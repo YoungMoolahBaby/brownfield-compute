@@ -111,3 +111,196 @@ radiant:
     unit: K, supply minus return across the floor loops at design
     conf: placeholder
     source: "judgement: radiant floors run small differences"
+
+# Step 3: a block of new homes on the data center's warm loop (A) against each home heating itself
+# with a heat pump (B) or gas (C). Per home, US dollars; cooling included in all three so they
+# compare like for like (a radiant slab can't cool, so A adds an air conditioner).
+block:
+  homes:
+    value: 200
+    low: 50
+    high: 500
+    unit: homes on the block
+    conf: placeholder
+    source: "a design choice; the share of the main per home falls with it"
+  main_km:
+    value: 1.5
+    low: 0.5
+    high: 3.0
+    unit: km of main from the data center's loop to the block
+    conf: placeholder
+    source: "judgement: homes stand ~20 m from the campus edge today (pass 2c), so a block can sit next to it; the loop's heat exchanger is inside"
+  main_usd_m:
+    value: 1100
+    low: 700
+    high: 1600
+    unit: USD per metre of main (supply and return, ~DN150 for ~1 MW)
+    conf: placeholder
+    source: "judgement, scaled down from ~2,100-2,500 EUR/m for DN400-500 rural pipe (cost model via search) to a pipe a third the size; to source"
+  street_usd_m:
+    value: 500
+    low: 250
+    high: 900
+    unit: USD per metre of street network (small twin pipe, laid in trenches dug for the other utilities)
+    conf: placeholder
+    source: "no per-metre figure found; new-build networks share open trenches with water, sewer, power and telecom (REHAU), which cuts civil cost; to source"
+  plant_usd_kw:
+    value: 200
+    low: 100
+    high: 400
+    unit: USD per kW of peak heat for the heat exchanger and pumps at the data center
+    conf: placeholder
+    source: "judgement, to source"
+  om_share:
+    value: 0.015
+    low: 0.01
+    high: 0.025
+    unit: share of network capex a year for operation and maintenance
+    conf: placeholder
+    source: "judgement, to source"
+  pump_share:
+    value: 0.02
+    low: 0.01
+    high: 0.04
+    unit: pumping electricity as a share of the heat delivered
+    conf: placeholder
+    source: "judgement: 1-4% for district heating networks, to source"
+density:
+  # Street frontage per dwelling (m): detached houses, townhouses, apartment buildings.
+  detached_m:
+    value: 20
+    low: 15
+    high: 30
+    unit: m of street network per detached house
+    conf: placeholder
+    source: "judgement: a small lot's frontage"
+  townhouse_m:
+    value: 7
+    low: 5
+    high: 9
+    unit: m of street network per townhouse
+    conf: placeholder
+    source: "judgement: a townhouse's width"
+  apartment_m:
+    value: 2
+    low: 1
+    high: 4
+    unit: m of street network per apartment (one connection serves a building)
+    conf: placeholder
+    source: "judgement: a 12-24 unit building on a ~40 m frontage"
+loop_home:
+  radiant_usd_ft2:
+    value: 8
+    low: 6
+    high: 12
+    unit: USD per square foot of in-slab radiant floor (tubing, manifold, insulation; no boiler)
+    conf: low
+    source: "consumer and contractor guides: slab-on-grade hydronic $6-12/sq ft plus boiler (here no boiler: the loop is the source); This Old House/Angi $6-20"
+  hiu_usd:
+    value: 2500
+    low: 1500
+    high: 4000
+    unit: USD per home for the connection (heat exchanger or direct manifold, valves, meter, controls)
+    conf: placeholder
+    source: "judgement: simpler than a retrofit HIU ($2,500-12,000, pass 2b) because there is no conversion and no high temperature"
+  booster_usd:
+    value: 2200
+    low: 1700
+    high: 5500
+    unit: USD per home for a small water-to-water heat pump lifting the loop to hot water
+    conf: low
+    source: "priced like a heat pump water heater: DOE 2024 standards analysis $2,164 installed (via a calculator); range $1,700-5,500"
+  booster_cop:
+    value: 4.0
+    low: 3.0
+    high: 5.0
+    unit: COP lifting ~45 C loop water to ~55-60 C hot water
+    conf: placeholder
+    source: "judgement: a small lift from a warm source; above an air-source HPWH's UEF 3.35 (DOE)"
+  ac_usd:
+    value: 5000
+    low: 3500
+    high: 8000
+    unit: USD per home for cooling (a radiant slab can't cool) - also added to the gas option
+    conf: placeholder
+    source: "judgement: a ductless or central AC unit, to source"
+heat_pump_home:
+  ashp_usd:
+    value: 16000
+    low: 12000
+    high: 24000
+    unit: USD per home for a ducted cold-climate heat pump with ducts (heats and cools)
+    conf: low
+    source: "vendor guide (pickhvac): ducted systems with new or upgraded ductwork $14,000-24,000; a small new house at the lower part"
+  scop:
+    value: 2.6
+    low: 2.2
+    high: 3.3
+    unit: seasonal heating COP
+    conf: medium
+    source: "British Columbia cold-climate field study (RDH 2021): central single-stage 2.6, central variable-speed 3.3, ductless 2.4; NEEP-region cold snaps >2.0 (Cadmus)"
+  hpwh_usd:
+    value: 2164
+    low: 1700
+    high: 5500
+    unit: USD for a heat pump water heater installed
+    conf: low
+    source: "DOE 2024 water heater standards analysis, $2,164 installed (via a calculator); guides $1,700-5,500"
+  hpwh_uef:
+    value: 3.35
+    low: 2.8
+    high: 3.8
+    unit: uniform energy factor of the heat pump water heater
+    conf: medium
+    source: "DOE's modelled heat pump water heater 3.35 at typical use (via the same calculator)"
+gas_home:
+  furnace_usd:
+    value: 6000
+    low: 4000
+    high: 9000
+    unit: USD for a gas furnace with ducts in a small new house
+    conf: placeholder
+    source: "judgement, to source"
+  gas_line_usd:
+    value: 2000
+    low: 1000
+    high: 4000
+    unit: USD for the gas service line and meter
+    conf: placeholder
+    source: "judgement, to source"
+  wh_usd:
+    value: 1570
+    low: 1200
+    high: 3000
+    unit: USD for a gas tank water heater installed
+    conf: low
+    source: "DOE 2024 standards analysis $1,570 installed (via a calculator); guides $1,200-3,000"
+  wh_uef:
+    value: 0.58
+    low: 0.58
+    high: 0.67
+    unit: uniform energy factor of a gas tank water heater
+    conf: medium
+    source: "DOE's modelled gas tank 0.58; a standard tank UEF 0.67 (guides)"
+  furnace_eff:
+    value: 0.95
+    low: 0.9
+    high: 0.97
+    unit: furnace efficiency (AFUE)
+    conf: medium
+    source: "new condensing furnaces 90-97% AFUE"
+  fixed_usd_month:
+    value: 15
+    low: 10
+    high: 25
+    unit: USD a month gas customer charge
+    conf: placeholder
+    source: "judgement, to source (PA gas utility tariffs)"
+prices:
+  res_elec_usd_mwh:
+    value: 193
+    low: 170
+    high: 230
+    unit: USD per MWh, Pennsylvania residential electricity
+    conf: medium
+    source: "AGA Pennsylvania residential energy cost analysis (Aug 2026): EIA-reported PA residential average 19.30 c/kWh in 2025; rising (high end)"

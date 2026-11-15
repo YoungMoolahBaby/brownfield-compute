@@ -37,7 +37,9 @@ don't know.
 **Status:** pass 1 done, [the site screen](docs/pass1/README.md): 205 sites, both known cases
 pass, 18 in the top quarter on both axes. Pass 2 done, [Homer City](docs/pass2/README.md): the
 good-neighbour data center, its [costs](docs/pass2/cost.md) and [firmer inputs](docs/pass2/firm-up.md).
-Pass 3 under way, [the first house](docs/pass3/README.md) in CortenForge. Decisions and next steps: [docs/PLAN.md](docs/PLAN.md).
+Pass 3 done, [the first neighbourhood module](docs/pass3/README.md): the first house in
+CortenForge, heated straight off the data center's warm water; it pays only for dense housing
+beside the campus. Decisions and next steps: [docs/PLAN.md](docs/PLAN.md).
 Sources: [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Why

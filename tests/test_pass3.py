@@ -31,3 +31,17 @@ def test_design_load_and_annual():
     assert abs(h["design_kw"] - total * (20 - P["pass3.loads.design_c"]) / 1e3) < 1e-9
     balance = 20 - P["pass3.loads.internal_w"] / total
     assert abs(h["space_mwh"] - total * balance * 8760 / 1e6) < 1e-9
+
+
+def test_block_by_hand():
+    from brownfield import block
+    from brownfield.cost import annuity
+    r = block.per_home(P, 8.0, 3.0, 5.0, 80.0, 20.0)
+    b = "pass3.block."
+    assert abs(r["street"] - 20.0 * P[b + "street_usd_m"]) < 1e-9
+    assert abs(r["main"] - P[b + "main_km"] * 1000 * P[b + "main_usd_m"] / P[b + "homes"]) < 1e-9
+    af = annuity(P["cost.money.discount"], P["cost.money.life_yr"])
+    assert abs(r["A"] - (r["A_capex"] + r["A_year"] * af)) < 1e-6
+    # The break-even street price really ties the loop with the cheaper alternative.
+    q = dict(P, **{b + "street_usd_m": r["street_breakeven_usd_m"]})
+    assert abs(block.per_home(q, 8.0, 3.0, 5.0, 80.0, 20.0)["A_minus_best"]) < 1e-6

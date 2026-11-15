@@ -35,7 +35,12 @@ over AI towers now ~$17M per module (ahead in 12%); conclusions stand.
 house in CortenForge (`forge/`, measured to its exact dimensions; found a mass_properties pitfall
 with flush cutters). Step 2: its heat (`brownfield house`): 5.3 kW at design, 8.7 MWh of space heat
 a year; a radiant floor needs ~34 C water (43.5 C at the worst corner) against the data center's
-50 C return: new homes heat straight off the loop, no heat pump. Next: step 3, the block's money.
+50 C return: new homes heat straight off the loop, no heat pump. Step 3, the money (`brownfield block`):
+the loop loses for detached homes and townhouses; it wins only for DENSE housing beside the campus
+(500+ apartments within ~1 km, 1,000+ within 1.5 km: ~$1-3k cheaper per dwelling over 20 years; 65%
+of draws for 1,000 apartments on a 0.5 km main). So: build dense affordable housing next to the
+data center; heat pumps for the existing town. Next: Jon's call (the apartment building in
+CortenForge, structure and build sequence; or pass 4, the economic base).
 
 ## Decisions
 

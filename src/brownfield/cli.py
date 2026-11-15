@@ -9,6 +9,7 @@
 - `sensitivity`: which inputs move pass 2's results most (one at a time, low to high).
 - `house`: pass 3, the first house's heat (envelope from forge's CortenForge model) and its radiant
   floor on the data center's warm water.
+- `block`: pass 3, a block of new homes on the warm loop against each home heating itself.
 """
 
 from __future__ import annotations
@@ -194,6 +195,39 @@ def cmd_house(_args) -> int:
     return 0
 
 
+def cmd_block(_args) -> int:
+    import numpy as np
+
+    from . import block, climate, house
+
+    params = load_params()
+    p = values(params)
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    env = house.envelope()
+    t = climate.hourly_temp(site.lat, site.lon)
+    h = house.heat(env, t, p)
+    mc = block.monte_carlo(params, lambda q: house.heat(env, t, q), env["floor_m2"])
+    md = block.report(block.run(p, h, env["floor_m2"]), mc, p)
+    md += NL + NL + "What it takes (negative = the loop is cheapest):" + NL + NL + block.grid(p, h, env["floor_m2"])
+    # The dense case beside the campus, with every input varying.
+    dense = {k: v for k, v in params.items()}
+    from .params import Param
+
+    for name, val in (("pass3.block.homes", 1000.0), ("pass3.block.main_km", 0.5)):
+        old = params[name]
+        dense[name] = Param(name, val, val, val, old.unit, old.conf, old.source, old.note)
+    mcd = block.monte_carlo(dense, lambda q: house.heat(env, t, q), env["floor_m2"])["apartment"]
+    q10, q50, q90 = np.percentile(mcd, [10, 50, 90])
+    md += (NL + NL + f"1,000 apartments on a 0.5 km main, every other input varying (2,000 draws): the loop minus the "
+           f"cheaper alternative P10 / P50 / P90 {q10:+,.0f} / {q50:+,.0f} / {q90:+,.0f} USD per dwelling; "
+           f"the loop cheapest in {(mcd < 0).mean():.0%}.")
+    print(md)
+    out = OUT_DIR / "pass3"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "block.md").write_text(md + NL, encoding="utf-8")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -222,10 +256,11 @@ def main(argv=None) -> int:
     sub.add_parser("homes", help="homes around the Homer City campus")
     sub.add_parser("sensitivity", help="which inputs move pass 2 most")
     sub.add_parser("house", help="pass 3: the first house's heat and radiant floor")
+    sub.add_parser("block", help="pass 3: a block of new homes on the warm loop")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block}.get(args.cmd or "check")
     return cmd(args)
 
 
