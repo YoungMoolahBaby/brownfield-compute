@@ -24,6 +24,8 @@ good neighbour costs ~$13-15M more per module over 20 years (zero water, quieter
 vs an AWS-style air + evaporative cloud hall it's about even (PUE 1.040 vs 1.039, almost no water
 either way at Homer City). So "better at the same cost" held only against the old design; dropping
 diesel is the site's option; the town's heat needs its own funding.
+AI (Jon: "can good neighbor be used for ai"): yes, it is an AI design; premium over liquid + towers
+~$14M per module over 20 years, ~$7M if chips take 45 C water, ~$31M if they need 32 C (cost.md s3).
 Next: Jon's call, pass 3 (CortenForge) or firm up prices (vendor quotes, home conversions).
 
 ## Decisions

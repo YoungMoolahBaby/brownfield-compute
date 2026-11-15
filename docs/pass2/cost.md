@@ -17,6 +17,8 @@ even, and the heat for the town needs its own funding:
   public data can't say which is cheaper. Air-cooled halls can't take AI racks of ~120 kW.
 - **Dropping diesel is the site's opportunity, not the design's**: any design at Homer City could
   lean on the on-site gas plant and batteries.
+- **For AI** (section 3) the good neighbour works as it is; its premium over a liquid hall with
+  towers runs from ~$7 million (chips on 45 C water) to ~$31 million (32 C) per module over 20 years.
 - **So "better at the same cost" holds only against the old design.** Against modern designs the
   good neighbour buys zero water and quiet for a small premium, and the town's heat network
   (-$159 million on its own) needs someone to choose to fund it.
@@ -110,6 +112,36 @@ L/kWh (2024) and 0.12 (2025) (Amazon sustainability report and AWS fact sheets).
 1.040 counts cooling only (no electrical losses), so it sits below the fleet's total as it should.
 Its 0.015 L/kWh is a tenth of the fleet's: Homer City is cool (pads run ~362 hours a year), and
 the model leaves out winter humidification and pads used below 27 C; read it as a low end.
+
+## 3. Can the good neighbour run AI?
+
+Yes: it is an AI design. Direct-to-chip liquid cooling on a warm-water loop is what AI racks of
+~120 kW need (85% of the heat into liquid, the figure used here); the air-cooled cloud hall in
+section 2 can't take them. So for AI the comparison is the liquid-cooled hall with cooling towers.
+Added 2026-11-15 (Jon: "can good neighbor be used for ai"), `uv run brownfield cost`, central
+values per 100 MW module:
+
+| Case | Good neighbour PUE | AI towers PUE | Heat pump COP | Heat reused | Water saved, million gal/day | Good neighbour vs AI towers, 20 years, million USD | Electricity bill a year, million USD |
+|---|---|---|---|---|---|---|---|
+| Today's AI racks: 40 C water, 80% load | 1.039 | 1.028 | 5.55 | 13% | 0.91 | -14.7 | 69 |
+| AI training: 40 C water, 95% load | 1.040 | 1.028 | 5.55 | 11% | 1.08 | -13.6 | 82 |
+| Chips that need colder water: 32 C, 95% load | 1.044 | 1.028 | 4.52 | 10% | 1.08 | -31.3 | 83 |
+| Chips that take warm water: 45 C, 95% load | 1.040 | 1.028 | 6.47 | 11% | 1.08 | -6.9 | 82 |
+
+- **It works for AI as it is.** The only change from the AI alternative is how the heat leaves:
+  dry coolers instead of towers. That costs ~$14 million over 20 years for ~1 million gallons of
+  water a day saved, about 2% of the module's ~$69 million a year electricity bill
+  (14.7 / 10.59 annuity = $1.4 million a year).
+- **The coolant temperature the chips accept decides the premium.** Warm-water chips (45 C) make
+  zero water nearly free (~$7 million) and lift the heat pumps' COP to 6.5, because the heat comes
+  off hotter. Chips that need 32 C water double the premium (~$31 million) and drop the COP to
+  4.5: dry coolers cool toward the dry bulb and need trim chillers more often; towers cool toward
+  the wet bulb and hardly notice. ASHRAE TC 9.9 warned in 2021 that higher-power chips may only run
+  on W32 (RESEARCH.md).
+- **More load doesn't mean more heat used.** At 95% load there is more heat, but the town and the
+  greenhouses can't take more, so the share falls (11%).
+- **What a buyer or a benefits agreement could ask for:** hardware rated for warm water (W40-W45),
+  which is what makes zero water cheap.
 
 ## What we don't know yet
 

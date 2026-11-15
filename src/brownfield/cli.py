@@ -131,6 +131,10 @@ def cmd_cost(_args) -> int:
     out.mkdir(parents=True, exist_ok=True)
     (out / "cost.md").write_text(md + "\n", encoding="utf-8")
     (out / "cost_strong.md").write_text(strong + "\n", encoding="utf-8")
+    ai = cost.ai_report(t, rh, params)
+    print("\nOn AI loads, against the AI alternative (liquid + towers):\n")
+    print(ai)
+    (out / "cost_ai.md").write_text(ai + "\n", encoding="utf-8")
     return 0
 
 

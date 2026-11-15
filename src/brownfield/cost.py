@@ -235,3 +235,37 @@ def strong_report(temp: np.ndarray, rh: np.ndarray, params: dict, n: int = 2000,
         f"electricity and saves {c['water_saved_vs_ai_mgd']:.2f} million gallons of water a day. Backup is the same "
         f"on both sides here. Monte Carlo: {n:,} draws, seed {seed}.",
     ])
+
+
+AI_CASES = [
+    ("Today's AI racks: 40 C water, 80% load", {}),
+    ("AI training: 40 C water, 95% load", {"pass2.module.load_factor": 0.95}),
+    ("Chips that need colder water: 32 C, 95% load",
+     {"pass2.module.load_factor": 0.95, "pass2.good_neighbour.liquid_supply_c": 32.0}),
+    ("Chips that take warm water: 45 C, 95% load",
+     {"pass2.module.load_factor": 0.95, "pass2.good_neighbour.liquid_supply_c": 45.0}),
+]
+
+
+def ai_report(temp: np.ndarray, rh: np.ndarray, params: dict) -> str:
+    """The good neighbour on AI loads against the AI alternative (same liquid loop, cooling
+    towers), central values: what changes with load and with the coolant temperature the chips
+    accept. Towers cool toward the wet bulb, so a colder supply costs them little; dry coolers
+    cool toward the dry bulb, so it costs them trim hours and the heat pumps a lower COP."""
+    from . import module
+
+    base = {k: v.value for k, v in params.items()}
+    g_ = "pass2.good_neighbour."
+    lines = ["| Case | Good neighbour PUE | AI towers PUE | Heat pump COP | Heat reused | Water saved, million gal/day "
+             "| Good neighbour vs AI towers, 20 years, million USD | Electricity bill a year, million USD |",
+             "|---|---|---|---|---|---|---|---|"]
+    for name, ov in AI_CASES:
+        p = dict(base, **ov)
+        g, ai = module.good_neighbour(temp, p), module.liquid_towers(temp, rh, p)
+        cop = module.heat_pump_cop(p[g_ + "liquid_supply_c"] + p[g_ + "liquid_rise_k"], p[g_ + "dh_supply_c"],
+                                   p[g_ + "hp_approach_k"], p[g_ + "hp_carnot_eff"])
+        c = vs_strong(temp, rh, p)
+        bill = (g.it_mwh + g.cooling_mwh) * p["cost.energy.elec_usd_mwh"] / 1e6
+        lines.append(f"| {name} | {g.pue:.3f} | {ai.pue:.3f} | {cop:.2f} | {g.heat_reused_mwh / g.heat_out_mwh:.0%} | "
+                     f"{c['water_saved_vs_ai_mgd']:.2f} | {c['npv_vs_ai'] / 1e6:+,.1f} | {bill:,.0f} |")
+    return "\n".join(lines)
