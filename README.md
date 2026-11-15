@@ -35,7 +35,9 @@ don't know.
    site, and what changes. A site option, never something the plan depends on.
 
 **Status:** pass 1 done, [the site screen](docs/pass1/README.md): 205 sites, both known cases
-pass, 18 in the top quarter on both axes. Decisions and next steps: [docs/PLAN.md](docs/PLAN.md).
+pass, 18 in the top quarter on both axes. Pass 2 done, [Homer City](docs/pass2/README.md): the
+good-neighbour data center, its [costs](docs/pass2/cost.md) and [firmer inputs](docs/pass2/firm-up.md).
+Pass 3 under way, [the first house](docs/pass3/README.md) in CortenForge. Decisions and next steps: [docs/PLAN.md](docs/PLAN.md).
 Sources: [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Why

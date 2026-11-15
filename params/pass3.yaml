@@ -1,0 +1,113 @@
+# Pass 3: the first house of the neighbourhood (forge/, CortenForge) and its heat. Envelope areas
+# come from forge's out/pass3/house.json; these are the assemblies, air and loads.
+
+envelope:
+  wall_u:
+    value: 0.060
+    low: 0.045
+    high: 0.060
+    unit: Btu/h ft2 F, above-grade wood-frame wall U-factor
+    conf: medium
+    source: "2018 IECC Table R402.1.4, climate zone 5: frame wall U-0.060 (R-20 or R-13+5), as adopted in Pennsylvania's UCC (Lebanon County residential energy worksheet: Central (5) 'R 49 / 20 or 13+5'); low end 2021 IECC U-0.045 (R-20+5)"
+  window_u:
+    value: 0.30
+    low: 0.25
+    high: 0.30
+    unit: Btu/h ft2 F, fenestration U-factor
+    conf: medium
+    source: "2018 IECC zone 5 and the Lebanon County worksheet: U-0.30; PA-Alt worksheet lists 0.25-0.27 for some paths (low end)"
+  door_u:
+    value: 0.20
+    low: 0.15
+    high: 0.35
+    unit: Btu/h ft2 F, opaque entry doors
+    conf: placeholder
+    source: "judgement: insulated steel or fibreglass doors"
+  ceiling_u:
+    value: 0.026
+    low: 0.024
+    high: 0.026
+    unit: Btu/h ft2 F, ceiling under a vented attic
+    conf: medium
+    source: "2018 IECC zone 5 U-0.026 (R-49; Lebanon County worksheet R-49); 2021 IECC U-0.024 (R-60)"
+  slab_f:
+    value: 0.6
+    low: 0.45
+    high: 0.9
+    unit: Btu/h ft F, F-factor of a heated (radiant) slab per foot of perimeter, insulated at the edge and underneath
+    conf: placeholder
+    source: "judgement, to source (ASHRAE 90.1 Appendix A heated-slab F-factors); a radiant slab loses more than an unheated one, so this is set above an unheated R-10 slab's"
+air:
+  ach50:
+    value: 3.0
+    low: 1.5
+    high: 3.0
+    unit: air changes an hour at 50 Pa (blower door)
+    conf: medium
+    source: "IECC 2018 R402.4.1.2: no more than 3 ACH50 in climate zones 3-8 (code maximum = high end); 1.5 a tight new house"
+  n_factor:
+    value: 20
+    low: 15
+    high: 25
+    unit: ACH50 / natural ACH
+    conf: medium
+    source: "the LBL rule of thumb, natural infiltration ~ ACH50 / 20 (15-25 by exposure and height)"
+  bedrooms:
+    value: 2
+    unit: bedrooms (sets the ventilation rate)
+    conf: high
+    source: "the D1 house's plan, 2 bedrooms in 24 x 40 ft"
+  hrv_eff:
+    value: 0
+    low: 0
+    high: 0.8
+    unit: heat recovered from the ventilation air (0 = code minimum, no heat recovery ventilator)
+    conf: high
+    source: "a design choice; code doesn't require heat recovery in zone 5; 0.7-0.8 for a good HRV"
+loads:
+  indoor_c:
+    value: 20
+    unit: C, indoor set point
+    conf: high
+    source: "convention for heating design (ACCA Manual J uses 70 F)"
+  design_c:
+    value: -16.8
+    low: -20
+    high: -14
+    unit: C, outdoor heating design temperature (99.6%)
+    conf: medium
+    source: "ASHRAE Handbook (2005) via a compiled table: Pittsburgh, PA 99.6% heating dry bulb 1.8 F = -16.8 C; the typical year at the plant reaches -13.9 C"
+  internal_w:
+    value: 600
+    low: 400
+    high: 800
+    unit: W of internal and solar gains on average in the heating season (sets the balance point)
+    conf: placeholder
+    source: "judgement: people, appliances, lights, some winter sun for a 2-bedroom house"
+  hot_water_mwh:
+    value: 3.0
+    low: 2.0
+    high: 4.0
+    unit: MWh of heat a year for hot water per home
+    conf: placeholder
+    source: "judgement, to source (RECS water heating)"
+radiant:
+  max_floor_c:
+    value: 29
+    unit: C, highest floor surface temperature in occupied areas
+    conf: high
+    source: "EN 1264 'physiologically agreed' maximum, 9 K above a 20 C room (supplier summaries of BS EN 1264); 35 C allowed at the perimeter zone"
+  k_h:
+    value: 6.0
+    low: 4.5
+    high: 7.5
+    unit: W/m2K, heat out of the floor per kelvin of mean water temperature above the room (the system's characteristic)
+    conf: placeholder
+    source: "judgement for pipes in a concrete slab under tile or thin flooring, to source (EN 1264-2 system tests); carpet would lower it"
+  dt_k:
+    value: 6
+    low: 4
+    high: 10
+    unit: K, supply minus return across the floor loops at design
+    conf: placeholder
+    source: "judgement: radiant floors run small differences"

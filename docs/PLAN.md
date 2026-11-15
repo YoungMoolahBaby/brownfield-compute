@@ -31,7 +31,11 @@ sensitivity ranking (`brownfield sensitivity`), homes around the campus from cou
 (`brownfield homes`: 109 within 300 m of the edge, 259 within 700 m, nearest ~20 m), water priced
 from a PA tariff, tower fans checked against ASHRAE 90.1, chip coolant from GB200 specs. Premium
 over AI towers now ~$17M per module (ahead in 12%); conclusions stand.
-Next: Jon's call, pass 3 (CortenForge, new homes on low-temperature heat) or vendor quotes.
+**Pass 3 in progress (Jon: "go with pass 3"): [docs/pass3/](pass3/README.md).** Step 1: the first
+house in CortenForge (`forge/`, measured to its exact dimensions; found a mass_properties pitfall
+with flush cutters). Step 2: its heat (`brownfield house`): 5.3 kW at design, 8.7 MWh of space heat
+a year; a radiant floor needs ~34 C water (43.5 C at the worst corner) against the data center's
+50 C return: new homes heat straight off the loop, no heat pump. Next: step 3, the block's money.
 
 ## Decisions
 

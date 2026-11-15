@@ -7,6 +7,8 @@
 - `cost`: pass 2b, what the good-neighbour features cost, and who pays and gains.
 - `homes`: the homes around the Homer City campus and their distance to it (county parcels).
 - `sensitivity`: which inputs move pass 2's results most (one at a time, low to high).
+- `house`: pass 3, the first house's heat (envelope from forge's CortenForge model) and its radiant
+  floor on the data center's warm water.
 """
 
 from __future__ import annotations
@@ -90,6 +92,7 @@ def cmd_rank(_args) -> int:
 
 
 HOMER_CITY = 3122  # EIA plant id
+NL = chr(10)
 
 
 def cmd_module(_args) -> int:
@@ -176,6 +179,21 @@ def cmd_sensitivity(_args) -> int:
     return 0
 
 
+def cmd_house(_args) -> int:
+    from . import climate, house
+
+    p = values(load_params())
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    env = house.envelope()
+    h = house.heat(env, climate.hourly_temp(site.lat, site.lon), p)
+    md = house.report(env, h, p["pass2.good_neighbour.liquid_supply_c"])
+    print(md)
+    out = OUT_DIR / "pass3"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "heat.md").write_text(md + NL, encoding="utf-8")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -203,10 +221,11 @@ def main(argv=None) -> int:
     sub.add_parser("cost", help="pass 2b: costs, who pays and gains")
     sub.add_parser("homes", help="homes around the Homer City campus")
     sub.add_parser("sensitivity", help="which inputs move pass 2 most")
+    sub.add_parser("house", help="pass 3: the first house's heat and radiant floor")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house}.get(args.cmd or "check")
     return cmd(args)
 
 
