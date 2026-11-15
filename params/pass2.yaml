@@ -304,3 +304,42 @@ jobs:
     unit: jobs per hectare of vegetable greenhouse
     conf: medium
     source: "Urban Ag News: US greenhouse vegetables 'three to four employees per acre (six to eight employees per hectare)'; automated lettuce 1-2 per acre (low); an advocacy budget implies ~14 per ha (high)"
+
+# The strongest conventional designs (Jon, 2026-11-15: test against the best, not the weakest).
+air_hall:
+  supply_max_c:
+    value: 27
+    low: 24
+    high: 27
+    unit: C, warmest air supplied to the servers before evaporative cooling starts
+    conf: high
+    source: "ASHRAE TC 9.9 recommended envelope for air-cooled IT, 18-27 C inlet (allowable A1 to 32 C)"
+  server_dt_k:
+    value: 12
+    low: 10
+    high: 15
+    unit: K, air temperature rise through the servers (sets the airflow)
+    conf: placeholder
+    source: "judgement, to source"
+  evap_eff:
+    value: 0.85
+    low: 0.75
+    high: 0.92
+    unit: saturation efficiency of the direct evaporative media (share of the dry bulb - wet bulb gap closed)
+    conf: placeholder
+    source: "judgement: rigid media pads typically 80-90%, to source"
+  ahu_kw_per_kw:
+    value: 0.04
+    low: 0.02
+    high: 0.07
+    unit: kW of air handler fans per kW of IT (outside air moved through the hall)
+    conf: placeholder
+    source: "judgement, to source; calibrated loosely by AWS's fleet PUE 1.15 (2024), 1.14 (2025), which also includes electrical losses (Amazon sustainability report, AWS fact sheets)"
+liquid_towers:
+  wb_approach_k:
+    value: 4
+    low: 3
+    high: 7
+    unit: K, cooling tower outlet water above the outdoor wet bulb
+    conf: placeholder
+    source: "judgement: typical tower approach 3-7 K, to source"

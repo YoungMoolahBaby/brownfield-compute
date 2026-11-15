@@ -4,6 +4,7 @@
 - `sites [--limit N]`: pass 1, the site screen, written to out/pass1/sites.csv.
 - `rank`: pass 1's ranking of out/pass1/sites.csv on two axes, host and help.
 - `module`: pass 2, one 100 MW module at Homer City, conventional vs good neighbour.
+- `cost`: pass 2b, what the good-neighbour features cost, and who pays and gains.
 """
 
 from __future__ import annotations
@@ -115,6 +116,24 @@ def cmd_module(_args) -> int:
     return 0
 
 
+def cmd_cost(_args) -> int:
+    from . import climate, cost
+
+    params = load_params()
+    site = screen.plant_table(values(params)).loc[HOMER_CITY]
+    md = cost.report(climate.hourly_temp(site.lat, site.lon), params)
+    print(md)
+    t, rh = climate.hourly_temp_rh(site.lat, site.lon)
+    strong = cost.strong_report(t, rh, params)
+    print("\nAgainst the strongest conventional designs:\n")
+    print(strong)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "cost.md").write_text(md + "\n", encoding="utf-8")
+    (out / "cost_strong.md").write_text(strong + "\n", encoding="utf-8")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -139,10 +158,11 @@ def main(argv=None) -> int:
     sub.add_parser("check", help="parameters and known cases")
     sub.add_parser("rank", help="pass 1: rank the screened sites")
     sub.add_parser("module", help="pass 2: one module at Homer City, two designs")
+    sub.add_parser("cost", help="pass 2b: costs, who pays and gains")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost}.get(args.cmd or "check")
     return cmd(args)
 
 

@@ -1,0 +1,184 @@
+# Pass 2b: what the good-neighbour features cost, and who pays and gains. US dollars (2025-26),
+# per 100 MW module. Cooling hardware is priced only where the designs differ (see cooling).
+
+money:
+  eur_usd:
+    value: 1.15
+    low: 1.05
+    high: 1.25
+    unit: USD per EUR
+    conf: placeholder
+    source: "judgement for 2026; European sources (heat pumps, pipes, networks) are in EUR"
+  discount:
+    value: 0.07
+    low: 0.04
+    high: 0.10
+    unit: real discount rate a year
+    conf: placeholder
+    source: "judgement: utility-like 4%, merchant 10%"
+  life_yr:
+    value: 20
+    low: 15
+    high: 30
+    unit: years the equipment is counted over
+    conf: placeholder
+    source: "judgement: heat pumps and dry coolers ~20 yr, pipes 30+"
+
+energy:
+  elec_usd_mwh:
+    value: 95
+    low: 84
+    high: 125
+    unit: USD per MWh the data center pays for electricity
+    conf: medium
+    source: "EIA Electric Power Monthly Table 5.3: US industrial 8.37 c/kWh in 2025 (low); Pennsylvania industrial rose ~22% July 2025 to July 2026 (third-party summary of EIA data) and a tracker gives 10.47 c (unverified); the campus buys from FirstEnergy (AWS filing), price not public"
+  res_gas_usd_mcf:
+    value: 15
+    low: 12.5
+    high: 19
+    unit: USD per thousand cubic feet, Pennsylvania residential natural gas
+    conf: medium
+    source: "EIA, Pennsylvania natural gas residential price (n3010pa3), 2025: Jan 12.51, Feb 12.87, Mar 15.24, Nov 15.31, Dec 13.91 (heating months, which carry most heating use); 12-month mean 19.09 (high)"
+  furnace_eff:
+    value: 0.85
+    low: 0.8
+    high: 0.95
+    unit: share of gas energy a home's furnace delivers as heat
+    conf: medium
+    source: "typical installed gas furnaces 80% (minimum standard, older units) to 95% (condensing)"
+  heat_discount:
+    value: 0.2
+    low: 0.0
+    high: 0.4
+    unit: share below the home's avoided gas cost that district heat is sold at
+    conf: placeholder
+    source: "a choice: the price cut that makes connecting worth it to a household"
+
+water:
+  usd_per_kgal:
+    value: 5
+    low: 2
+    high: 10
+    unit: USD per 1,000 gallons withdrawn (withdrawal, treatment, blowdown treatment and discharge)
+    conf: placeholder
+    source: "judgement, to source; Homer City Generation plans a treatment plant of 'hundreds of millions of dollars' for the campus (fact sheet), so treated water isn't free even from its own reservoir"
+
+cooling:
+  dry_usd_kw:
+    value: 150
+    low: 80
+    high: 250
+    unit: USD per kW of dry cooler capacity added by oversizing
+    conf: placeholder
+    source: "no published $/kW found; industry sources claim towers and closed-circuit coolers of similar capacity cost about the same installed (Mission Critical, ACHR News), so only the oversizing (k - 1) is priced"
+  chiller_usd_kw:
+    value: 250
+    low: 150
+    high: 400
+    unit: "USD per kW of chiller plant (conventional: full load; good neighbour: trim at the hottest hour)"
+    conf: placeholder
+    source: "judgement, to source (RSMeans or vendor quotes)"
+
+heat:
+  hp_eur_mw:
+    value: 1.2
+    low: 0.8
+    high: 1.95
+    unit: million EUR per MW of heat pump output
+    conf: low
+    source: "Danish Energy Agency technology catalogue for process heat (Jan 2025): example 1.55 MEUR/MW base, 1.95 with steam and >75 K lift extras (high); district heating units on a 50 C source need neither extra, so central below the base; DTU (2018) cost correlations for Danish large heat pumps, older"
+  hp_om_share:
+    value: 0.02
+    low: 0.01
+    high: 0.03
+    unit: share of heat pump capex a year for operation and maintenance
+    conf: placeholder
+    source: "judgement, to source (DEA catalogue O&M)"
+  main_eur_m:
+    value: 2800
+    low: 2100
+    high: 3500
+    unit: EUR per metre of transmission main (supply and return)
+    conf: low
+    source: "a German-sourced cost model (via search): rural DN400 uninsulated PE ~2,100 EUR/m, DN500 ~2,510 (low end; understates pre-insulated steel); high end judgement"
+  main_km:
+    value: 13
+    low: 12
+    high: 18
+    unit: km of main from the plant to Indiana borough
+    conf: medium
+    source: "straight line 12.6 km from the plant's EIA point to Indiana borough's centre; a real route runs longer"
+  network_eur_per_mwh_yr:
+    value: 400
+    low: 150
+    high: 655
+    unit: EUR of town network investment per MWh a year of heat sold
+    conf: low
+    source: "Danish Technology Catalogue as cited (via search): ~150 EUR per MWh/yr of demand in urban areas, ~655 in suburban areas; Indiana borough is a dense small town"
+  connection_usd_home:
+    value: 6500
+    low: 2500
+    high: 12000
+    unit: USD per home for the heat interface unit and its piping
+    conf: low
+    source: "US vendor estimates, installed single-family HIUs $2,500-12,000, 'average national price $6,500' (pickcomfort, latestcost); London study 4,600-6,800 GBP per unit for homes with central heating. NOT included: converting forced-air furnace homes to hydronic heat (no US price found)"
+
+backup:
+  diesel_usd_kw:
+    value: 550
+    low: 350
+    high: 700
+    unit: USD per kW of diesel generators installed
+    conf: medium
+    source: "Cummins guidance 'at least $350 per kW plus contractor markup and installation' (1-3 MW mission critical); a vendor comparison $400-700k installed per MW; capital costs up 45% Q3 2021 to mid-2024 (cost guide)"
+  diesel_om_usd_kw_yr:
+    value: 10
+    low: 5
+    high: 20
+    unit: USD per kW a year to keep the generators (maintenance, test fuel, permits)
+    conf: placeholder
+    source: "judgement, to source"
+  battery_usd_kwh:
+    value: 400
+    low: 250
+    high: 700
+    unit: USD per kWh for a ~15-minute battery
+    conf: placeholder
+    source: "NREL ATB 2024 commercial Li-ion: $199/kWh at 4 h, $211 at 1 h; a 15-minute battery is power-heavy and costs more per kWh (judgement)"
+  fuel_cell_usd_kw:
+    value: 1500
+    low: 300
+    high: 3000
+    unit: USD per kW of hydrogen fuel cells (the no-fossil long-outage option)
+    conf: placeholder
+    source: "DOE 2014 stationary target $1,000/kW (natural gas fuel cells); DOE 2024 heavy-duty vehicle systems ~$300/kW at low volume (low end, not stationary); no current stationary backup price found"
+  h2_storage_usd_kg:
+    value: 1000
+    low: 500
+    high: 1450
+    unit: USD per kg of hydrogen stored on site
+    conf: low
+    source: "DOE (2016): 875 bar stationary storage fell from $1,450/kg (2011) to $1,000/kg"
+  h2_hours:
+    value: 24
+    low: 12
+    high: 48
+    unit: hours of full facility load the hydrogen covers
+    conf: placeholder
+    source: "a choice; Microsoft's 2020 test ran 10 racks for 48 hours on a 250 kW fuel cell system, its 2022 3 MW test ran 'several weeks' of qualification tests (DCD, Microsoft)"
+  fuel_cell_eff:
+    value: 0.5
+    low: 0.45
+    high: 0.6
+    unit: electricity out per hydrogen energy in (LHV)
+    conf: medium
+    source: "PEM fuel cell systems typically 45-60% LHV (DOE fuel cell fact sheets)"
+
+berm:
+  usd:
+    value: 1000000
+    low: 300000
+    high: 3000000
+    unit: USD for an earth berm screening one module's coolers
+    conf: placeholder
+    source: "judgement: a few tens of thousands of m3 of earthworks; Homer City has old coal ash and spoil on site that could be moved, or not (to check)"

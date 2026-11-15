@@ -52,3 +52,27 @@ def site_climate(sites: pd.DataFrame, base_c: float, limit_c: float) -> pd.DataF
     """Climate stats for every site (index plant_id, columns lat, lon)."""
     rows = {pid: stats(hourly_temp(r.lat, r.lon), base_c, limit_c) for pid, r in sites.iterrows()}
     return pd.DataFrame.from_dict(rows, orient="index")
+
+
+def hourly_temp_rh(lat: float, lon: float) -> tuple[np.ndarray, np.ndarray]:
+    """8760 hourly air temperatures (C) and relative humidities (%) of the typical year, cached."""
+    lat, lon = round(lat, 3), round(lon, 3)
+    path = CACHE_DIR / f"{lat:.3f}_{lon:.3f}_rh.json"
+    if not path.exists():
+        resp = requests.get(PVGIS_TMY, params={"lat": lat, "lon": lon, "outputformat": "json", "usehorizon": 0},
+                            headers={"User-Agent": USER_AGENT}, timeout=120)
+        resp.raise_for_status()
+        rows = resp.json()["outputs"]["tmy_hourly"]
+        data = {"t": [round(float(r["T2m"]), 1) for r in rows], "rh": [round(float(r["RH"]), 1) for r in rows]}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(data))
+    data = json.loads(path.read_text())
+    return np.array(data["t"], dtype=float), np.array(data["rh"], dtype=float)
+
+
+def wet_bulb(t: np.ndarray, rh: np.ndarray) -> np.ndarray:
+    """Wet-bulb temperature (C) from air temperature (C) and relative humidity (%), Stull (2011),
+    J. Appl. Meteor. Climatol. 50: within ~0.3 K for RH 5-99% and -20 to 50 C at sea-level pressure."""
+    rh = np.clip(rh, 5.0, 99.0)
+    return (t * np.arctan(0.151977 * np.sqrt(rh + 8.313659)) + np.arctan(t + rh) - np.arctan(rh - 1.676331)
+            + 0.00391838 * rh ** 1.5 * np.arctan(0.023101 * rh) - 4.686035)

@@ -13,9 +13,18 @@ sites in the top quarter on both axes. Jon picked **Homer City** for pass 2 (D6)
 **Pass 2 v1 complete: [docs/pass2/](pass2/README.md).** Per 100 MW module at Homer City:
 water 1.05 million gallons a day vs none; PUE 1.20 vs 1.04; 13% of the heat to 5,000 homes and
 10 ha of greenhouses; 40 dB(A) at night beyond ~700 m vs ~120 m (oversized dry coolers + berm);
-44 diesel gensets vs batteries. Next: real distances to homes (building footprints), vendor
-sound and fan data for the placeholders, then pass 3 (the neighbourhood module, CortenForge)
-or pass 4 (costs) as Jon chooses.
+44 diesel gensets vs batteries.
+
+**Pass 2b, costs (Jon: "price it first"): [docs/pass2/cost.md](pass2/cost.md).** Operator: ~$56M
+less up front and ~$14M a year saved per module, +$129-201M over 20 years (positive in every
+Monte Carlo draw, negative only in the all-worst corner); the heat network alone loses ~$159M;
+together a coin flip (+$42M central, 51%). Hydrogen backup ~$380M vs diesel ~$72M (Jon asked).
+Then (Jon: "yes run it") against the STRONGEST designs: vs a liquid-cooled AI hall with towers the
+good neighbour costs ~$13-15M more per module over 20 years (zero water, quieter; ahead in 18%);
+vs an AWS-style air + evaporative cloud hall it's about even (PUE 1.040 vs 1.039, almost no water
+either way at Homer City). So "better at the same cost" held only against the old design; dropping
+diesel is the site's option; the town's heat needs its own funding.
+Next: Jon's call, pass 3 (CortenForge) or firm up prices (vendor quotes, home conversions).
 
 ## Decisions
 
@@ -106,6 +115,10 @@ plant), same load, same power (the site's gas plant, so the difference is the da
 5. **Backup power**: diesel testing hours and emissions vs batteries.
 6. **Jobs and taxes**: AWS's 1,500-2,000 permanent staff, 50 per building at the peak shift.
 7. **Report** `docs/pass2/`: the scorecard side by side, and what we don't know.
+8. **Costs** (pass 2b, done): `uv run brownfield cost`, `src/brownfield/cost.py`,
+   `params/cost.yaml`; two ledgers (operator, heat business), Monte Carlo, worst corner,
+   hydrogen backup as a third option (Jon, 2026-11-15: "what about hydrogen instead of
+   batteries?").
 
 ## Later passes
 

@@ -73,3 +73,39 @@ def test_fan_law_matches_vendor_claim():
     from brownfield import noise
     # Guntner: EC fans at half airflow 15 dB(A) quieter; fan law 50 lg 0.5 = -15.05.
     assert abs(noise.fan_law_db(0.5) + 15.0) < 0.1
+
+
+def test_cost_arithmetic():
+    from brownfield import cost
+    # 7% over 20 years: the textbook annuity factor 10.594.
+    assert abs(cost.annuity(0.07, 20) - 10.594) < 1e-3
+    # ~1,037 Btu per cubic foot: a thousand cubic feet is ~0.304 MWh.
+    assert abs(cost.MCF_MWH - 0.3039) < 1e-3
+    r = cost.ledgers(np.full(8760, 5.0), P)
+    assert abs(r["capex_heat"] - (r["hp"] + r["main"] + r["network"] + r["homes"])) < 1e-3
+    assert abs(r["npv_both"] - (r["npv_op"] + r["npv_heat"])) < 1e-3
+    # Hydrogen by hand: backup kW x hours / (efficiency x 33.33 kWh/kg).
+    kw = P["pass2.module.it_mw"] * P["pass2.backup.installed_per_it_mw"] * 1000
+    kg = kw * P["cost.backup.h2_hours"] / (P["cost.backup.fuel_cell_eff"] * 33.33)
+    assert abs(r["h2_t"] * 1000 - kg) < 1e-6
+
+
+def test_wet_bulb_stull_example():
+    from brownfield import climate
+    # Stull (2011): 20 C at 50% RH has a wet bulb of 13.7 C.
+    assert abs(float(climate.wet_bulb(np.array([20.0]), np.array([50.0]))[0]) - 13.7) < 0.1
+
+
+def test_air_hall_dry_cold_year_uses_no_water():
+    # Below the 27 C supply limit all year, the pads never run.
+    r = module.air_hall(np.full(8760, 10.0), np.full(8760, 60.0), P)
+    assert r.withdrawn_m3 == 0.0 and abs(r.pue - (1 + P["pass2.air_hall.ahu_kw_per_kw"])) < 1e-9
+
+
+def test_vs_strong_arithmetic():
+    from brownfield import cost
+    t, rh = np.linspace(-10, 32, 8760), np.full(8760, 60.0)
+    c = cost.vs_strong(t, rh, P)
+    af = cost.annuity(P["cost.money.discount"], P["cost.money.life_yr"])
+    assert abs(c["npv_vs_ai"] - (c["yearly_vs_ai"] * af - c["capex_vs_ai"])) < 1e-3
+    assert abs(c["breakeven_vs_cloud"] - c["yearly_vs_cloud"] * af) < 1e-3

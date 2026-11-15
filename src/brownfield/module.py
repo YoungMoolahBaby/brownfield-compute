@@ -39,6 +39,8 @@ class Result:
     town_demand_mwh: float
     greenhouse_demand_mwh: float
     trim_hours: int
+    peak_trim_mw: float = 0.0  # heat the trim chillers carry at full IT load in the hottest hour
+    peak_delivered_mw: float = 0.0  # most heat the heat pumps deliver in any hour
 
     @property
     def withdrawn_m3(self) -> float:
@@ -132,9 +134,13 @@ def good_neighbour(temp: np.ndarray, p: dict) -> Result:
     fans = to_air * p["pass2.fans.dry_kw_per_kw"]  # dry cooler fans + loop pumps
     trim_mw = trim_mw + fans  # cooling electricity: trim chillers + fans + pumps
     heat_out = it + trim_mw  # all of it leaves as heat, to the town or to the air
+    full = p["pass2.module.it_mw"]
+    frac = p[g + "liquid_fraction"]
+    peak_trim = full * (frac * trim_l.max() + (1 - frac) * trim_a.max())
     return Result("good neighbour", it.sum(), trim_mw.sum(), (delivered - taken).sum(), 0.0, 0.0, heat_out.sum(),
                   taken.sum(), delivered.sum(), (delivered * share_town).sum(), (delivered * (1 - share_town)).sum(),
-                  town.sum(), gh.sum(), int(((trim_l > 0) | (trim_a > 0)).sum()))
+                  town.sum(), gh.sum(), int(((trim_l > 0) | (trim_a > 0)).sum()), float(peak_trim),
+                  float(delivered.max()))
 
 
 def table(results: list[Result]) -> str:
@@ -159,3 +165,57 @@ def table(results: list[Result]) -> str:
     for label, unit, fn, fmt in rows:
         out.append(f"| {label} | {unit} | " + " | ".join(fmt.format(fn(r)) for r in results) + " |")
     return "\n".join(out)
+
+
+CP_AIR = 1006.0  # J/(kg K)
+
+
+def air_hall(temp: np.ndarray, rh: np.ndarray, p: dict) -> Result:
+    """The strongest cloud design (AWS-style): outside air straight through the hall, direct
+    evaporative pads on hot hours, no chillers, diesel backup. Air-cooled racks only; AI racks at
+    ~120 kW can't be cooled this way. Water = the sensible cooling the pads do, evaporated
+    (m_air c_p dT / h_fg), plus media bleed at the towers' cycles. Humidification in winter is
+    left out (it adds a little water)."""
+    from .climate import wet_bulb
+
+    a = "pass2.air_hall."
+    it = np.full(temp.shape, p["pass2.module.it_mw"] * p["pass2.module.load_factor"])
+    fans = it * p[a + "ahu_kw_per_kw"]
+    m_air = (it + fans) * 1e6 / (CP_AIR * p[a + "server_dt_k"])  # kg/s of air through the hall
+    target = p[a + "supply_max_c"]
+    wb = wet_bulb(temp, rh)
+    after = np.where(temp > target, np.maximum(target, temp - p[a + "evap_eff"] * (temp - wb)), temp)
+    evap_kg = (m_air * CP_AIR * (temp - after) / H_FG * 3600.0).sum()
+    evap_m3 = evap_kg / 1000.0
+    blow_m3 = evap_m3 / (p["pass2.conventional.cycles"] - 1.0)
+    z = 0.0
+    over = int((after > target + 1e-9).sum())
+    return Result("strong cloud (air + evaporative)", it.sum(), fans.sum(), z, evap_m3, blow_m3, (it + fans).sum(),
+                  z, z, z, z, town_demand(temp, p).sum(), greenhouse_demand(temp, p).sum(), over)
+
+
+def liquid_towers(temp: np.ndarray, rh: np.ndarray, p: dict) -> Result:
+    """The strongest AI design: the good neighbour's liquid and air loops, but heat rejected by
+    evaporative cooling towers (water down to wet bulb + approach) instead of dry coolers, no heat
+    sold, diesel backup. Isolates the trade: water against fan and trim electricity."""
+    from .climate import wet_bulb
+
+    g = "pass2.good_neighbour."
+    it = np.full(temp.shape, p["pass2.module.it_mw"] * p["pass2.module.load_factor"])
+    liquid = it * p[g + "liquid_fraction"]
+    air = it - liquid
+    tower_out = wet_bulb(temp, rh) + p["pass2.liquid_towers.wb_approach_k"]
+    trim_l = _trim_share(tower_out, p[g + "liquid_supply_c"], p[g + "liquid_rise_k"], 0.0)
+    trim_a = _trim_share(tower_out, p[g + "air_supply_c"], p[g + "liquid_rise_k"], 0.0)
+    trim = (liquid * trim_l + air * trim_a) / p[g + "trim_cop"]
+    fans = (it + trim) * p["pass2.fans.tower_kw_per_kw"]
+    cooling = trim + fans
+    tower_w = (it + cooling) * 1e6
+    evap_m3 = (tower_w * p["pass2.conventional.evap_fraction"] / H_FG * 3600.0).sum() / 1000.0
+    blow_m3 = evap_m3 / (p["pass2.conventional.cycles"] - 1.0)
+    frac = p[g + "liquid_fraction"]
+    peak_trim = p["pass2.module.it_mw"] * (frac * trim_l.max() + (1 - frac) * trim_a.max())
+    z = 0.0
+    return Result("strong AI (liquid + towers)", it.sum(), cooling.sum(), z, evap_m3, blow_m3, (it + cooling).sum(),
+                  z, z, z, z, town_demand(temp, p).sum(), greenhouse_demand(temp, p).sum(),
+                  int(((trim_l > 0) | (trim_a > 0)).sum()), float(peak_trim), 0.0)
