@@ -1,0 +1,54 @@
+"""Climate at a site from a PVGIS typical meteorological year (EU JRC; ERA5 in North America).
+
+Two numbers matter for a liquid-cooled data center: the hours too hot for dry coolers alone (so
+water or chillers are needed), and the heating degree days (how much waste heat a town could
+use). The hourly temperatures are cached in .cache/climate/ (~44 kB a site); the stats are
+recomputed on every run, so changing a threshold needs no re-download.
+"""
+
+from __future__ import annotations
+
+import json
+
+import numpy as np
+import pandas as pd
+import requests
+
+from . import ROOT
+from .http import USER_AGENT
+
+PVGIS_TMY = "https://re.jrc.ec.europa.eu/api/v5_3/tmy"
+CACHE_DIR = ROOT / ".cache" / "climate"
+
+
+def hourly_temp(lat: float, lon: float) -> np.ndarray:
+    """8760 hourly air temperatures (C, 2 m) of the typical year, cached."""
+    lat, lon = round(lat, 3), round(lon, 3)
+    path = CACHE_DIR / f"{lat:.3f}_{lon:.3f}.json"
+    if path.exists():
+        return np.array(json.loads(path.read_text()), dtype=float)
+    resp = requests.get(PVGIS_TMY, params={"lat": lat, "lon": lon, "outputformat": "json", "usehorizon": 0},
+                        headers={"User-Agent": USER_AGENT}, timeout=120)
+    resp.raise_for_status()
+    temp = [round(float(r["T2m"]), 1) for r in resp.json()["outputs"]["tmy_hourly"]]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(temp))
+    return np.array(temp, dtype=float)
+
+
+def stats(temp: np.ndarray, base_c: float, limit_c: float) -> dict:
+    """Mean, 99th percentile, heating degree days (C day, daily means against `base_c`), and the
+    hours above `limit_c`."""
+    daily = temp[: len(temp) // 24 * 24].reshape(-1, 24).mean(axis=1)
+    return {
+        "mean_c": float(temp.mean()),
+        "p99_c": float(np.percentile(temp, 99)),
+        "hdd": float(np.clip(base_c - daily, 0, None).sum()),
+        "hot_hours": int((temp > limit_c).sum()),
+    }
+
+
+def site_climate(sites: pd.DataFrame, base_c: float, limit_c: float) -> pd.DataFrame:
+    """Climate stats for every site (index plant_id, columns lat, lon)."""
+    rows = {pid: stats(hourly_temp(r.lat, r.lon), base_c, limit_c) for pid, r in sites.iterrows()}
+    return pd.DataFrame.from_dict(rows, orient="index")

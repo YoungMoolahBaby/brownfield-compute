@@ -1,0 +1,105 @@
+# Pass 1, the site screen: which coal plant sites enter the list. All judgement for now
+# (conf: placeholder) until pass 1's research sources them; the report shows how the list
+# changes across each range.
+
+coal:
+  retired_since:
+    value: 2015
+    low: 2010
+    high: 2020
+    unit: year, earliest coal retirement counted
+    conf: placeholder
+    source: "judgement: sites retired long ago are more often demolished, sold or rebuilt, and a retired plant's interconnection rights lapse unless reused within a window set by each grid operator (to source: FERC and RTO generator replacement rules)"
+  retire_by:
+    value: 2035
+    low: 2030
+    high: 2040
+    unit: year, latest planned coal retirement counted
+    conf: placeholder
+    source: "judgement: planned retirement years further out change often; Type One's Infinity Two is aimed at the mid-2030s (RESEARCH.md)"
+  min_mw:
+    value: 100
+    low: 50
+    high: 300
+    unit: MW nameplate of coal retired or retiring at the plant
+    conf: placeholder
+    source: "judgement: a proxy for the grid connection left behind; a campus worth a town's attention draws tens to hundreds of MW (to source: typical campus sizes)"
+
+climate:
+  hdd_base_c:
+    value: 18.0
+    low: 15.5
+    high: 18.3
+    unit: C, base temperature for heating degree days
+    conf: medium
+    source: "convention: 65 F (18.3 C) in US practice, 18 C in Europe; 15.5 C for well-insulated buildings (lower bound). Used only to rank how much heat a town could use"
+  dry_cooler_limit_c:
+    value: 30
+    low: 25
+    high: 35
+    unit: C outdoor air, above which dry coolers alone can't hold the coolant temperature
+    conf: placeholder
+    source: "judgement: warm-water liquid cooling supplies coolant at ~30-45 C (ASHRAE TC 9.9 W-classes, to source) and a dry cooler needs ~5-10 K of approach; pass 2 sizes this properly"
+
+flood:
+  half_m:
+    value: 500
+    low: 250
+    high: 1000
+    unit: m, half-width of the square checked around a plant's EIA point
+    conf: placeholder
+    source: "judgement: a 1 km square is ~250 acres, the order of a coal plant's core site; ash ponds and coal yards can reach further"
+
+rank:
+  # Each component is a percentile rank within the list (0 worst, 1 best); an axis is their
+  # weighted mean. Equal weights to start: a stated choice, shown component by component in the
+  # report so a reader can re-weight.
+  host:
+    grid:
+      value: 1
+      unit: weight, coal MW leaving the site (more is better; percentile of the log)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+    flood:
+      value: 1
+      unit: weight, share of the square in the FEMA floodplain (less is better; unmapped counts as the median)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+    heat:
+      value: 1
+      unit: weight, hours above the dry-cooler limit (fewer is better)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+    fresh:
+      value: 1
+      unit: weight, years since the last coal retirement, 0 if still retiring (fewer is better)
+      conf: placeholder
+      source: "judgement: equal weights to start. Why it counts: in PJM a retired unit's capacity interconnection rights end one year after deactivation unless a replacement request is filed (RESEARCH.md); matters for generating on site, less for a data center connecting as load"
+  help:
+    shrinking:
+      value: 1
+      unit: weight, county population change 2010-2025 (falling is more need)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+    income:
+      value: 1
+      unit: weight, county median household income against the US (lower is more need)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+    heat_use:
+      value: 1
+      unit: weight, heating degree days (more means the town can use more waste heat)
+      conf: placeholder
+      source: "judgement: equal weights to start"
+  known_case_min_pct:
+    value: 0.5
+    low: 0.5
+    high: 0.75
+    unit: percentile on the host axis each known case must reach (0.5 = top half)
+    conf: placeholder
+    source: "judgement, set before the first full run (2026-11-15): sites developers chose should sit in the top half of a screen that measures what they need"
+  now_year:
+    value: 2026
+    unit: year the screen is run (for years since retirement)
+    conf: high
+    source: "the run date, 2026-11-15"

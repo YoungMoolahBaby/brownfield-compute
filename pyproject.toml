@@ -1,0 +1,34 @@
+[project]
+name = "brownfield"
+version = "0.1.0"
+description = "A data center a town would vote for: retired coal plant sites, shrinking towns, and a data center designed so the town comes out ahead"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2",
+    "pyyaml>=6",
+    "pandas>=2.2",
+    "openpyxl>=3.1",
+    "python-calamine>=0.3",
+    "requests>=2.32",
+    "shapely>=2.0",
+    "matplotlib>=3.9",
+    "pyshp>=2.3",
+]
+
+[project.scripts]
+brownfield = "brownfield.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/brownfield"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

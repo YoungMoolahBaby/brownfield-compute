@@ -1,0 +1,174 @@
+# Pass 2: one 100 MW (IT) data center module at Homer City, two designs on the same weather and
+# load. Conventional: water-cooled, heat to evaporative cooling towers. Good neighbour: direct
+# liquid cooling on a warm-water loop, dry coolers, heat sold to a town network and greenhouses.
+
+module:
+  it_mw:
+    value: 100
+    unit: MW of IT load at full use, the repeatable unit (D4)
+    conf: high
+    source: "definition; a typical hyperscale building or phase is tens to ~100+ MW (AWS's Homer City filing gives no MW per building)"
+  load_factor:
+    value: 0.8
+    low: 0.6
+    high: 0.95
+    unit: mean IT load over the year as a share of it_mw
+    conf: placeholder
+    source: "judgement: AI training runs near full load, cloud lower; to source (LBNL 2024 utilisation assumptions)"
+
+conventional:
+  chiller_cop:
+    value: 6
+    low: 4
+    high: 8
+    unit: chiller coefficient of performance; the towers reject IT heat x (1 + 1/COP)
+    conf: placeholder
+    source: "judgement: water-cooled centrifugal chillers at data center conditions; economiser hours (chiller off) ignored, so the towers' heat is slightly overstated"
+  evap_fraction:
+    value: 0.88
+    low: 0.75
+    high: 1.0
+    unit: share of tower heat removed by evaporation (the rest sensible)
+    conf: medium
+    source: "the rule 'evaporation 0.85% of circulation per 10 F of range' (Mortensen, Univ. of Houston 2022 water forum, citing DOE/EPA) against the all-latent value c_p dT / h_fg = 0.96% per 10 F: 0.85/0.96 = 0.88; 1.0 = the '1% per 10 F' rule"
+  cycles:
+    value: 4
+    low: 3
+    high: 6
+    unit: cycles of concentration; blowdown = evaporation / (cycles - 1)
+    conf: medium
+    source: "typical open recirculating towers run 3-6 cycles (Mortensen 2022; blowdown formula the standard one, same source)"
+
+good_neighbour:
+  liquid_fraction:
+    value: 0.8
+    low: 0.7
+    high: 0.9
+    unit: share of IT heat taken by direct-to-chip liquid cooling (the rest by air)
+    conf: placeholder
+    source: "judgement: cold plates take the processors and memory; fans, power supplies and storage stay on air (vendor figures 70-90%, to source)"
+  liquid_supply_c:
+    value: 40
+    low: 32
+    high: 45
+    unit: C, facility water supply temperature to the liquid loop
+    conf: medium
+    source: "ASHRAE TC 9.9 Thermal Guidelines 5th ed. (2021) classes W32, W40 (new, 'several manufacturers ... around 40 C'), W45 (Upsite summary); W40 central"
+  liquid_rise_k:
+    value: 10
+    low: 6
+    high: 15
+    unit: K, temperature rise of facility water through the IT (return = supply + rise)
+    conf: placeholder
+    source: "judgement, to source (cold plate flow design)"
+  air_supply_c:
+    value: 20
+    low: 16
+    high: 24
+    unit: C, chilled water supply to the air-side coils
+    conf: placeholder
+    source: "judgement: air at ~25-27 C into the IT (ASHRAE recommended envelope up to 27 C) needs coil water a few K colder"
+  approach_k:
+    value: 7
+    low: 5
+    high: 10
+    unit: K, dry cooler approach (coolant out minus outdoor air)
+    conf: placeholder
+    source: "judgement, to source (dry cooler selections)"
+  trim_cop:
+    value: 5
+    low: 3.5
+    high: 7
+    unit: COP of the chillers that trim when dry coolers can't reach supply temperature (no water)
+    conf: placeholder
+    source: "judgement: air-cooled chillers at mild lift"
+  hp_carnot_eff:
+    value: 0.5
+    low: 0.4
+    high: 0.6
+    unit: heat pump COP as a share of the Carnot COP between source and supply
+    conf: placeholder
+    source: "judgement: large ammonia heat pumps reach ~50% of Carnot; Meta Odense lifts data center heat to 70-75 C (Ramboll)"
+  dh_supply_c:
+    value: 75
+    low: 65
+    high: 85
+    unit: C, district heating supply temperature the heat pumps deliver
+    conf: medium
+    source: "Odense: heat pumps raise data center heat to 70-75 C 'suitable for the city's district heating network' (Ramboll project page)"
+
+town:
+  homes:
+    value: 5000
+    low: 2000
+    high: 10000
+    unit: homes on the district heating network
+    conf: placeholder
+    source: "judgement: Indiana Borough and Homer City Borough are the nearest towns (~13 km and ~4 km); to count from Census (pass 2 research)"
+  heat_per_home_mwh:
+    value: 15
+    low: 12
+    high: 18
+    unit: MWh of heat a year delivered per home (space heat + hot water)
+    conf: medium
+    source: "EIA RECS 2020 Table CE5.4: 60.75 million Btu of natural gas a year for space heating per household in very cold and cold climates = 17.8 MWh of fuel; x ~0.85 furnace efficiency = 15.1 MWh of heat. Odense: 100,000 MWh for 6,900 homes = 14.5 (Meta 2018), 215,000 for 12,000 = 17.9 (Ramboll)"
+  hot_water_share:
+    value: 0.15
+    low: 0.1
+    high: 0.25
+    unit: share of annual heat that is hot water (flat over the year)
+    conf: placeholder
+    source: "judgement, to source (RECS water heating vs space heating)"
+  base_c:
+    value: 15.5
+    low: 13
+    high: 18
+    unit: C, outdoor temperature below which homes need space heat
+    conf: medium
+    source: "balance-point convention for heating degree days (15.5 C for well-insulated homes, 18 C traditional)"
+
+greenhouse:
+  hectares:
+    value: 10
+    low: 0
+    high: 100
+    unit: ha of greenhouse heated by the module
+    conf: placeholder
+    source: "a design choice to explore, not a fact"
+  u_w_m2k:
+    value: 4.3
+    low: 4.0
+    high: 4.5
+    unit: W/m2K, double polyethylene cover
+    conf: medium
+    source: "double poly 0.7 Btu/h ft2 F (Univ. of Kentucky) to 0.8 (Univ. of Wisconsin): 4.0-4.5 W/m2K"
+  cover_ratio:
+    value: 1.3
+    low: 1.2
+    high: 1.5
+    unit: m2 of cover per m2 of floor
+    conf: placeholder
+    source: "judgement: gutter-connected houses; walls and roof slopes"
+  set_c:
+    value: 18
+    low: 15
+    high: 21
+    unit: C, inside temperature held
+    conf: placeholder
+    source: "judgement: vegetables and leafy greens"
+
+fans:
+  tower_kw_per_kw:
+    value: 0.025
+    low: 0.015
+    high: 0.04
+    unit: kW of tower fans + condenser pumps per kW of heat rejected (conventional)
+    conf: placeholder
+    source: "judgement, to source; towers move less air than dry coolers because evaporation carries most of the heat"
+  dry_kw_per_kw:
+    value: 0.035
+    low: 0.02
+    high: 0.05
+    unit: kW of dry cooler fans + loop pumps per kW of heat rejected to air (good neighbour)
+    conf: placeholder
+    source: "judgement, to source; set above the towers' on purpose: a dry cooler rejects heat sensibly only and needs more air, so leaving this out would flatter the good-neighbour design"
