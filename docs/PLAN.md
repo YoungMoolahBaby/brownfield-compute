@@ -10,9 +10,12 @@ data center on the same site.
 of coal leaving; both known cases pass (Homer City 3rd of 205 on *can host*, Bull Run 38th); 18
 sites in the top quarter on both axes. Jon picked **Homer City** for pass 2 (D6).
 
-**Pass 2 in progress: [docs/pass2/](pass2/README.md).** Water and heat v1 done: per 100 MW
-module, conventional 1.05 million gallons a day, good neighbour none, 14% of the heat to a town
-and greenhouses. Next: source the placeholders, the Odense check, noise, backup, jobs.
+**Pass 2 v1 complete: [docs/pass2/](pass2/README.md).** Per 100 MW module at Homer City:
+water 1.05 million gallons a day vs none; PUE 1.20 vs 1.04; 13% of the heat to 5,000 homes and
+10 ha of greenhouses; 40 dB(A) at night beyond ~700 m vs ~120 m (oversized dry coolers + berm);
+44 diesel gensets vs batteries. Next: real distances to homes (building footprints), vendor
+sound and fan data for the placeholders, then pass 3 (the neighbourhood module, CortenForge)
+or pass 4 (costs) as Jon chooses.
 
 ## Decisions
 
@@ -84,7 +87,7 @@ offers a data center and what its town needs. Jon picks the case-study site from
 7. **Report**: `docs/pass1/` with the map, the table and what we don't know (interconnection
    rights after retirement, coal ash, fiber, land ownership).
 
-## Pass 2: the good-neighbour data center at Homer City (in progress)
+## Pass 2: the good-neighbour data center at Homer City (v1 complete 2026-11-15)
 
 One 100 MW (IT) module, conventional vs good neighbour, same weather (PVGIS typical year at the
 plant), same load, same power (the site's gas plant, so the difference is the data center).

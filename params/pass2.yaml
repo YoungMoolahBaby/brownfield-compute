@@ -41,12 +41,12 @@ conventional:
 
 good_neighbour:
   liquid_fraction:
-    value: 0.8
+    value: 0.85
     low: 0.7
     high: 0.9
     unit: share of IT heat taken by direct-to-chip liquid cooling (the rest by air)
-    conf: placeholder
-    source: "judgement: cold plates take the processors and memory; fans, power supplies and storage stay on air (vendor figures 70-90%, to source)"
+    conf: low
+    source: "the OCP MGX rack spec reportedly sets 120 kW racks with an 85% liquid heat-capture requirement (secondary: vendor-neutral planning page cheatsheets.davidveksler.com/datacenter-cooling-thresholds.html; spec itself not read); low end for mixed cloud halls"
   liquid_supply_c:
     value: 40
     low: 32
@@ -83,12 +83,19 @@ good_neighbour:
     conf: placeholder
     source: "judgement: air-cooled chillers at mild lift"
   hp_carnot_eff:
-    value: 0.5
-    low: 0.4
-    high: 0.6
-    unit: heat pump COP as a share of the Carnot COP between source and supply
+    value: 0.55
+    low: 0.45
+    high: 0.65
+    unit: heat pump COP as a share of the Carnot COP between evaporating and condensing temperatures
+    conf: medium
+    source: "IEA HPT Annex 57 Danish case (Felding): a water/water unit measured COP 3.58 from -4.5 C source to a 30/55 C sink = 0.65 of Carnot without approaches (high end); Danish planning uses COP ~3.5 for large district heating heat pumps on cold sources; 0.55 central, below the measured unit"
+  hp_approach_k:
+    value: 5
+    low: 3
+    high: 8
+    unit: K, heat exchanger approach on each side of the heat pump (evaporating below the source, condensing above the supply)
     conf: placeholder
-    source: "judgement: large ammonia heat pumps reach ~50% of Carnot; Meta Odense lifts data center heat to 70-75 C (Ramboll)"
+    source: "judgement: typical plate heat exchanger approaches; left out in v1, which put COP at 7.0"
   dh_supply_c:
     value: 75
     low: 65
@@ -101,10 +108,10 @@ town:
   homes:
     value: 5000
     low: 2000
-    high: 10000
+    high: 14000
     unit: homes on the district heating network
-    conf: placeholder
-    source: "judgement: Indiana Borough and Homer City Borough are the nearest towns (~13 km and ~4 km); to count from Census (pass 2 research)"
+    conf: medium
+    source: "Indiana borough has ~4,698 households (Census QuickFacts 2019-2023; 14,697 people July 2025), ~13 km from the plant. High end ~14,000: Indiana borough + White Twp (14,933) + Homer City borough (1,708) + Center Twp (4,330) + Black Lick Twp (1,105) at 2.36 persons per household (county, QuickFacts 2014-2018), Census sub-county estimates vintage 2025"
   heat_per_home_mwh:
     value: 15
     low: 12
@@ -172,3 +179,128 @@ fans:
     unit: kW of dry cooler fans + loop pumps per kW of heat rejected to air (good neighbour)
     conf: placeholder
     source: "judgement, to source; set above the towers' on purpose: a dry cooler rejects heat sensibly only and needs more air, so leaving this out would flatter the good-neighbour design"
+
+noise:
+  target_night_db:
+    value: 40
+    low: 35
+    high: 45
+    unit: dB(A), night level outside the nearest home
+    conf: high
+    source: "WHO Night Noise Guidelines for Europe (2009): Lnight,outside 40 dB as the guideline value (55 dB interim target). For comparison, Loudoun County, VA enforces a 55 dB average limit (county noise page) and Chandler, AZ (2023) caps data centers at their baseline study level"
+  alpha_db_km:
+    value: 1.9
+    low: 1.0
+    high: 3.7
+    unit: dB/km, air absorption at 500 Hz
+    conf: high
+    source: "ISO 9613-2 Table 2 (10 C, 70% RH): 1.0 dB/km at 250 Hz, 1.9 at 500 Hz, 3.7 at 1 kHz; 500 Hz is the standard's band for its A-weighted method"
+  h_m:
+    value: 4
+    low: 2
+    high: 8
+    unit: m, mean height of the sound path above ground (source on a roof or pad, ear at 4 m)
+    conf: placeholder
+    source: "judgement: rooftop or pad-mounted coolers; ISO 9613-2 eq. (10) uses it"
+  barrier_db:
+    value: 10
+    low: 5
+    high: 15
+    unit: dB, a berm or wall between the coolers and the homes (good neighbour only)
+    conf: placeholder
+    source: "judgement: ISO 9613-2 caps single diffraction at 20 dB; 5-15 dB is what earth berms typically give; to size with the site's terrain"
+  tower_fan_lw:
+    value: 100
+    low: 90
+    high: 106
+    unit: dB(A), sound power of one cooling tower fan cell at design speed
+    conf: low
+    source: "a cooling tower fan study lists per-fan sound power from ~79 to 106 dB(A) by fan type and operating point (BAC Sound Expert, via search; not read in full); 100 central for large induced-draft cells"
+  tower_mw_per_fan:
+    value: 5
+    low: 3
+    high: 8
+    unit: MW of heat per tower fan cell
+    conf: placeholder
+    source: "judgement, to source (tower selections)"
+  dry_fan_lw:
+    value: 88
+    low: 82
+    high: 94
+    unit: dB(A), sound power of one dry cooler fan (~1 m EC fan) at design speed
+    conf: placeholder
+    source: "judgement, to source (dry cooler data sheets)"
+  dry_mw_per_fan:
+    value: 0.12
+    low: 0.08
+    high: 0.2
+    unit: MW of heat per dry cooler fan at design speed
+    conf: placeholder
+    source: "judgement: a large V-type dry cooler of ~10-12 fans rejects ~1-1.5 MW at design (to source)"
+  dry_oversize:
+    value: 2
+    low: 1
+    high: 3
+    unit: dry cooler area over the minimum (k), so fans run at ~1/k speed at design
+    conf: placeholder
+    source: "a design choice: k times the fans at 1/k speed changes sound power by 50 lg(1/k) + 10 lg(k) = -40 lg(k) (fan law); vendor: EC fans at half airflow are 15 dB(A) quieter (Guntner GreenTech claim), matching 50 lg(0.5) = -15.05"
+
+backup:
+  installed_per_it_mw:
+    value: 1.3
+    low: 1.2
+    high: 1.5
+    unit: MW of backup generation per MW of IT (IT + cooling at peak, plus spare units)
+    conf: placeholder
+    source: "judgement: the facility's peak load with N+1 spares, to source"
+  gen_mw:
+    value: 3.0
+    low: 2.0
+    high: 3.5
+    unit: MW per diesel generator set
+    conf: placeholder
+    source: "judgement: hyperscale sites use 2-3+ MW gensets, to source"
+  test_hours:
+    value: 24
+    low: 12
+    high: 100
+    unit: hours a year each generator runs for maintenance and readiness tests
+    conf: medium
+    source: "legal cap: 100 hours a calendar year for maintenance checks and readiness testing of emergency engines (40 CFR 60.4211(f)); 12-24 = a monthly run plus an annual load bank (judgement)"
+  test_load:
+    value: 0.5
+    low: 0.3
+    high: 1.0
+    unit: share of rating during tests
+    conf: placeholder
+    source: "judgement: monthly runs are light, load-bank tests full"
+  nox_g_kwh:
+    value: 6.4
+    low: 0.67
+    high: 6.4
+    unit: g of NOx (+NMHC) per kWh generated
+    conf: medium
+    source: "EPA Tier 2 limit for engines over 560 kW, NMHC+NOx 6.4 g/kWh (40 CFR 89.112 Table 1, from memory, to confirm), which emergency engines may meet; Tier 4 final 0.67 g/kWh NOx (low end)"
+  battery_minutes:
+    value: 15
+    low: 5
+    high: 60
+    unit: minutes of full facility load from batteries (good neighbour), bridging to the on-site gas plant and grid
+    conf: placeholder
+    source: "judgement: Homer City has a 4.5 GW gas plant on the same campus (AWS filing), so batteries only bridge the switch; whether operators accept that without diesel is the open question"
+
+jobs:
+  per_aws_building:
+    value: 45
+    low: 38
+    high: 51
+    unit: permanent jobs per AWS building (both designs)
+    conf: high
+    source: "AWS filing: 1,500-2,000 permanent staff for 39 buildings = 38-51 per building; 50 per building at the peak shift (parking)"
+  greenhouse_per_ha:
+    value: 7
+    low: 2.5
+    high: 15
+    unit: jobs per hectare of vegetable greenhouse
+    conf: medium
+    source: "Urban Ag News: US greenhouse vegetables 'three to four employees per acre (six to eight employees per hectare)'; automated lettuce 1-2 per acre (low); an advocacy budget implies ~14 per ha (high)"

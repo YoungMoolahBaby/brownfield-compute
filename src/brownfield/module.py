@@ -61,6 +61,14 @@ def evaporation_per_10f() -> float:
     return CP_WATER * (10.0 / 1.8) / H_FG
 
 
+def heat_pump_cop(source_c: float, supply_c: float, approach_k: float, carnot_eff: float) -> float:
+    """COP of a heat pump lifting heat from water at source_c to water at supply_c: a share of the
+    Carnot COP between evaporating (source - approach) and condensing (supply + approach)."""
+    cond = supply_c + approach_k + KELVIN
+    evap = source_c - approach_k + KELVIN
+    return carnot_eff * cond / (cond - evap)
+
+
 def town_demand(temp: np.ndarray, p: dict) -> np.ndarray:
     """Hourly heat demand of the town network (MW): space heat in proportion to degrees below the
     balance point, hot water flat, scaled to the annual total."""
@@ -110,9 +118,7 @@ def good_neighbour(temp: np.ndarray, p: dict) -> Result:
     trim_a = _trim_share(temp, supply_a, rise, approach)
 
     # Heat pumps take heat from the liquid loop's return before the dry coolers see it.
-    src_k = supply_l + rise + KELVIN
-    dh_k = p[g + "dh_supply_c"] + KELVIN
-    cop_hp = p[g + "hp_carnot_eff"] * dh_k / (dh_k - src_k)
+    cop_hp = heat_pump_cop(supply_l + rise, p[g + "dh_supply_c"], p[g + "hp_approach_k"], p[g + "hp_carnot_eff"])
     town = town_demand(temp, p)
     gh = greenhouse_demand(temp, p)
     demand = town + gh

@@ -47,3 +47,29 @@ def test_cold_needs_no_trim():
     # Below supply - approach, the dry coolers carry both loops alone: cooling power = fans only.
     r = module.good_neighbour(np.full(8760, 0.0), P)
     assert r.trim_hours == 0
+
+
+def test_heat_pump_cop_against_measured_unit():
+    # IEA HPT Annex 57 (Danish case): water/water, -4.5 C source, 30/55 C sink, measured COP 3.58.
+    # With no approaches that's 0.65 of Carnot; our central 0.55 with 5 K approaches must come out
+    # below the measured unit (conservative), and the high end (0.65, no approach) must match it.
+    ours = module.heat_pump_cop(-4.5, 55.0, P["pass2.good_neighbour.hp_approach_k"],
+                                P["pass2.good_neighbour.hp_carnot_eff"])
+    assert ours < 3.58
+    assert abs(module.heat_pump_cop(-4.5, 55.0, 0.0, 0.65) - 3.58) < 0.05
+
+
+def test_iso9613_closed_forms():
+    from brownfield import noise
+    # A_div at 1 km = 20 lg 1000 + 11 = 71 dB; ground term by hand at 200 m, h_m 1.5 m.
+    assert abs(noise.a_div(1000.0) - 71.0) < 1e-9
+    assert abs(noise.a_gr(200.0, 1.5) - (4.8 - (3.0 / 200.0) * (17.0 + 1.5))) < 1e-9
+    # Budget and level are inverses.
+    lw = noise.budget(40.0, 800.0, P)
+    assert abs(noise.level_at(lw, 800.0, P) - 40.0) < 1e-9
+
+
+def test_fan_law_matches_vendor_claim():
+    from brownfield import noise
+    # Guntner: EC fans at half airflow 15 dB(A) quieter; fan law 50 lg 0.5 = -15.05.
+    assert abs(noise.fan_law_db(0.5) + 15.0) < 0.1

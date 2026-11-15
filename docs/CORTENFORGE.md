@@ -18,8 +18,8 @@ the end collects the features this project wanted, with what we built instead.
 
 Listed so they can be confirmed or struck once code meets them:
 
-- **Outdoor sound propagation** (ISO 9613-2: spreading, air absorption, ground, barriers) for
-  noise at the nearest homes; no acoustics crate in 0.9.
+- **Outdoor sound propagation**: confirmed 2026-11-15 (pass 2). No acoustics in 0.9; we wrote
+  ISO 9613-2's A-weighted method ourselves (`src/brownfield/noise.py`, ~80 lines).
 - **Geographic data**: coordinates, projections, rasters, map layers. Pass 1 and the city work
   are GIS-heavy; CortenForge is geometry in a local frame. Confirmed 2026-11-15: pass 1 (EIA,
   Census, FEMA, PVGIS, ranking, maps) used no CortenForge at all, as expected; it isn't a GIS
@@ -36,4 +36,10 @@ Listed so they can be confirmed or struck once code meets them:
 Nice-to-haves for CortenForge, with what this project built instead.
 
 - **Building physics** (2026-11-15): heat transfer through assemblies and a room-level thermal
-  network (RC model), coolant and district heat loops. Instead: our own model in Python (pass 2).
+  network (RC model), coolant and district heat loops, heat pumps. Instead: an hourly energy
+  balance in Python (`src/brownfield/module.py`: cooling towers, dry coolers, trim chillers, heat
+  pumps, a degree-hour town load).
+- **Outdoor acoustics** (2026-11-15): ISO 9613-2 propagation (spreading, air absorption, ground,
+  barriers) from sources placed in a CortenForge scene to receivers, ideally by octave band, with
+  terrain from a height field (cf-geometry already has HeightFieldData). Instead: the standard's
+  single-band A-weighted method in Python (`src/brownfield/noise.py`).

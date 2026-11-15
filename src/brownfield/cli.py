@@ -103,9 +103,15 @@ def cmd_module(_args) -> int:
     print(f"\ntown demand {b.town_demand_mwh / 1e3:,.0f} GWh/yr ({p['pass2.town.homes']:,.0f} homes), "
           f"greenhouse demand {b.greenhouse_demand_mwh / 1e3:,.0f} GWh/yr ({p['pass2.greenhouse.hectares']:g} ha), "
           f"trim hours {b.trim_hours}")
+    from . import scorecard
+
+    card, _ = scorecard.build(temp, p)
+    print("\nscorecard:")
+    print(card)
     out = OUT_DIR / "pass2"
     out.mkdir(parents=True, exist_ok=True)
     (out / "module.md").write_text(module.table([a, b]) + "\n", encoding="utf-8")
+    (out / "scorecard.md").write_text(card + "\n", encoding="utf-8")
     return 0
 
 

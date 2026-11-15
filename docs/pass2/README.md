@@ -1,7 +1,7 @@
-# Pass 2: the good-neighbour data center at Homer City (draft)
+# Pass 2: the good-neighbour data center at Homer City
 
-**Status: in progress.** Water and heat v1 are done; noise, backup power, jobs and the checks
-are next (PLAN.md, pass 2).
+**Status: v1 complete (2026-11-15).** Every row comes from `uv run brownfield module`; inputs and
+their sources are in `params/pass2.yaml`, and many are still placeholders (listed at the end).
 
 ## The site and the plan
 
@@ -12,61 +12,113 @@ asks for no property-tax breaks; a Community Benefits Agreement is still to be w
 reviewing a water permit for up to 6.8 million gallons a day into Two Lick and Blacklick Creeks,
 at up to 110 F. Sources and quotes: RESEARCH.md.
 
-What this pass is: an independent, public estimate of what a good-neighbour design would deliver
-on this site, measure by measure, against a conventional one. It doesn't know AWS's cooling
-design (their filing doesn't state it) and doesn't guess it.
+This pass is an independent, public estimate of what a good-neighbour design would deliver on
+this site, measure by measure, against a conventional one. AWS's filing doesn't state its cooling
+design, and this pass doesn't guess it.
 
 ## One module, two designs
 
 A 100 MW (IT) module at 80% average load, over the typical year at the plant (PVGIS: mean 11.2
-C, 82 hours above 30 C, -13.9 to 36.1 C). Same load, same weather, same power.
+C, 82 hours above 30 C, -13.9 to 36.1 C). Same load, same weather, same power (the site's gas
+plant), so the difference is the data center.
 
-- **Conventional**: chillers move the heat to evaporative cooling towers.
-- **Good neighbour**: direct-to-chip liquid cooling (80% of the heat) on a 40 C loop, the rest on
-  an air-side loop; dry coolers, no water; small chillers trim the hottest hours; heat pumps lift
-  the loop's heat to 75 C for a town network (5,000 homes) and 10 ha of greenhouses.
+- **Conventional**: chillers move the heat to evaporative cooling towers; diesel generators for
+  backup.
+- **Good neighbour**: direct-to-chip liquid cooling (85% of the heat) on a 40 C loop, the rest on
+  an air-side loop; dry coolers, no water, oversized so the fans turn at half speed, behind an
+  earth berm; small chillers trim the hottest hours; heat pumps lift the loop's heat to 75 C for
+  a district heating network (5,000 homes) and 10 ha of greenhouses; batteries bridge to the
+  on-site gas plant instead of diesel.
 
-`uv run brownfield module`, first run 2026-11-15:
+## The scorecard
 
-| Per 100 MW module, per year | Unit | conventional | good neighbour |
+| Per 100 MW module | Unit | Conventional | Good neighbour |
 |---|---|---|---|
-| IT energy | GWh | 701 | 701 |
-| Cooling electricity (chillers, trim, fans, pumps) | GWh | 137.2 | 29.7 |
-| PUE (IT + cooling; electrical losses left out of both) |  | 1.196 | 1.042 |
-| Water withdrawn | million m3 | 1.46 | 0.00 |
-| Water withdrawn | million US gal a day | 1.05 | 0.00 |
-| Water evaporated (consumed) | million m3 | 1.09 | 0.00 |
-| WUE (withdrawn per IT kWh) | L/kWh | 2.08 | 0.00 |
-| Heat leaving the site | GWh | 838 | 730 |
-| Heat delivered to town + greenhouses | GWh | 0 | 116 |
-|   of it to the town | GWh | 0 | 75 |
-|   of it to greenhouses | GWh | 0 | 41 |
-| Data center heat reused | share of heat out | 0% | 14% |
-| Heat pump electricity | GWh | 0.0 | 16.6 |
+| Water withdrawn | million US gal/day | 1.05 | 0 |
+| Water consumed (evaporated) | million m3/yr | 1.09 | 0 |
+| WUE | L/kWh IT | 2.08 | 0 |
+| PUE (IT + cooling) |  | 1.196 | 1.039 |
+| Heat put to use | GWh/yr | 0 | 116 |
+| Heat put to use | share of heat out | 0% | 13% |
+| Homes heated | homes | 0 | 5,000 |
+| Sound power of heat rejection | dB(A) | 114 | 106 |
+|   dry coolers at minimum size instead (fans at full speed) | dB(A) |  | 118 |
+| Distance to 40 dB(A) at night | m | 698 | 116 (with berm) |
+|   without the berm | m |  | 317 |
+| Diesel generators | units | 44 | 0 |
+| Diesel test hours | engine-hours/yr | 1,056 | 0 |
+| NOx from tests | t/yr | 10.1 | 0 |
+| Batteries | MWh | - | 32 |
+| Jobs, data center | per AWS building | 45 | 45 |
+| Jobs, greenhouses | jobs | 0 | 70 (10 ha) |
 
-Checked: the conventional water use (2.08 L/kWh) lands inside the published range for
-evaporative and water-cooled data centers (1.55 to 2.8 L/kWh, RESEARCH.md), and the cooling
-tower rule of thumb matches thermodynamics (tests).
+PUE leaves out electrical losses in both designs. Heat pump electricity (20.8 GWh/yr) is
+reported apart: it is spent to sell heat, replacing the town's furnaces.
 
-What the first numbers say:
+## What it says
 
-- **Water is a design choice, not a law of nature.** Each conventional module draws about a
-  million gallons a day; the coal plant drew 5.6 million in 2020. The good-neighbour module
-  draws none, for ~0.15 points of PUE better, not worse, because the warm loop rarely needs
-  chillers in this climate.
-- **A town can't use most of the heat.** 5,000 homes and 10 ha of greenhouses take 14% of one
-  module's heat; the rest still goes to the air (in the good-neighbour design, never to the
-  creek). The campus is many modules. Using more of the heat means bigger greenhouses, other
-  heat users, or accepting that most of it is rejected.
+- **Water is a design choice.** A conventional module draws about a million gallons a day; the
+  coal plant drew 5.6 million in 2020, and the campus will be many modules. The good-neighbour
+  module draws none, and in this climate it also uses less cooling energy (PUE 1.04 vs 1.20),
+  because a 40 C loop rarely needs chillers in western Pennsylvania.
+- **A town can use only a slice of the heat.** Indiana borough's ~4,700 households, 13 km away,
+  plus 10 ha of greenhouses take 13% of one module's heat. Every home within reach (~14,000
+  households, Census) would still leave most of it to the air; using more means much larger
+  greenhouses or other heat users. In the good-neighbour design the rest goes to the air, never
+  to the creek.
+- **Quiet isn't automatic.** Dry coolers need ~40 times the fans of cooling towers; at minimum
+  size they are louder (118 vs 114 dB(A)). Oversized so the fans run at half speed, they are
+  8 dB quieter than the towers, and a berm takes another 10.
+- **The measure that holds without vendor data is the sound power budget**: what a module may
+  emit for 40 dB(A) outside a home at night (WHO 2009), from ISO 9613-2 propagation:
+
+  | Nearest home | Budget, open ground | Budget behind a 10 dB berm |
+  |---|---|---|
+  | 300 m | 105 dB(A) | 115 dB(A) |
+  | 500 m | 110 dB(A) | 120 dB(A) |
+  | 1,000 m | 118 dB(A) | 128 dB(A) |
+  | 2,000 m | 126 dB(A) | 136 dB(A) |
+
+  A commitment written as "40 dB(A) at night at any home" can be checked against a design with
+  this table.
+- **Diesel is avoidable here** more than at most sites: the campus has its own 4.5 GW gas plant
+  next to the grid, so batteries only have to bridge the switch. Whether operators accept
+  backup without diesel is the open question.
+- **Jobs barely change.** The data center's jobs are the same in both designs; greenhouses add
+  ~7 per hectare.
+
+## Checks
+
+- The cooling tower rule of thumb (~1% of the circulation evaporated per 10 F) matches
+  thermodynamics, c_p dT / h_fg = 0.96%.
+- The conventional module's 2.08 L/kWh lands inside the published range for evaporative and
+  water-cooled data centers, 1.55-2.8 L/kWh.
+- The heat pump model, at our central settings, stays below a measured Danish unit (COP 3.58 at
+  -4.5 C source, 55 C sink), and matches it at the high end.
+- ISO 9613-2 terms against hand-worked values; the fan law (50 lg speed ratio) matches a fan
+  maker's claim that EC fans at half airflow are 15 dB(A) quieter.
+- Meta's Odense data center (45 MW of heat pumps, 100,000-215,000 MWh a year, 6,900-12,000
+  homes) can't be a numeric check: its IT load isn't published. Its 14.5-17.9 MWh per home
+  brackets our 15.
 
 ## What we don't know yet
 
-- **Many inputs are placeholders** (`conf: placeholder` in `params/pass2.yaml`): fan and pump
-  power, the liquid-cooled share, the heat pump COP (7.0 here, likely optimistic), the load
-  factor. The next step sources them and checks the heat side against Odense.
+- **Placeholders** (`conf: placeholder`): fan power for towers and dry coolers, per-fan sound
+  levels, MW per fan, the load factor, backup sizing, generator test load. Water and efficiency
+  hold across the ranges: with every conventional input at its best end and every
+  good-neighbour input at its worst, the conventional module still draws 1.52 L/kWh and has
+  PUE 1.142, the good neighbour none and 1.112 (run 2026-11-15). Heat reuse moves a lot with
+  who takes the heat: 3% for 2,000 homes, 24% for all ~14,000 households in reach, 46% with
+  100 ha of greenhouses as well. The noise figures lean on the placeholders, so the budget
+  table is the firmer result.
+- **Distances to real homes.** OpenStreetMap shows only 29 buildings within 3 km of the plant,
+  far from complete. The six AWS sites' boundaries aren't public in a usable form. Next:
+  building footprints or the county's address points.
 - **AWS's actual design.** Their filing says non-contact cooling water is "returned to the Homer
-  City Station for reuse"; where that heat goes in the end isn't stated.
-- **The gas plant's own water and heat** are outside this comparison (same for both designs) and
-  likely larger than the data centers'.
-- **The campus size in IT megawatts** isn't public, so results are per 100 MW module.
+  City Station for reuse"; where that heat ends up isn't stated.
+- **The gas plant's own water and heat** are outside this comparison (same for both designs)
+  and likely larger than the data centers'.
+- **The campus in IT megawatts** isn't public, so results are per 100 MW module.
+- **Cost.** Dry coolers oversized 2x, berms, heat pumps and a 13 km heat main all cost money;
+  pass 4 prices them against what the town gains.
 - **Greenhouse heat** ignores the sun, so it's an upper bound on what greenhouses can take.
