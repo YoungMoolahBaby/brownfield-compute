@@ -56,12 +56,12 @@ energy:
 
 water:
   usd_per_kgal:
-    value: 5
+    value: 4.3
     low: 2
-    high: 10
+    high: 7.8
     unit: USD per 1,000 gallons withdrawn (withdrawal, treatment, blowdown treatment and discharge)
-    conf: placeholder
-    source: "judgement, to source; Homer City Generation plans a treatment plant of 'hundreds of millions of dollars' for the campus (fact sheet), so treated water isn't free even from its own reservoir"
+    conf: medium
+    source: "York Water (PA) industrial tariff effective 2025-08-01: $4.338 per 1,000 gal above 2,000,000 gal a month (central; a data center is far above that), $7.755 in the first tier (high); a utility's price for treated, delivered water. Homer City self-supplies from its reservoir but plans a treatment plant of 'hundreds of millions of dollars' (fact sheet), so low end 2"
 
 cooling:
   dry_usd_kw:

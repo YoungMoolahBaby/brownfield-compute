@@ -269,3 +269,50 @@ def ai_report(temp: np.ndarray, rh: np.ndarray, params: dict) -> str:
         lines.append(f"| {name} | {g.pue:.3f} | {ai.pue:.3f} | {cop:.2f} | {g.heat_reused_mwh / g.heat_out_mwh:.0%} | "
                      f"{c['water_saved_vs_ai_mgd']:.2f} | {c['npv_vs_ai'] / 1e6:+,.1f} | {bill:,.0f} |")
     return "\n".join(lines)
+
+
+OUTPUTS = {
+    "npv_vs_ai": "Good neighbour vs AI towers, 20-year value",
+    "npv_op": "Operator vs the old design, 20-year value",
+    "npv_heat": "Heat network alone, 20-year value",
+}
+
+
+def _outputs(temp, rh, p) -> dict:
+    led = ledgers(temp, p)
+    return {"npv_vs_ai": vs_strong(temp, rh, p)["npv_vs_ai"], "npv_op": led["npv_op"], "npv_heat": led["npv_heat"]}
+
+
+def tornado(temp: np.ndarray, rh: np.ndarray, params: dict) -> dict[str, list[tuple[str, float, float]]]:
+    """One input at a time from its low to its high end, the rest at their central values: how
+    far each output moves. Returns, per output, (input, value at low end, value at high end) sorted
+    by the size of the swing. Pass 1's screen inputs are left out (they don't touch pass 2)."""
+    base = {k: v.value for k, v in params.items()}
+    centre = _outputs(temp, rh, base)
+    swings = {k: [] for k in OUTPUTS}
+    for name, prm in params.items():
+        if name.startswith("screen.") or not prm.varies:
+            continue
+        lo = _outputs(temp, rh, dict(base, **{name: prm.low}))
+        hi = _outputs(temp, rh, dict(base, **{name: prm.high}))
+        for k in OUTPUTS:
+            if abs(hi[k] - lo[k]) > 1e-6:
+                swings[k].append((name, lo[k], hi[k]))
+    for k in swings:
+        swings[k].sort(key=lambda s: -abs(s[2] - s[1]))
+    swings["_centre"] = centre
+    return swings
+
+
+def tornado_report(sw: dict, params: dict, top: int = 10) -> str:
+    out = []
+    for k, title in OUTPUTS.items():
+        c = sw["_centre"][k] / 1e6
+        out += [f"**{title}**: central {c:+,.1f} million USD", "",
+                "| Input | Range | At low end | At high end | Swing | Confidence |", "|---|---|---|---|---|---|"]
+        for name, lo, hi in sw[k][:top]:
+            pr = params[name]
+            out.append(f"| `{name}` | {pr.low:g}-{pr.high:g} | {lo / 1e6:+,.1f} | {hi / 1e6:+,.1f} | "
+                       f"{abs(hi - lo) / 1e6:,.1f} | {pr.conf} |")
+        out.append("")
+    return "\n".join(out)

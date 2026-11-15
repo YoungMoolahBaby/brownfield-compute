@@ -100,3 +100,29 @@ Sources, with what we took from them and their limits. Newest first within a sec
   1.0 (2x12), C_r 1.15: 2x10 at 30 psf 206.9 in. by deflection, 206.4 in. by bending (17-2);
   2x12 at 40 psf 214.1 in. by bending (17-10). The NDS values are from memory, to confirm
   against the AWC Supplement Table 4A before pass 3 relies on them.
+
+## Pass 2 inputs (firmed up 2026-11-15)
+
+- **Water price**: York Water (PA) industrial tariff effective 2025-08-01, $7.755 per 1,000 gal in
+  the first tier and $4.338 above 2,000,000 gal a month
+  ([tariff](https://www.yorkwater.com/wp-content/uploads/165-Pro-Forma-Rate-Case-Water-Tariff-Effective-August-1-2025.pdf)).
+  Pennsylvania American Water's industrial rates sit in its PUC tariff (Rate Zone 1, docket
+  R-2025-3057983), not read.
+- **Cooling tower fan efficiency**: ASHRAE 90.1 Table 6.8.1-7, open-circuit axial-fan towers
+  >= 40.2 gpm/hp at 95 F in, 85 F out, 75 F wet bulb (BAC codes and standards summary,
+  [PDF](https://baltimoreaircoil.com/es/download_api_endpoint/1187/j22_tr_codesstandards_20150914.pdf);
+  older editions 38.2). Fans <= 0.0127 kW per kW of heat at rating (derived).
+- **AI rack coolant**: GB200 NVL72 maximum liquid inlet 45 C, maximum return 65 C, up to 130 L/min
+  per rack ([QCT](https://blog.qct.io/wp-content/uploads/2025/04/QCT-Qoolrack-Stand-Alone_Advanced-Liquid-Cooling-for-NVIDIA-GB200-NVL72-Systems.pdf));
+  NVIDIA: 45 C lets the facility reject heat without chillers in many climates
+  ([NVIDIA blog](https://blogs.nvidia.com/blog/liquid-cooling-ai-factories/)); Uptime Institute:
+  most customers keep chillers and run colder.
+- **AWS fleet**: PUE 1.15 and WUE 0.15 L/kWh (2024), 1.14 and 0.12 (2025)
+  ([2024 AWS summary](https://sustainability.aboutamazon.com/2024-amazon-sustainability-report-aws-summary.pdf),
+  [Georgia fact sheet](https://sustainability.aboutamazon.com/aws-sustainability-fact-sheets/aws-fact-sheet-georgia.pdf)).
+- **Homes around the campus**: Indiana County parcels, November 2023, PASDA map service layer 5
+  ([REST](https://mapservices.pasda.psu.edu/server/rest/services/pasda/IndianaCounty/MapServer/5)):
+  owner field `LAST_NAME` (Homer City Generation LP), dwelling type `DWELLING_T`. OpenStreetMap
+  had only 29 buildings within 3 km and wasn't usable.
+- **Wet bulb**: Stull, R. (2011), "Wet-bulb temperature from relative humidity and air
+  temperature", J. Appl. Meteor. Climatol. 50, 2267-2269: 20 C at 50% gives 13.7 C (a test).

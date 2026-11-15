@@ -1,6 +1,7 @@
 # Pass 2: the good-neighbour data center at Homer City
 
-**Status: v1 complete (2026-11-15); costs in [cost.md](cost.md).** Read with cost.md's bottom
+**Status: v1 complete (2026-11-15); costs in [cost.md](cost.md); firmed up in
+[firm-up.md](firm-up.md) (sensitivity, homes around the campus, sourced inputs).** Read with cost.md's bottom
 line: the conventional design here is the old water-cooled one. Against the strongest modern
 designs the water and energy gaps shrink a lot at this cool site (cost.md, section 2). Every row comes from `uv run brownfield module`; inputs and
 their sources are in `params/pass2.yaml`, and many are still placeholders (listed at the end).

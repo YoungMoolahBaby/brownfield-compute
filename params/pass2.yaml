@@ -53,14 +53,14 @@ good_neighbour:
     high: 45
     unit: C, facility water supply temperature to the liquid loop
     conf: medium
-    source: "ASHRAE TC 9.9 Thermal Guidelines 5th ed. (2021) classes W32, W40 (new, 'several manufacturers ... around 40 C'), W45 (Upsite summary); W40 central"
+    source: "ASHRAE TC 9.9 Thermal Guidelines 5th ed. (2021) classes W32, W40, W45 (Upsite summary); NVIDIA GB200 NVL72: maximum liquid inlet 45 C, maximum return 65 C (QCT Qoolrack paper, 2025); NVIDIA promotes 45 C as chillerless in many climates (NVIDIA blog), but Uptime Institute reports most customers run colder and keep chillers; W40 central"
   liquid_rise_k:
     value: 10
     low: 6
-    high: 15
+    high: 20
     unit: K, temperature rise of facility water through the IT (return = supply + rise)
-    conf: placeholder
-    source: "judgement, to source (cold plate flow design)"
+    conf: low
+    source: "GB200 NVL72 allows up to 20 K (45 C in, 65 C out maximum, QCT); a planning example assumes 10 K (vendor-neutral planning page); 10 central"
   air_supply_c:
     value: 20
     low: 16
@@ -170,8 +170,8 @@ fans:
     low: 0.015
     high: 0.04
     unit: kW of tower fans + condenser pumps per kW of heat rejected (conventional)
-    conf: placeholder
-    source: "judgement, to source; towers move less air than dry coolers because evaporation carries most of the heat"
+    conf: medium
+    source: "ASHRAE 90.1 Table 6.8.1-7: open-circuit axial-fan towers >= 40.2 gpm/hp at 95/85/75 F (BAC codes summary); 1 gpm over a 10 F range = 1.465 kW, so fans <= 0.746 / (40.2 x 1.465) = 0.0127 kW per kW at rating; plus condenser water pumps ~0.01 (judgement)"
   dry_kw_per_kw:
     value: 0.035
     low: 0.02
@@ -343,3 +343,19 @@ liquid_towers:
     unit: K, cooling tower outlet water above the outdoor wet bulb
     conf: placeholder
     source: "judgement: typical tower approach 3-7 K, to source"
+
+homes:
+  campus_radius_m:
+    value: 6000
+    low: 4000
+    high: 8000
+    unit: m, how far from the plant the owner's parcels count as the campus (beyond = reservoir and other land)
+    conf: medium
+    source: "judgement checked against the result: the owner's parcels within 6 km total ~3,011 acres, against the 'more than 3,200 acres' reported for the campus (RESEARCH.md)"
+  strip_m:
+    value: 50
+    low: 25
+    high: 100
+    unit: m, half-width below which strips of the owner's land are left out of the campus (2 x 50 = 100 m wide)
+    conf: medium
+    source: "a long, thin owner parcel (rail spur or conveyor corridor) runs south to Homer City borough and made its homes look next to the campus (map, 2026-11-15); equipment won't stand on a strip"

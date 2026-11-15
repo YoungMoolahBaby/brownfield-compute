@@ -26,7 +26,12 @@ either way at Homer City). So "better at the same cost" held only against the ol
 diesel is the site's option; the town's heat needs its own funding.
 AI (Jon: "can good neighbor be used for ai"): yes, it is an AI design; premium over liquid + towers
 ~$14M per module over 20 years, ~$7M if chips take 45 C water, ~$31M if they need 32 C (cost.md s3).
-Next: Jon's call, pass 3 (CortenForge) or firm up prices (vendor quotes, home conversions).
+FIRMED UP (pass 2c, Jon: "firm up pass 2 first"): [docs/pass2/firm-up.md](pass2/firm-up.md):
+sensitivity ranking (`brownfield sensitivity`), homes around the campus from county parcels
+(`brownfield homes`: 109 within 300 m of the edge, 259 within 700 m, nearest ~20 m), water priced
+from a PA tariff, tower fans checked against ASHRAE 90.1, chip coolant from GB200 specs. Premium
+over AI towers now ~$17M per module (ahead in 12%); conclusions stand.
+Next: Jon's call, pass 3 (CortenForge, new homes on low-temperature heat) or vendor quotes.
 
 ## Decisions
 

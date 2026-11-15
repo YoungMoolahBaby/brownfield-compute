@@ -163,3 +163,47 @@ def host_help(r: pd.DataFrame, labels: pd.DataFrame, path) -> None:
     _place_labels(fig, ax, [(x["host_pct"], x["help_pct"], str(i)) for i, (_, x) in enumerate(labels.iterrows(), 1)])
     fig.savefig(path, facecolor=SURFACE)
     plt.close(fig)
+
+
+BANDS = [(300, "#0d366b", "within 300 m"), (700, "#256abf", "300-700 m"),
+         (1500, "#5598e7", "700 m-1.5 km"), (1e9, "#9ec5f4", "beyond 1.5 km")]
+
+
+def homes_map(campus, homes, path, plant_xy=(0.0, 0.0)) -> None:
+    """The campus (the plant owner's land near the plant) and every home around it, by distance to
+    the campus edge (a one-hue ordinal ramp: darker = closer)."""
+    from shapely.geometry import MultiPolygon
+
+    fig, ax = plt.subplots(figsize=(9, 8.2), dpi=150, facecolor=SURFACE)
+    _style(ax)
+    polys = campus.geoms if isinstance(campus, MultiPolygon) else [campus]
+    for poly in polys:
+        x, y = poly.exterior.xy
+        ax.fill(np.array(x) / 1000, np.array(y) / 1000, facecolor="#d9d7cf", edgecolor="#898781", linewidth=0.6,
+                zorder=1)
+    lo = 0.0
+    for hi, colour, label in BANDS:
+        pts = [(h[0], h[1]) for h in homes if lo < h[3] <= hi or (lo == 0.0 and h[3] <= hi)]
+        if pts:
+            a = np.array(pts) / 1000
+            ax.scatter(a[:, 0], a[:, 1], s=6, color=colour, edgecolors="none", zorder=3,
+                       label=f"{label} ({len(pts):,})")
+        lo = hi
+    ax.scatter([plant_xy[0]], [plant_xy[1]], marker="^", s=60, color=INK, zorder=4, label="the old plant")
+    ax.set_aspect("equal")
+    ax.set_xlabel("km east of the plant", color=INK2, fontsize=9)
+    ax.set_ylabel("km north of the plant", color=INK2, fontsize=9)
+    ax.grid(True, color=GRID, linewidth=0.5)
+    ax.set_axisbelow(True)
+    leg = ax.legend(loc="upper left", frameon=True, fontsize=8, labelcolor=INK2, title="homes, by distance to the campus edge",
+                    title_fontsize=8, markerscale=2)
+    leg.get_frame().set_facecolor(SURFACE)
+    leg.get_frame().set_edgecolor(GRID)
+    leg.get_title().set_color(INK2)
+    ax.set_title(f"{len(homes):,} homes around the Homer City campus (grey: the plant owner's land, "
+                 f"{campus.area / 4046.86:,.0f} acres)", fontsize=10, color=INK, loc="left")
+    fig.text(0.01, 0.01, "Indiana County parcels (PASDA, Nov 2023): parcels with a dwelling. Distances from each home "
+             "parcel's centre to the campus edge; equipment sits further in.", fontsize=7, color=MUTED)
+    fig.tight_layout(rect=(0, 0.02, 1, 1))
+    fig.savefig(path, facecolor=SURFACE)
+    plt.close(fig)

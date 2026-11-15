@@ -5,6 +5,8 @@
 - `rank`: pass 1's ranking of out/pass1/sites.csv on two axes, host and help.
 - `module`: pass 2, one 100 MW module at Homer City, conventional vs good neighbour.
 - `cost`: pass 2b, what the good-neighbour features cost, and who pays and gains.
+- `homes`: the homes around the Homer City campus and their distance to it (county parcels).
+- `sensitivity`: which inputs move pass 2's results most (one at a time, low to high).
 """
 
 from __future__ import annotations
@@ -138,6 +140,42 @@ def cmd_cost(_args) -> int:
     return 0
 
 
+def cmd_homes(_args) -> int:
+    from . import ROOT, figures, homes
+
+    p = values(load_params())
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    campus, acres, hs = homes.campus_and_homes(site.lat, site.lon, p["pass2.homes.campus_radius_m"],
+                                               p["pass2.homes.strip_m"])
+    lines = [f"Campus (the plant owner's land within {p['pass2.homes.campus_radius_m'] / 1000:g} km of the plant): "
+             f"{acres:,.0f} acres; {len(hs):,} homes around it.", "",
+             "| Distance from the campus edge | Homes |", "|---|---|"]
+    lines += [f"| within {e:,} m | {n:,} |" for e, n in homes.bands(hs)]
+    near = sorted(h[3] for h in hs)[:5]
+    lines += ["", f"Nearest homes: {', '.join(f'{d:.0f}' for d in near)} m from the edge."]
+    md = "\n".join(lines)
+    print(md)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "homes.md").write_text(md + "\n", encoding="utf-8")
+    figures.homes_map(campus, hs, ROOT / "docs" / "pass2" / "homes.png")
+    return 0
+
+
+def cmd_sensitivity(_args) -> int:
+    from . import climate, cost
+
+    params = load_params()
+    site = screen.plant_table(values(params)).loc[HOMER_CITY]
+    t, rh = climate.hourly_temp_rh(site.lat, site.lon)
+    md = cost.tornado_report(cost.tornado(t, rh, params), params)
+    print(md)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "sensitivity.md").write_text(md + "\n", encoding="utf-8")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -163,10 +201,12 @@ def main(argv=None) -> int:
     sub.add_parser("rank", help="pass 1: rank the screened sites")
     sub.add_parser("module", help="pass 2: one module at Homer City, two designs")
     sub.add_parser("cost", help="pass 2b: costs, who pays and gains")
+    sub.add_parser("homes", help="homes around the Homer City campus")
+    sub.add_parser("sensitivity", help="which inputs move pass 2 most")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity}.get(args.cmd or "check")
     return cmd(args)
 
 

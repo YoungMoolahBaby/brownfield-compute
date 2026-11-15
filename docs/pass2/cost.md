@@ -7,23 +7,23 @@ looked cheaper and better. Against the **strongest** modern designs it is a litt
 even, and the heat for the town needs its own funding:
 
 - **Against a liquid-cooled AI hall with cooling towers** (the same loops, towers instead of dry
-  coolers): the good neighbour costs ~$13-15 million more per 100 MW module over 20 years (P10-P90
-  -$31 to +$4 million, ahead in 18% of draws). For that it uses no water (~0.9 million gallons a
+  coolers): the good neighbour costs ~$15-17 million more per 100 MW module over 20 years (P10-P90
+  -$32 to +$1 million, ahead in 12% of draws). For that it uses no water (~0.9 million gallons a
   day saved) and is quieter at night; it spends ~8 GWh a year more electricity on fans and trim.
 - **Against an air-cooled cloud hall with evaporative pads** (AWS-style): at Homer City's cool
   climate both use almost no water and the same energy (PUE 1.040 vs 1.039, cooling only), so
   there is nothing to pay for anything: the good neighbour's cooling plant would have to cost
-  about the same as an air plant (break-even +$0.5 million, P10-P90 -$7 to +$18 million), and
+  about the same as an air plant (break-even +$0.5 million, P10-P90 -$6 to +$19 million), and
   public data can't say which is cheaper. Air-cooled halls can't take AI racks of ~120 kW.
 - **Dropping diesel is the site's opportunity, not the design's**: any design at Homer City could
   lean on the on-site gas plant and batteries.
 - **For AI** (section 3) the good neighbour works as it is; its premium over a liquid hall with
-  towers runs from ~$7 million (chips on 45 C water) to ~$31 million (32 C) per module over 20 years.
+  towers runs from ~$10 million (chips on 45 C water) to ~$34 million (32 C) per module over 20 years.
 - **So "better at the same cost" holds only against the old design.** Against modern designs the
   good neighbour buys zero water and quiet for a small premium, and the town's heat network
   (-$159 million on its own) needs someone to choose to fund it.
 
-Run: `uv run brownfield cost` (both sections), 2026-11-15. Section 1 below is against the old
+Run: `uv run brownfield cost`, 2026-11-15, with the inputs firmed up in [firm-up.md](firm-up.md). Section 1 below is against the old
 conventional design; section 2 against the strongest designs.
 
 ## 1. Against the old conventional design
@@ -46,7 +46,7 @@ the dry coolers' oversizing (for quiet) and the size of the chiller plant.
 | Berm | +1.0 |
 | **Up-front difference** | **-56.4** |
 | Cooling electricity saved, a year | 10.41 |
-| Water saved, a year | 1.92 |
+| Water saved, a year | 1.65 |
 | Generator upkeep saved, a year | 1.30 |
 | **Heat business** | |
 | Heat pumps (51 MW) | 70.8 |
@@ -59,10 +59,10 @@ the dry coolers' oversizing (for quiet) and the size of the chiller plant.
 
 | 20-year value, million USD | Central | P10 / P50 / P90 | Positive in | Worst corner |
 |---|---|---|---|---|
-| Operator, no diesel | +201 | +156 / +203 / +256 | 100% | -82 |
-| Operator, keeps its diesel | +129 | +102 / +140 / +191 | 100% | -42 |
-| Heat business alone | -159 | -277 / -200 / -136 | 0% |  |
-| Operator + heat business | +42 | -88 / +1 / +87 | 51% |  |
+| Operator, no diesel | +198 | +154 / +200 / +252 | 100% | -82 |
+| Operator, keeps its diesel | +126 | +100 / +139 / +187 | 100% | -42 |
+| Heat business alone | -159 | -273 / -197 / -133 | 0% |  |
+| Operator + heat business | +39 | -85 / +1 / +91 | 51% |  |
 
 Monte Carlo: 2,000 draws of every range in `params/` (triangular, independent), seed 7. The
 worst corner sets every input at the end that hurts the good neighbour at once (`cost.WORST`).
@@ -70,14 +70,14 @@ worst corner sets every input at the end that hurts the good neighbour at once (
 ## What it says
 
 - **For the operator the good-neighbour module pays, mostly through electricity.** It costs ~$56
-  million less up front (no diesel, a smaller chiller plant) and saves ~$14 million a year, $10
-  million of it cooling electricity. Even keeping its diesel, the operator comes out ~$130
+  million less up front (no diesel, a smaller chiller plant) and saves ~$13 million a year, $10
+  million of it cooling electricity. Even keeping its diesel, the operator comes out ~$126
   million ahead over 20 years. It is positive in every Monte Carlo draw, but not in the worst
   corner (every input against it at once: -$82 million), so it is robust, not unconditional.
 - **District heat doesn't pay for itself here.** Pennsylvania gas is cheap: heat a home's furnace
   makes costs ~$58/MWh, so heat sold 20% below that brings in little against ~$180 million of
   heat pumps, a 13 km main, a town network and connections. It is negative in every draw.
-- **Together it's a coin flip.** The operator's savings roughly cover the heat network (+$42
+- **Together it's a coin flip.** The operator's savings roughly cover the heat network (+$39
   million central, positive in 51% of draws). That is the shape of a deal a benefits agreement
   could write down: the operator funds the heat network out of what the design saves it, and
   ~5,000 households save ~$170 a year each on heat.
@@ -102,8 +102,8 @@ for wet bulb by Stull 2011), same load, cooling only (backup the same on both si
 
 | Good neighbour against | Central (million USD) | P10 / P50 / P90 | Good neighbour ahead in | Worst corner |
 |---|---|---|---|---|
-| Strong AI, 20-year value (up front +23.9; a year +0.87) | -14.7 | -30.8 / -12.7 / +4.3 | 18% | -103.7 |
-| Strong cloud, most its cooling plant may cost extra up front and still break even | +0.5 | -6.9 / +5.1 / +18.1 | 70% | -23.5 |
+| Strong AI, 20-year value (up front +23.9; a year +0.64) | -17.2 | -32.1 / -14.9 / +1.2 | 12% | -103.7 |
+| Strong cloud, most its cooling plant may cost extra up front and still break even | +0.5 | -6.1 / +5.7 / +18.8 | 73% | -23.5 |
 
 Against the strong AI hall the good neighbour spends 8.3 GWh a year more electricity and saves 0.91 million gallons of water a day. Backup is the same on both sides here. Monte Carlo: 2,000 draws, seed 7.
 
@@ -123,18 +123,18 @@ values per 100 MW module:
 
 | Case | Good neighbour PUE | AI towers PUE | Heat pump COP | Heat reused | Water saved, million gal/day | Good neighbour vs AI towers, 20 years, million USD | Electricity bill a year, million USD |
 |---|---|---|---|---|---|---|---|
-| Today's AI racks: 40 C water, 80% load | 1.039 | 1.028 | 5.55 | 13% | 0.91 | -14.7 | 69 |
-| AI training: 40 C water, 95% load | 1.040 | 1.028 | 5.55 | 11% | 1.08 | -13.6 | 82 |
-| Chips that need colder water: 32 C, 95% load | 1.044 | 1.028 | 4.52 | 10% | 1.08 | -31.3 | 83 |
-| Chips that take warm water: 45 C, 95% load | 1.040 | 1.028 | 6.47 | 11% | 1.08 | -6.9 | 82 |
+| Today's AI racks: 40 C water, 80% load | 1.039 | 1.028 | 5.55 | 13% | 0.91 | -17.2 | 69 |
+| AI training: 40 C water, 95% load | 1.040 | 1.028 | 5.55 | 11% | 1.08 | -16.5 | 82 |
+| Chips that need colder water: 32 C, 95% load | 1.044 | 1.028 | 4.52 | 10% | 1.08 | -34.2 | 83 |
+| Chips that take warm water: 45 C, 95% load | 1.040 | 1.028 | 6.47 | 11% | 1.08 | -9.8 | 82 |
 
 - **It works for AI as it is.** The only change from the AI alternative is how the heat leaves:
-  dry coolers instead of towers. That costs ~$14 million over 20 years for ~1 million gallons of
-  water a day saved, about 2% of the module's ~$69 million a year electricity bill
-  (14.7 / 10.59 annuity = $1.4 million a year).
+  dry coolers instead of towers. That costs ~$17 million over 20 years for ~1 million gallons of
+  water a day saved, about 2.3% of the module's ~$69 million a year electricity bill
+  (17.2 / 10.59 annuity = $1.6 million a year).
 - **The coolant temperature the chips accept decides the premium.** Warm-water chips (45 C) make
-  zero water nearly free (~$7 million) and lift the heat pumps' COP to 6.5, because the heat comes
-  off hotter. Chips that need 32 C water double the premium (~$31 million) and drop the COP to
+  zero water nearly free (~$10 million) and lift the heat pumps' COP to 6.5, because the heat comes
+  off hotter. Chips that need 32 C water double the premium (~$34 million) and drop the COP to
   4.5: dry coolers cool toward the dry bulb and need trim chillers more often; towers cool toward
   the wet bulb and hardly notice. ASHRAE TC 9.9 warned in 2021 that higher-power chips may only run
   on W32 (RESEARCH.md).
@@ -158,6 +158,7 @@ values per 100 MW module:
   on-site gas plant).
 - **Whether an operator accepts backup without diesel** is a reliability policy question, not a
   cost one.
-- **Water's price** is the developer's own treatment cost, not public.
+- **Water's price** here is a Pennsylvania utility's industrial tariff ($4.34 per 1,000 gal,
+  York Water); the developer's own treatment cost isn't public.
 - No grants or tax credits are counted (federal and state programmes for district energy and
   heat pumps could change the heat ledger).
