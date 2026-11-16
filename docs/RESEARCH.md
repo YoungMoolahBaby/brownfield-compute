@@ -160,6 +160,37 @@ Sources, with what we took from them and their limits. Newest first within a sec
   (undated): hollow-core planks $4.50-12 material + $3.50-9.50 installation per sq ft; ready mix
   $150-220/cy delivered (consumer guides, 2025).
 
+## Pass 4 inputs (2026-11-16)
+
+- **ACS 2019-2023 5-year detailed tables** (Census Bureau table-based summary file,
+  www2.census.gov/programs-surveys/acs/summary_file/2023/table-based-SF; `src/brownfield/acs.py`):
+  Homer City borough 1,716 people, 764 households, 822 homes (619 pre-1960, 13 since 2000), 227
+  renter households, 0 for rent, median gross rent $699, renters' median income $35,795; Center
+  Township 4,387, 409 renters, 16 for rent, $912; Indiana County 83,213, 9,327 renters, rental
+  vacancy 13% (Indiana borough 19%, White Township 17%).
+- **PHFA LIHTC income limits and rents** (MTXR041, run 2026-05-04, effective 2026-05-01): Indiana
+  County median $83,800; 60%: $46,560 for 3 people, 2-bedroom rent $1,164; 2025 median $74,500.
+- **HUD 2024 Unit Total Development Cost limits** (hud.gov PIH): walk-up 2 bedrooms, Johnstown HCC
+  $161,169 / TDC $282,045; Pittsburgh $173,632 / $303,857 (TDC = 1.75 x HCC).
+- **PHFA 2027-2028 draft QAP**: median total development cost per sq ft scored by cycle (values not
+  published); 4% deals max basis $400,000 per unit.
+- **AWS jobs elsewhere** (company announcements): Pennsylvania $20B / 1,250+ jobs; Indiana $11B /
+  1,000+; Mississippi $10B / ~1,000; North Carolina $10B / 500.
+- **Data center job multipliers**: PwC for the Data Center Coalition 4.5 additional jobs per
+  direct job nationally (2024 data, industry-funded); Virginia 2.1 statewide excluding
+  construction (2025); an Ohio analysis 2.27 (AGC summary); Microsoft Catawba County 3.2.
+- **Indiana County 2026 millage** (Assessment Office sheet, updated 7/16/2026): Center Township
+  county 6.105, township 1.530, school 18.2639 = 25.899; Homer City borough 28.964; Blacklick
+  Township 23.786-30.766. **Common level ratio**: Indiana County factor 1.42 (2025 CLR factors from
+  STEB 2024 sales, Elk County's list, July 2026) = 0.704.
+- **Prince William County, VA, 2024 Data Center Revenue Report**: 29 turnkey data centers, 862
+  MW, 5,844,023 sq ft, assessed $8,178,801,700 (real property incl. fixtures, excl. computer
+  equipment); real property tax revenue from data centers $144.2M.
+- **AWS Project Narrative** (2026-08-27): no incentives that would reduce real property tax
+  assessments; a community benefits agreement under Governor Shapiro's GRID standards.
+- **Homer-Center School District** 2025-26 budget: close to $20M revenue, over $21M expenses, 3%
+  tax increase (WCCS radio).
+
 ## Pass 2 inputs (firmed up 2026-11-15)
 
 - **Water price**: York Water (PA) industrial tariff effective 2025-08-01, $7.755 per 1,000 gal in

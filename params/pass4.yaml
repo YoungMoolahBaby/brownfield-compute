@@ -1,0 +1,208 @@
+# Pass 4: the economic base. Who would live in the flats beside the campus, what a flat costs,
+# what households here can pay, and who could close the gap (src/brownfield/econ.py).
+
+demand:
+  jobs:
+    value: 1750
+    low: 1500
+    high: 2000
+    unit: permanent AWS operations staff at full build-out (2036)
+    conf: medium
+    source: "AWS Project Narrative, Homer City Energy Campus (Indiana County Office of Planning and Development, 2026-08-27): '1,500 to 2,000 permanent operations staff'; AWS's other campuses for scale: Pennsylvania $20B / 1,250+ jobs, Indiana $11B / 1,000+, Mississippi $10B / ~1,000, North Carolina $10B / 500 (company announcements)"
+  salary_usd:
+    value: 90000
+    low: 80000
+    high: 100000
+    unit: USD a year, average AWS salary there
+    conf: medium
+    source: "same narrative: average salaries $80,000-$100,000"
+  movers_share:
+    value: 0.40
+    low: 0.20
+    high: 0.60
+    unit: share of AWS hires who come from beyond commuting range and move here
+    conf: placeholder
+    source: "judgement: data center technicians are hired regionally where possible (training programs), specialists from outside"
+  induced_per_job:
+    value: 1.0
+    low: 0.5
+    high: 2.1
+    unit: other local jobs per AWS job (suppliers, services, households' spending)
+    conf: low
+    source: "Virginia (state report, 2025): 2.1 additional jobs per data center job statewide excluding construction; an Ohio analysis 2.27 (AGC summary); Microsoft Catawba County 3.2 (company); PwC for the Data Center Coalition 4.5 nationally (industry-funded); one county keeps fewer: judgement 1.0"
+  induced_movers_share:
+    value: 0.20
+    low: 0.10
+    high: 0.40
+    unit: share of those other jobs filled by people moving in
+    conf: placeholder
+    source: "judgement: mostly filled by people already here (Indiana County's population is shrinking; pass 1)"
+  workers_per_household:
+    value: 1.3
+    low: 1.0
+    high: 1.6
+    unit: workers per new household
+    conf: placeholder
+    source: "judgement; ACS table B08202 would set it"
+  renter_share:
+    value: 0.50
+    low: 0.30
+    high: 0.70
+    unit: share of new households renting
+    conf: placeholder
+    source: "judgement: newcomers rent more than the county's 29% of households (ACS 2019-2023: 9,327 renter of 32,291)"
+  near_campus_share:
+    value: 0.30
+    low: 0.15
+    high: 0.50
+    unit: share of new renters choosing Homer City and Center Township over Indiana (8 miles, the county seat and IUP)
+    conf: placeholder
+    source: "judgement"
+
+cost:
+  tdc_per_flat:
+    value: 304600
+    low: 230000
+    high: 340000
+    unit: USD, total development cost of a 2-bedroom walk-up flat (land, site, construction, soft costs, financing)
+    conf: medium
+    source: "HUD 2024 Unit Total Development Cost limits, walk-up 2 bedrooms: Johnstown TDC $282,045 (HCC $161,169), Pittsburgh $303,857 (HCC $173,632); value Johnstown x 1.08 to 2026 (judgement ~4%/yr); low a lean project at 1.4 x HCC, high Pittsburgh x 1.12"
+  hcc_per_flat:
+    value: 161169
+    low: 161169
+    high: 173632
+    unit: USD, housing construction cost of a 2-bedroom walk-up flat (2024)
+    conf: high
+    source: "HUD 2024 Unit TDC limits: HCC, walk-up, 2 bedrooms, Johnstown 161,169 / Pittsburgh 173,632"
+
+rents:
+  ami_usd:
+    value: 83800
+    unit: USD, Indiana County area median income (4-person) 2026
+    conf: high
+    source: "PHFA LIHTC income limits and rents (MTXR041, run 2026-05-04, effective 2026-05-01): Indiana County median 83,800"
+  lihtc_60_3p_usd:
+    value: 46560
+    unit: USD, 60% of AMI income limit for 3 people (the 2-bedroom rent basis)
+    conf: high
+    source: "same PHFA table: 60% income limit, 3 persons 46,560; 2-bedroom rent limit 1,164"
+  utility_allowance_usd:
+    value: 120
+    low: 80
+    high: 180
+    unit: USD a month the tenant pays for utilities, deducted from the gross rent limit
+    conf: placeholder
+    source: "judgement: electricity and hot water; the warm loop makes heating cheap (pass 3)"
+  market_rent_usd:
+    value: 1350
+    low: 1100
+    high: 1700
+    unit: USD a month, a new 2-bedroom flat at market rent near the campus
+    conf: placeholder
+    source: "judgement: ACS 2019-2023 median gross rent $699 (Homer City), $912 (Center Township), $786 (county) is old stock; PHFA's 80% AMI 2-bedroom cap $1,552; 30% of an $80,000 salary is $2,000"
+  opex_usd:
+    value: 7500
+    low: 5500
+    high: 10000
+    unit: USD a flat a year, operating costs including property tax and replacement reserves
+    conf: placeholder
+    source: "judgement, to source (PHFA underwriting standards)"
+  vacancy:
+    value: 0.05
+    low: 0.03
+    high: 0.08
+    unit: share of rent lost to vacancy and collection
+    conf: placeholder
+    source: "judgement; underwriting commonly assumes 5-7%"
+
+finance:
+  rate:
+    value: 0.065
+    low: 0.055
+    high: 0.075
+    unit: interest rate on the permanent mortgage
+    conf: placeholder
+    source: "judgement, 2026"
+  term_yr:
+    value: 35
+    low: 30
+    high: 40
+    unit: years, mortgage amortisation
+    conf: placeholder
+    source: "judgement: affordable housing permanent loans 30-40 years"
+  dscr:
+    value: 1.15
+    low: 1.15
+    high: 1.25
+    unit: debt service coverage the lender requires
+    conf: medium
+    source: "common affordable-housing underwriting minimum 1.15 (judgement on the range)"
+  basis_share:
+    value: 0.85
+    low: 0.80
+    high: 0.90
+    unit: share of total development cost that is eligible basis for tax credits (excludes land, some soft costs)
+    conf: placeholder
+    source: "judgement"
+  credit_price:
+    value: 0.88
+    low: 0.80
+    high: 0.95
+    unit: USD of equity raised per USD of tax credit
+    conf: placeholder
+    source: "judgement, to source (Novogradac pricing)"
+  market_yield:
+    value: 0.065
+    low: 0.060
+    high: 0.075
+    unit: net operating income over cost a market-rate developer needs to build
+    conf: placeholder
+    source: "judgement: yield on cost ~100-150 bp above cap rates"
+
+money:
+  dc_buildings:
+    value: 39
+    unit: AWS data center buildings at full build-out
+    conf: high
+    source: "AWS Project Narrative (2026-08-27): 39 data centers on six sites in Center and Blacklick Townships"
+  dc_ft2_each:
+    value: 225000
+    unit: sq ft per building (two storeys)
+    conf: high
+    source: "same: ~112,500 sq ft footprint, 225,000 sq ft per building"
+  dc_value_ft2:
+    value: 600
+    low: 300
+    high: 1400
+    unit: USD of taxable real-property market value per sq ft of data center
+    conf: low
+    source: "Prince William County, VA, 2024 Data Center Revenue Report: 29 turnkey data centers, 5,844,023 sq ft, assessed $8,178,801,700 = $1,400/sq ft, including the cooling and electrical fixtures Virginia taxes as real property (high); Pennsylvania doesn't tax equipment, so shell and core are a fraction of that: judgement"
+  clr:
+    value: 0.704
+    low: 0.65
+    high: 0.75
+    unit: Indiana County common level ratio (assessed value / market value)
+    conf: medium
+    source: "Realty transfer tax factor 1.42 for Indiana County (2025 common level ratio factors from STEB 2024 sales, Elk County's published list, July 2026): 1 / 1.42 = 0.704"
+  mills_county:
+    value: 6.105
+    unit: mills, Indiana County (2026)
+    conf: high
+    source: "Indiana County Assessment Office, 2026 school millage sheet (updated 7/16/2026): Center Township 6.105 / 1.530 / 18.2639 = 25.899"
+  mills_township:
+    value: 1.530
+    unit: mills, Center Township (2026)
+    conf: high
+    source: "same sheet"
+  mills_school:
+    value: 18.2639
+    unit: mills, Homer-Center School District (2026)
+    conf: high
+    source: "same sheet; AWS: 'does not anticipate seeking any economic incentives that would reduce real property tax assessments' (Project Narrative)"
+  housing_share:
+    value: 0.10
+    low: 0.0
+    high: 0.25
+    unit: share of the campus's new property tax (or a community benefits agreement worth the same) put into housing
+    conf: placeholder
+    source: "a policy choice, for illustration; the community benefits agreement under the GRID standards isn't written yet"

@@ -349,6 +349,19 @@ def cmd_costcarbon(_args) -> int:
     return 0
 
 
+def cmd_economy(_args) -> int:
+    from . import acs, econ
+
+    params = load_params()
+    p = values(params)
+    md = econ.report(p, params, acs.housing()) + NL + econ.sensitivity(params, p)
+    print(md)
+    out = OUT_DIR / "pass4"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "economy.md").write_text(md + NL, encoding="utf-8")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -383,12 +396,13 @@ def main(argv=None) -> int:
     bp.add_argument("system", nargs="?", default="wood", choices=["wood", "steel", "masonry"])
     sub.add_parser("compare", help="pass 3b: wood, light steel and block + precast side by side")
     sub.add_parser("costcarbon", help="pass 3b: embodied carbon and cost of the three structures")
+    sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
     sub.add_parser("steel", help="pass 3b: the walk-up in light steel, sized")
     sub.add_parser("masonry", help="pass 3b: the walk-up in block and precast planks, sized")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy}.get(args.cmd or "check")
     return cmd(args)
 
 

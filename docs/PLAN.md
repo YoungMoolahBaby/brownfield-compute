@@ -67,6 +67,16 @@ wood lowest in 100% of draws); installed cost (low confidence) $0.36M / $0.52M /
 $43k / $40k a flat; wood cheapest in 98%); wood framing $24.8/sq ft vs NAHB $26.8. Next: wind and
 bracing, local bids, or pass 4.
 
+**Pass 4 in progress (Jon: "push, then go with pass 4 please"): [docs/pass4/](pass4/README.md).**
+`brownfield economy`: AWS's 1,500-2,000 staff bring ~120 renter households who'd live in Homer City
+or Center Township (85-220), not the ~1,000 flats pass 3's warm loop needs; Homer City has 16 homes
+for rent and ~209 rent-burdened renters (ACS 2019-23). A 2-bedroom walk-up costs ~$305k (HUD 2024
+TDC, Johnstown): no flat pencils here, even at market rent (gap $183k), tax-credit flats leave $161k
+(4%) or $47k (9%). The campus's property tax at build-out ~$96M/yr (AWS: no abatements; 25.899
+mills, CLR 0.704, $600/sq ft taxable), $68M of it school tax (~3x Homer-Center's budget, can't buy
+housing); the gap for every newcomer and every burdened household ~$55M. Steer: 100-250 mixed flats
+at the campus edge, funded in the community benefits agreement.
+
 ## Decisions
 
 - **D1** (2026-11-15) Jon asked for "a repo modeling and building a house in cortenforge". He
