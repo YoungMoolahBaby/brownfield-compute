@@ -279,6 +279,25 @@ at the campus edge, funded in the community benefits agreement.
   - The market, not the heat, is the limit (AppHarvest).
   - The machines' health is engineering: vibration under rooftop coolers, intake air near the gas
     plant and ash site, loop water quality, lightning on the towers.
+- **D11** (2026-11-16) The neighbourhood at the campus edge (next pass, to plan). Jon: "personally id wanna live by
+  this place ... a foodcourt order for the robot to bring me my fresh produce ... that data center is heating my
+  house in the winter, the gym ... id be thankful for the data center"; then homes "around the garden ... apartment
+  buildings like what we built", a food court where "a robot chef makes you meals with food directly from the
+  garden", "a seedbank given what people have been ordering, so it knows what to plant", a community center with
+  roller hockey, basketball, volleyball and pickleball courts, real grass fields for soccer and football, an ice
+  hockey rink; "basically like an entire town, just scaled down"; no pool ("theyre kind of sketchy"); "if we plan for
+  homer city its gonna be like a dollar tree and a snap fitness"; the food "should be vegetarian". The steer:
+  - Amenities sized for the region (Indiana County's 83,000, the university 13 km away, Pittsburgh an hour off),
+    which the campus's property tax and the benefits agreement can carry, used even if no one moves.
+  - Housing in phases that follow demand: the first 100-250 flats around the garden (pass 4's floor); each next
+    phase once the last fills. Pass 4 gets a scenario for people moving for the place (Tulsa Remote, Ascend WV).
+  - Robots assemble (as Sweetgreen's Infinite Kitchen does today), cooks oversee; full robot chefs aren't there.
+  - Orders steer a small market-garden house (greens, herbs, strawberries turn in weeks), not the big tomato
+    houses (planted a year ahead on contracts).
+  - Heated natural-grass fields (as at Lambeau Field) on the capped ash site, subject to DEP's closure terms; the
+    rink makes heat rather than using it; summer heat otherwise goes to the dry coolers, using no water.
+  - Vegetarian menu built round the houses; staples bought from Pennsylvania farms; to confirm vegetarian or vegan.
+  - Checks: rooftop-cooler noise at upper-floor windows; walk times; heat by month; cost and who pays.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
