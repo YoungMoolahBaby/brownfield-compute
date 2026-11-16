@@ -60,8 +60,12 @@ light steel (SFIA tables, joist spans reproduced to 0.5 in.; 12 in. C-joists, 60
 crew of 5 per panel) and 8 in. block + 8 in. hollow-core planks (Oldcastle table, TMS ASD example to
 0.09%; 475 t, footings 45 / 70 in., 142 crane picks of 1.9 t, ~12,200 blocks, floors 8 in. deep),
 each built in CortenForge and sim-core; `brownfield compare`. Wood and steel are near twins; block +
-precast is 20x heavier but thinner, quieter-floored (unmodelled) and noncombustible. Next: cost and
-embodied carbon of the three, or wind and bracing.
+precast is 20x heavier but thinner, quieter-floored (unmodelled) and noncombustible. Step 8 (Jon: "do
+cost and embodied carbon next please"): `brownfield costcarbon`: A1-A3 carbon (CLF baselines via
+Washington's code table) wood 32 t / steel 79 t / block + precast 97 t (2.6 / 6.6 / 8.1 t a flat;
+wood lowest in 100% of draws); installed cost (low confidence) $0.36M / $0.52M / $0.48M ($30k /
+$43k / $40k a flat; wood cheapest in 98%); wood framing $24.8/sq ft vs NAHB $26.8. Next: wind and
+bracing, local bids, or pass 4.
 
 ## Decisions
 

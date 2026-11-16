@@ -143,6 +143,23 @@ Sources, with what we took from them and their limits. Newest first within a sec
   f'm/3; worked example Pa = 26,429 lb/ft for a fully grouted 8 in. wall (f'm 2,000 psi, r 2.20
   in., h 16.67 ft); partially grouted 8 in. CMU r = 2.66 in. (NCMA TEK 14-1B via MDG 2016).
 
+- **Embodied carbon factors** (pass 3b, cradle to gate A1-A3): Washington State Building Code
+  Council, CLF Option 1 Amendment 2 (2026-07,
+  [PDF](https://sbcc.wa.gov/sites/default/files/2026-07/Option%201%20Amendment%202.pdf)), Table
+  S103.23.1, industry averages from the 2023 Carbon Leadership Forum North American Material
+  Baselines updated with CLF 2025 baselines: ready mix 3,000 psi 261, 4,000 psi 316, 5,000 psi 386,
+  8,000+ psi 487 kg CO2e/m3; normal-weight CMU f'm <= 2,000 psi 208 kg/m3; rebar fabricated 854,
+  unfabricated 753 kg/t; galvanized cold-formed steel members 2,440 kg/t; LVL 361, LSL 275,
+  glulam 137, softwood plywood 219, OSB 243 kg/m3; wood framing US Southern 90.39, Pacific Coast
+  73.81, Inland Northwest 71.35 kg/m3. PCI's 2025 industry-average precast EPDs are members-only.
+- **Cost anchors** (pass 3b, low confidence): NAHB Cost of Constructing a Home 2024 (via
+  eyeonhousing.org): framing $70,982 = 16.6% of $428,215, average home 2,647 sq ft; HomeWyse cost
+  to frame a wall (July 2025) $4.00-6.52/sq ft; AAC Steel citing RSMeans 2024, 4-storey
+  multifamily framing: wood $14.50-16.50/sq ft, cold-formed steel $24-26; Terrapin Construction
+  Group (2026): 8 in. CMU grouted reinforced $18-24/sq ft, hollow $14-18; latestcost.com
+  (undated): hollow-core planks $4.50-12 material + $3.50-9.50 installation per sq ft; ready mix
+  $150-220/cy delivered (consumer guides, 2025).
+
 ## Pass 2 inputs (firmed up 2026-11-15)
 
 - **Water price**: York Water (PA) industrial tariff effective 2025-08-01, $7.755 per 1,000 gal in

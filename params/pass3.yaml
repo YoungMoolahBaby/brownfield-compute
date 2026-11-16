@@ -534,3 +534,176 @@ masonry:
     unit: lb, one 8 x 8 x 16 in. block
     conf: placeholder
     source: "judgement: normal-weight 8 in. units ~35-40 lb, lightweight ~28; to source"
+
+# Pass 3b: embodied carbon (cradle to gate, A1-A3) and cost of the three structures
+# (src/brownfield/costcarbon.py). Quantities come from the CortenForge models.
+carbon:
+  lumber_kg_m3:
+    value: 90.39
+    low: 71.35
+    high: 90.39
+    unit: kg CO2e per m3 of kiln-dried softwood framing lumber (A1-A3, GWP excluding biogenic carbon)
+    conf: medium
+    source: "Washington SBCC Option 1 Amendment 2 (2026-07), Table S103.23.1, industry averages from the CLF North American Material Baselines: wood framing US Southern 90.39, Pacific Coast 73.81, Inland Northwest 71.35 kg CO2e/m3 (no Northern value listed; Southern, the highest, as the central value)"
+  ijoist_kg_m3:
+    value: 323
+    low: 140
+    high: 340
+    unit: kg CO2e per m3 of I-joist (flanges and web as modelled)
+    conf: low
+    source: "built up from the same table: LVL flanges 361 and OSB web 243 kg CO2e/m3 by the modelled share of each (68 / 32%); sawn-lumber flanges would give ~140"
+  rim_kg_m3:
+    value: 275
+    low: 243
+    high: 361
+    unit: kg CO2e per m3 of engineered rim board
+    conf: medium
+    source: "same table: laminated strand lumber 275; OSB 243, LVL 361"
+  osb_kg_m3:
+    value: 243
+    low: 219
+    high: 243
+    unit: kg CO2e per m3 of OSB sheathing and subfloor
+    conf: medium
+    source: "same table: oriented strand board 243 kg CO2e/m3 (softwood plywood 219)"
+  cfs_kg_t:
+    value: 2440
+    low: 1730
+    high: 2660
+    unit: kg CO2e per metric ton of galvanized cold-formed steel framing
+    conf: medium
+    source: "same table: hot-dipped galvanized cold-formed steel members 2,440 kg CO2e/t; one plant's EPD 2,660 and Colorado's limit 1,730 (Colorado OSA listing)"
+  cmu_kg_m3:
+    value: 208
+    low: 208
+    high: 241
+    unit: kg CO2e per m3 of concrete in normal-weight block, f'm up to 2,000 psi
+    conf: medium
+    source: "same table: concrete masonry units, normal weight, f'm <= 2,000 psi 208, 2,500 psi 232, >= 3,000 psi 241 kg CO2e/m3"
+  cmu_density_kg_m3:
+    value: 2160
+    low: 2000
+    high: 2240
+    unit: kg/m3, the concrete in normal-weight block
+    conf: low
+    source: "judgement: ASTM C90 normal weight is 125 pcf (2,000 kg/m3) or more (from memory); 135 pcf typical"
+  readymix_kg_m3:
+    value: 261
+    low: 235
+    high: 316
+    unit: kg CO2e per m3 of 3,000 psi ready-mix (footings, stem walls, slab; also grout)
+    conf: medium
+    source: "same table: ready mix 3,000 psi 261, up to 2,500 psi 235, 4,000 psi 316 kg CO2e/m3"
+  precast_kg_m3:
+    value: 386
+    low: 386
+    high: 487
+    unit: kg CO2e per m3 of concrete in the planks and lintels
+    conf: low
+    source: "estimated from the mix: same table, ready mix 5,000 psi 386, 8,000 psi and over 487 kg CO2e/m3; PCI's industry-average precast EPD (2025) is members-only; plant energy for extrusion and curing not counted"
+  steel_kg_t:
+    value: 854
+    low: 753
+    high: 1080
+    unit: kg CO2e per metric ton of reinforcing steel and prestressing strand
+    conf: medium
+    source: "same table: rebar fabricated 854, unfabricated 753; hot-rolled sections fabricated 1,080 as a high end for strand"
+  plank_concrete_m3_m2:
+    value: 0.110
+    low: 0.105
+    high: 0.115
+    unit: m3 of concrete per m2 of 8 in. hollow-core plank
+    conf: medium
+    source: "Oldcastle Elematic guide: 54 psf (263.6 kg/m2) at ~2,400 kg/m3 = 0.110; its section area 207 in2 per 48 in. width gives 0.112"
+  plank_strand_kg_m2:
+    value: 3.2
+    low: 2.5
+    high: 4.5
+    unit: kg of prestressing strand per m2 of plank
+    conf: low
+    source: "Oldcastle 2008805: 5 x 1/2 in. strands per 4 ft (0.765 in2); at ~0.52 lb/ft each, 2.6 lb/ft per plank = 3.2 kg/m2"
+  grout_m3_m2:
+    value: 0.015
+    low: 0.010
+    high: 0.030
+    unit: m3 of grout per m2 of block wall (cores at 48 in. and bond beams)
+    conf: placeholder
+    source: "judgement: an 8 in. wall fully grouted takes ~0.06 m3/m2; one core in six plus bond beams ~0.015"
+  wall_rebar_kg_m2:
+    value: 2.0
+    low: 1.0
+    high: 3.0
+    unit: kg of reinforcement per m2 of block wall
+    conf: placeholder
+    source: "judgement: #5 bars (1.55 kg/m) at 48 in. vertically plus bond beam and joint reinforcement"
+cost:
+  wall_framing_usd_ft2:
+    value: 7.0
+    low: 4.0
+    high: 12.0
+    unit: USD per sq ft of wall, wood stud wall framing installed (studs, plates, headers)
+    conf: low
+    source: "HomeWyse 'cost to frame a wall' (July 2025) $4.00-6.52/sq ft; CostFlow AI $7-15 with contractor overhead (consumer-grade sources)"
+  sheathing_usd_ft2:
+    value: 1.6
+    low: 1.0
+    high: 2.5
+    unit: USD per sq ft, OSB wall sheathing installed
+    conf: placeholder
+    source: "judgement: 7/16 in. OSB ~$0.6-0.9/sq ft material plus nailing"
+  deck_framing_usd_ft2:
+    value: 12.0
+    low: 8.0
+    high: 15.0
+    unit: USD per sq ft of floor or roof, joists, rims and subfloor installed (wood)
+    conf: low
+    source: "inference from consumer guides: I-joists $4-8/lin ft material (~$3-6/sq ft at 16 in.), framing $6-14/sq ft (CostFlow AI 2025)"
+  cfs_factor:
+    value: 1.6
+    low: 1.2
+    high: 1.8
+    unit: light steel framing installed cost as a multiple of wood's
+    conf: low
+    source: "AAC Steel (a steel supplier) citing RSMeans 2024, 4-storey multifamily framing: wood $14.50-16.50/sq ft, cold-formed steel $24-26 (1.5-1.8x); low end judgement"
+  cmu_usd_ft2:
+    value: 21.0
+    low: 15.0
+    high: 30.0
+    unit: USD per sq ft of wall face, 8 in. block, grouted and reinforced, installed
+    conf: low
+    source: "Terrapin Construction Group (2026): grouted reinforced 8 in. CMU $18-24/sq ft, hollow $14-18; consumer guides $15-40"
+  lintel_usd_ft:
+    value: 30
+    low: 20
+    high: 50
+    unit: USD per linear ft of precast lintel installed
+    conf: placeholder
+    source: "judgement, to source"
+  plank_usd_ft2:
+    value: 15.5
+    low: 8.0
+    high: 21.5
+    unit: USD per sq ft of 8 in. hollow-core plank, delivered, craned and grouted
+    conf: low
+    source: "latestcost.com (undated): material $4.50-12.00 plus installation $3.50-9.50 per sq ft, average 15.50"
+  ceiling_framed_usd_ft2:
+    value: 5.0
+    low: 3.5
+    high: 7.0
+    unit: USD per sq ft, fire- and sound-rated gypsum ceiling under a framed floor (resilient channel, two layers of 5/8 in. type X), hung and finished
+    conf: placeholder
+    source: "judgement, to source"
+  ceiling_plank_usd_ft2:
+    value: 1.0
+    low: 0.5
+    high: 2.0
+    unit: USD per sq ft, finishing the underside of planks (fill joints, skim, paint)
+    conf: placeholder
+    source: "judgement, to source"
+  concrete_usd_m3:
+    value: 590
+    low: 390
+    high: 850
+    unit: USD per m3 of footing, stem wall and slab concrete in place (formed, reinforced, placed)
+    conf: placeholder
+    source: "judgement: ready mix $150-220/cy delivered (consumer guides, 2025) = $196-288/m3, about doubled to tripled for forming, reinforcing and placing; to source"

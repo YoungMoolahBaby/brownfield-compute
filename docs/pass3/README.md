@@ -10,7 +10,8 @@ center's water, (3) a 12-flat walk-up in CortenForge and every flat's heat (pass
 of new homes on that loop, priced against each home heating itself, (5) the walk-up framed in
 wood, member by member, sized to the codes, (6) built in order in CortenForge's physics engine:
 every wall panel tilted up, every joist set down, (7) the same walk-up in light steel and in
-concrete block with precast floors, sized, built and compared (pass 3b).
+concrete block with precast floors, sized, built and compared, (8) the three structures' embodied
+carbon and cost (pass 3b).
 
 **The answer: only for big blocks of apartments right beside the campus, and against gas only
 just.** A new home's floor can run on the data center's water directly (no heat pump), but
@@ -378,9 +379,76 @@ built in CortenForge and put up in sim-core like the wood frame:
   74% of its bed, over the grout gap between the plank ends on the spine); all placed pieces
   settle onto their seats in sim-core, and out of order they fall.
 
-Not compared yet: cost, embodied carbon, fire resistance ratings, sound between flats, wind and
-the walls that brace against it, and the thicker exterior wall a block building needs for its
-insulation. The steel members are drawn as their sections' outlines, not as C-shapes.
+Not compared here: fire resistance ratings, sound between flats, wind and the walls that brace
+against it, and the thicker exterior wall a block building needs for its insulation (cost and
+carbon are section 8). The steel members are drawn as their sections' outlines, not as C-shapes.
+
+## 8. Embodied carbon and cost of the three structures (pass 3b)
+
+`uv run brownfield costcarbon` (`src/brownfield/costcarbon.py`), from the quantities in the three
+CortenForge models: the structure (framing, or block, lintels and planks; sheathing and subfloor
+for the framed systems), the ceilings the floors need underneath (rated gypsum under framed floors,
+a skim and paint under planks; cost only), and the foundation. Left out because it's the same in
+all three: the radiant floor's topping, finishes, windows, services. Left out though it differs:
+the exterior walls' insulation and cladding.
+
+**Carbon** is cradle to gate (A1-A3), from the industry averages of the Carbon Leadership Forum's
+North American Material Baselines, as tabled in Washington's proposed embodied-carbon code: wood
+framing 71-90 kg CO2e/m3, OSB 243, light steel framing 2,440 kg/t, normal-weight block 208 kg/m3 of
+concrete, 3,000 psi ready-mix 261, rebar 854 kg/t. The planks are estimated from their concrete
+and strand (PCI's precast EPD is members-only).
+
+| Embodied carbon, A1-A3 | Wood frame | Light steel | Block + precast |
+|---|---|---|---|
+| Structure | 13.7 t (lumber, I-joists, rims, OSB) | 60.7 t (steel 54.6, OSB 6.1) | 72.1 t (planks 44.9, block 19.2, grout and rebar 5.7, lintels 2.3) |
+| Foundation | 17.9 t | 17.9 t | 24.5 t |
+| **Total** | **32 t** | **79 t** | **97 t** |
+| Per flat | 2.6 t | 6.6 t | 8.1 t |
+| Per m2 of floor area | 28 kg | 71 kg | 87 kg |
+| Monte Carlo P10 / P90 | 30 / 33 t | 69 / 81 t | 99 / 109 t |
+
+**Cost** is installed unit costs (material and labour) from public sources, mostly consumer-grade:
+wood wall framing $4-12/sq ft of wall (HomeWyse 2025; CostFlow AI), floor framing $8-15/sq ft,
+light steel 1.2-1.8 times wood (RSMeans 2024 for 4-storey multifamily, as quoted by a steel
+supplier), grouted reinforced 8 in. block $15-30/sq ft of wall (Terrapin 2026: $18-24), hollow-core
+$8-21.50/sq ft installed (latestcost.com). **Low confidence**: national figures, not Indiana County
+bids.
+
+| Installed cost | Wood frame | Light steel | Block + precast |
+|---|---|---|---|
+| Walls | $128k framing + $11k sheathing | $205k + $11k | $227k block + $16k lintels |
+| Floors and roof | $128k framing + $54k rated ceilings | $205k + $54k | $166k planks + $11k ceilings |
+| Foundation | $41k | $41k | $55k |
+| **Total** | **$0.36M** | **$0.52M** | **$0.48M** |
+| Per flat | $30k | $43k | $40k |
+| Per sq ft of floor area | $30 | $43 | $40 |
+| Monte Carlo P10 / P90 | $0.33-0.42M | $0.44-0.60M | $0.43-0.55M |
+
+Known case: the wood frame's framing (walls, floors, roof, sheathing) comes to $24.8 per sq ft
+of flat; NAHB's 2024 survey of single-family homes puts framing (with roof trusses and
+sheathing) at $70,982 for 2,647 sq ft, $26.8.
+
+- **Wood is the lowest-carbon structure by a wide margin**: 2.6 t a flat against 6.6 (steel) and
+  8.1 (block and precast), lowest in every one of 4,000 draws; the ranges don't overlap. More than
+  half of wood's total is its foundation. The wood also holds ~60 t of CO2 drawn from the air,
+  reported beside the total, not netted: whether it stays out of the air depends on what becomes
+  of the wood in the end.
+- **Steel's carbon is the steel**: 22 t of galvanized framing at 2.4 t CO2e a tonne, 69% of its
+  total. **Block and precast's is the concrete**: the planks (45 t) and the block (19 t), plus a
+  third more foundation.
+- **Wood is also the cheapest**, by about $10-13 thousand a flat for the structure: cheapest in 98%
+  of draws. Block and precast ($40k a flat) comes in under light steel ($43k) at central prices.
+  What would change the ranking: steel's cost multiple over wood and the framing prices (steel);
+  the block wall and plank prices (block and precast; at the top of the wood framing range, block
+  and precast is only ~$22k dearer in all).
+- **For affordable flats at Homer City** the wood platform frame is the default on both counts.
+  The other two buy something real for their premium: steel a structure that doesn't burn (~$13k
+  and ~4 t CO2e a flat more), block and precast that plus thinner, heavier, quieter floors (~$10k
+  and ~5.5 t a flat more).
+
+Not counted: transport, construction and end of life (A4-C4), the ceilings' gypsum in the carbon
+(no factor in the source table), fasteners and connectors, insurance (non-combustible structures
+are often cheaper to insure), and how long each takes to build.
 
 ## What we don't know yet
 
