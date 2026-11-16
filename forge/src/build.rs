@@ -6,7 +6,6 @@
 //!
 //! sim-core works in metres and kilograms: `framing` members (mm) are scaled on the way in.
 
-use cortenforge::sim::core::{Data, Model};
 use cortenforge::sim::mjcf::load_model;
 use nalgebra::{UnitQuaternion, Vector3};
 
@@ -103,9 +102,9 @@ pub struct Landing {
 
 /// Static boxes (the built frame, mm) and bodies to set (each a set of boxes in design pose, mm),
 /// released `lift` mm above their seats as free bodies; settle for `secs`.
-pub fn set_down(statics: &[(Vector3<f64>, Vector3<f64>)], bodies: &[Vec<(Vector3<f64>, Vector3<f64>)>], density: f64, lift: f64, secs: f64) -> Landing {
+pub fn set_down(statics: &[(Vector3<f64>, Vector3<f64>)], bodies: &[Vec<(Vector3<f64>, Vector3<f64>)>], densities: &[f64], lift: f64, secs: f64) -> Landing {
     let zero = Vector3::zeros();
-    let stat: String = statics.iter().map(|(lo, hi)| geom(lo, hi, &zero, density, "")).collect::<Vec<_>>().join("\n    ");
+    let stat: String = statics.iter().map(|(lo, hi)| geom(lo, hi, &zero, 1000.0, "")).collect::<Vec<_>>().join("\n    ");
     let mut dyn_xml = String::new();
     let mut origins = Vec::new();
     for (i, b) in bodies.iter().enumerate() {
@@ -120,7 +119,7 @@ pub fn set_down(statics: &[(Vector3<f64>, Vector3<f64>)], bodies: &[Vec<(Vector3
         // each other up by friction.
         let gs: String = b.iter().map(|(a, c)| {
             let shrink = Vector3::new(0.5, 0.5, 0.0);
-            geom(&(a + shrink), &(c - shrink), &o, density, "")
+            geom(&(a + shrink), &(c - shrink), &o, densities[i], "")
         }).collect::<Vec<_>>().join("");
         dyn_xml += &format!(r#"<body name="b{i}" pos="{:.6} {:.6} {:.6}"><freejoint/>{gs}</body>
     "#, o.x / 1e3, o.y / 1e3, (o.z + lift) / 1e3);
@@ -147,11 +146,6 @@ pub fn set_down(statics: &[(Vector3<f64>, Vector3<f64>)], bodies: &[Vec<(Vector3
         ((p - o).norm(), d.xquat[i + 1].angle())
     }).collect();
     Landing { errors, max_depth_mm: max_depth * 1e3, steps }
-}
-
-pub fn body_pose(d: &Data, model: &Model, i: usize) -> (Vector3<f64>, UnitQuaternion<f64>) {
-    let _ = model;
-    (d.xpos[i], d.xquat[i])
 }
 
 /// Probe: one wall panel tilted up, a joist set on two plates, and one on a single plate.
@@ -187,7 +181,7 @@ pub fn probe() {
     let support = |y0: f64| (Vector3::new(-500.0, y0, -38.1), Vector3::new(500.0, y0 + 140.0, 0.0));
     for (name, statics) in [("on two plates", vec![support(0.0), support(5800.0 - 140.0)]), ("on one plate", vec![support(0.0)])] {
         let t0 = std::time::Instant::now();
-        let land = set_down(&statics, &[joist(0.0)], rho, 10.0, 1.0);
+        let land = set_down(&statics, &[joist(0.0)], &[rho], 10.0, 1.0);
         println!("joist {name}: ends {:.2} mm / {:.4} rad from its seat, deepest contact {:.2} mm ({} steps, {:.2} s)",
                  land.errors[0].0, land.errors[0].1, land.max_depth_mm, land.steps, t0.elapsed().as_secs_f64());
     }

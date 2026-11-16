@@ -460,3 +460,77 @@ build:
     unit: ft, the longest wall panel framed flat and raised in one piece
     conf: placeholder
     source: "judgement: crews frame long walls in sections they can raise; to source"
+
+# Pass 3b: the same walk-up in 8 in. concrete block bearing walls with 8 in. hollow-core floors
+# (src/brownfield/masonry.py). Plank capacities and self weight are a table in the code.
+masonry:
+  plank_bearing_in:
+    value: 3
+    low: 2
+    high: 4
+    unit: in., plank bearing on the block walls at each end
+    conf: placeholder
+    source: "judgement: hollow-core on masonry commonly sits on 3-4 in. of bond beam; PCI's minimum is smaller; to source"
+  finishes_psf:
+    value: 2
+    low: 1
+    high: 5
+    unit: psf, finish floor over the topping (no ceiling below; the planks are painted)
+    conf: placeholder
+    source: "judgement"
+  openings_psf:
+    value: 15
+    low: 0
+    high: 15
+    unit: psf added to the floor load for service openings cut in the planks
+    conf: medium
+    source: "Oldcastle Elematic Hollowcore Technical Guide (2019), load table note 8: 'In residential buildings, add 15+/- psf to your total uniform loading to account for MEP openings in preliminary design'"
+  roof_sdl_psf:
+    value: 10
+    low: 6
+    high: 15
+    unit: psf on the roof planks (tapered insulation, membrane)
+    conf: placeholder
+    source: "judgement, to source"
+  fm_psi:
+    value: 2000
+    low: 1500
+    high: 2500
+    unit: psi, specified compressive strength of the masonry f'm
+    conf: medium
+    source: "The Masonry Society ASD course examples use 2,000 psi; TMS 602 unit strength method: ~2,000 psi units with type S mortar (from memory, to confirm)"
+  an_in2_ft:
+    value: 30
+    low: 30
+    high: 91.5
+    unit: in2 per ft of wall, net bedded area of 8 in. block
+    conf: medium
+    source: "NCMA TEK 14-1B: 8 in. hollow units, face-shell bedded, 30.0 in2/ft (from memory, to confirm; the conservative choice for a partly grouted wall); fully grouted 91.5 (7.625 x 12, TMS course example)"
+  r_in:
+    value: 2.66
+    low: 2.20
+    high: 3.21
+    unit: in., radius of gyration of the wall
+    conf: medium
+    source: "TMS ASD course (MDG 2016 ch. 11): partially grouted 8 in. CMU, average r = 2.66 in. per NCMA TEK 14-1B; fully grouted 2.20"
+  sn_in3_ft:
+    value: 81
+    low: 81
+    high: 116
+    unit: in3 per ft, net section modulus of 8 in. block
+    conf: low
+    source: "NCMA TEK 14-1B, 8 in. hollow face-shell bedded, ~81 in3/ft (from memory, to confirm); fully grouted 7.625^2 x 12 / 6 = 116"
+  cmu_psf:
+    value: 50
+    low: 40
+    high: 60
+    unit: psf of wall, 8 in. normal-weight block grouted at 48 in. with its reinforcement
+    conf: placeholder
+    source: "judgement from NCMA weight tables (TEK 14-13), to confirm"
+  block_lb:
+    value: 36
+    low: 28
+    high: 42
+    unit: lb, one 8 x 8 x 16 in. block
+    conf: placeholder
+    source: "judgement: normal-weight 8 in. units ~35-40 lb, lightweight ~28; to source"

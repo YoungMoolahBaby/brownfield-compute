@@ -12,6 +12,8 @@ mod apartment;
 mod build;
 mod framing;
 mod house;
+mod masonry;
+mod masonry_build;
 mod render;
 mod sequence;
 
@@ -89,9 +91,16 @@ fn apartment_mode(root: &Path) -> std::io::Result<()> {
 }
 
 /// The walk-up's wood frame (pass 3b, step 3), from `brownfield frame`'s sizes.
-fn framing_mode(root: &Path) -> std::io::Result<()> {
+/// The schedule a system's frame is built from: wood (`brownfield frame`) or steel (`brownfield steel`),
+/// and the suffix its outputs get ("" for wood, "_steel").
+fn schedule_path(system: &str) -> (&'static str, &'static str) {
+    if system == "steel" { ("out/pass3/steel.json", "_steel") } else { ("out/pass3/frame.json", "") }
+}
+
+fn framing_mode(root: &Path, system: &str) -> std::io::Result<()> {
+    let (sched, sfx) = schedule_path(system);
     use framing::Kind;
-    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
+    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join(sched))?)?;
     let s = framing::Schedule::from_json(&v);
     let b = apartment::Building::example();
     let t = Instant::now();
@@ -143,10 +152,16 @@ fn framing_mode(root: &Path) -> std::io::Result<()> {
     let lumber: f64 = q.iter().filter(|r| !r.0.concrete()).map(|r| r.3).sum();
     let concrete: f64 = q.iter().filter(|r| r.0.concrete()).map(|r| r.3).sum();
     let bf: f64 = q.iter().map(|r| r.4).sum();
-    println!("wood {lumber:.1} m3 ({bf:.0} board feet of sawn lumber), concrete {concrete:.1} m3");
+    if s.system == "steel" {
+        let kg: f64 = members.iter().filter_map(|m| m.nominal.as_ref().and_then(|n| s.linear_kg_m.get(n)).map(|k| k * m.length_m())).sum();
+        println!("steel {:.1} t (by the sections' weights per foot), concrete {concrete:.1} m3", kg / 1e3);
+    } else {
+        println!("wood {lumber:.1} m3 ({bf:.0} board feet of sawn lumber), concrete {concrete:.1} m3");
+    }
     let per_storey: Vec<_> = (0..=b.storeys).map(|k| members.iter().filter(|m| m.storey == k).count()).collect();
-    std::fs::write(root.join("out/pass3/framing.json"), serde_json::to_string_pretty(&json!({
-        "source": "forge `framing` (CortenForge 0.9): the walk-up's wood frame from out/pass3/frame.json",
+    std::fs::write(root.join(format!("out/pass3/framing{sfx}.json")), serde_json::to_string_pretty(&json!({
+        "source": format!("forge `framing` (CortenForge 0.9): the walk-up's {} frame from {sched}", s.system),
+        "steel_kg": members.iter().filter_map(|m| m.nominal.as_ref().and_then(|n| s.linear_kg_m.get(n)).map(|k| k * m.length_m())).sum::<f64>(),
         "members": members.len(), "overlaps": overlaps.len(), "members_by_storey": per_storey,
         "wood_m3": lumber, "sawn_board_feet": bf, "concrete_m3": concrete,
         "floor_joist": s.floor_joist.name, "roof_joist": s.roof_joist.name,
@@ -162,7 +177,7 @@ fn framing_mode(root: &Path) -> std::io::Result<()> {
         Kind::FloorJoist | Kind::RoofJoist => 4,
         _ => 1,
     };
-    let colours = [[0.66, 0.66, 0.64], [0.84, 0.70, 0.50], [0.62, 0.42, 0.26], [0.55, 0.45, 0.35], [0.92, 0.82, 0.62]];
+    let colours = framing::palette(&s.system);
     // `cut`: keep only what lies before y = cut, cutting members at that plane (a section).
     let draw = |cut: Option<f64>, views: &[View], px: f64, name: &str| -> std::io::Result<()> {
         let mut meshes: Vec<IndexedMesh> = (0..5).map(|_| IndexedMesh::new()).collect();
@@ -182,10 +197,107 @@ fn framing_mode(root: &Path) -> std::io::Result<()> {
     };
     let views = [View::looking(Vector3::new(0.8, 0.5, -0.25), Vector3::z()), View::looking(Vector3::x(), Vector3::z()),
                  View::looking(Vector3::y(), Vector3::z())];
-    draw(None, &views, 0.025, "framing.png")?;
+    draw(None, &views, 0.025, &format!("framing{sfx}.png"))?;
     // The left end, cut 4 m in: one flat's corner on every storey, the floors and roof in section.
     draw(Some(4000.0), &[View::looking(Vector3::new(0.75, 0.55, -0.35), Vector3::z()),
-                         View::looking(Vector3::new(-0.55, 0.75, -0.3), Vector3::z())], 0.06, "framing_corner.png")?;
+                         View::looking(Vector3::new(-0.55, 0.75, -0.3), Vector3::z())], 0.06, &format!("framing{sfx}_corner.png"))?;
+    Ok(())
+}
+
+/// Pairs of members whose boxes overlap by more than 0.1 mm each way (sorted sweep along x).
+fn overlaps(members: &[framing::Member]) -> Vec<(usize, usize)> {
+    let mut boxes: Vec<(usize, Vector3<f64>, Vector3<f64>)> = members.iter().enumerate()
+        .flat_map(|(i, m)| m.boxes.iter().map(move |(lo, hi)| (i, *lo, *hi))).collect();
+    boxes.sort_by(|a, b| a.1.x.total_cmp(&b.1.x));
+    let mut out = Vec::new();
+    for a in 0..boxes.len() {
+        let (i, lo1, hi1) = boxes[a];
+        for c in a + 1..boxes.len() {
+            let (j, lo2, hi2) = boxes[c];
+            if lo2.x >= hi1.x - 0.1 { break; }
+            if i == j { continue; }
+            let o = (hi1.inf(&hi2) - lo1.sup(&lo2)).map(|d| d - 0.1);
+            if o.x > 0.0 && o.y > 0.0 && o.z > 0.0 { out.push((i, j)); }
+        }
+    }
+    out
+}
+
+/// The walk-up in block and precast planks (pass 3b), from `brownfield masonry`'s sizes.
+fn masonry_mode(root: &Path) -> std::io::Result<()> {
+    use framing::Kind;
+    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/masonry.json"))?)?;
+    let s = masonry::Spec::from_json(&v);
+    let b = apartment::Building::example();
+    let t = Instant::now();
+    let members = masonry::build(&b, &s);
+    println!("{} pieces in {:.2} s", members.len(), t.elapsed().as_secs_f64());
+    let ov = overlaps(&members);
+    println!("overlapping pieces: {}", ov.len());
+    for (i, j) in ov.iter().take(6) {
+        println!("  {:?} {:?} {:?} with {:?} {:?} {:?}", members[*i].kind, members[*i].nominal, members[*i].bounds(), members[*j].kind, members[*j].nominal, members[*j].bounds());
+    }
+    // Everything laid rests on something: blocks and fillers over at least half their bed,
+    // planks over their bearing at both ends (the share checked against what is below).
+    let t = Instant::now();
+    let mut by_z: Vec<&framing::Member> = members.iter().collect();
+    by_z.sort_by(|a, c| a.bounds().1.z.total_cmp(&c.bounds().1.z));
+    let mut worst = (f64::INFINITY, String::new());
+    let mut short = 0;
+    for m in members.iter().filter(|m| matches!(m.kind, Kind::Block | Kind::Lintel | Kind::Plank)) {
+        let z = m.bounds().0.z;
+        let lo = by_z.partition_point(|o| o.bounds().1.z < z - s.joint - 1.0);
+        let hi = by_z.partition_point(|o| o.bounds().1.z < z + 1.0);
+        let sup = masonry::support(m, &by_z[lo..hi], &s);
+        if sup < worst.0 { worst = (sup, format!("{:?} {:?} at {:?}", m.kind, m.nominal, m.bounds().0)); }
+        if sup < 0.5 { short += 1; if short <= 12 { println!("  {:.0}% {:?} {:?} storey {} at {:.0?} to {:.0?}", 100.0 * sup, m.kind, m.nominal, m.storey, m.bounds().0.as_slice(), m.bounds().1.as_slice()); } }
+    }
+    println!("support: worst {:.0}% ({}); {} pieces under half supported ({:.1} s)", 100.0 * worst.0, worst.1, short, t.elapsed().as_secs_f64());
+
+    let count = |k: Kind, n: &str| members.iter().filter(|m| m.kind == k && m.nominal.as_deref() == Some(n)).count();
+    let vol = |k: Kind| members.iter().filter(|m| m.kind == k).map(|m| m.volume_m3()).sum::<f64>();
+    let full_block = (s.unit - s.joint) * s.t * (s.course - s.joint) / 1e9;
+    let blocks_equiv = members.iter().filter(|m| m.kind == Kind::Block).map(|m| m.volume_m3() / full_block).sum::<f64>();
+    let planks = members.iter().filter(|m| m.kind == Kind::Plank).count();
+    let plank_area: f64 = members.iter().filter(|m| m.kind == Kind::Plank).map(|m| { let (lo, hi) = m.bounds(); (hi.x - lo.x) * (hi.y - lo.y) / 1e6 }).sum();
+    let plank_t = plank_area * 54.0 * 4.88243 / 1e3;
+    let block_t = blocks_equiv * s.block_kg / 1e3;
+    let lintel_t = vol(Kind::Lintel) * s.lintel_density / 1e3;
+    let concrete = vol(Kind::Footing) + vol(Kind::Stem) + vol(Kind::Slab);
+    println!("blocks: {} pieces ({} full-length equivalents {:.0}, of them {} filler pieces), {:.0} t; lintels {}, {:.1} t; planks {} ({:.0} m2), {:.0} t; foundation concrete {:.1} m3",
+             count(Kind::Block, "8 in. block") + count(Kind::Block, "filler"), count(Kind::Block, "8 in. block"), blocks_equiv,
+             count(Kind::Block, "filler"), block_t, members.iter().filter(|m| m.kind == Kind::Lintel).count(), lintel_t, planks, plank_area, plank_t, concrete);
+    std::fs::write(root.join("out/pass3/masonry_model.json"), serde_json::to_string_pretty(&json!({
+        "source": "forge `masonry` (CortenForge 0.9): the walk-up in 8 in. block and 8 in. hollow-core planks",
+        "pieces": members.len(), "overlaps": ov.len(), "worst_support": worst.0, "under_half_supported": short,
+        "blocks_pieces": count(Kind::Block, "8 in. block"), "filler_pieces": count(Kind::Block, "filler"), "blocks_full_equivalent": blocks_equiv,
+        "block_t": block_t, "lintels": members.iter().filter(|m| m.kind == Kind::Lintel).count(), "lintel_t": lintel_t,
+        "planks": planks, "plank_m2": plank_area, "plank_t": plank_t, "plank_kg_each": s.plank_kg, "foundation_concrete_m3": concrete,
+    }))?)?;
+
+    let layer_of = |k: Kind| match k { Kind::Footing | Kind::Stem | Kind::Slab => 0, Kind::Block => 1, Kind::Lintel => 2, _ => 3 };
+    let colours = [[0.66, 0.66, 0.64], [0.80, 0.78, 0.72], [0.56, 0.55, 0.52], [0.90, 0.90, 0.88]];
+    let draw = |cut: Option<f64>, views: &[View], px: f64, name: &str| -> std::io::Result<()> {
+        let mut meshes: Vec<IndexedMesh> = (0..4).map(|_| IndexedMesh::new()).collect();
+        for m in &members {
+            let mut m = m.clone();
+            if let Some(c) = cut {
+                if m.kind == Kind::Slab { continue; }
+                m.boxes = m.boxes.into_iter().filter(|(lo, _)| lo.y < c).map(|(lo, hi)| (lo, Vector3::new(hi.x, hi.y.min(c), hi.z))).collect();
+                if m.boxes.is_empty() { continue; }
+            }
+            m.append_mesh(&mut meshes[layer_of(m.kind)]);
+        }
+        let layers: Vec<Layer> = meshes.iter().zip(colours).filter(|(m, _)| !m.faces.is_empty()).map(|(m, c)| Layer::solid(m, c)).collect();
+        let (w, h) = render::render_styled(&layers, views, px, &root.join("docs/pass3").join(name), Style::pretty())?;
+        println!("drew docs/pass3/{name} ({w} x {h})");
+        Ok(())
+    };
+    let views = [View::looking(Vector3::new(0.8, 0.5, -0.25), Vector3::z()), View::looking(Vector3::x(), Vector3::z()),
+                 View::looking(Vector3::y(), Vector3::z())];
+    draw(None, &views, 0.025, "masonry.png")?;
+    draw(Some(4000.0), &[View::looking(Vector3::new(0.75, 0.55, -0.35), Vector3::z()),
+                         View::looking(Vector3::new(-0.55, 0.75, -0.3), Vector3::z())], 0.06, "masonry_corner.png")?;
     Ok(())
 }
 
@@ -363,14 +475,28 @@ fn main() {
             }
         }
         "build-probe" => build::probe(),
+        "masonry" => {
+            if let Err(e) = masonry_mode(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         "build" => {
             // The build sequence in sim-core, from the frame `framing` builds.
             let run = || -> std::io::Result<()> {
-                let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
+                let system = std::env::args().nth(2).unwrap_or_default();
+                if system == "masonry" {
+                    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/masonry.json"))?)?;
+                    let s = masonry::Spec::from_json(&v);
+                    let b = apartment::Building::example();
+                    return masonry_build::run(root, &b, &s, &masonry::build(&b, &s));
+                }
+                let (sched, sfx) = schedule_path(&system);
+                let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join(sched))?)?;
                 let s = framing::Schedule::from_json(&v);
                 let b = apartment::Building::example();
                 let (members, panels) = framing::build(&b, &s);
-                sequence::run(root, &b, &members, &panels, &sequence::Settings::from_json(&v))
+                sequence::run(root, &b, &s, &members, &panels, &sequence::Settings::from_json(&v), sfx)
             };
             if let Err(e) = run() {
                 eprintln!("{e}");
@@ -378,7 +504,7 @@ fn main() {
             }
         }
         "framing" => {
-            if let Err(e) = framing_mode(root) {
+            if let Err(e) = framing_mode(root, &std::env::args().nth(2).unwrap_or_default()) {
                 eprintln!("{e}");
                 std::process::exit(1);
             }

@@ -277,16 +277,64 @@ def cmd_frame(_args) -> int:
     return 0
 
 
-def cmd_build(_args) -> int:
+def cmd_build(args) -> int:
     from . import ROOT, build
 
-    b = build.load()
-    md = build.report(b)
+    system = args.system
+    sfx = build.SUFFIX[system]
+    b = build.load(system)
+    md = build.masonry_report(b) if system == "masonry" else build.report(b)
     print(md)
     out = OUT_DIR / "pass3"
-    (out / "build.md").write_text(md + NL, encoding="utf-8")
-    n = build.gif(out / "build_frames", ROOT / "docs" / "pass3" / "build.gif")
-    print(NL + f"docs/pass3/build.gif: {n} frames")
+    (out / f"build{sfx}.md").write_text(md + NL, encoding="utf-8")
+    n = build.gif(out / f"build_frames{sfx}", ROOT / "docs" / "pass3" / f"build{sfx}.gif")
+    print(NL + f"docs/pass3/build{sfx}.gif: {n} frames")
+    return 0
+
+
+def cmd_compare(_args) -> int:
+    from . import compare
+
+    md = compare.report(compare.gather())
+    print(md)
+    (OUT_DIR / "pass3" / "compare.md").write_text(md + NL, encoding="utf-8")
+    return 0
+
+
+def cmd_steel(_args) -> int:
+    import json
+
+    from . import frame, house, steel
+
+    p = values(load_params())
+    apt = house.apartment()
+    d = steel.design(apt, p)
+    md = ("SFIA joist spans, reproduced from the section properties:" + NL + NL
+          + frame.known_report(steel.known_cases()) + NL + NL + steel.report(d))
+    print(md)
+    out = OUT_DIR / "pass3"
+    (out / "steel.md").write_text(md + NL, encoding="utf-8")
+    (out / "steel.json").write_text(json.dumps(steel.for_forge(d, p, apt), indent=2) + NL, encoding="utf-8")
+    print(NL + f"wrote {out / 'steel.json'} (forge `framing steel` builds it)")
+    return 0
+
+
+def cmd_masonry(_args) -> int:
+    import json
+
+    from . import house, masonry
+
+    p = values(load_params())
+    apt = house.apartment()
+    d = masonry.design(apt, p)
+    k = masonry.known_cases()[0]
+    md = (f"Known case: {k['case']}: {k['table']:,} lb, this code {k['model']:,.0f} lb ({k['model'] / k['table'] - 1:+.2%})."
+          + NL + NL + masonry.report(d))
+    print(md)
+    out = OUT_DIR / "pass3"
+    (out / "masonry.md").write_text(md + NL, encoding="utf-8")
+    (out / "masonry.json").write_text(json.dumps(masonry.for_forge(d, p, apt), indent=2) + NL, encoding="utf-8")
+    print(NL + f"wrote {out / 'masonry.json'} (forge `masonry` builds it)")
     return 0
 
 
@@ -320,11 +368,15 @@ def main(argv=None) -> int:
     sub.add_parser("house", help="pass 3: the first house's heat and radiant floor")
     sub.add_parser("block", help="pass 3: a block of new homes on the warm loop")
     sub.add_parser("frame", help="pass 3b: the walk-up's wood frame, sized")
-    sub.add_parser("build", help="pass 3b: the build sequence (after forge `build`)")
+    bp = sub.add_parser("build", help="pass 3b: the build sequence (after forge `build [steel|masonry]`)")
+    bp.add_argument("system", nargs="?", default="wood", choices=["wood", "steel", "masonry"])
+    sub.add_parser("compare", help="pass 3b: wood, light steel and block + precast side by side")
+    sub.add_parser("steel", help="pass 3b: the walk-up in light steel, sized")
+    sub.add_parser("masonry", help="pass 3b: the walk-up in block and precast planks, sized")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare}.get(args.cmd or "check")
     return cmd(args)
 
 

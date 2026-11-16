@@ -81,6 +81,12 @@ the end collects the features this project wanted, with what we built instead.
   fixed boxes, every contact a box-box pair) runs ~0.1 s a step at 0.5 ms (800 steps: 92 s; the
   roof's 172 bodies 137 s). Fine for a build sequence, slow next to MuJoCo for the size; contacts
   sink ~3 mm under default contact softness at impact.
+- **works** (2026-11-15, pass 3b, three systems): the same approach carried a light steel frame
+  (3,190 members) and a block-and-plank building (13,614 pieces: every block, lintel and plank)
+  without strain: exact `unit_cube` meshes, sim-core set-downs of 44-54 precast planks (1.9 t
+  each) onto ~260-310 bearing blocks in 18-23 s, all within 0.02 mm. The overlap and support
+  checks across 13,614 pieces are our own sorted sweeps (cf-spatial may have the structure for
+  it; not tried).
 
 ## Expected gaps (scoping, not yet hit in code)
 

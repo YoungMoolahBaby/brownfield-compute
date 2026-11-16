@@ -55,7 +55,13 @@ sim-core (forge `build`, `brownfield build`, docs/pass3/build.gif): 138 wall pan
 flat and tilted up on a hinge servo (torque = statics within 0.4%): the heaviest, a sheathed end-wall
 panel, 243 kg / 267 lbf at the top plate = a crew of 6 at NIOSH's 51 lb (4 before sheathing), no wall
 jacks; cap plates and joists set as free bodies land within 0.11 mm; joists set before the spine fall
-(132 of 142). Next in 3b: light steel and masonry + precast floors on the same plan.
+(132 of 142). Step 7 (3b, Jon: "Light steel and concrete block with precast floors on the same plan"):
+light steel (SFIA tables, joist spans reproduced to 0.5 in.; 12 in. C-joists, 600S162 studs; 22 t,
+crew of 5 per panel) and 8 in. block + 8 in. hollow-core planks (Oldcastle table, TMS ASD example to
+0.09%; 475 t, footings 45 / 70 in., 142 crane picks of 1.9 t, ~12,200 blocks, floors 8 in. deep),
+each built in CortenForge and sim-core; `brownfield compare`. Wood and steel are near twins; block +
+precast is 20x heavier but thinner, quieter-floored (unmodelled) and noncombustible. Next: cost and
+embodied carbon of the three, or wind and bracing.
 
 ## Decisions
 

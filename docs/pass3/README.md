@@ -5,11 +5,12 @@ loss (pass 2b: -$159 million on existing homes) into a win? Existing homes need 
 heat pumps to lift ~50 C water to 75 C for old radiators. A new house with a radiant floor might
 take the warm water directly.
 
-Six steps: (1) the first house in CortenForge, (2) its heat and radiant floor on the data
+Seven steps: (1) the first house in CortenForge, (2) its heat and radiant floor on the data
 center's water, (3) a 12-flat walk-up in CortenForge and every flat's heat (pass 3b), (4) a block
 of new homes on that loop, priced against each home heating itself, (5) the walk-up framed in
 wood, member by member, sized to the codes, (6) built in order in CortenForge's physics engine:
-every wall panel tilted up, every joist set down (pass 3b).
+every wall panel tilted up, every joist set down, (7) the same walk-up in light steel and in
+concrete block with precast floors, sized, built and compared (pass 3b).
 
 **The answer: only for big blocks of apartments right beside the campus, and against gas only
 just.** A new home's floor can run on the data center's water directly (no heat pump), but
@@ -317,6 +318,69 @@ animation.
 
 Not simulated: the nailing (members placed are treated as fixed), temporary bracing, wind on
 the bare frame, the crane or forklift that brings the lumber up, and the time it all takes.
+
+## 7. The same walk-up in light steel, and in block with precast floors (pass 3b)
+
+Same plan, same loads, same bearing lines (the facades and the spine carry the floors), sized,
+built in CortenForge and put up in sim-core like the wood frame:
+
+- **Light (cold-formed) steel** (`uv run brownfield steel`, `src/brownfield/steel.py`): C-section
+  studs and joists and U-section tracks from the Steel Framing Industry Association's technical
+  guide (AISI S100-07 edition; its tables parsed into `src/brownfield/sfia.py`). The code first
+  reproduces the guide's own joist span tables from its section properties: 16 cases (8 sections,
+  L/360 and L/480) to within 0.5 in. Studs come from the guide's allowable loads under combined
+  axial and lateral load (15 psf on the facades, the ASD wind), headers from its header tables.
+- **Concrete block bearing walls and precast hollow-core floors** (`uv run brownfield masonry`,
+  `src/brownfield/masonry.py`): 8 in. prestressed planks from a precaster's published load table
+  (Oldcastle Infrastructure's Elematic hollow-core guide, 2019: 8 in. x 48 in., 54 psf); 8 in.
+  block walls checked by TMS 402 allowable stress design, the formula first reproducing The
+  Masonry Society's worked example (26,452 vs 26,429 lb/ft, +0.09%).
+
+| | Wood platform frame | Light steel frame | Block walls + precast planks |
+|---|---|---|---|
+| Floors | 11-7/8 in. I-joists (PRI-60) at 16 in. | 12 in. C-joists (1200S250-54) at 16 in. | 8 in. hollow-core planks |
+| Floor structure depth | 12.6 in. | 12.7 in. | 8.0 in. (no ceiling needed below) |
+| Bearing walls | 2x6 studs at 16 in. (facades), two rows of 2x4 (spine) | 600S162-43 studs at 16 in. (ground-floor facades), 362S200-43 rows (spine) | 8 in. concrete block, partly grouted |
+| Hardest-working member | floor joists 99% (stiffness) | floor joists 97% (bending) | ground-floor spine wall 60%; planks only 43% |
+| Structure above the foundation | 24 t | 22 t | 475 t |
+| Pieces placed | 3,432 | 3,190 | 13,614 |
+| Footings, facades / spine | 22 / 35 in. wide | 22 / 35 in. | 45 / 70 in. |
+| Foundation concrete | 69 m3 | 69 m3 | 94 m3 |
+| Heaviest lift, and how | 243 kg wall panel: a crew of 6 | 218 kg wall panel: a crew of 5 | 1,915 kg plank: a crane (142 of them); 16 kg blocks by hand (~12,200) |
+| Placed pieces land within | 0.11 mm | 0.11 mm | 0.02 mm (planks) |
+| Out of order (the check bites) | 132 of 142 joists fall without the spine | the same | 44 of 44 planks fall without the spine |
+| Combustible structure | yes | no | no |
+
+![The steel frame](framing_steel.png)
+
+![The steel frame, one corner](framing_steel_corner.png)
+
+![The block-and-plank walk-up](masonry.png)
+
+![The block-and-plank walk-up, one corner](masonry_corner.png)
+
+![Built in steel](build_steel.gif) ![Built in block and planks](build_masonry.gif)
+
+- **Wood and light steel are near twins.** Same layout, the same floor depth (12.6 vs 12.7 in.),
+  about the same weight (24 vs 22 t of structure), the same footings; the steel panels are a
+  little lighter to raise (a crew of 5 instead of 6) and the structure doesn't burn.
+- **Block and precast is twenty times heavier** (475 t against 24 t of structure): footings twice
+  as wide on the code's presumptive 1,500 psf soil (a site investigation allowing more would
+  shrink them), a third more foundation concrete, a crane for every one of the 142 planks (1.9 t
+  each), and ~12,200 blocks laid by hand. In return the floors are 8 in. of concrete with no
+  ceiling to hang below (4-5 in. less than the framed floors, before their ceilings), and nothing
+  in the structure burns. The planks run at under half their capacity; the precaster's table
+  starts at 8 in., and a thinner plank might do.
+- **The block walls change the openings**: they move to the 8 in. coursing (windows from a 36 in.
+  to a 40 in. sill, the same 48 in. tall), and every opening gets a precast lintel.
+- **Every piece checks**: no overlaps in any of the three (CortenForge models of 3,432, 3,190
+  and 13,614 pieces); every block, lintel and plank rests on what is below it (the worst block
+  74% of its bed, over the grout gap between the plank ends on the spine); all placed pieces
+  settle onto their seats in sim-core, and out of order they fall.
+
+Not compared yet: cost, embodied carbon, fire resistance ratings, sound between flats, wind and
+the walls that brace against it, and the thicker exterior wall a block building needs for its
+insulation. The steel members are drawn as their sections' outlines, not as C-shapes.
 
 ## What we don't know yet
 

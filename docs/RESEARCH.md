@@ -125,6 +125,24 @@ Sources, with what we took from them and their limits. Newest first within a sec
   detached 44.0, attached 31.5, apartments in 2-4 unit buildings 22.6, in 5+ unit buildings 9.1;
   Tables HC10.14 / HC10.15: heated floor area per single-family home 1,951 sq ft, per apartment 828.
 
+- **SFIA, Technical Guide for Cold-Formed Steel Framing Products** (the edition based on AISI
+  S100-07 and the 2009 IBC; [buildsite.com copy](https://www.buildsite.com/pdf/ram_sales/SFIA-Technical-Guide-for-Cold-Formed-Steel-Framing-Products-2086312.pdf),
+  112 pages): section properties of every stud, joist and track (effective Ix and Sx, allowable
+  moment Ma, distortional buckling moment Mnd, allowable shear Vag, weight), allowable floor joist
+  spans (10/20 to 40/125 psf), allowable axial loads under combined axial and lateral load (5-50
+  psf), header allowable uniform loads. Parsed into `src/brownfield/sfia.py` (pass 3b).
+- **Oldcastle Infrastructure, Elematic Hollowcore Plank Technical Guide** (2019,
+  [PDF](https://oldcastleinfrastructure.com/wp-content/uploads/2020/05/Elematic-Technical-Brochure-2019-FINAL.pdf)),
+  page 20: 8 in. x 48 in. untopped plank, 54 psf, f'c 5,000 psi; allowable live load by clear
+  span for 5 and 7 half-inch strands (e.g. 188 / 218 psf at 19 ft, 170 / 202 at 20 ft); ACI
+  318-14, L/360; combined loads as (1.2/1.6) SDL + LL; add ~15 psf for service openings in
+  residential preliminary design.
+- **The Masonry Society, Allowable Stress Design Night School 3** (axial and out-of-plane loads,
+  [PDF](https://theme.masonrysociety.org/wp-content/uploads/2022/02/Allowable-Stress-Design-Night-School-3-Design-for-Axial-Load-and-Out-of-Plane-Loads.pdf)):
+  unreinforced ASD Fa = 0.25 f'm [1 - (h/140r)^2] for h/r <= 99, 0.25 f'm (70r/h)^2 above; Fb =
+  f'm/3; worked example Pa = 26,429 lb/ft for a fully grouted 8 in. wall (f'm 2,000 psi, r 2.20
+  in., h 16.67 ft); partially grouted 8 in. CMU r = 2.66 in. (NCMA TEK 14-1B via MDG 2016).
+
 ## Pass 2 inputs (firmed up 2026-11-15)
 
 - **Water price**: York Water (PA) industrial tariff effective 2025-08-01, $7.755 per 1,000 gal in

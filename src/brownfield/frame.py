@@ -390,7 +390,7 @@ def report(d: dict) -> str:
         "",
         "| Member | Chosen | Highest check |", "|---|---|---|",
         f"| Floor joists | {member_name(d['floor_joist'])} at {d['spacing_in']:g} in. | {d['floor_util']['max']:.0%} ({u(d['floor_util'])}) |",
-        f"| Floor joists: everything else that passes | " + ", ".join(member_name(o) for o in d['floor_alternatives'][1:]) + " | |",
+        "| Floor joists: everything else that passes | " + ", ".join(member_name(o) for o in d['floor_alternatives'][1:]) + " | |",
         f"| Floor joists, without the topping | {member_name(d['floor_joist_without_topping'])} | {d['bare_util']['max']:.0%} |",
         f"| Roof joists | {member_name(d['roof_joist'])} at {d['spacing_in']:g} in. | {d['roof_util']['max']:.0%} ({u(d['roof_util'])}) |",
     ]

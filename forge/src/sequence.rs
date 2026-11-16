@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 
 use crate::apartment::Building;
 use crate::build::{Landing, gravity_torque, set_down, tilt_up};
-use crate::framing::{Group, Kind, Member, Panel};
+use crate::framing::{Group, Kind, Member, Panel, Schedule};
 use crate::render::{self, Layer, Style, View};
 
 pub struct Settings {
@@ -32,9 +32,9 @@ impl Settings {
 const LBF: f64 = 4.448222;
 
 /// The panel's boxes with their densities (sheathing too, when `sheathed` and it has some).
-fn panel_boxes(members: &[Member], p: &Panel, st: &Settings, sheathed: bool) -> Vec<(Vector3<f64>, Vector3<f64>, f64)> {
+fn panel_boxes(members: &[Member], p: &Panel, s: &Schedule, st: &Settings, sheathed: bool) -> Vec<(Vector3<f64>, Vector3<f64>, f64)> {
     let mut boxes: Vec<_> = members.iter().filter(|m| m.panel == Some(p.id))
-        .flat_map(|m| m.boxes.iter().map(|(lo, hi)| (*lo, *hi, st.density))).collect();
+        .flat_map(|m| { let rho = m.density(&s.linear_kg_m, st.density); m.boxes.iter().map(move |(lo, hi)| (*lo, *hi, rho)) }).collect();
     if let (true, Some((lo, hi))) = (sheathed, p.sheathing) {
         let t = (hi - lo).min() / 1e3;
         boxes.push((lo, hi, st.osb_kgm2 / t));
@@ -45,7 +45,7 @@ fn panel_boxes(members: &[Member], p: &Panel, st: &Settings, sheathed: bool) -> 
 /// Draws the build as it stands: `placed` members fixed, the `moving` panels turned `deg` from
 /// their place (90 = flat on the deck). The finished building's corners go into every frame as
 /// bare vertices, so all frames share one scale and framing.
-fn draw_state(members: &[Member], panels: &[Panel], placed: &[bool], moving: &[usize], deg: f64, corners: &[Vector3<f64>], path: &Path) -> std::io::Result<()> {
+fn draw_state(members: &[Member], panels: &[Panel], placed: &[bool], moving: &[usize], deg: f64, corners: &[Vector3<f64>], system: &str, path: &Path) -> std::io::Result<()> {
     let layer_of = |k: Kind| match k {
         Kind::Footing | Kind::Stem | Kind::Slab => 0,
         Kind::Header => 2,
@@ -53,7 +53,8 @@ fn draw_state(members: &[Member], panels: &[Panel], placed: &[bool], moving: &[u
         Kind::FloorJoist | Kind::RoofJoist => 4,
         _ => 1,
     };
-    let colours = [[0.66, 0.66, 0.64], [0.84, 0.70, 0.50], [0.62, 0.42, 0.26], [0.55, 0.45, 0.35], [0.92, 0.82, 0.62], [0.0, 0.0, 0.0]];
+    let p = crate::framing::palette(system);
+    let colours = [p[0], p[1], p[2], p[3], p[4], [0.0, 0.0, 0.0]];
     let mut meshes: Vec<IndexedMesh> = (0..6).map(|_| IndexedMesh::new()).collect();
     for (i, m) in members.iter().enumerate() {
         if placed[i] {
@@ -72,19 +73,20 @@ fn draw_state(members: &[Member], panels: &[Panel], placed: &[bool], moving: &[u
 
 /// Sets the `stage` members down on what's placed (only placed members near their level take
 /// part, less any `exclude`d).
-fn set_stage(members: &[Member], placed: &[bool], stage: &[usize], st: &Settings, exclude: &dyn Fn(&Member) -> bool) -> Landing {
+fn set_stage(members: &[Member], placed: &[bool], stage: &[usize], s: &Schedule, st: &Settings, exclude: &dyn Fn(&Member) -> bool) -> Landing {
     let zmin = stage.iter().map(|&i| members[i].bounds().0.z).fold(f64::INFINITY, f64::min);
     let zmax = stage.iter().map(|&i| members[i].bounds().1.z).fold(f64::NEG_INFINITY, f64::max);
     let statics: Vec<_> = members.iter().enumerate()
         .filter(|(i, m)| placed[*i] && !exclude(m) && m.bounds().1.z > zmin - 60.0 && m.bounds().0.z < zmax)
         .flat_map(|(_, m)| m.boxes.clone()).collect();
     let bodies: Vec<_> = stage.iter().map(|&i| members[i].boxes.clone()).collect();
-    set_down(&statics, &bodies, st.density, 10.0, 0.4)
+    let densities: Vec<f64> = stage.iter().map(|&i| members[i].density(&s.linear_kg_m, st.density)).collect();
+    set_down(&statics, &bodies, &densities, 10.0, 0.4)
 }
 
-pub fn run(root: &Path, b: &Building, members: &[Member], panels: &[Panel], st: &Settings) -> std::io::Result<()> {
+pub fn run(root: &Path, b: &Building, s: &Schedule, members: &[Member], panels: &[Panel], st: &Settings, sfx: &str) -> std::io::Result<()> {
     let t_all = std::time::Instant::now();
-    let frames = root.join("out/pass3/build_frames");
+    let frames = root.join(format!("out/pass3/build_frames{sfx}"));
     let _ = std::fs::remove_dir_all(&frames);
     std::fs::create_dir_all(&frames)?;
     let mut placed: Vec<bool> = members.iter().map(|m| m.kind.concrete()).collect();
@@ -99,7 +101,7 @@ pub fn run(root: &Path, b: &Building, members: &[Member], panels: &[Panel], st: 
         .collect();
     let mut frame = 0usize;
     let mut snap = |placed: &[bool], moving: &[usize], deg: f64| -> std::io::Result<()> {
-        draw_state(members, panels, placed, moving, deg, &corners, &frames.join(format!("f{frame:03}.png")))?;
+        draw_state(members, panels, placed, moving, deg, &corners, &s.system, &frames.join(format!("f{frame:03}.png")))?;
         frame += 1;
         Ok(())
     };
@@ -115,8 +117,8 @@ pub fn run(root: &Path, b: &Building, members: &[Member], panels: &[Panel], st: 
             let t0 = std::time::Instant::now();
             for &id in &ids {
                 let p = &panels[id];
-                let framed = panel_boxes(members, p, st, false);
-                let boxes = panel_boxes(members, p, st, true);
+                let framed = panel_boxes(members, p, s, st, false);
+                let boxes = panel_boxes(members, p, s, st, true);
                 let lift = tilt_up(&boxes, &p.pivot, &p.axis, 20.0);
                 let flat = gravity_torque(&boxes, &p.pivot, &p.axis, std::f64::consts::FRAC_PI_2).abs();
                 let framed_flat = gravity_torque(&framed, &p.pivot, &p.axis, std::f64::consts::FRAC_PI_2).abs();
@@ -154,14 +156,14 @@ pub fn run(root: &Path, b: &Building, members: &[Member], panels: &[Panel], st: 
                 let cx = b.depth / 2.0;
                 let no_spine = |m: &Member| ((m.bounds().0.x + m.bounds().1.x) / 2.0 - cx).abs() < 150.0 && m.kind != Kind::Rim;
                 let t0 = std::time::Instant::now();
-                let land = set_stage(members, &placed, &stage, st, &no_spine);
+                let land = set_stage(members, &placed, &stage, s, st, &no_spine);
                 let fell = land.errors.iter().filter(|e| e.0 > 50.0).count();
                 negative = json!({"stage": "storey 1 floor joists with the spine not yet built", "bodies": stage.len(), "fell": fell,
                                   "secs": t0.elapsed().as_secs_f64()});
                 println!("  negative control (no spine): {fell} of {} fell ({:.1} s)", stage.len(), t0.elapsed().as_secs_f64());
             }
             let t0 = std::time::Instant::now();
-            let land = set_stage(members, &placed, &stage, st, &|_| false);
+            let land = set_stage(members, &placed, &stage, s, st, &|_| false);
             let secs = t0.elapsed().as_secs_f64();
             let max_err = land.errors.iter().map(|e| e.0).fold(0.0, f64::max);
             let max_ang = land.errors.iter().map(|e| e.1).fold(0.0, f64::max);
@@ -176,12 +178,12 @@ pub fn run(root: &Path, b: &Building, members: &[Member], panels: &[Panel], st: 
             snap(&placed, &[], 0.0)?;
         }
     }
-    std::fs::write(root.join("out/pass3/build.json"), serde_json::to_string_pretty(&json!({
-        "source": "forge `build` (CortenForge 0.9 sim-core): the walk-up's wood frame, raised and set",
+    std::fs::write(root.join(format!("out/pass3/build{sfx}.json")), serde_json::to_string_pretty(&json!({
+        "source": format!("forge `build` (CortenForge 0.9 sim-core): the walk-up's {} frame, raised and set", s.system),
         "density_kgm3": st.density, "osb_kgm2": st.osb_kgm2, "crew_lift_lbf": st.crew_lbf, "crew_max": st.crew_max,
         "lifts": lifts, "stages": stages, "negative_control": negative, "frames": frame,
         "secs": t_all.elapsed().as_secs_f64(),
     }))?)?;
-    println!("{frame} frames in out/pass3/build_frames; build.json written ({:.1} s)", t_all.elapsed().as_secs_f64());
+    println!("{frame} frames in out/pass3/build_frames{sfx}; build{sfx}.json written ({:.1} s)", t_all.elapsed().as_secs_f64());
     Ok(())
 }

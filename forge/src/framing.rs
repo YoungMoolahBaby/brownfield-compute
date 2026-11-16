@@ -23,8 +23,6 @@ use crate::apartment::{Building, Face, Opening};
 
 const IN: f64 = 25.4;
 const GYP: f64 = 0.625 * IN; // the gypsum lining inside the studs
-const PLY: f64 = 1.5 * IN; // a 2x member's thickness
-const RIM: f64 = 1.125 * IN; // engineered rim board
 const RO: f64 = 0.5 * IN; // rough opening play each side
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -43,6 +41,9 @@ pub enum Kind {
     Footing,
     Stem,
     Slab,
+    Block,
+    Lintel,
+    Plank,
 }
 
 impl Kind {
@@ -62,6 +63,9 @@ impl Kind {
             Kind::Footing => "footings",
             Kind::Stem => "stem walls",
             Kind::Slab => "slab",
+            Kind::Block => "blocks",
+            Kind::Lintel => "lintels",
+            Kind::Plank => "planks",
         }
     }
     pub fn concrete(self) -> bool {
@@ -78,7 +82,8 @@ pub struct Member {
     /// Nominal size for board feet ("2x6"), or None (I-joists, rim, concrete).
     pub nominal: Option<String>,
     pub boxes: Vec<(Vector3<f64>, Vector3<f64>)>,
-    /// The wall panel it was framed in, if any (`Panel::id`).
+    /// The wall panel it was framed in, if any (`Panel::id`); for masonry pieces, the course they
+    /// are laid in (the build's order).
     pub panel: Option<usize>,
 }
 
@@ -109,6 +114,15 @@ impl Member {
         let (t, w) = n.split_once('x').map(|(a, b)| (a.parse::<f64>().unwrap_or(0.0), b.parse::<f64>().unwrap_or(0.0))).unwrap_or((0.0, 0.0));
         t * w / 12.0 * self.length_m() / 0.3048
     }
+    /// Mass density to give each of its boxes (kg/m3): from the member's weight per metre where the
+    /// schedule has one (steel, whose boxes are the sections' outlines), otherwise `wood`.
+    pub fn density(&self, linear_kg_m: &std::collections::HashMap<String, f64>, wood: f64) -> f64 {
+        let Some(kgm) = self.nominal.as_ref().and_then(|n| linear_kg_m.get(n)) else { return wood };
+        let (lo, hi) = self.bounds();
+        let mut d = [(hi - lo).x, (hi - lo).y, (hi - lo).z];
+        d.sort_by(f64::total_cmp);
+        kgm / (d[0] * d[1] / 1e6)
+    }
     /// CortenForge's solid of the member (boxes unioned).
     pub fn solid(&self) -> Solid {
         self.boxes.iter().map(|(lo, hi)| Solid::cuboid((hi - lo) / 2.0).translate((hi + lo) / 2.0))
@@ -132,6 +146,15 @@ impl Member {
             let r = rot * (v.coords - pivot) + pivot + shift;
             *v = Point3::from(r);
         }
+    }
+}
+
+/// Colours by drawing layer (concrete, wall framing, headers, rims, joists) for a system.
+pub fn palette(system: &str) -> [[f64; 3]; 5] {
+    if system == "steel" {
+        [[0.66, 0.66, 0.64], [0.74, 0.77, 0.80], [0.52, 0.56, 0.62], [0.50, 0.53, 0.58], [0.84, 0.86, 0.89]]
+    } else {
+        [[0.66, 0.66, 0.64], [0.84, 0.70, 0.50], [0.62, 0.42, 0.26], [0.55, 0.45, 0.35], [0.92, 0.82, 0.62]]
     }
 }
 
@@ -184,6 +207,20 @@ pub struct Schedule {
     pub footing_t: f64,
     /// Longest wall panel a crew frames and raises (mm).
     pub panel_max: f64,
+    /// "wood" or "steel".
+    pub system: String,
+    /// A stud's width along the wall, a plate's (or track's) thickness, the rim's thickness (mm).
+    pub ply: f64,
+    pub plate: f64,
+    pub rim: f64,
+    /// A second top plate lapping the panels (wood); steel has a single top track.
+    pub cap: bool,
+    /// The track that goes with each stud (steel), the rim's name, and weights per metre (kg/m) by
+    /// member name where they are known (steel); wood members weigh by their volume.
+    pub track_for: std::collections::HashMap<String, String>,
+    pub rim_name: Option<String>,
+    pub linear_kg_m: std::collections::HashMap<String, f64>,
+    pub stair_stud: String,
 }
 
 pub struct Joist {
@@ -229,6 +266,15 @@ impl Schedule {
             facade_footing: f(&v["footings"], "facade_width_mm"), spine_footing: f(&v["footings"], "spine_width_mm"),
             footing_t: f(&v["footings"], "thickness_mm"),
             panel_max: v["build"]["panel_max_mm"].as_f64().unwrap_or(16.0 * 12.0 * IN),
+            system: v["dims"]["system"].as_str().unwrap_or("wood").to_string(),
+            ply: v["dims"]["ply_mm"].as_f64().unwrap_or(1.5 * IN),
+            plate: v["dims"]["plate_mm"].as_f64().unwrap_or(1.5 * IN),
+            rim: v["dims"]["rim_mm"].as_f64().unwrap_or(1.125 * IN),
+            cap: v["dims"]["cap"].as_bool().unwrap_or(true),
+            track_for: v["track_for"].as_object().into_iter().flatten().map(|(k, x)| (k.clone(), x.as_str().unwrap_or("").to_string())).collect(),
+            rim_name: v["rim_name"].as_str().map(String::from),
+            linear_kg_m: v["linear_kg_m"].as_object().into_iter().flatten().map(|(k, x)| (k.clone(), x.as_f64().unwrap_or(0.0))).collect(),
+            stair_stud: v["stair_stud"].as_str().unwrap_or("2x4").to_string(),
         }
     }
     fn depth_of(&self, size: &str) -> f64 {
@@ -268,12 +314,14 @@ impl Line<'_> {
 fn wall(line: &Line, s: &Schedule, storey: usize, zb: f64, panel: Option<usize>, out: &mut Vec<Member>) {
     let (c0, c1) = (line.c0, line.c0 + line.depth);
     let nom = Some(line.nominal);
+    let (ply, plate) = (s.ply, s.plate);
+    let track = Some(s.track_for.get(line.nominal).map(String::as_str).unwrap_or(line.nominal));
     let push = |out: &mut Vec<Member>, kind, nominal: Option<&str>, b: (Vector3<f64>, Vector3<f64>)| {
         let mut m = Member::one(kind, storey, nominal, b.0, b.1);
         m.panel = panel;
         out.push(m);
     };
-    let stud0 = zb + PLY;
+    let stud0 = zb + plate;
     let stud1 = stud0 + s.stud_len;
     // Openings: rough opening, then jacks and kings either side, the header on the jacks.
     struct Hole { ro0: f64, ro1: f64, out0: f64, out1: f64, bottom: f64, top: f64, door: bool }
@@ -284,27 +332,27 @@ fn wall(line: &Line, s: &Schedule, storey: usize, zb: f64, panel: Option<usize>,
         let (bottom, top) = (if door { stud0 } else { o.sill - RO }, o.sill + o.height + RO);
         let (plies, hsize, jacks) = s.header_for(storey, o.width / 1e3);
         let hdepth = s.depth_of(&hsize);
-        let j = jacks as f64 * PLY;
+        let j = jacks as f64 * ply;
         for side in [-1.0, 1.0] {
             let edge = if side < 0.0 { ro0 } else { ro1 };
             for k in 0..jacks {
-                let (a0, a1) = if side < 0.0 { (edge - (k + 1) as f64 * PLY, edge - k as f64 * PLY) } else { (edge + k as f64 * PLY, edge + (k + 1) as f64 * PLY) };
+                let (a0, a1) = if side < 0.0 { (edge - (k + 1) as f64 * ply, edge - k as f64 * ply) } else { (edge + k as f64 * ply, edge + (k + 1) as f64 * ply) };
                 push(out, Kind::Jack, nom, line.bx(a0, a1, c0, c1, stud0, top));
             }
-            let (a0, a1) = if side < 0.0 { (edge - j - PLY, edge - j) } else { (edge + j, edge + j + PLY) };
+            let (a0, a1) = if side < 0.0 { (edge - j - ply, edge - j) } else { (edge + j, edge + j + ply) };
             push(out, Kind::King, nom, line.bx(a0, a1, c0, c1, stud0, stud1));
         }
         // The header: plies side by side across the wall, centred, over the jacks.
-        let hw = plies as f64 * PLY;
+        let hw = plies as f64 * ply;
         let cm = (c0 + c1) / 2.0;
         for k in 0..plies {
-            let cc = cm - hw / 2.0 + k as f64 * PLY;
-            push(out, Kind::Header, Some(hsize.as_str()), line.bx(ro0 - j, ro1 + j, cc, cc + PLY, top, (top + hdepth).min(stud1)));
+            let cc = cm - hw / 2.0 + k as f64 * ply;
+            push(out, Kind::Header, Some(hsize.as_str()), line.bx(ro0 - j, ro1 + j, cc, cc + ply, top, (top + hdepth).min(stud1)));
         }
         if !door {
-            push(out, Kind::Sill, nom, line.bx(ro0, ro1, c0, c1, bottom - PLY, bottom));
+            push(out, Kind::Sill, track, line.bx(ro0, ro1, c0, c1, bottom - plate, bottom));
         }
-        holes.push(Hole { ro0, ro1, out0: ro0 - j - PLY, out1: ro1 + j + PLY, bottom: bottom - if door { 0.0 } else { PLY }, top: (top + hdepth).min(stud1), door });
+        holes.push(Hole { ro0, ro1, out0: ro0 - j - ply, out1: ro1 + j + ply, bottom: bottom - if door { 0.0 } else { plate }, top: (top + hdepth).min(stud1), door });
     }
     // Plates: the bottom plate stops at door openings.
     let mut cuts: Vec<(f64, f64)> = holes.iter().filter(|h| h.door).map(|h| (h.ro0, h.ro1)).collect();
@@ -312,22 +360,22 @@ fn wall(line: &Line, s: &Schedule, storey: usize, zb: f64, panel: Option<usize>,
     let mut a = line.a0;
     for (x0, x1) in cuts.iter().chain(std::iter::once(&(line.a1, line.a1))) {
         if *x0 - a > 1.0 {
-            push(out, Kind::Plate, nom, line.bx(a, *x0, c0, c1, zb, zb + PLY));
+            push(out, Kind::Plate, track, line.bx(a, *x0, c0, c1, zb, zb + plate));
         }
         a = *x1;
     }
     // The first top plate; the cap plate goes on after the panels are up, lapping their joints.
-    push(out, Kind::Plate, nom, line.bx(line.a0, line.a1, c0, c1, stud1, stud1 + PLY));
+    push(out, Kind::Plate, track, line.bx(line.a0, line.a1, c0, c1, stud1, stud1 + plate));
     // Studs on the layout, full height away from openings, cripples above headers and below sills.
     let mut positions = vec![line.a0];
     let mut p = line.a0 + line.spacing;
-    while p + PLY / 2.0 < line.a1 - PLY {
-        positions.push(p - PLY / 2.0);
+    while p + ply / 2.0 < line.a1 - ply {
+        positions.push(p - ply / 2.0);
         p += line.spacing;
     }
-    positions.push(line.a1 - PLY);
+    positions.push(line.a1 - ply);
     for p0 in positions {
-        let p1 = p0 + PLY;
+        let p1 = p0 + ply;
         match holes.iter().find(|h| p1 > h.out0 && p0 < h.out1) {
             None => push(out, Kind::Stud, nom, line.bx(p0, p1, c0, c1, stud0, stud1)),
             Some(h) => {
@@ -386,8 +434,8 @@ fn joist_member(j: &Joist, kind: Kind, storey: usize, lo: Vector3<f64>, hi: Vect
 /// opening's rough opening, jack and king studs and the panel's own end stud (every panel gets
 /// its own end studs, so the joint is a double stud). Crews cut walls wherever there's room, so
 /// the cut needn't fall on the stud layout.
-fn panel_bounds(line: &Line, max: f64) -> Vec<f64> {
-    let need = RO + 4.0 * PLY + 10.0; // play, up to two jacks and a king, the end stud, a little slack
+fn panel_bounds(line: &Line, max: f64, ply: f64) -> Vec<f64> {
+    let need = RO + 4.0 * ply + 10.0; // play, up to two jacks and a king, the end stud, a little slack
     let clear = |x: f64| line.openings.iter().all(|o| (x - o.along).abs() > o.width / 2.0 + need);
     let mut b = vec![line.a0];
     let mut cur = line.a0;
@@ -451,7 +499,7 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
         };
         let ext = |along_y, c0, a0, a1, face| Line { along_y, c0, depth: ext_d, a0, a1, nominal: ext_size.as_str(), spacing: ext_sp, openings: at(face) };
         let sd = s.depth_of(&spine_size);
-        let stair_row = s.depth_of("2x4");
+        let stair_row = s.depth_of(&s.stair_stud);
         // Every wall line, with the way its panels lie on the deck before they go up (`inward`,
         // a unit vector across the wall) and whether it is sheathed before raising. Facades run
         // the full length, the end walls fit between them; the spine is two rows 1 in. apart from
@@ -474,12 +522,13 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
             for c0 in [sy - 0.5 * IN - stair_row, sy + 0.5 * IN] {
                 let flat_side = (c0 < sy) == (sy == s0);
                 let inward = if flat_side { toward_flat } else { -toward_flat };
-                lines.push((Group::Stair, Line { along_y: false, c0, depth: stair_row, a0: xf + ext_d, a1: xb - ext_d, nominal: "2x4", spacing: s.spacing, openings: vec![] }, inward, false));
+                lines.push((Group::Stair, Line { along_y: false, c0, depth: stair_row, a0: xf + ext_d, a1: xb - ext_d, nominal: s.stair_stud.as_str(), spacing: s.spacing, openings: vec![] }, inward, false));
             }
         }
-        let cap_top = zb + 3.0 * PLY + s.stud_len;
+        let cap_top = zb + if s.cap { 3.0 } else { 2.0 } * s.plate + s.stud_len;
+        let wall_top = cap_top - if s.cap { s.plate } else { 0.0 };
         for (group, line, inward, sheathed) in &lines {
-            let bounds = panel_bounds(line, s.panel_max);
+            let bounds = panel_bounds(line, s.panel_max, s.ply);
             for pair in bounds.windows(2) {
                 let id = panels.len();
                 let seg = Line { along_y: line.along_y, c0: line.c0, depth: line.depth, a0: pair[0], a1: pair[1], nominal: line.nominal,
@@ -493,7 +542,7 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
                     let outer = if inward.dot(&if line.along_y { Vector3::x() } else { Vector3::y() }) > 0.0 { line.c0 } else { line.c0 + line.depth };
                     let t = 11.1 * if inward.dot(&if line.along_y { Vector3::x() } else { Vector3::y() }) > 0.0 { -1.0 } else { 1.0 };
                     let (c0, c1) = (outer.min(outer + t), outer.max(outer + t));
-                    line.bx(pair[0], pair[1], c0, c1, zb, cap_top - PLY)
+                    line.bx(pair[0], pair[1], c0, c1, zb, wall_top)
                 });
                 panels.push(Panel { id, storey, group: *group, pivot, axis: Vector3::z().cross(inward), length_mm: pair[1] - pair[0], sheathing });
             }
@@ -502,8 +551,8 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
             let mut cuts = vec![line.a0];
             cuts.extend(bounds.windows(2).skip(1).map(|q| (q[0] + q[1]) / 2.0));
             cuts.push(line.a1);
-            for pair in cuts.windows(2) {
-                let (lo, hi) = line.bx(pair[0], pair[1], line.c0, line.c0 + line.depth, cap_top - PLY, cap_top);
+            for pair in cuts.windows(2).filter(|_| s.cap) {
+                let (lo, hi) = line.bx(pair[0], pair[1], line.c0, line.c0 + line.depth, cap_top - s.plate, cap_top);
                 out.push(Member::one(Kind::CapPlate, storey, Some(line.nominal), lo, hi));
             }
         }
@@ -517,20 +566,20 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
             assert!((next - storey as f64 * b.storey).abs() < 1.0, "storey {storey} closes at {next:.1} mm, not {:.1}", storey as f64 * b.storey);
         }
         let (j, kind) = if roof { (&s.roof_joist, Kind::RoofJoist) } else { (&s.floor_joist, Kind::FloorJoist) };
-        let rim_nom = None;
-        for (x0, x1) in [(xf, xf + RIM), (xb - RIM, xb)] {
+        let rim_nom = s.rim_name.as_deref();
+        for (x0, x1) in [(xf, xf + s.rim), (xb - s.rim, xb)] {
             out.push(Member::one(Kind::Rim, storey, rim_nom, Vector3::new(x0, yl, top), Vector3::new(x1, yr, top + j.depth)));
         }
         let bays = [(yl, s0 - 0.5 * IN), (s1 + 0.5 * IN, yr)];
         for (y0, y1) in bays {
-            joists(j, kind, storey, s.spacing, y0, y1, xf + RIM, cx - 0.5 * IN, top, &mut out);
-            joists(j, kind, storey, s.spacing, y0, y1, cx + 0.5 * IN, xb - RIM, top, &mut out);
+            joists(j, kind, storey, s.spacing, y0, y1, xf + s.rim, cx - 0.5 * IN, top, &mut out);
+            joists(j, kind, storey, s.spacing, y0, y1, cx + 0.5 * IN, xb - s.rim, top, &mut out);
         }
         if roof {
             // Over the stair the roof joists span between the stair walls' inner rows (along y).
             let (y0, y1) = (s0 + 0.5 * IN, s1 - 0.5 * IN);
-            let mut x = xf + RIM;
-            while x + j.width <= xb - RIM {
+            let mut x = xf + s.rim;
+            while x + j.width <= xb - s.rim {
                 out.push(joist_member(j, kind, storey, Vector3::new(x, y0, top), Vector3::new(x + j.width, y1, top + j.depth), false));
                 x += s.spacing;
             }
