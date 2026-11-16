@@ -1,0 +1,177 @@
+# Pass 3e: the neighbourhood at the campus edge (D11). Inputs to src/brownfield/village.py.
+# Geometry is the design (forge `garden` draws the same). Research-sourced groups are added as the
+# research notes land; until then a value is marked placeholder.
+
+townhouse:
+  width_gap:
+    value: 6.1
+    unit: m, house width, detached with a ~3 m gap (a two-car garage needs ~6 m)
+    conf: high
+    source: "the design (Jon, D11): 20 ft, the usual minimum width for a two-car garage"
+  gap_gap:
+    value: 3.0
+    unit: m between houses (1.5 m each side of the lot line, so side windows are allowed)
+    conf: high
+    source: "the design; IRC R302.1 Table R302.1(1): openings unlimited at a fire separation distance of 5 ft or more (to confirm in the research notes)"
+  width_narrow:
+    value: 6.6
+    unit: m, house width, detached with a ~1 m gap (side walls fire-rated and blank)
+    conf: high
+    source: "the design: a 25 ft (7.6 m) San Francisco lot"
+  gap_narrow:
+    value: 1.0
+    unit: m between houses
+    conf: high
+    source: "the design"
+  width_twin:
+    value: 6.6
+    unit: m, house width, attached on twin walls (each house its own wall, an air gap between)
+    conf: high
+    source: "the design"
+  gap_twin:
+    value: 0.05
+    unit: m, the air gap between twin walls
+    conf: high
+    source: "the design (no ties across the gap)"
+  depth_m:
+    value: 11.0
+    unit: m, house depth (garage 6.5 m deep plus a workshop, stair and entry)
+    conf: high
+    source: "the design"
+  storeys:
+    value: 2
+    low: 2
+    high: 3
+    unit: storeys of home over the garage
+    conf: high
+    source: "the design (Jon: 'a few stories'; two keeps the windows under the noise guideline nearer the hall)"
+  storey_m:
+    value: 3.0
+    unit: m floor to floor
+    conf: high
+    source: "the design"
+  garage_h_m:
+    value: 3.0
+    unit: m, the garage storey
+    conf: high
+    source: "the design"
+  glazing_front_back:
+    value: 0.25
+    low: 0.15
+    high: 0.35
+    unit: share of front and back walls glazed (bay windows)
+    conf: placeholder
+    source: "judgement"
+  glazing_sides:
+    value: 0.10
+    low: 0.0
+    high: 0.2
+    unit: share of side walls glazed, detached-with-gap variant only
+    conf: placeholder
+    source: "judgement"
+  door_m2:
+    value: 2.0
+    unit: m2, the front door
+    conf: high
+    source: "the design"
+  garage_door_m2:
+    value: 10.4
+    unit: m2, a 16 x 7 ft double garage door
+    conf: high
+    source: "the standard double-door size"
+  garage_door_u_si:
+    value: 1.5
+    low: 1.0
+    high: 3.0
+    unit: W/m2K, an insulated sectional garage door with its seals
+    conf: placeholder
+    source: "judgement (to source)"
+  garage_floor_u:
+    value: 0.033
+    low: 0.026
+    high: 0.047
+    unit: Btu/(h ft2 F), the floor between the house and the garage below
+    conf: medium
+    source: "IECC 2021 Table R402.1.2: floor U-0.033 in climate zones 4 marine-8 (Homer City is 5A); to confirm in the research notes"
+  garage_c:
+    value: 10
+    low: 5
+    high: 15
+    unit: C, the garage-workshop held off the loop in winter
+    conf: placeholder
+    source: "the design choice: a workshop you can work in all winter"
+
+site:
+  phase1_homes:
+    value: 120
+    low: 85
+    high: 250
+    unit: homes in phase 1 (later phases follow demand)
+    conf: high
+    source: "Jon (D11): '120'; pass 4's central newcomer renters 121 (85-219)"
+  home_setback_m:
+    value: 150
+    low: 100
+    high: 245
+    unit: m from the hall's south face to the first row of homes
+    conf: high
+    source: "the design: garage + 2 storeys stays under 40 dB(A) at night here with fans 3 dB quieter than pass 2's; beyond ~245 m any home does with pass 2's fans (`brownfield village`)"
+  lot_depth_m:
+    value: 24
+    unit: m, lot depth (house 11 m, drive and yard)
+    conf: high
+    source: "the design"
+  street_w_m:
+    value: 15
+    unit: m, street right of way (two lanes, walks, trees)
+    conf: high
+    source: "the design"
+  spine_w_m:
+    value: 24
+    unit: m, the public spine street from the town to the square (walks, trees, a lane each way)
+    conf: high
+    source: "the design: shared places reached from town streets, no gates (D11, mixing not an enclave)"
+  street_m:
+    value: 200
+    unit: m, length of each street of phase 1
+    conf: high
+    source: "the design"
+  square_x:
+    value: 30
+    unit: m, the square's centre (on the garden's axis)
+    conf: high
+    source: "the design"
+  square_y:
+    value: 90
+    unit: m, the square's centre (between the garden and the homes)
+    conf: high
+    source: "the design"
+  garden_x:
+    value: 30
+    unit: m, the winter garden's lower pool, south edge
+    conf: high
+    source: "forge garden"
+  garden_y:
+    value: 35
+    unit: m
+    conf: high
+    source: "forge garden"
+  fields_x:
+    value: -220
+    unit: m, the fields' centre (on the parcel marked as the capped ash site; schematic)
+    conf: low
+    source: "the design; the ash site's real outline is not in this model"
+  fields_y:
+    value: 160
+    unit: m
+    conf: low
+    source: "the design (schematic)"
+
+walk:
+  speed_m_s:
+    value: 1.3
+    low: 1.2
+    high: 1.4
+    unit: m/s, walking speed
+    conf: placeholder
+    source: "to source (Bohannon 1997; HCM 1.2 m/s for design)"

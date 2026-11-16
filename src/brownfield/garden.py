@@ -139,17 +139,20 @@ def rooftop_screen(p: dict, parapet_m: float | None = None):
     return wall.Screen(f"{hp:g} m parapet", ((gap, deck + hp), (gap + t, deck + hp), edge), t)
 
 
-def rooftop_noise(p: dict, parapet_m: float | None = None, fan_cut_db: float | None = None, distances=None) -> dict:
-    """Night level at homes on the ground (dB(A)) from the coolers on the roof, scanned over distance,
-    because near a tall building the level rises before it falls. pass 2d's ISO 9613-2 model with the
-    sources at deck + fan height and the ground term at the mean path height. The coolers stand at the
-    makers' spacing with no walls between them (wall.py's `perimeter` yard)."""
+def rooftop_noise(p: dict, parapet_m: float | None = None, fan_cut_db: float | None = None, distances=None,
+                  h_r: float | None = None) -> dict:
+    """Night level at homes (dB(A)) from the coolers on the roof, scanned over distance, because near a
+    tall building the level rises before it falls. pass 2d's ISO 9613-2 model with the sources at deck +
+    fan height and the ground term at the mean path height; the window `h_r` m up (default: pass 2d's
+    ear height). The coolers stand at the makers' spacing with no walls between them (wall.py's
+    `perimeter` yard)."""
     from . import noise, wall
 
     a = "garden.acoustics."
     s = rooftop_screen(p, parapet_m)
     yd = wall.yard(p, "perimeter")
-    hs, hr = p[a + "deck_m"] + p["wall.yard.fan_h_m"], p["wall.acoustics.ear_h_m"]
+    hs = p[a + "deck_m"] + p["wall.yard.fan_h_m"]
+    hr = p["wall.acoustics.ear_h_m"] if h_r is None else h_r
     q = dict(p, **{"pass2.noise.h_m": (hs + hr) / 2})
     cut = p[a + "fan_cut_db"] if fan_cut_db is None else fan_cut_db
     lw = noise.module_lw("good neighbour", p["pass2.module.it_mw"] * 1.2, p) - cut

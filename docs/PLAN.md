@@ -319,6 +319,62 @@ at the campus edge, funded in the community benefits agreement.
     "introvert tinkering" or storage. Both housing options are in: detached with a gap, and twin walls with an
     air gap between them. Idea to test, not a promise: the makerspace as where local people learn to run and
     repair the machines that build and look after the campus (D7).
+  - Mixing, not an enclave (Jon OK'd 2026-11-16; real cases, to cite in the pass's report):
+    - Living next door doesn't make people mix. Shared places, one set of rules and one voice, and
+      regular small groups do.
+    - Cases:
+      - Chicago's mixed-income developments: little interaction; owners had an association and renters
+        didn't (Chaskin & Joseph, J. Urban Affairs 33(2), 2011).
+      - About half the rich-poor friendship gap is never sharing the same groups (Chetty et al., Nature
+        608, 2022).
+      - Contact reduces prejudice, most with equal status and common goals (Pettigrew & Tropp, JPSP
+        90(5), 2006; 515 studies).
+      - Pullman, where people could only rent, was ordered by the Illinois Supreme Court (1898) to sell
+        its houses; in Hershey people could buy.
+      - New York banned separate "poor doors" in 2015.
+    - Design changes:
+      - A public street from the town straight to the square, lined by the new homes; no gates or
+        private roads.
+      - The shared places run by one body with renters, owners and townspeople on it; the operator
+        funds, and a trust, co-op or the township runs them.
+      - First option on homes for current Homer City and Indiana County residents.
+      - The housing mix a rule for every phase in the benefits agreement.
+      - Leagues, classes and makerspace projects, and a welcome for newcomers.
+      - Amenities priced for the town.
+    - Still to check before citing: Columbia MD's segregation figures (an advocacy source), and
+      reporting on Starbase TX.
+  - Running the shared places (Jon OK'd 2026-11-16; real cases, to cite in the pass's report):
+    - Shared places last when the money can't be switched off by one party and their users run them by
+      clear rules.
+    - Each single source of money fails on its own: membership fees alone (TechShop closed all its US
+      sites in 2017), volunteers alone (burnout), yearly gifts from an operator (the town comes to
+      depend on them), land with no owner (neglect).
+    - Cases:
+      - Ostrom's design principles, well supported across 91 studies as tendencies, mostly for natural
+        resources (Cox, Arnold & Villamayor Tomas, Ecology and Society 15(4):38, 2010).
+      - Public money with its own vote: Minneapolis's elected park board (1883, its own levy); the
+        Seattle Park District (2014).
+      - Back alleys gated for the adjoining homes in Liverpool: burglary down ~37% (Bowers, Johnson &
+        Hirschfield 2004).
+    - Design changes:
+      - Two streams the operator can't switch off: an endowment and maintenance reserve paid up front
+        under the benefits agreement, and a set share of the campus's property tax. The model sizes it
+        as pass 4 sized the housing share.
+      - Gifts from the operator only on top; small user fees, low or none for county residents on low
+        incomes.
+      - A nonprofit trust or a township authority owns and runs the places: renters, owners,
+        townspeople and the township on the board; the operator one seat, not control.
+      - Each place has its own users' committee and a paid lead.
+      - Makerspace: tool sign-offs, members' cleanup rules with small penalties first, free open hours
+        for county residents.
+      - Courts, rink and fields: a public booking calendar, drop-in hours, a cap for each league, some
+        slots for county youth.
+      - The garden and arboretum: a paid gardener and a friends group.
+      - The trust serves the whole county, so the old town's parks don't decline beside the new ones.
+      - Every metre of the strips between townhouses belongs to one home, with a recorded easement for
+        the neighbour (twin walls leave almost none).
+    - Still to check before citing: the Men's Sheds funding history, library makerspace staffing, the
+      Central Park Conservancy critiques, and the zero-lot-line code example.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
