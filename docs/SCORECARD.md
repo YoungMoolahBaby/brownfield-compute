@@ -25,4 +25,5 @@ Checked against the public record of the Homer City campus (2026-11-16,
 taxes, but raise most often what isn't here. That covers process and transparency, the
 creek's ecology, the gas plant's air, monitoring and enforcement, private wells, local hiring and
 cleanup liability. No one raised housing, hospital access or reuse of waste heat. Candidate
-additions are listed there, for a decision.
+additions are listed there, for a decision. The first, heat to the creek in degrees, is computed
+in [pass 2e](pass2/creek.md).

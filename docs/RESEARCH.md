@@ -59,6 +59,35 @@ Sources, with what we took from them and their limits. Newest first within a sec
   White Township. Blacklick Creek Watershed Association (30+ years of cleanup) and Trout
   Unlimited (thermal impact) raised concerns; DEP opened a $27 million+ mine drainage treatment
   plant at Vintondale in 2025, improving ~25 stream miles of Blacklick Creek.
+- **The water permit itself (pass 2e, 2026-11-16)**, from DEP's
+  [Homer City page](https://www.pa.gov/agencies/dep/dep-regions/northwest-regional-office/homer-city-generation-redevelopment):
+  - **The amendment:** NPDES PA0005037 amendment A-2, Outfall 027. 6.84 MGD of cooling tower
+    blowdown from 7 closed-cycle towers; 36 MGD drawn from Two Lick Creek, 29.16 consumed.
+  - **The receiving stream:** Blacklick Creek (trout stocking, 25 Pa. Code 93.9t), river mile
+    10.72, about 75 ft above the Two Lick confluence (the applicant's CORMIX study). The 2026-07-11
+    Bulletin notice's "Two Lick Creek" conflicts with every permit document.
+  - **The limits:** interim 110 F; final limits by period from 2026-12-01 (Jan 101.7, Feb 96.2,
+    late Jun 100.9, Jul 79.5, late Nov 96.3, Dec 88.3, otherwise 110 F). The permit expires
+    2026-12-31; the renewal was applied for on 2026-05-01. Temperature measured once a week.
+  - **DEP's design inputs:** Q7-10 of 34 cfs (23 Blacklick + 11 cfs the plant must keep in Two
+    Lick Creek under a consent order not found); DEP's default stream temperatures for trout
+    stocking water. The first draft (June 2026) used the warm-water defaults by mistake.
+  - **The applicant's projections:** blowdown at 85 F at most, 75 F long-term average; monthly
+    averages 63.6-79.7 F; 84.4 F on a 90 F day, 85.6 F on a 105 F day.
+  - **One vendor drawing:** the blowdown sample point at 122 F operating, 135 F design
+    (unresolved).
+- **DEP's Thermal Limits Spreadsheet v1.0 (April 2024)** and its instructions (DEP Bureau of
+  Clean Water): Case 2 formulas, semi-monthly flow multipliers and default stream temperatures
+  (`data/tls_tables.csv`). The instructions say the defaults "should only be used if no
+  information on stream temperature is available". 25 Pa. Code 93.7 Table 3 (criteria); 96.6(b)
+  (no more than 2 F change in any hour).
+- **USGS:**
+  - 03042000, Blacklick Creek at Josephine (193 mi2): daily flow since 1952, water temperature
+    since 2013-10.
+  - 03042500, Two Lick Creek at Graceton (171 mi2, regulated, upstream of the plant's intake): no
+    temperature record.
+  - Stuckey and Roland, OFR 2011-1070: 7Q10 26.6 cfs (Josephine, 1952-2008); 39.0 cfs (Graceton,
+    regulated, 1969-2008); 11.3 cfs (Graceton, before the dams).
 - **Naughton, WY** is not a known case: EIA-860M (September 2026) lists units 1-2 as coal with
   no planned retirement and unit 3 converted to gas; TerraPower's Natrium plant is being built
   next to a plant that still runs.

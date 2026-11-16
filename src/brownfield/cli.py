@@ -375,6 +375,28 @@ def cmd_wall(_args) -> int:
     return 0
 
 
+def cmd_creek(_args) -> int:
+    from . import ROOT, climate, creek, module
+
+    params = load_params()
+    p = values(params)
+    a = creek.analyse(p)
+    md = creek.report(p, a)
+    # The comparison: a conventional module's own tower blowdown, which the good neighbour doesn't have.
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    conv = module.conventional(climate.hourly_temp(site.lat, site.lon), p)
+    bd = conv.blowdown_m3 / module.GAL / 365 / 1e6
+    md += NL + NL + (f"Per 100 MW data center module (pass 2): a conventional module's cooling towers blow down "
+                     f"{bd:.2f} million gallons a day on average; the good neighbour (dry coolers) none.")
+    print(md)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "creek.md").write_text(md + NL, encoding="utf-8")
+    creek.figure(p, a, ROOT / "docs" / "pass2" / "creek.png")
+    print(NL + "wrote out/pass2/creek.md, docs/pass2/creek.png")
+    return 0
+
+
 def cmd_economy(_args) -> int:
     from . import acs, econ
 
@@ -423,13 +445,14 @@ def main(argv=None) -> int:
     sub.add_parser("compare", help="pass 3b: wood, light steel and block + precast side by side")
     sub.add_parser("costcarbon", help="pass 3b: embodied carbon and cost of the three structures")
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
+    sub.add_parser("creek", help="pass 2e: the gas plant blowdown against Blacklick Creek temperature criteria")
     sub.add_parser("wall", help="pass 2d: the wall in front of the coolers (then forge `wall`, then this again)")
     sub.add_parser("steel", help="pass 3b: the walk-up in light steel, sized")
     sub.add_parser("masonry", help="pass 3b: the walk-up in block and precast planks, sized")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek}.get(args.cmd or "check")
     return cmd(args)
 
 

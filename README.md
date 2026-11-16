@@ -40,7 +40,9 @@ good-neighbour data center, its [costs](docs/pass2/cost.md), [firmer inputs](doc
 and [the wall in front of its coolers](docs/pass2/wall.md): brick walls between the rows of
 coolers, laid by a robot, take ~12 dB off where a berm takes ~1, for about the cost of precast.
 What people raised in the public record, against the scorecard:
-[docs/hearing-record.md](docs/hearing-record.md). Pass 3 done, [the first neighbourhood module](docs/pass3/README.md): the first house in
+[docs/hearing-record.md](docs/hearing-record.md); the one they raised most,
+[the gas plant's discharge to Blacklick Creek](docs/pass2/creek.md), checked against the
+state's temperature rules. Pass 3 done, [the first neighbourhood module](docs/pass3/README.md): the first house in
 CortenForge, heated straight off the data center's warm water; it pays only for dense housing
 beside the campus. Decisions and next steps: [docs/PLAN.md](docs/PLAN.md).
 Sources: [docs/RESEARCH.md](docs/RESEARCH.md).

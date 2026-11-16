@@ -35,10 +35,59 @@ gensets vs batteries.
   how the campus looks, housing or hospitals.
 
 Pass 2b rerun with the walls (2026-11-16, Jon: "yes go with 1 then 2 please"): the premium over AI
-towers grows from ~$17M to ~$22M per module over 20 years. Next: the creek (pass 2e: the gas
-plant's permitted discharge against Pennsylvania's trout-water temperatures); the site's ASCE wind
-speed (Hazard Tool); a timed mason mock-up of the turned face; candidate scorecard measures
-(hearing record) for Jon.
+towers grows from ~$17M to ~$22M per module over 20 years.
+
+**Pass 2e, the creek: [docs/pass2/creek.md](pass2/creek.md).**
+- **The check.** `brownfield creek` reproduces DEP's Outfall 027 temperature limits exactly (19
+  of 19, and the first draft) from its public Thermal Limits Spreadsheet, then reruns them with
+  the creek's measured temperatures (USGS, 2013-2024; July's median 74.7 F, already above the 74 F
+  criterion) and Blacklick's own low flow (23.1 cfs, the outfall being above the Two Lick
+  confluence).
+- **What changes.** With both corrections the applicant's projected 85 F blowdown is over the limit
+  in February, June, July and December (December 66.2 F). An 85 F discharge switched on at once
+  would break the 2 F-an-hour rule in 11 of 19 periods. Over the 2013-2024 record, the creek
+  would be warmer than DEP's own target on 10-11% of days and 27-34% of July days.
+- **The scorecard.** A conventional module adds ~0.26 MGD of its own blowdown; the good neighbour
+  none.
+
+Next: the site's ASCE wind speed (Hazard Tool); a timed mason mock-up of the turned face; candidate
+scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 when DEP drafts it.
+
+**Pass 3c IN PROGRESS (2026-11-16), the winter garden and campus (D9, to write up):**
+- **Jon's direction:** "stone and light" and a public winter garden, then "it definetely should be
+  fallingwater inspired". Then: the whole campus nice, not a mask on a plain box; no trees near
+  buildings (roots); one connected building; no walls on the roof. Approved the result: "thats what
+  im talking about!"
+- **Built (uncommitted):**
+  - `forge/src/scene.rs`: renderer with a sun, shadow map (slope bias, focus box), perspective
+    with near clip, glass, stencilled pool reflections and exposure. `scene-check` gives the shadow
+    within 0.5% of h/tan.
+  - `forge/src/garden.rs` (mode `garden`; renders to `out/pass3/renders/<stamp>/`, copied to
+    `docs/pass3/`):
+    - one stone data hall, 122 x 129 m;
+    - coolers on its roof deck (14 m) in rows with sedum strips between, behind a 3 m stone
+      parapet;
+    - stone piers, ochre bands and towers;
+    - the Fallingwater-inspired winter garden built into its south face: trays, tray 1 900 mm deep;
+      a hearth tower up the hall's face; pools with a 2.4 m fall;
+    - trees at least 10 m from anything built.
+  - `src/brownfield/garden.py` with `params/garden.yaml`: heat 36-64 MWh/yr; floor water 23-31 C
+    against the ~50 C loop.
+- **Findings:**
+  - **Cantilever (ACI 318):** a 600 mm tray sags 44 mm long-term against a 23 mm limit, which is
+    Fallingwater's own failure (sag up to ~7 in., an $11.5M program); 900 mm passes at 20 mm.
+  - **Rooftop noise:** a 3 m parapet plus low-noise fans (-6 dB) gives at most 37 dB(A) at any
+    home, against pass 2d's ground cells at 44-47 dB(A).
+- **To do:**
+  - `garden.py`: replace `bluff_il` with the rooftop noise check (parapet and roof-overhang edges,
+    sources at deck + 2.88, h_m = mean path height; scan distances, because the level isn't
+    monotonic near a tall building). The params are added.
+  - Tests.
+  - Cost and carbon, from the research notes: Sheffield Winter Garden GBP 3,570/m2 (2002); WVDOT
+    concrete $1,695/CY; stone $36-49/ft2 (low conf); NSI stone EPD; IGU 42 kg/m2.
+  - An orbit GIF.
+  - `docs/pass3/garden.md`, D9, CORTENFORGE (no instancing; DC-mesh striping on flat slabs;
+    eq_active), README, and a note in pass 2d that rooftop beats the ground cells.
 
 **Pass 2b, costs (Jon: "price it first"): [docs/pass2/cost.md](pass2/cost.md).** Operator: ~$56M
 less up front and ~$14M a year saved per module, +$129-201M over 20 years (positive in every

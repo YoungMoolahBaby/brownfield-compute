@@ -1,0 +1,92 @@
+# Pass 2e: the gas plant's cooling tower blowdown to Blacklick Creek (NPDES PA0005037 amendment
+# A-2, Outfall 027), checked from public numbers (src/brownfield/creek.py). The semi-monthly tables
+# (criteria, DEP's default stream temperatures, flow multipliers) are in data/tls_tables.csv.
+# DEP documents: the Homer City Generation Redevelopment page, pa.gov/agencies/dep (second-draft
+# permit and fact sheet "NPDES Permit Amendment", June-July 2026; the applications, February 2026).
+
+permit:
+  discharge_mgd:
+    value: 6.84
+    unit: MGD, Outfall 027 design flow (cooling tower blowdown)
+    conf: high
+    source: "DEP second-draft fact sheet p.2 'Design Flow (MGD) 6.84'; p.4 'approximately 4,750 gallons per minute'"
+  intake_mgd:
+    value: 36
+    unit: MGD drawn from Two Lick Creek (external to the receiving stream)
+    conf: high
+    source: "DEP fact sheet Attachment 2 (Thermal Limits Spreadsheet inputs), every period: Intake (External) 36"
+  consumptive_mgd:
+    value: 29.16
+    unit: MGD consumed (evaporated) between intake and discharge
+    conf: high
+    source: "DEP fact sheet Attachment 2: Consumptive Loss 29.16 (= 36 - 6.84)"
+  pmf:
+    value: 1.0
+    unit: share of the stream the discharge mixes with (partial mix factor; 1 = complete mix)
+    conf: high
+    source: "DEP fact sheet Attachment 2; the applicant's CORMIX study (application Att. 8-1) finds complete mixing within 150-200 ft at Q7-10"
+  q710_cfs:
+    value: 34
+    unit: cfs, the design low flow DEP used (23 Blacklick Creek + 11 Two Lick Creek)
+    conf: high
+    source: "DEP fact sheet p.2: '34 cfs (23 cfs Blacklick Creek and 11 cfs Two Lick Creek)', basis USGS gauge 03042000"
+  twolick_release_cfs:
+    value: 11
+    unit: cfs, the minimum flow kept in Two Lick Creek below the plant's intake
+    conf: medium
+    source: "GAI Consultants Q7-10 memo, 2026-01-23 (application Att. 8-2): 'required by a Consent Order and Agreement to maintain a minimum flow of 11 cubic feet per second (cfs) at the Two Lick Dam'; the order itself not found"
+  outfall_upstream_ft:
+    value: 75
+    unit: ft the outfall sits upstream of the Two Lick Creek confluence, on Blacklick Creek
+    conf: medium
+    source: "applicant's CORMIX study (ASA, application Att. 8-1) p.2-2; conflicts with GAI's memo ('directly downstream of the confluence'), which is why DEP's Q7-10 adds Two Lick's 11 cfs"
+  blacklick_area_ratio:
+    value: 1.005
+    low: 1.0
+    high: 1.011
+    unit: drainage area at the outfall over the area at USGS 03042000 (Josephine, 0.5 mi upstream)
+    conf: high
+    source: "DEP fact sheet p.2: 194 mi2 at the outfall; USGS site file 03042000: 193 mi2 (StreamStats 192)"
+
+effluent:
+  max_daily_f:
+    value: 85
+    low: 84.4
+    high: 85.6
+    unit: F, the blowdown's maximum daily temperature as the applicant projects it
+    conf: medium
+    source: "NPDES amendment application Att. 4, Design Engineer Projection, Temperature 85 F max daily (winter and summer); applicant's CORMIX study Table 2-1 (Kiewit 2025): 84.4 F on a 90 F day, 85.6 F on a 105 F day"
+  summer_avg_f:
+    value: 79.7
+    unit: F, the blowdown's monthly average temperature, June-September
+    conf: medium
+    source: "applicant's CORMIX study Table 2-1 (Kiewit 2025): Jun-Sep 79.7, Apr-May and Oct-Nov 71.3, Dec-Mar 63.6"
+  sample_point_f:
+    value: 122
+    low: 122
+    high: 135
+    unit: F, operating (design 135) temperature labelled at the 'cooling tower blowdown' sample point on a vendor drawing
+    conf: low
+    source: "WQM amendment application p.135, Kiewit drawing D-WC0961-M05 rev 0 'Circulating Water Sample Panel' (not for construction, 2026-03-18); may be the hot side of the loop, not the discharge; unresolved"
+  cap_f:
+    value: 110
+    unit: F, the interim limit and the spreadsheet's ceiling on any recommended limit
+    conf: high
+    source: "draft permit p.39 (interim instantaneous maximum 110 F until 2026-12-01); DEP Thermal Limits Spreadsheet instructions p.3"
+  rate_f_per_h:
+    value: 2
+    unit: F, the most a heated discharge may change the stream's temperature in any hour
+    conf: high
+    source: "25 Pa. Code 96.6(b); draft permit Part C I.E"
+
+usgs:
+  q710_blacklick_1952_2008_cfs:
+    value: 26.6
+    unit: cfs, 7-day 10-year low flow at 03042000, climatic years 1952-2008 (the known case for our fit)
+    conf: high
+    source: "Stuckey and Roland, USGS Open-File Report 2011-1070, M7D10Y for 03042000"
+  q710_graceton_regulated_cfs:
+    value: 39.0
+    unit: cfs, 7-day 10-year low flow at 03042500 (Two Lick Creek at Graceton), regulated, 1969-2008
+    conf: high
+    source: "USGS OFR 2011-1070, M7D10YC for 03042500; the gauge is upstream of the plant's intake"

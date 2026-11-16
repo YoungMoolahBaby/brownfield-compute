@@ -11,10 +11,12 @@
 mod apartment;
 mod build;
 mod framing;
+mod garden;
 mod house;
 mod masonry;
 mod masonry_build;
 mod render;
+mod scene;
 mod sequence;
 mod wall;
 mod wall_robot;
@@ -477,6 +479,20 @@ fn main() {
             }
         }
         "build-probe" => build::probe(),
+        "garden" => {
+            if let Err(e) = garden::run(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        "scene-check" => match scene::check(root) {
+            Ok(true) => {}
+            Ok(false) => std::process::exit(1),
+            Err(e) => {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        },
         "wall" => {
             if let Err(e) = wall::run(root) {
                 eprintln!("{e}");
