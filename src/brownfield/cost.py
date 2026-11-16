@@ -3,8 +3,8 @@
 Two ledgers, because different people pay and gain:
 
 - **The data center operator** (good neighbour minus conventional): oversized dry coolers, a
-  smaller chiller plant, a berm, batteries instead of diesel; against the cooling electricity,
-  water and generator upkeep it saves.
+  smaller chiller plant, the walls round and between the coolers (pass 2d, `wall.py`), batteries
+  instead of diesel; against the cooling electricity, water and generator upkeep it saves.
 - **The heat business** (a utility, the town, or the operator): heat pumps, the main to Indiana
   borough, the town network and home connections; against heat sold at a discount to the gas it
   replaces, less the heat pumps' electricity and upkeep. The homes' savings are shown beside it.
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from . import module
+from . import module, wall
 from .module import GAL
 
 MCF_MWH = 1.037 * 0.29307  # MWh per thousand cubic feet of natural gas (~1,037 Btu/cf, EIA)
@@ -46,7 +46,8 @@ def ledgers(temp: np.ndarray, p: dict) -> dict:
     chillers_gn = g.peak_trim_mw * 1000 * p["cost.cooling.chiller_usd_kw"]
     diesel = backup_mw * 1000 * p["cost.backup.diesel_usd_kw"]
     battery = backup_mw * 1000 * p["pass2.backup.battery_minutes"] / 60 * p["cost.backup.battery_usd_kwh"]
-    capex_op = (oversize + chillers_gn + battery + p["cost.berm.usd"]) - (chillers_conv + diesel)
+    screen = wall.screen_usd(p)
+    capex_op = (oversize + chillers_gn + battery + screen) - (chillers_conv + diesel)
     saved_elec = (a.cooling_mwh - g.cooling_mwh) * elec
     saved_water = a.withdrawn_m3 / GAL / 1000 * p["cost.water.usd_per_kgal"]
     saved_diesel = backup_mw * 1000 * p["cost.backup.diesel_om_usd_kw_yr"]
@@ -68,14 +69,14 @@ def ledgers(temp: np.ndarray, p: dict) -> dict:
     hydrogen = backup_mw * 1000 * p["cost.backup.fuel_cell_usd_kw"] + h2_kg * p["cost.backup.h2_storage_usd_kg"]
 
     # If the operator keeps its diesel anyway: only the cooling differences remain.
-    capex_keep = oversize + chillers_gn + p["cost.berm.usd"] - chillers_conv
+    capex_keep = oversize + chillers_gn + screen - chillers_conv
     npv_keep = (saved_elec + saved_water) * af - capex_keep
     npv_op = yearly_op * af - capex_op
     npv_heat = yearly_heat * af - capex_heat
     return {
         "npv_keep_diesel": npv_keep, "npv_both": npv_op + npv_heat,
         "capex_op": capex_op, "oversize": oversize, "chillers_conv": chillers_conv, "chillers_gn": chillers_gn,
-        "diesel": diesel, "battery": battery, "berm": p["cost.berm.usd"],
+        "diesel": diesel, "battery": battery, "screen": screen,
         "saved_elec": saved_elec, "saved_water": saved_water, "saved_diesel": saved_diesel, "yearly_op": yearly_op,
         "npv_op": npv_op,
         "capex_heat": capex_heat, "hp": hp, "main": main, "network": network, "homes": homes,
@@ -89,7 +90,7 @@ def ledgers(temp: np.ndarray, p: dict) -> dict:
 def monte_carlo(temp: np.ndarray, params: dict, n: int, seed: int) -> dict[str, np.ndarray]:
     from .params import draw
 
-    d = draw(params, n, seed)
+    d = wall.pin_design(draw(params, n, seed), params)
     rows = [ledgers(temp, {k: float(v[i]) for k, v in d.items()}) for i in range(n)]
     return {k: np.array([r[k] for r in rows]) for k in rows[0]}
 
@@ -105,7 +106,16 @@ WORST = {
     "pass2.good_neighbour.hp_approach_k": "high", "cost.energy.elec_usd_mwh": "low",
     "cost.water.usd_per_kgal": "low", "cost.cooling.dry_usd_kw": "high", "cost.cooling.chiller_usd_kw": "high",
     "cost.backup.diesel_usd_kw": "low", "cost.backup.battery_usd_kwh": "high", "cost.backup.diesel_om_usd_kw_yr": "low",
-    "pass2.backup.battery_minutes": "high", "cost.berm.usd": "high", "cost.money.discount": "high",
+    "pass2.backup.battery_minutes": "high", "cost.money.discount": "high",
+    # The walls (pass 2d) at their dearest: prices, the robot's rate and cost, wind, soil, masonry.
+    "wall.cost.brick_usd_per_1000": "high", "wall.cost.mortar_usd_m3": "high", "wall.cost.grout_usd_m3": "high",
+    "wall.cost.rebar_usd_kg": "high", "pass3.cost.concrete_usd_m3": "high", "wall.cost.overhead_profit": "high",
+    "wall.cost.access_usd_m2": "high", "wall.cost.mason_usd_h": "high", "wall.cost.helper_usd_h": "high",
+    "wall.cost.operator_usd_h": "high", "wall.cost.helpers_per_mason": "high", "wall.cost.brick_per_mason_day": "low",
+    "wall.cost.pier_brick_factor": "high", "wall.cost.robot_bricks_per_h": "low", "wall.cost.robot_usd": "high",
+    "wall.cost.robot_years": "low", "wall.cost.robot_hours_yr": "low", "wall.cost.robot_upkeep": "high",
+    "wall.cost.robot_crew": "high", "wall.cost.robot_mason_share": "high", "wall.wind.v_mph": "high",
+    "wall.wind.cf_body": "high", "wall.wind.cf_end": "high", "wall.masonry.fm_psi": "low", "wall.masonry.s1_psf_ft": "low",
     "cost.money.life_yr": "low", "pass2.module.load_factor": "low", "pass2.noise.dry_oversize": "high",
 }
 
@@ -135,7 +145,7 @@ def report(temp: np.ndarray, params: dict, n: int = 2000, seed: int = 7) -> str:
         f"| Trim chillers ({c['peak_trim_mw']:.0f} MW) instead of a full chiller plant | "
         f"{(c['chillers_gn'] - c['chillers_conv']) / M:+,.1f} |",
         f"| Batteries instead of diesel generators | {(c['battery'] - c['diesel']) / M:+,.1f} |",
-        f"| Berm | {c['berm'] / M:+,.1f} |",
+        f"| Walls round and between the coolers (pass 2d) | {c['screen'] / M:+,.1f} |",
         f"| **Up-front difference** | **{c['capex_op'] / M:+,.1f}** |",
         f"| Cooling electricity saved, a year | {c['saved_elec'] / M:,.2f} |",
         f"| Water saved, a year | {c['saved_water'] / M:,.2f} |",
@@ -169,8 +179,8 @@ def vs_strong(temp: np.ndarray, rh: np.ndarray, p: dict) -> dict:
     """The good neighbour against the strongest conventional designs, cooling only (backup kept
     the same on both sides: dropping diesel is a choice either design can make).
 
-    - vs liquid + towers (AI): the same loops; good neighbour adds dry cooler oversizing and a berm
-      and differs in trim chillers; pays more electricity, saves the towers' water.
+    - vs liquid + towers (AI): the same loops; good neighbour adds dry cooler oversizing and the
+      walls between the coolers (pass 2d) and differs in trim chillers; pays more electricity, saves the towers' water.
     - vs air + evaporative (cloud): cooling plants too different to price from public data, so
       the answer is a break-even: how much more the good neighbour's plant may cost up front for
       its energy and water savings to pay it back.
@@ -185,7 +195,7 @@ def vs_strong(temp: np.ndarray, rh: np.ndarray, p: dict) -> dict:
     it = p["pass2.module.it_mw"]
     oversize = (p["pass2.noise.dry_oversize"] - 1) * it * 1.05 * 1000 * p["cost.cooling.dry_usd_kw"]
     chillers = (g.peak_trim_mw - ai.peak_trim_mw) * 1000 * p["cost.cooling.chiller_usd_kw"]
-    capex_ai = oversize + chillers + p["cost.berm.usd"]
+    capex_ai = oversize + chillers + wall.screen_usd(p)
     yearly_ai = (ai.cooling_mwh - g.cooling_mwh) * elec + ai.withdrawn_m3 / GAL / 1000 * water
     yearly_cloud = (cloud.cooling_mwh - g.cooling_mwh) * elec + cloud.withdrawn_m3 / GAL / 1000 * water
     return {
@@ -291,7 +301,7 @@ def tornado(temp: np.ndarray, rh: np.ndarray, params: dict) -> dict[str, list[tu
     centre = _outputs(temp, rh, base)
     swings = {k: [] for k in OUTPUTS}
     for name, prm in params.items():
-        if name.startswith("screen.") or not prm.varies:
+        if name.startswith(("screen.",) + wall.DESIGN_KEYS) or not prm.varies:
             continue
         lo = _outputs(temp, rh, dict(base, **{name: prm.low}))
         hi = _outputs(temp, rh, dict(base, **{name: prm.high}))

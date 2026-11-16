@@ -46,10 +46,10 @@ Every figure here is per 100 MW module.
   So the pattern costs a robot nothing, and the wall costs about the same as the plain
   value-engineered choice. The berm is cheap only when its earth is moved anyway: at mass-grading
   prices it comes to about $0.7M.
-- **The walls cost more than pass 2 assumed.** Pass 2b counted $1M for the berm. The cells cost
-  about $5.4-6.0M up front, so the good-neighbour premium over an AI hall with cooling towers
-  (~$17M per module over 20 years, [firm-up](firm-up.md)) grows. `brownfield cost` has not been
-  rerun with it yet.
+- **The walls cost more than pass 2 assumed.** Pass 2b counted $1M for the berm; the robot-laid
+  cells cost $5.4M. Rerun with them ([cost.md](cost.md), 2026-11-16), the good-neighbour premium
+  over an AI hall with cooling towers grows from ~$17M to ~$22M per module over 20 years (ahead in
+  6% of draws). The operator still comes out +$194M against the old design.
 - **The walls help least against the hum.** At 300 m the cells take 12 dB off at 500 Hz, 6.5 dB
   at 125 Hz and 4 dB at 63 Hz. Fan hum sits at the low end. One speaker at the pipeline hearing
   raised exactly this: sound people feel but dB(A) misses ([hearing record](../hearing-record.md)).

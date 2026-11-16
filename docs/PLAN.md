@@ -34,7 +34,9 @@ gensets vs batteries.
   often process, the creek, the gas plant's air, monitoring, wells and cleanup. No one raised
   how the campus looks, housing or hospitals.
 
-Next: rerun `brownfield cost` with the cells' cost in place of the $1M berm; the site's ASCE wind
+Pass 2b rerun with the walls (2026-11-16, Jon: "yes go with 1 then 2 please"): the premium over AI
+towers grows from ~$17M to ~$22M per module over 20 years. Next: the creek (pass 2e: the gas
+plant's permitted discharge against Pennsylvania's trout-water temperatures); the site's ASCE wind
 speed (Hazard Tool); a timed mason mock-up of the turned face; candidate scorecard measures
 (hearing record) for Jon.
 
@@ -53,7 +55,9 @@ FIRMED UP (pass 2c, Jon: "firm up pass 2 first"): [docs/pass2/firm-up.md](pass2/
 sensitivity ranking (`brownfield sensitivity`), homes around the campus from county parcels
 (`brownfield homes`: 109 within 300 m of the edge, 259 within 700 m, nearest ~20 m), water priced
 from a PA tariff, tower fans checked against ASHRAE 90.1, chip coolant from GB200 specs. Premium
-over AI towers now ~$17M per module (ahead in 12%); conclusions stand.
+over AI towers now ~$17M per module (ahead in 12%); conclusions stand. Rerun with pass 2d's
+walls ($5.4M in place of the $1M berm, 2026-11-16): premium over AI towers ~$22M (ahead in 6%),
+operator vs the old design +$194M, both ledgers +$35M (49%).
 **Pass 3 done, 3b in progress (Jon: "go with pass 3", then "go with the apartment building in
 CortenForge"): [docs/pass3/](pass3/README.md).** Step 1: the first house in CortenForge (`forge/`,
 measured to its exact dimensions; found a mass_properties pitfall with flush cutters). Step 2: its

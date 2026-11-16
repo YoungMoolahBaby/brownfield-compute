@@ -106,3 +106,10 @@ over the AI hall with towers grows from ~$15 to ~$17 million per module over 20 
 water makes saving it worth less; ahead in 12% of draws instead of 18%); the operator against the
 old design +$198 million (was +$201); the heat network -$159 million (unchanged); both together
 +$39 million, positive in 51% of draws. The conclusions stand.
+
+**Rerun 2026-11-16 with pass 2d's walls** ($5.4 million of brick between the coolers in place of
+the $1 million berm placeholder; [wall.md](wall.md), [cost.md](cost.md)): the premium over the AI
+hall with towers is ~$22 million (ahead in 6% of draws); the operator against the old design
++$194 million; both ledgers together +$35 million (49%). In `brownfield sensitivity` the central
+values move by about the walls' cost (-21.6 and +193.6 million in the tables above); the inputs
+and their order are unchanged, and none of the walls' own inputs enters a top ten.

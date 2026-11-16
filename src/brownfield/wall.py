@@ -368,16 +368,31 @@ def costs(p: dict) -> dict[str, dict]:
     return {o: option_cost(p, o, yc, yp) for o in OPTIONS}
 
 
+# The screen pass 2d chose for the good neighbour, which pass 2b's costs carry.
+DESIGN = "brick cells, patterned, by robot"
+# Design choices and the coolers' own geometry: held as chosen in a Monte Carlo, so the spread is
+# in prices, rates, wind, soil and materials.
+DESIGN_KEYS = ("wall.design.", "wall.brick.", "wall.yard.", "wall.acoustics.")
+
+
+def screen_usd(p: dict) -> float:
+    """Installed cost (USD) of the chosen screen for one module."""
+    yc = yard(p, "cells")
+    return option_cost(p, DESIGN, yc, yc)["usd"]
+
+
+def pin_design(d: dict, params: dict, extra: tuple = ()) -> dict:
+    n = len(next(iter(d.values())))
+    for k in d:
+        if k.startswith(DESIGN_KEYS + extra):
+            d[k] = np.full(n, params[k].value)
+    return d
+
+
 def monte_carlo(params: dict, n: int = 2000, seed: int = 7) -> dict[str, dict[str, np.ndarray]]:
     from .params import draw
 
-    d = draw(params, n, seed)
-    # Design choices and the coolers' own geometry stay as chosen: the spread is in prices, rates,
-    # wind, soil and materials.
-    fixed = ("wall.design.", "wall.brick.", "wall.yard.", "wall.acoustics.", "pass2.noise.dry_oversize", "pass2.module.")
-    for k in d:
-        if k.startswith(fixed):
-            d[k] = np.full(n, params[k].value)
+    d = pin_design(draw(params, n, seed), params, ("pass2.noise.dry_oversize", "pass2.module."))
     out = {o: {"usd": np.empty(n), "kg": np.empty(n)} for o in OPTIONS}
     for i in range(n):
         p = {k: float(v[i]) for k, v in d.items()}

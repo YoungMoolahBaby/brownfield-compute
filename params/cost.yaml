@@ -174,11 +174,3 @@ backup:
     conf: medium
     source: "PEM fuel cell systems typically 45-60% LHV (DOE fuel cell fact sheets)"
 
-berm:
-  usd:
-    value: 1000000
-    low: 300000
-    high: 3000000
-    unit: USD for an earth berm screening one module's coolers
-    conf: placeholder
-    source: "judgement: a few tens of thousands of m3 of earthworks; Homer City has old coal ash and spoil on site that could be moved, or not (to check)"
