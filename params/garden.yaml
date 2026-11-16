@@ -115,6 +115,11 @@ acoustics:
     unit: m of stone parapet above the deck (its top 13 cm below the fans' discharge)
     conf: high
     source: "the design; EVAPCO Layout Manual 320A and BAC Layout Guidelines: a unit's discharge at or above adjacent walls (wall.yaml)"
+  parapet_thick_m:
+    value: 0.4
+    unit: m, the stone parapet's thickness
+    conf: high
+    source: "the design (forge `garden`)"
   overhang_m:
     value: 2.6
     unit: m, the roof overhang beyond the parapet (a second edge for sound bending down to the ground)

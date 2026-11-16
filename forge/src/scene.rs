@@ -216,9 +216,34 @@ fn raster(a: (f64, f64, f64), b: (f64, f64, f64), c: (f64, f64, f64), w: usize, 
     if xmin > xmax || ymin > ymax {
         return;
     }
+    // Walk only each row's span inside the triangle (long thin triangles lying across the screen
+    // have bounding boxes far larger than themselves); the barycentric test below still decides.
+    let edges = [(a, b), (b, c), (c, a)];
     for y in ymin..=ymax {
-        for x in xmin..=xmax {
-            let (px, py) = (x as f64 + 0.5, y as f64 + 0.5);
+        let py = y as f64 + 0.5;
+        let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
+        for (p, q) in edges {
+            let (y0, y1) = (p.1.min(q.1), p.1.max(q.1));
+            if py < y0 - 1.0 || py > y1 + 1.0 {
+                continue;
+            }
+            let xs = if (q.1 - p.1).abs() < 1e-12 {
+                [p.0, q.0]
+            } else {
+                let t = ((py - p.1) / (q.1 - p.1)).clamp(0.0, 1.0);
+                let x = p.0 + t * (q.0 - p.0);
+                [x, x]
+            };
+            lo = lo.min(xs[0].min(xs[1]));
+            hi = hi.max(xs[0].max(xs[1]));
+        }
+        if lo > hi {
+            continue;
+        }
+        let x0 = ((lo - 1.0).floor().max(xmin as f64)) as usize;
+        let x1 = ((hi + 1.0).ceil().min(xmax as f64)) as usize;
+        for x in x0.max(xmin)..=x1.min(xmax) {
+            let px = x as f64 + 0.5;
             let w0 = ((b.0 - px) * (c.1 - py) - (c.0 - px) * (b.1 - py)) / area;
             let w1 = ((c.0 - px) * (a.1 - py) - (a.0 - px) * (c.1 - py)) / area;
             let w2 = 1.0 - w0 - w1;

@@ -8,9 +8,11 @@
 //! - glass running between the trays and turning the corners: the winter garden's rooms;
 //! - water under and in front of it: two pools stepping down over a stone ledge.
 //!
-//! Behind it, the cooler cells of pass 2d. Their town-side wall becomes a sandstone bluff that the
-//! building grows from, still solid, still the sound wall. A stone hearth tower marks where the
-//! data center's warm water comes in; the rooms' stone floors are heated by it.
+//! It is built against the data hall's south face: one stone hall with its dry coolers in rows on
+//! the roof behind a 3 m stone parapet. A stone hearth tower climbs the hall's face where the data
+//! center's warm water comes in; the rooms' stone floors are heated by it. East of the hall, the
+//! food houses (food.rs, pass 3d); round it all, an arboretum of native trees kept back from every
+//! foundation.
 //!
 //! Frame: millimetres; x east along the frontage, y south toward the town, z up from the upper
 //! pool's water. Dimensions below are written in metres and scaled.
@@ -22,6 +24,7 @@ use cortenforge::mesh::types::IndexedMesh;
 use nalgebra::{Point3, Vector3};
 use serde_json::json;
 
+use crate::food;
 use crate::scene::{self, Camera, Light, SLayer, add_box};
 
 /// Reflected in still water at height `zw` (mm): z -> 2 zw - z.
@@ -32,24 +35,24 @@ fn add_mirrored_at(out: &mut IndexedMesh, m: &IndexedMesh, zw: f64) {
 }
 
 type V = Vector3<f64>;
-const M: f64 = 1000.0;
+pub(crate) const M: f64 = 1000.0;
 
 /// A small, seeded generator (xorshift64*), so every stone lands the same way every run.
-struct Rng(u64);
+pub(crate) struct Rng(pub(crate) u64);
 
 impl Rng {
-    fn next(&mut self) -> f64 {
+    pub(crate) fn next(&mut self) -> f64 {
         self.0 ^= self.0 >> 12;
         self.0 ^= self.0 << 25;
         self.0 ^= self.0 >> 27;
         (self.0.wrapping_mul(0x2545F4914F6CDD1D) >> 11) as f64 / (1u64 << 53) as f64
     }
-    fn range(&mut self, a: f64, b: f64) -> f64 {
+    pub(crate) fn range(&mut self, a: f64, b: f64) -> f64 {
         a + (b - a) * self.next()
     }
 }
 
-fn b(out: &mut IndexedMesh, lo: [f64; 3], hi: [f64; 3]) {
+pub(crate) fn b(out: &mut IndexedMesh, lo: [f64; 3], hi: [f64; 3]) {
     add_box(out, V::new(lo[0], lo[1], lo[2]) * M, V::new(hi[0], hi[1], hi[2]) * M);
 }
 
@@ -64,7 +67,7 @@ fn stone_mass(out: &mut [IndexedMesh; 5], rng: &mut Rng, lo: [f64; 3], hi: [f64;
 }
 
 /// As `stone_mass`, with every stone's course height and length scaled by `k`.
-fn stone_mass_s(out: &mut [IndexedMesh; 5], rng: &mut Rng, lo: [f64; 3], hi: [f64; 3], faces: [bool; 4], k: f64) -> usize {
+pub(crate) fn stone_mass_s(out: &mut [IndexedMesh; 5], rng: &mut Rng, lo: [f64; 3], hi: [f64; 3], faces: [bool; 4], k: f64) -> usize {
     let j = 0.010 * k.sqrt();
     b(&mut out[0], [lo[0] + 0.03, lo[1] + 0.03, lo[2]], [hi[0] - 0.03, hi[1] - 0.03, hi[2] - 0.02]);
     let mut n = 0;
@@ -117,17 +120,19 @@ fn rounded(lo: [f64; 3], hi: [f64; 3], r: f64, tol_mm: f64) -> IndexedMesh {
     Solid::cuboid(half).round(r * M).translate((hi + lo) / 2.0).mesh_adaptive_par(tol_mm).geometry
 }
 
-fn append(out: &mut IndexedMesh, m: &IndexedMesh) {
+pub(crate) fn append(out: &mut IndexedMesh, m: &IndexedMesh) {
     scene::add_moved(out, m, V::zeros());
 }
 
-/// A tree: a trunk and a crown of three blended ellipsoids (m).
-fn tree(trunk: &mut IndexedMesh, crowns: &mut IndexedMesh, shade: &mut IndexedMesh, rng: &mut Rng, x: f64, y: f64, z0: f64, h: f64) {
+/// A tree: a trunk and a crown of lumps inside an ellipsoid `wf` x h wide and `zf` x h tall
+/// (round crowns ~0.32 / 0.27; tall ovals such as tulip poplar ~0.19 / 0.36).
+pub(crate) fn tree(trunk: &mut IndexedMesh, crowns: &mut IndexedMesh, shade: &mut IndexedMesh, rng: &mut Rng, x: f64, y: f64, z0: f64, h: f64,
+                   wf: f64, zf: f64) {
     let r = rng.range(0.18, 0.3);
     b(trunk, [x - r, y - r, z0], [x + r, y + r, z0 + h * 0.62]);
     // The crown: a cluster of lumps (spheres) inside an ellipsoid, unioned, so it reads as foliage.
     let c = V::new(x, y, z0 + h * 0.66) * M;
-    let (rw, rz) = (h * rng.range(0.26, 0.34) * M, h * 0.27 * M);
+    let (rw, rz) = (h * wf * rng.range(0.85, 1.12) * M, h * zf * M);
     let (mut s, mut d): (Option<Solid>, Option<Solid>) = (None, None);
     for k in 0..40 {
         let (u, v, w) = loop {
@@ -144,8 +149,9 @@ fn tree(trunk: &mut IndexedMesh, crowns: &mut IndexedMesh, shade: &mut IndexedMe
             s = Some(match s { Some(t) => t.union(lump), None => lump });
         }
     }
-    append(crowns, &s.expect("lumps").mesh_adaptive_par(180.0).geometry);
-    append(shade, &d.expect("lumps").mesh_adaptive_par(180.0).geometry);
+    let tol = 180.0 * (h / 15.0).max(1.0);
+    append(crowns, &s.expect("lumps").mesh_adaptive_par(tol).geometry);
+    append(shade, &d.expect("lumps").mesh_adaptive_par(tol).geometry);
 }
 
 pub struct Garden {
@@ -164,14 +170,17 @@ pub struct Garden {
     pub water_low: IndexedMesh,
     pub falls: IndexedMesh,
     pub trunks: IndexedMesh,
-    pub crowns: [IndexedMesh; 4],
-    pub crowns_dark: [IndexedMesh; 4],
+    pub crowns: Vec<IndexedMesh>,
+    pub crowns_dark: Vec<IndexedMesh>,
+    pub crown_colours: Vec<[f64; 3]>,
     pub plants: IndexedMesh,
+    pub food: food::Houses,
+    pub view: (f64, f64, f64, f64),
     pub stones: usize,
     pub areas: serde_json::Value,
 }
 
-pub fn build() -> Garden {
+pub fn build(spec: &food::Spec) -> Garden {
     let mut rng = Rng(0x9E3779B97F4A7C15);
     let mut stone: [IndexedMesh; 5] = Default::default();
     let mut concrete = IndexedMesh::new();
@@ -180,8 +189,9 @@ pub fn build() -> Garden {
     let mut roofs = IndexedMesh::new();
     let (mut water, mut falls, mut trunks, mut plants) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
     let mut water_low = IndexedMesh::new();
-    let mut crowns: [IndexedMesh; 4] = Default::default();
-    let mut crowns_dark: [IndexedMesh; 4] = Default::default();
+    let ns = spec.trees.len();
+    let mut crowns: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
+    let mut crowns_dark: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
     let mut n = 0;
 
     // --- The land and the water: upper ground +0.2 and the upper pool at 0 north of the ledge
@@ -318,7 +328,7 @@ pub fn build() -> Garden {
     }
     for (x, y) in [(13.0, 2.2), (32.0, 2.0), (19.0, 7.2)] {
         let (mut cr, mut cd) = (IndexedMesh::new(), IndexedMesh::new());
-        tree(&mut trunks, &mut cr, &mut cd, &mut rng, x, y, 3.55, 2.3);
+        tree(&mut trunks, &mut cr, &mut cd, &mut rng, x, y, 3.55, 2.3, 0.30, 0.27);
         append(&mut plants, &cr);
         append(&mut plants, &cd);
     }
@@ -388,33 +398,24 @@ pub fn build() -> Garden {
         b(&mut concrete, [tx - 0.8, ty - 0.8, deck + 7.0], [tx + 6.8, ty + 6.8, deck + 7.5]);
     }
 
-    // --- Trees: woods round the site, none within 10 m of anything built (roots), none between
-    // buildings. Indoor plants stay in raised stone planters.
-    let built: [(f64, f64, f64, f64); 3] = [(hx0 - 4.0, hx1 + 4.0, hy0 - 4.0, 20.0), (-4.0, 62.6, 0.0, 34.6), (-30.0, 92.0, 0.0, 3.0)];
-    // Clear of the views' camera positions too (with their sight lines' near end).
-    let eyes = [(36.0, 46.0), (62.0, 58.0), (-30.0, 95.0), (150.0, -40.0)];
-    let clear = |x: f64, y: f64| {
-        built.iter().all(|(x0, x1, y0, y1)| x < x0 - 10.0 || x > x1 + 10.0 || y < y0 - 10.0 || y > y1 + 10.0)
-            && eyes.iter().all(|(ex, ey)| (x - ex).hypot(y - ey) > 22.0)
-    };
-    let mut spots: Vec<(f64, f64, f64)> = vec![(-20.0, 24.0, 16.0), (-8.0, 46.0, 12.0), (-28.0, 40.0, 15.0), (76.0, 46.0, 17.0),
-                 (84.0, 30.0, 13.0), (96.0, 40.0, 15.0), (-40.0, 30.0, 14.0), (88.0, 56.0, 13.0), (-46.0, 50.0, 16.0), (30.0, 52.0, 14.0),
-                 (50.0, 58.0, 15.0), (10.0, 60.0, 13.0)];
-    for _ in 0..70 {
-        let side = rng.next();
-        let (x, y) = if side < 0.3 { (rng.range(-80.0, -48.0), rng.range(-150.0, 60.0)) }
-            else if side < 0.6 { (rng.range(110.0, 140.0), rng.range(-150.0, 60.0)) }
-            else if side < 0.8 { (rng.range(-80.0, 140.0), rng.range(-175.0, -150.0)) }
-            else { (rng.range(-60.0, 120.0), rng.range(46.0, 80.0)) };
-        spots.push((x, y, rng.range(12.0, 18.0)));
-    }
-    for (i, (x, y, h)) in spots.iter().enumerate() {
-        if !clear(*x, *y) {
-            continue;
-        }
-        let z0 = if *y < 20.0 { 0.2 } else { -2.2 };
-        tree(&mut trunks, &mut crowns[i % 4], &mut crowns_dark[i % 4], &mut rng, *x, *y, z0, *h);
-    }
+    // --- The food houses (pass 3d), east of the hall past a belt of the arboretum, and the
+    // arboretum: native trees in groves, each species kept back from every foundation by its own
+    // distance (params/food.yaml via food.json), none between buildings, clear of the views.
+    let reach = spec.trees.iter().map(|t| t.setback).fold(10.0, f64::max);
+    let x_food = hx1 + 2.0 * reach + 12.0;
+    let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, 0.0, 0.2, hx1 + 1.5, -40.0);
+    n += nf;
+    let (fx0, fx1, fy0, fy1) = fh.block;
+    let built: [(f64, f64, f64, f64); 5] = [(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (-4.0, 62.6, -3.0, 34.6), (-30.0, 92.0, -3.0, 3.0),
+                                            (fx0, fx1, fy0, fy1), fh.head];
+    let eyes = [(36.0, 46.0), (62.0, 58.0), (-30.0, 95.0), (150.0, -40.0), (((fx0 + fx1) / 2.0) - 30.0, fh.head.3 + 62.0)];
+    let groves = [(-20.0, 75.0), ((hx1 + fx0) / 2.0, -70.0), (40.0, 85.0), (-75.0, -20.0), (100.0, 80.0), (-75.0, -110.0),
+                  ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), ((hx1 + fx0) / 2.0, -150.0), (fx1 + 50.0, (fy0 + fy1) / 2.0)];
+    let placed = food::arboretum(spec, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &groves,
+                                 |_x: f64, y: f64| if y < 20.0 { 0.2 } else { -2.2 });
+    let view = (hx0.min(-90.0), fx1 + 60.0, fy0.min(hy0) - 80.0, 140.0);
+    let trees_json: Vec<serde_json::Value> = spec.trees.iter().zip(&placed)
+        .map(|(t, k)| json!({"name": t.name, "placed": k, "height_m": t.height, "setback_m": t.setback})).collect();
 
     let areas = json!({
         "glass_m2": {"level1": g1, "level2": g2},
@@ -425,22 +426,33 @@ pub fn build() -> Garden {
         "trays": {"level1": {"lo": t1.0, "hi": t1.1}, "level2": {"lo": t2.0, "hi": t2.1}, "roof": {"lo": t3.0, "hi": t3.1}},
         "cantilevers_m": {"level1_south_beyond_piers": 18.5 - 13.0, "level2_east_beyond_pier": 54.0 - 50.5},
         "level1_tray_depth_m": 0.9,
+        "food_houses": {"floor_m2": fh.floor_m2, "block": [fx0, fx1, fy0, fy1], "head_house": [fh.head.0, fh.head.1, fh.head.2, fh.head.3]},
+        "arboretum": trees_json,
     });
-    Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, trunks, crowns, crowns_dark, plants, stones: n, areas }
+    let crown_colours = spec.trees.iter().map(|t| t.colour).collect();
+    Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, trunks, crowns, crowns_dark,
+             crown_colours, plants, food: fh, view, stones: n, areas }
+}
+
+fn hx_mid(_g: &Garden) -> f64 {
+    31.0 // the hall's centre line (x -30..92)
 }
 
 pub fn run(root: &Path) -> std::io::Result<()> {
     let t0 = std::time::Instant::now();
-    let g = build();
+    let spec = food::spec(root);
+    let g = build(&spec);
     let tris = |m: &IndexedMesh| m.faces.len();
     let total: usize = g.stone.iter().map(tris).sum::<usize>() + tris(&g.concrete) + tris(&g.glass) + tris(&g.sash) + tris(&g.ground)
-        + tris(&g.yard) + tris(&g.coolers) + tris(&g.fans) + g.crowns.iter().map(tris).sum::<usize>() + tris(&g.plants);
+        + tris(&g.yard) + tris(&g.coolers) + tris(&g.fans) + g.crowns.iter().chain(g.crowns_dark.iter()).map(tris).sum::<usize>() + tris(&g.plants)
+        + tris(&g.food.glass) + tris(&g.food.frame) + tris(&g.food.crops) + tris(&g.food.lamps);
     println!("garden: {} stones, {} triangles, built in {:.1} s", g.stones, total, t0.elapsed().as_secs_f64());
 
     // Reflections: everything standing above the water, mirrored at each pool's water line; each
     // set shows only where its own pool's water does (the renderer's stencil).
     let reflect = |zw: f64| -> Vec<IndexedMesh> {
-        let mut v: Vec<IndexedMesh> = (0..12).map(|_| IndexedMesh::new()).collect();
+        let ns = g.crowns.len();
+        let mut v: Vec<IndexedMesh> = (0..8 + 2 * ns).map(|_| IndexedMesh::new()).collect();
         for (i, m) in g.stone.iter().enumerate() {
             add_mirrored_at(&mut v[i], m, zw);
         }
@@ -448,14 +460,13 @@ pub fn run(root: &Path) -> std::io::Result<()> {
         add_mirrored_at(&mut v[6], &g.sash, zw);
         add_mirrored_at(&mut v[7], &g.trunks, zw);
         for (i, m) in g.crowns.iter().chain(g.crowns_dark.iter()).enumerate() {
-            add_mirrored_at(&mut v[8 + i % 4], m, zw);
+            add_mirrored_at(&mut v[8 + i], m, zw);
         }
         v
     };
     let refl = [reflect(0.0), reflect(-2.4 * M)];
     const CONCRETE: [f64; 3] = [0.94, 0.85, 0.66];
     const SASH: [f64; 3] = [0.46, 0.17, 0.12];
-    const AUTUMN: [[f64; 3]; 4] = [[0.74, 0.42, 0.15], [0.82, 0.63, 0.22], [0.58, 0.26, 0.12], [0.50, 0.52, 0.22]];
     let mut layers: Vec<SLayer> = Vec::new();
     for (i, m) in g.stone.iter().enumerate() {
         layers.push(SLayer::solid(m, STONE[i]));
@@ -471,11 +482,15 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     layers.push(SLayer::solid(&g.roofs, [0.40, 0.50, 0.28]));
     layers.push(SLayer::solid(&g.trunks, [0.30, 0.24, 0.19]));
     for (i, m) in g.crowns.iter().enumerate() {
-        layers.push(SLayer::solid(m, AUTUMN[i]).smooth());
+        layers.push(SLayer::solid(m, g.crown_colours[i]).smooth());
     }
     for (i, m) in g.crowns_dark.iter().enumerate() {
-        layers.push(SLayer::solid(m, AUTUMN[i].map(|c| c * 0.8)).smooth());
+        layers.push(SLayer::solid(m, g.crown_colours[i].map(|c| c * 0.8)).smooth());
     }
+    layers.push(SLayer::solid(&g.food.frame, [0.84, 0.85, 0.84]));
+    layers.push(SLayer::solid(&g.food.crops, [0.32, 0.55, 0.25]));
+    layers.push(SLayer::solid(&g.food.lamps, [1.0, 0.88, 0.66]).no_shadow());
+    layers.push(SLayer::solid(&g.food.paving, [0.70, 0.66, 0.58]).no_shadow());
     layers.push(SLayer::solid(&g.plants, [0.36, 0.55, 0.30]).smooth());
     // Water reflects only part of the light: the reflections are dimmed.
     let dim = |c: [f64; 3]| c.map(|v| v * 0.62);
@@ -487,12 +502,15 @@ pub fn run(root: &Path) -> std::io::Result<()> {
         layers.push(SLayer::solid(&set[5], dim(CONCRETE)).mirrored(zw, pool));
         layers.push(SLayer::solid(&set[6], dim(SASH)).mirrored(zw, pool));
         layers.push(SLayer::solid(&set[7], dim([0.30, 0.24, 0.19])).mirrored(zw, pool));
-        for i in 0..4 {
-            layers.push(SLayer::solid(&set[8 + i], dim(AUTUMN[i])).smooth().mirrored(zw, pool));
+        let ns = g.crowns.len();
+        for i in 0..2 * ns {
+            let c = g.crown_colours[i % ns].map(|v| if i >= ns { v * 0.8 } else { v });
+            layers.push(SLayer::solid(&set[8 + i], dim(c)).smooth().mirrored(zw, pool));
         }
     }
     // Translucent last: glass, the water's skin, the falling water.
     layers.push(SLayer::translucent(&g.glass, [0.70, 0.82, 0.86], 0.28));
+    layers.push(SLayer::translucent(&g.food.glass, [0.78, 0.86, 0.88], 0.22));
     layers.push(SLayer::water(&g.water, [0.10, 0.18, 0.20], 0.42, 1));
     layers.push(SLayer::water(&g.water_low, [0.10, 0.18, 0.20], 0.42, 2));
     layers.push(SLayer::translucent(&g.falls, [0.92, 0.95, 0.96], 0.6));
@@ -504,7 +522,10 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     let mut light = Light::sun_at(150.0, 32.0); // an autumn afternoon sun from the south-west
     light.shadow_px = 6144;
     light.shadow_px = 8192;
-    light.shadow_focus = Some((V::new(-85.0, -180.0, -5.0) * M, V::new(145.0, 85.0, 35.0) * M));
+    let (vx0, vx1, vy0, vy1) = g.view;
+    light.shadow_focus = Some((V::new(vx0, vy0, -5.0) * M, V::new(vx1, vy1, 40.0) * M));
+    let (fx0, fx1, fy0, fy1) = g.food.block;
+    let (fxm, fym) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
     let p = |x: f64, y: f64, z: f64| Point3::new(x * M, y * M, z * M);
     let views = [
         ("garden_falls.png", Camera::Persp { eye: p(36.0, 46.0, -0.6), target: p(23.0, 10.0, 3.6), up: V::z(), fov_deg: 52.0, w: 1600, h: 1000 }, 1.0, false),
@@ -514,6 +535,10 @@ pub fn run(root: &Path) -> std::io::Result<()> {
         ("campus_aerial.png", Camera::Persp { eye: p(190.0, 90.0, 120.0), target: p(30.0, -70.0, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
         ("campus_hall.png", Camera::Persp { eye: p(150.0, -40.0, 1.7), target: p(92.0, -80.0, 10.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
         ("campus_front.png", Camera::Persp { eye: p(-30.0, 95.0, 14.0), target: p(28.0, -25.0, 8.0), up: V::z(), fov_deg: 52.0, w: 1600, h: 1000 }, 1.0, false),
+        ("campus_food.png", Camera::Persp { eye: p(fx1 + 260.0, 330.0, 330.0), target: p((hx_mid(&g) + fxm) / 2.0, fym, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
+        ("food_inside.png", Camera::Persp { eye: p(fxm + 1.2, fy1 - 4.0, 2.0), target: p(fxm + 1.0, fy1 - 60.0, 2.6), up: V::z(), fov_deg: 68.0, w: 1600, h: 1000 }, 1.3, false),
+        ("food_head.png", Camera::Persp { eye: p(fxm - 30.0, g.food.head.3 + 62.0, -0.4), target: p(fxm, fy1 + 4.0, 5.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
+        ("arboretum.png", Camera::Persp { eye: p(-30.0, 95.0, 1.7), target: p(30.0, 40.0, 6.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
     ];
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let run_dir = out.join("renders").join(stamp.to_string());

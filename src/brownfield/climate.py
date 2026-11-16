@@ -70,6 +70,25 @@ def hourly_temp_rh(lat: float, lon: float) -> tuple[np.ndarray, np.ndarray]:
     return np.array(data["t"], dtype=float), np.array(data["rh"], dtype=float)
 
 
+def hourly_weather(lat: float, lon: float) -> dict[str, np.ndarray]:
+    """8760 hours of the typical year, cached: air temperature `t` (C), relative humidity `rh` (%),
+    global horizontal irradiance `ghi` (W/m2), and `hour_utc` (0-23). PVGIS times are UTC."""
+    lat, lon = round(lat, 3), round(lon, 3)
+    path = CACHE_DIR / f"{lat:.3f}_{lon:.3f}_wx.json"
+    if not path.exists():
+        resp = requests.get(PVGIS_TMY, params={"lat": lat, "lon": lon, "outputformat": "json", "usehorizon": 0},
+                            headers={"User-Agent": USER_AGENT}, timeout=120)
+        resp.raise_for_status()
+        rows = resp.json()["outputs"]["tmy_hourly"]
+        data = {"t": [round(float(r["T2m"]), 1) for r in rows], "rh": [round(float(r["RH"]), 1) for r in rows],
+                "ghi": [round(float(r["G(h)"]), 1) for r in rows],
+                "hour_utc": [int(r["time(UTC)"][9:11]) for r in rows]}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(data))
+    data = json.loads(path.read_text())
+    return {k: np.array(v, dtype=int if k == "hour_utc" else float) for k, v in data.items()}
+
+
 def wet_bulb(t: np.ndarray, rh: np.ndarray) -> np.ndarray:
     """Wet-bulb temperature (C) from air temperature (C) and relative humidity (%), Stull (2011),
     J. Appl. Meteor. Climatol. 50: within ~0.3 K for RH 5-99% and -20 to 50 C at sea-level pressure."""

@@ -76,18 +76,45 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
 - **Findings:**
   - **Cantilever (ACI 318):** a 600 mm tray sags 44 mm long-term against a 23 mm limit, which is
     Fallingwater's own failure (sag up to ~7 in., an $11.5M program); 900 mm passes at 20 mm.
-  - **Rooftop noise:** a 3 m parapet plus low-noise fans (-6 dB) gives at most 37 dB(A) at any
-    home, against pass 2d's ground cells at 44-47 dB(A).
+  - **Rooftop noise (`brownfield garden`):** a 3 m parapet plus low-noise fans (-6 dB) gives at
+    most 37.0 dB(A) at any distance.
+    - Corrected the same day: like for like, pass 2d's walled ground cells are quieter at the
+      distances where homes are. With pass 2 fans the cells are above 40 dB(A) out to 32-76 m,
+      the roof to 221 m.
+    - So the roof meets the guideline because of the fans, which would help the cells equally.
+    - The roof was chosen for the building (one roofed hall, no walls), not for noise.
+- **Done since:** the rooftop noise check is in `brownfield garden` (`rooftop_noise`, `ground_cells`)
+  with `tests/test_garden.py` (8 tests).
 - **To do:**
-  - `garden.py`: replace `bluff_il` with the rooftop noise check (parapet and roof-overhang edges,
-    sources at deck + 2.88, h_m = mean path height; scan distances, because the level isn't
-    monotonic near a tall building). The params are added.
-  - Tests.
   - Cost and carbon, from the research notes: Sheffield Winter Garden GBP 3,570/m2 (2002); WVDOT
     concrete $1,695/CY; stone $36-49/ft2 (low conf); NSI stone EPD; IGU 42 kg/m2.
   - An orbit GIF.
-  - `docs/pass3/garden.md`, D9, CORTENFORGE (no instancing; DC-mesh striping on flat slabs;
-    eq_active), README, and a note in pass 2d that rooftop beats the ground cells.
+  - `docs/pass3/garden.md`, including "the machines' side" from the food research notes:
+    - rooftop isolators (cooling towers 3.0-4.5 in., UH spec; the ASHRAE table rows not found);
+    - G1 copper 300 / silver 200 A/month, ISO class 8;
+    - W40/W45 water classes, 25 um loop filtration (OCP 2025).
+  - D9, CORTENFORGE (no instancing; DC-mesh striping on flat slabs; eq_active; our scene renderer
+    walks row spans now), README.
+
+**Pass 3d IN PROGRESS (2026-11-16), winter food (D10): [docs/pass3/food.md](pass3/food.md).**
+- `brownfield food` (`food.py`, `params/food.yaml`, `tests/test_food.py`, 8 tests);
+  `climate.hourly_weather` adds PVGIS sunlight.
+- Design point: 43.5 ha of lit tomato glasshouses per 100 MW module, heated straight off the 50 C
+  return (twice the usual pipe), with a 200 m3/ha tank.
+  - 24% of the module's heat; a third with the town network.
+  - 29,500 t a year, the fresh tomatoes of 3.4 million people (more than Pittsburgh); 478 jobs.
+  - Lamps 84 GWh a year (+11% electricity), 29 MW at peak.
+  - Margin before overheads $17M a year on the module's heat, against $10M on gas; 35,000 t CO2 a
+    year saved.
+- Lettuce loses money at field prices.
+- Known cases: the yield is calibrated on Leamington. The model's heat is 24% above Ontario
+  growers', and it overstates the lit/unlit gain (1.49 against 1.27).
+- Stellarator (option): the lamps are 8% of its output; its rejected heat could carry ~330 ha more.
+  The limit is the market.
+- Forge `garden` draws the houses from `out/pass3/food.json`, plus the arboretum of 8 native
+  species set back by NHBC zones x mature height.
+- Research notes (scratchpad `food_inputs.md`) are folded into params and RESEARCH is still to do.
+- **To do:** RESEARCH.md entries; SCORECARD rows (food grown, lamp power, heat put to use); README.
 
 **Pass 2b, costs (Jon: "price it first"): [docs/pass2/cost.md](pass2/cost.md).** Operator: ~$56M
 less up front and ~$14M a year saved per module, +$129-201M over 20 years (positive in every
@@ -233,6 +260,25 @@ at the campus edge, funded in the community benefits agreement.
   connection. Rammed earth itself suits dry climates. Jon: the desert "might be good for some sort
   of earthship like those tire homes, just updated": an off-grid home, closer to mothership than
   to this project. Kept from it: making units on site in our own moulds (D7).
+- **D9** (2026-11-16) The campus as one building. Jon: "stone and light", a "public winter garden",
+  "it definetely should be fallingwater inspired"; then "i dont want it to look decieving. we should
+  just build nice things ... even if its a data center"; no trees near buildings ("the roots could
+  potentially hurt the building"); the buildings connected; no walls on the roof. Approved: "thats
+  what im talking about!" Built as one stone hall with its coolers on the roof behind a 3 m parapet,
+  the garden on its town face. Steers: the terraces sized to ACI 318 (Fallingwater's sagged); the
+  roof chosen for the building, not for noise (like for like the ground cells are quieter).
+- **D10** (2026-11-16) Winter food. Jon: "im just trying to maximize that warm air going to
+  something inspiring/usefful", "i definetely think it should be put into growing food in the
+  winter", "native pa trees outside would look great", and "the stellarator in the future, so we
+  will estimate that into this model where energy might take away from anything"; "this amount of
+  compute is a blessing or a curse. and we need to honor it like a blessing". The steer:
+  - Winter food needs light: the lamps' electricity is the energy that "takes away", shown in the
+    model.
+  - The stellarator stays an option (CLAUDE.md): it covers the lamps and more heat, and nothing
+    depends on it.
+  - The market, not the heat, is the limit (AppHarvest).
+  - The machines' health is engineering: vibration under rooftop coolers, intake air near the gas
+    plant and ash site, loop water quality, lightning on the towers.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

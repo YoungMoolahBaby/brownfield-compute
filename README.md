@@ -35,8 +35,14 @@ The campus is one building:
 
   Its two glass rooms have about 540 m² of floor between them. A stone tower climbs the hall's
   face where the warm water comes in.
-- **Trees kept back.** No tree stands within 10 m of anything built, so roots stay clear of the
-  foundations. Indoor plants grow in raised stone planters.
+- **Food houses for the winter.** About 43 ha (107 acres) of glasshouses east of the hall grow
+  tomatoes through the winter. They're heated straight off the data center's 50 °C water, with
+  grow lights where the winter sun falls short, and have a stone head house facing the town
+  ([pass 3d](docs/pass3/food.md)).
+- **An arboretum of native Pennsylvania trees:** oaks, sugar maple, black cherry, tulip poplar,
+  sycamore, hemlock and white pine. Each species stands back from every foundation by its own
+  root reach (UK house-building rules: up to 1.25 times a tree's mature height for oaks). Indoor
+  plants grow in raised stone planters.
 
 <p>
 <img src="docs/pass3/garden_hero.png" width="49%" alt="The winter garden from across its lower pool: concrete terraces and bands of glass against the hall's stone face">
@@ -55,10 +61,12 @@ What the numbers say so far (in progress; [plan](docs/PLAN.md)):
   900 mm it sags 20 mm. Fallingwater's own terraces were short of steel. They had sagged by up to
   about 7 inches by the mid-1990s and had to be strengthened
   ([Fallingwater's preservation history](https://fallingwater.org/preservation-history/)).
-- **Noise.** A first check puts the coolers on the roof under the 40 dB(A) night guideline at
-  every distance from the building. It assumes low-noise fans and uses pass 2d's sound model; it
-  isn't in the project's code yet. The roof hides the coolers from homes on the ground. Homes
-  higher up, looking down on the roof, would get less shielding.
+- **Noise.** With low-noise fans, the coolers on the roof stay under the 40 dB(A) night
+  guideline at every distance from the building (`brownfield garden`, pass 2d's sound model).
+  That is down to the fans, not the roof. With the same fans, pass 2d's walled cells on the
+  ground are quieter at the distances where homes are. The roof was chosen for the building: one
+  roofed hall, no walls standing in the open. Homes higher up, looking down on the roof, would
+  get less shielding.
 - **Not known yet:**
   - what a stone hall and the garden cost to build and to run, against a plain box;
   - their carbon;
@@ -100,7 +108,13 @@ yet.
     checked against the state's temperature rules.
 - **Pass 3 done**, [the first neighbourhood module](docs/pass3/README.md): the first house in
   CortenForge, heated straight off the data center's warm water. It pays only for dense housing
-  beside the campus. In progress: the campus and winter garden above.
+  beside the campus. In progress: the campus and winter garden above, and
+  [winter food](docs/pass3/food.md):
+  - One module's spare heat carries ~43 ha of lit tomato glasshouses: ~29,500 t a year and ~480
+    jobs.
+  - With the town network, a third of the module's heat is put to use instead of a tenth.
+  - The grow lights add 11% to the module's electricity.
+  - The limit is the market, not the heat: that's more tomatoes than the Pittsburgh metro eats.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

@@ -8,7 +8,8 @@
 - The cantilever: level 1's terrace as a reinforced concrete strip, ACI 318-19: strength
   (Mu <= phi As fy (d - a/2)), and deflection with the effective moment of inertia (Bischoff's
   form, 24.2.3.5) and the long-term multiplier lambda = xi / (1 + 50 rho').
-- Sound: the bluff as one more screen in front of the cooler cells (pass 2d's ISO 9613-2 model).
+- Sound: the coolers on the hall's roof behind its parapet, against pass 2d's walled cells on the
+  ground (pass 2d's ISO 9613-2 model, scanned over distance).
 """
 
 from __future__ import annotations
@@ -122,22 +123,60 @@ def cantilever(p: dict, span_m: float | None = None, depth_mm: float | None = No
             "long_term_mm": long_term, "limit_mm": L / p[c + "limit_ratio"], "ok": long_term <= L / p[c + "limit_ratio"]}
 
 
-# --- Sound: the bluff as one more screen ------------------------------------------------------------
+# --- Sound: the coolers on the hall's roof -----------------------------------------------------------
 
-def bluff_il(p: dict, distances=(120.0, 300.0, 700.0)) -> dict:
-    """Insertion loss (dB) of walled cells alone, and with the bluff in front of them, homes facing
-    across the rows (pass 2d's model)."""
+def rooftop_screen(p: dict, parapet_m: float | None = None):
+    """What a home on the ground sees between it and the roof's fans: the parapet's two top edges
+    (unless it is zero), then the roof overhang's edge at deck height. x from the coolers' edge."""
     from . import wall
 
-    yd = wall.yard(p, "cells")
-    s, depth, width = wall.screen_for(p, yd, "across")
     a = "garden.acoustics."
-    x0 = p["wall.yard.side_to_wall_m"] + wall.wall_thick(p) + p[a + "bluff_offset_m"]
-    hb = p[a + "bluff_h_m"]
-    with_bluff = wall.Screen("cells + bluff", tuple(sorted(s.edges + ((x0, hb), (x0 + p[a + "bluff_thick_m"], hb)))), s.footprint_m)
+    gap, deck, t = p["wall.yard.side_to_wall_m"], p[a + "deck_m"], p[a + "parapet_thick_m"]
+    hp = p[a + "parapet_m"] if parapet_m is None else parapet_m
+    edge = (gap + t + p[a + "overhang_m"], deck)
+    if hp <= 0:
+        return wall.Screen("roof edge only", (edge,), 0.0)
+    return wall.Screen(f"{hp:g} m parapet", ((gap, deck + hp), (gap + t, deck + hp), edge), t)
+
+
+def rooftop_noise(p: dict, parapet_m: float | None = None, fan_cut_db: float | None = None, distances=None) -> dict:
+    """Night level at homes on the ground (dB(A)) from the coolers on the roof, scanned over distance,
+    because near a tall building the level rises before it falls. pass 2d's ISO 9613-2 model with the
+    sources at deck + fan height and the ground term at the mean path height. The coolers stand at the
+    makers' spacing with no walls between them (wall.py's `perimeter` yard)."""
+    from . import noise, wall
+
+    a = "garden.acoustics."
+    s = rooftop_screen(p, parapet_m)
+    yd = wall.yard(p, "perimeter")
+    hs, hr = p[a + "deck_m"] + p["wall.yard.fan_h_m"], p["wall.acoustics.ear_h_m"]
+    q = dict(p, **{"pass2.noise.h_m": (hs + hr) / 2})
+    cut = p[a + "fan_cut_db"] if fan_cut_db is None else fan_cut_db
+    lw = noise.module_lw("good neighbour", p["pass2.module.it_mw"] * 1.2, p) - cut
+    rs = np.geomspace(10.0, 3000.0, 60) if distances is None else np.asarray(distances, dtype=float)
+    lv = np.array([wall.level(lw, r, s, yd.length, yd.depth, hs, hr, q) for r in rs])
+    target = p[a + "target_db"]
+    over = rs[lv > target]
+    return {"screen": s.name, "fan_cut_db": cut, "lw": lw, "r": rs, "levels": lv, "loudest_db": float(lv.max()),
+            "at_m": float(rs[lv.argmax()]), "over_to_m": float(over.max()) if over.size else 0.0, "target": target}
+
+
+def ground_cells(p: dict, fan_cut_db: float = 0.0, distances=None) -> list[dict]:
+    """pass 2d's walled cells on the ground, scanned the same way, for comparison."""
+    from . import noise, wall
+
+    lw = noise.module_lw("good neighbour", p["pass2.module.it_mw"] * 1.2, p) - fan_cut_db
     hs, hr = p["wall.yard.fan_h_m"], p["wall.acoustics.ear_h_m"]
-    return {r: (wall.insertion_loss(r, s, width, depth, hs, hr, p), wall.insertion_loss(r, with_bluff, width, depth, hs, hr, p))
-            for r in distances}
+    rs = np.geomspace(10.0, 3000.0, 60) if distances is None else np.asarray(distances, dtype=float)
+    yd = wall.yard(p, "cells")
+    out = []
+    for direction in ("across", "along"):
+        s, depth, width = wall.screen_for(p, yd, direction)
+        lv = np.array([wall.level(lw, r, s, width, depth, hs, hr, p) for r in rs])
+        over = rs[lv > p["garden.acoustics.target_db"]]
+        out.append({"direction": direction, "loudest_db": float(lv.max()), "at_m": float(rs[lv.argmax()]),
+                    "over_to_m": float(over.max()) if over.size else 0.0})
+    return out
 
 
 def report(p: dict, temp: np.ndarray) -> str:
@@ -169,7 +208,20 @@ def report(p: dict, temp: np.ndarray) -> str:
               f"- Tip deflection: {cv['d_dead_mm']:.1f} mm under dead load, {cv['d_live_mm']:.1f} mm more under full live load; long-term "
               f"(x {cv['lambda']:.2f} on the sustained part) {cv['long_term_mm']:.1f} mm against the L/{p['garden.cantilever.limit_ratio']:g} limit "
               f"{cv['limit_mm']:.0f} mm: {'within' if cv['ok'] else 'OVER'}."]
-    il = bluff_il(p)
-    lines += ["", "**Sound**: walled cells alone, then with the bluff in front (homes across the rows):", ""]
-    lines += [f"- {r:,.0f} m: {a:.1f} dB -> {b:.1f} dB" for r, (a, b) in il.items()]
+    a = "garden.acoustics."
+    lines += ["", f"**Sound at homes on the ground, at night** (pass 2d's ISO 9613-2 model; coolers on the {p[a + 'deck_m']:g} m roof "
+              f"deck, homes facing across the rows; WHO night guideline {p[a + 'target_db']:g} dB(A))", "",
+              "| Coolers | Fans | Loudest at any distance | Above the guideline out to |", "|---|---|---|---|"]
+    for cut in (0.0, p[a + "fan_cut_db"]):
+        fans = "as pass 2" if cut == 0 else f"low-noise (-{cut:g} dB)"
+        for g in ground_cells(p, cut):
+            far = f"{g['over_to_m']:.0f} m" if g["over_to_m"] > 0 else "nowhere"
+            lines.append(f"| On the ground in walled cells (pass 2d), homes {g['direction']} the rows | {fans} | "
+                         f"{g['loudest_db']:.1f} dB(A) at {g['at_m']:.0f} m | {far} |")
+    for hp in (0.0, p[a + "parapet_m"]):
+        for cut in (0.0, p[a + "fan_cut_db"]):
+            r = rooftop_noise(p, parapet_m=hp, fan_cut_db=cut)
+            fans = "as pass 2" if cut == 0 else f"low-noise (-{cut:g} dB)"
+            far = f"{r['over_to_m']:.0f} m" if r["over_to_m"] > 0 else "nowhere"
+            lines.append(f"| On the roof, {r['screen']} | {fans} | {r['loudest_db']:.1f} dB(A) at {r['at_m']:.0f} m | {far} |")
     return "\n".join(lines)

@@ -1,0 +1,478 @@
+# Pass 3d: winter food on the data center's warm water (D10). Inputs to src/brownfield/food.py.
+# Sources gathered 2026-11-16 (research notes); "not opened" marks a figure taken from a search summary.
+
+light:
+  par_per_w:
+    value: 2.1
+    low: 1.96
+    high: 2.3
+    unit: umol of growing light (PAR) per J of global horizontal sunlight (so x W/m2 = umol/m2/s)
+    conf: medium
+    source: "Bionumbers 100934: 2.1 (1.86-2.31) mol/MJ, citing Agric. For. Meteorol. 97 (1999) 21-31; low: MSU/GPN 2021 ~1.96 (not opened); high: R bigleaf default 0.5 x 4.6 = 2.3"
+  trans_glass:
+    value: 0.73
+    low: 0.72
+    high: 0.80
+    unit: share of outside PAR reaching the crop in a Venlo glasshouse, with its structure and one energy screen
+    conf: medium
+    source: "Kempkes, Janse, Swinkels, Hemming, Acta Hort 1296 (2020), edepot.wur.nl/538065: reference Venlo 73% (Luxous 4317 screen), 72% (RES 10); high: WUR Winterlight design +10%"
+  trans_poly:
+    value: 0.62
+    low: 0.50
+    high: 0.77
+    unit: share of outside PAR reaching the crop in a gutter-connected double-polyethylene house
+    conf: low
+    source: "derived: 0.73 x 0.85 (Washington State Extension: double poly ~15% less than glass, not opened); film alone 74-77% (Virginia Tech SPES-821NP, 2026); low: Lanoue et al. 2026 citing Roberts 1998, winter DLI inside 'may be half' of outside. No measured value with structure found"
+  led_umol_j:
+    value: 3.0
+    low: 2.5
+    high: 3.7
+    unit: umol/J, grow-light efficacy (LED toplighting)
+    conf: medium
+    source: "Katzin, Marcelis, van Mourik, Applied Energy 281 (2021) 116019: 'commercial LEDs currently provide 3 umol/J'; low: DesignLights Consortium Horticultural V4.0 minimum 2.5 (from 2025-04-18); high: Signify GreenPower LED toplighting force 3.7 at full output (2022 sheet). HPS lamps 1.7-1.85"
+  lamp_ppfd_lettuce:
+    value: 100
+    low: 60
+    high: 250
+    unit: umol/m2/s of grow light installed at the crop, lettuce
+    conf: low
+    source: "MSU (Runkle): '60 to 100 umol/m2/s is common for moderate-DLI crops' (not opened); Berkshire Produce NY 100 (HortiDaily 2026-03-20); high: Cornell seedling stage 250 (Mattson, GPN Oct 2016). No North American survey found"
+  lamp_ppfd_tomato:
+    value: 200
+    low: 150
+    high: 250
+    unit: umol/m2/s of grow light installed at the crop, tomato
+    conf: medium
+    source: "Lanoue & Hao, Greenhouse Canada 2020-10-20: 200-220 typical for fruiting vegetables; Katzin et al. 2021 reference Venlo 200; Vincenzi et al., Front. Plant Sci. 16 (2025): 250; MSU: 150-200 common (not opened)"
+  photoperiod_lettuce:
+    value: 24
+    low: 16
+    high: 24
+    unit: most hours of light a day, lettuce
+    conf: medium
+    source: "Mattson, 'Growing Hydroponic Leafy Greens', GPN Oct 2016 (Cornell CEA): seedling DLI met 'with a 24-hour photoperiod'; no limit stated for finishing heads (tipburn limits the daily light, not the hours)"
+  photoperiod_tomato:
+    value: 17
+    low: 16
+    high: 18
+    unit: most hours of light a day, tomato
+    conf: medium
+    source: "Lanoue & Hao 2020: 16-18 h typical, injury above ~17 h; Hao et al., Acta Hort 1423 (2025): even 16-17 h can injure leaves in the darkest months"
+  dli_lettuce:
+    value: 17
+    low: 13
+    high: 20
+    unit: mol/m2/day of growing light the crop is given, head lettuce (low = without fans blowing down on the crop)
+    conf: high
+    source: "Mattson 2016 (Cornell CEA): 'When DLI is maintained at 17 mol/m2/d, 5- to 6-ounce heads are ready to harvest 24 days after transplanting'; 13-14 without vertical airflow; Both et al., Acta Hort 418 (1997): 17; Purdue (Nemali & Langenhoven 2017): 15-20"
+  dli_tomato:
+    value: 25
+    low: 20
+    high: 30
+    unit: mol/m2/day of growing light, greenhouse tomato
+    conf: medium
+    source: "Lanoue et al., Front. Plant Sci. 17:1731972 (2026): 'optimal DLI for tomato production being between 20-30' (OMAFRA 2025); value the midpoint"
+
+yield:
+  lue_lettuce:
+    value: 6.8
+    low: 3.7
+    high: 18.6
+    unit: g of lettuce (fresh) per mol of growing light on a m2 of growing area
+    conf: low
+    source: "Purdue (Nemali & Langenhoven, 2017-04-13): 6.8 g per mol, Kubota et al. 2016: 3.7-6.9 g per mol received by plants. High: Mattson 2016's spacing and timing at 17 mol (150 g heads, ~770 a m2 of pond a year, ~115 kg/m2) = 18.6 g/mol per m2 of pond (research arithmetic). The two disagree ~3x; the report carries the range"
+  lue_tomato:
+    value: 8.2
+    low: 7.7
+    high: 13
+    unit: g of ripe tomatoes per mol of growing light at the crop, a full season
+    conf: low
+    source: "calibrated on Ontario, the climate nearest Homer City: Leamington growers' 55.5 kg/m2 (Dias et al. 2017) over this model's light there (PVGIS, glass) = 8.2; independently, Vincenzi et al., Front. Plant Sci. 16 (2025) (WUR): 7.98 g/mol in a winter trial; low a WUR density trial 7.7 (not opened). High: Dutch growers' 60-70 kg/m2 over Dutch light (3,500 MJ/m2/yr global x 2.1 x 0.73) = 11-13 g/mol: they get ~1.5x more from a mol"
+  dli_cap_lettuce:
+    value: 17
+    low: 15
+    high: 20
+    unit: mol/m2/day above which growers shade lettuce (tipburn), so more sun adds nothing
+    conf: medium
+    source: "set at the target (Mattson 2016: DLI held at 17 with shade and lamps); Purdue 15-20"
+  dli_cap_tomato:
+    value: 30
+    low: 25
+    high: 35
+    unit: mol/m2/day above which more light no longer adds tomato yield
+    conf: low
+    source: "Lanoue & Hao 2020: 'the typically required 30 mol/m2/day'; Marcelis et al., Acta Hort 711 (2006): 0.7-1% more yield per 1% more light, less at high light (judgement for the cap)"
+  in_crop_lettuce:
+    value: 0.80
+    low: 0.70
+    high: 0.90
+    unit: share of the floor in crop through the year (aisles, the seedling area, packing lanes left out)
+    conf: placeholder
+    source: "judgement: pond or gutter systems with walks"
+  in_crop_tomato:
+    value: 0.90
+    low: 0.85
+    high: 0.95
+    unit: share of the year and floor in fruiting crop (the turnaround between crops, walks)
+    conf: placeholder
+    source: "judgement: one high-wire crop a year with a 3-5 week turnaround"
+
+heat:
+  u_glass:
+    value: 6.2
+    low: 5.7
+    high: 6.25
+    unit: W/m2K of cover, single glass
+    conf: high
+    source: "ANSI/ASAE EP406.4 Table 1: single glass sealed 6.2; Virginia Tech SPES-821NP: 1.0-1.1 Btu/h ft2 F"
+  u_glass_screen:
+    value: 4.0
+    low: 3.5
+    high: 4.5
+    unit: W/m2K, single glass with the energy screen closed (at night)
+    conf: medium
+    source: "ASAE EP406.4 Table 1, 'only when blanket is closed and well sealed'; a first screen saves 24-35% of the year's heat (Hanifin, Greenhouse Canada 2023; OMAFRA), consistent"
+  u_poly:
+    value: 4.0
+    low: 2.8
+    high: 4.5
+    unit: W/m2K of cover, air-inflated double polyethylene (low = IR-blocking film)
+    conf: high
+    source: "ASAE EP406.4 Table 1: double polyethylene 4.0, IR-inhibited 2.8; params/pass2.yaml uses 4.0-4.5"
+  u_poly_screen:
+    value: 2.5
+    low: 2.2
+    high: 2.8
+    unit: W/m2K, double polyethylene with the screen closed
+    conf: medium
+    source: "ASAE EP406.4 Table 1"
+  ach:
+    value: 1.0
+    low: 0.5
+    high: 1.5
+    unit: air changes an hour by leakage in the heating season
+    conf: placeholder
+    source: "judgement for new tight houses; ASAE EP406 tabulates air exchange by construction (not re-read here)"
+  height_m:
+    value: 6.4
+    low: 5.5
+    high: 7.0
+    unit: m, mean inside height (gutter 6 m plus half the roof's rise)
+    conf: high
+    source: "the design (forge: 4 m bays, 6 m gutters, 22 degree roofs)"
+  sensible_share:
+    value: 0.5
+    low: 0.3
+    high: 0.7
+    unit: share of the sun and lamp energy inside that warms the air (the rest goes into the crop's transpiration)
+    conf: placeholder
+    source: "judgement: a full crop turns a large part of absorbed light into transpiration"
+  set_day_lettuce:
+    value: 24
+    low: 21
+    high: 24
+    unit: C, air while lit, lettuce
+    conf: high
+    source: "Mattson 2016: 'maintained at 75/66 F day/night'"
+  set_night_lettuce:
+    value: 19
+    low: 17
+    high: 19
+    unit: C, air in the dark, lettuce
+    conf: high
+    source: "Mattson 2016 (75/66 F)"
+  set_day_tomato:
+    value: 19.5
+    low: 17.5
+    high: 22
+    unit: C, heating set point while lit, tomato
+    conf: medium
+    source: "Katzin et al. 2021 GreenLight reference: 19.5 C light period, scenarios +/- 2 C"
+  set_night_tomato:
+    value: 18.5
+    low: 16
+    high: 19.5
+    unit: C, heating set point in the dark, tomato
+    conf: medium
+    source: "Katzin et al. 2021: 18.5 C; Lanoue et al. 2026 (AAFC Harrow): 19 +/- 0.5 C"
+  pipe_w_m2_10k:
+    value: 30
+    low: 25
+    high: 35
+    unit: W per m2 of floor for each 10 K between mean pipe and air, standard pipe rail (1.25 m of 51 mm pipe per m2)
+    conf: medium
+    source: "AHDB 'Minimum pipe heat in your glasshouse': '300 kW per hectare' per 10 C (a simplification; real output falls faster at low dT); pipe length 1.25 m/m2 per Katzin et al. 2021"
+  pipe_m_m2:
+    value: 2.5
+    low: 2.0
+    high: 3.0
+    unit: m of heating pipe per m2 of floor (twice standard rail, so 50 C water can carry the houses)
+    conf: placeholder
+    source: "the design: Dutch practice runs low-grade 40-50 C heat through 'a second heating system, with a larger heating surface' (Kwekerij de Wieringermeer, HortiDaily 2025-03-18); pipe length not given there"
+  buffer_m3_ha:
+    value: 200
+    low: 60
+    high: 550
+    unit: m3 of hot-water store per hectare
+    conf: low
+    source: "AHDB 'How to size a heat storage system': 'rule of thumb ... for a salad crop is 200 m3/ha'; high: de Ridder et al., Energy 235 (2021) ~550 m3/ha shared optimum; low: WUR 60 m3/ha (not opened)"
+  supply_c:
+    value: 50
+    unit: C, the loop's return water the houses are heated with (pass 2, 40 C supply + 10 K); also the heat pumps' target in the fusion option
+    conf: high
+    source: "params/pass2.yaml good_neighbour.liquid_supply_c + liquid_rise_k"
+
+design:
+  backup_max_share:
+    value: 0.05
+    low: 0.02
+    high: 0.10
+    unit: most of the houses' yearly heat a gas boiler may supply at the design point
+    conf: placeholder
+    source: "a design choice: the houses are sized to the data center's heat, with a boiler for the coldest nights and outages"
+
+cost:
+  house_usd_m2:
+    value: 269
+    low: 108
+    high: 390
+    unit: USD per m2 of floor, a commercial greenhouse fully outfitted (no split found between glass and double poly)
+    conf: low
+    source: "Prospiant (builder), 2025: '$10 per square foot structure may rise to $20-$30 per square foot when fully outfitted'; high: AppHarvest Morehead KY, $82-100M financing for 25.7 ha of lit glass = $320-390/m2 (research arithmetic)"
+  lamps_usd_per_umol_s:
+    value: 0.6
+    low: 0.15
+    high: 1.84
+    unit: USD per umol/s of installed grow light
+    conf: placeholder
+    source: "between Discover Agriculture (Dec 2024) LED panel build cost $0.15-0.21 (not opened, not installed) and Nelson & Bugbee, PLoS ONE 9(6):e99010 (2014) LED $1.84-5.28 (old fixtures); get a quote"
+  gas_usd_mwh:
+    value: 36
+    low: 32
+    high: 46
+    unit: USD per MWh of natural gas (fuel), Pennsylvania commercial
+    conf: medium
+    source: "EIA Natural Gas Monthly Table 21: Pennsylvania commercial $10.88/Mcf in 2024 (Jan-Apr 2025 $10.98-13.80); / 1.037 MMBtu/Mcf x 3.412 MMBtu/MWh = $35.8/MWh (high: Apr 2025)"
+  boiler_eff:
+    value: 0.90
+    low: 0.85
+    high: 0.95
+    unit: share of gas energy a greenhouse boiler delivers as heat
+    conf: medium
+    source: "as cost.yaml furnace_eff for condensing equipment (0.95) and older units (0.85)"
+  wage_usd_yr:
+    value: 36000
+    low: 34000
+    high: 38000
+    unit: USD a year per greenhouse worker (wages only; benefits and supervision not included)
+    conf: low
+    source: "BLS OEWS 45-2092 farmworkers, crop, nursery and greenhouse: Southwestern Pennsylvania nonmetropolitan median $33,960 (May 2025, via WageDex); national mean $37,850 (May 2024, secondary)"
+  price_usd_kg_lettuce:
+    value: 1.28
+    low: 1.28
+    high: 3.0
+    unit: USD per kg the lettuce sells for at the farm (low = field lettuce's value, what it competes with)
+    conf: low
+    source: "USDA ERS VGS-378 (2026-04-30): US lettuce production value $5.84 billion for 10.1 billion lb in 2025 = $0.58/lb; high (a premium for local greenhouse heads) is judgement, no wholesale series for greenhouse lettuce found"
+  price_usd_kg_tomato:
+    value: 2.0
+    low: 1.9
+    high: 2.6
+    unit: USD per kg, greenhouse tomatoes at the farm or terminal market
+    conf: low
+    source: "AAFC Statistical Overview 2024: Canadian greenhouse tomatoes CAD 2.67/kg farm-gate (~USD 1.95); USDA AMS Tomato Fax 2025-11-17: greenhouse TOV ~USD 2.0-2.6/kg (one week)"
+
+jobs:
+  per_ha_lettuce:
+    value: 21
+    low: 7
+    high: 21
+    unit: jobs per hectare of lettuce greenhouse, packing included
+    conf: medium
+    source: "Little Leaf Farms, McAdoo PA (PA Governor's office 2023-05-31): ~170 workers on ~8 ha; low: Urban Ag News 6-8/ha (params/pass2.yaml)"
+  per_ha_tomato:
+    value: 11
+    low: 7
+    high: 13
+    unit: jobs per hectare of tomato greenhouse
+    conf: low
+    source: "AppHarvest Morehead KY: 285 jobs announced on 25.7 ha (KY Cabinet for Economic Development 2020, not opened), 300-330 per the local chamber; low: Urban Ag News"
+
+carbon:
+  gas_kg_mwh:
+    value: 181
+    unit: kg CO2 per MWh of natural gas burned
+    conf: high
+    source: "EPA GHG Emission Factors Hub: 53.06 kg CO2 per MMBtu / 0.29307 MWh per MMBtu"
+
+market:
+  kg_person_lettuce:
+    value: 13.0
+    low: 13.0
+    high: 14.3
+    unit: kg of fresh lettuce per person a year, US (all types)
+    conf: medium
+    source: "USDA ERS food availability via The Packer: 28.6 lb in 2024 (not opened); 31.5 lb in 2023 (search summary)"
+  kg_person_tomato:
+    value: 8.6
+    low: 8.6
+    high: 8.7
+    unit: kg of fresh tomatoes per person a year, US
+    conf: medium
+    source: "USDA ERS via The Packer: ~19 lb in 2024 (not opened); 19.2 lb 2023 (Statista); ERS VGS-378: 69% of fresh tomatoes are imported, 64% of imports greenhouse-grown"
+  county_pop:
+    value: 83246
+    low: 82953
+    high: 83246
+    unit: people, Indiana County PA
+    conf: high
+    source: "US Census 2020: 83,246; 2024 estimate 82,953 (QuickFacts)"
+  metro_pop:
+    value: 2457036
+    low: 2430000
+    high: 2457036
+    unit: people, Pittsburgh metro area (MSA), the nearest big market
+    conf: medium
+    source: "2020 Census via citypopulation.de; 2024 ~2.43 million (USAFacts) (not opened)"
+
+known:
+  nl_unlit_tomato_kg_m2:
+    value: 65
+    low: 60
+    high: 70
+    unit: kg/m2 a year, Dutch round and truss tomatoes, mostly unlit (the model's light use efficiency is set from this)
+    conf: medium
+    source: "Ji & Butturini (2023), citing Heuvelink 2018: 'average yield is 60-70 kg/m2'; CBS national 41-48 includes specialty types"
+  on_tomato_kg_m2:
+    value: 55.5
+    low: 46
+    high: 60
+    unit: kg/m2 a year, 8 Leamington, Ontario tomato growers (the independent check)
+    conf: high
+    source: "Dias et al., J. Cleaner Production 140 (2017) 831-839: 'average annual yield of 55.5 kg/m2 (range of 46-60)'; Canada-wide 2024 47.6 (AAFC)"
+  on_tomato_heat_mj_m2:
+    value: 1650
+    low: 1360
+    high: 1880
+    unit: MJ of heat per m2 a year, Leamington tomato houses (their fuel x a 0.9 boiler)
+    conf: medium
+    source: "Dias et al. 2017 Table 1: natural gas 28.9 + oil 4.06 MJ per kg x 55.5 (46-60) kg/m2 = 1,829 (1,516-1,978) MJ/m2 of fuel (research arithmetic) x 0.9 (0.85-0.95)"
+  lit_gain:
+    value: 1.27
+    low: 1.15
+    high: 1.40
+    unit: lit over unlit Dutch tomato yield
+    conf: medium
+    source: "Katzin et al. 2021, citing KWIN 2019 (Raaphorst et al.): 'the illuminated greenhouse is estimated to provide only 27% higher yields' for more than double the energy; range judgement"
+
+fusion:
+  net_mwe:
+    value: 350
+    low: 300
+    high: 400
+    unit: MW of electricity, net, Infinity Two (a design target)
+    conf: low
+    source: "Anderson, Canik, Hegna, Mowry, J. Plasma Phys. 91(2) e65 (2025): 'this nominal 350 MWe'; Type One Energy blog 2026-04-14: '400 MWe'"
+  efficiency:
+    value: 0.35
+    low: 0.30
+    high: 0.40
+    unit: net electricity over thermal power
+    conf: low
+    source: "Clark et al., J. Plasma Phys. (2025) doi:10.1017/S002237782500039X: 'net efficiency of at least 30%' with a Rankine cycle with reheat; ~992 MWth implied by its pumping power (49.61 MW = 5%); 350/992"
+  reject_c:
+    value: 35
+    low: 30
+    high: 45
+    unit: C, the temperature its steam cycle lets heat go at (condenser water)
+    conf: placeholder
+    source: "judgement: steam condensers run at roughly 30-45 C; not published for Infinity Two"
+  usable_share:
+    value: 0.5
+    low: 0.2
+    high: 0.8
+    unit: share of its rejected heat that could be piped to food houses (the rest goes to its cooling towers)
+    conf: placeholder
+    source: "judgement"
+
+trees:
+  setback_high:
+    value: 1.25
+    low: 1.0
+    high: 1.25
+    unit: multiple of mature height kept from foundations, high-water-demand trees (oaks)
+    conf: medium
+    source: "NHBC Standards 4.2.4 (2025) zones of influence: high 1.25H, moderate 0.75H, low 0.5H (search summary; site 403); RHS 'Trees near buildings': high-demand influence to about the tree's height. For shrinkable clay; check the Homer City soil"
+  setback_moderate:
+    value: 0.75
+    low: 0.5
+    high: 0.75
+    unit: multiple of mature height, moderate water demand (maples, cherries, planes/sycamores, pines, most others)
+    conf: medium
+    source: "NHBC as above; RHS: 'unlikely to extend more than half the tree's height' for moderate and low"
+  height_white_oak:
+    value: 27
+    low: 24
+    high: 30
+    unit: m, white oak mature height (forest-grown)
+    conf: high
+    source: "USDA FS Silvics of North America, White oak (Rogers): 'often 24 to 30 m'"
+  height_red_oak:
+    value: 25
+    low: 20
+    high: 30
+    unit: m, northern red oak
+    conf: high
+    source: "Silvics, Northern red oak (Sander): 'usually from 20 to 30 m'"
+  height_sugar_maple:
+    value: 32
+    low: 27
+    high: 37
+    unit: m, sugar maple (forest stands; open-grown trees are shorter)
+    conf: high
+    source: "Silvics, Sugar maple (Godman, Yawney, Tubbs): '27 to 37 m'"
+  height_black_cherry:
+    value: 24
+    low: 15
+    high: 38
+    unit: m, black cherry
+    conf: low
+    source: "USDA NRCS Plant Guide: 'may reach 38 meters' (not opened); Univ. of Minnesota 15-24 m (not opened); Silvics gives none"
+  height_tulip_poplar:
+    value: 38
+    low: 30.5
+    high: 45.7
+    unit: m, tulip poplar (yellow-poplar)
+    conf: high
+    source: "Silvics, Yellow-poplar (Beck): 'more often 30.5 to 45.7 m'"
+  height_sycamore:
+    value: 35
+    low: 21
+    high: 43
+    unit: m, American sycamore
+    conf: low
+    source: "Silvics, Sycamore (Wells & Schmidtling): no typical height; records over 43 m on bottomland; value judgement between"
+  height_eastern_hemlock:
+    value: 30
+    low: 25
+    high: 30
+    unit: m, eastern hemlock
+    conf: medium
+    source: "Silvics, Eastern hemlock (Fajvan et al. 2026): 'heights over 30 m' in old growth"
+  height_white_pine:
+    value: 35
+    low: 30
+    high: 46
+    unit: m, eastern white pine (planted; 46 m was common in virgin forest)
+    conf: low
+    source: "Silvics, Eastern white pine (Wendel & Smith): 46 m common in virgin forests; value judgement for planted trees"
+  per_grove:
+    value: 7
+    unit: trees of each species in its grove
+    conf: high
+    source: "the design"
+  drawn_share:
+    value: 0.6
+    unit: share of mature height the renders draw (young trees for decades)
+    conf: high
+    source: "the design (rendering only)"

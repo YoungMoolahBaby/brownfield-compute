@@ -10,6 +10,7 @@
 
 mod apartment;
 mod build;
+mod food;
 mod framing;
 mod garden;
 mod house;
