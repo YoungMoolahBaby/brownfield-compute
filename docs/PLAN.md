@@ -12,8 +12,31 @@ sites in the top quarter on both axes. Jon picked **Homer City** for pass 2 (D6)
 
 **Pass 2 v1 complete: [docs/pass2/](pass2/README.md).** Per 100 MW module at Homer City:
 water 1.05 million gallons a day vs none; PUE 1.20 vs 1.04; 13% of the heat to 5,000 homes and
-10 ha of greenhouses; 40 dB(A) at night beyond ~700 m vs ~120 m (oversized dry coolers + berm);
-44 diesel gensets vs batteries.
+10 ha of greenhouses; 40 dB(A) at night beyond ~700 m vs ~220 m from the cooler yard behind a
+berm (first given as ~120 m; corrected in pass 2d) or 34-80 m with walled cells; 44 diesel
+gensets vs batteries.
+
+**Pass 2d, the wall (D7; Jon: "commit, then do both please, start with the wall"):
+[docs/pass2/wall.md](pass2/wall.md).**
+- **Acoustics.** `brownfield wall` sizes the cooler yard from the makers' data: 175 units, about
+  109 x 116 m, fans at 2.9 m. By ISO 9613-2's barrier method pass 2's 10 dB berm is worth ~1 dB
+  at 300 m. Walls between every second row and across every second unit ("cells") take ~12 dB
+  off across the rows and ~6.5 off the ends, and pass the makers' well rule (1.75 of 2.03 m/s).
+- **The wall.** Brick pier and panel to TMS 402-16 under ASCE 7-16 wind, checked against BIA
+  45A, TEK 14-19B/14-15B, Caltrans and MECA examples. Forge `wall` builds it brick by brick (face
+  bricks turned up to 13° in a ripple, every joint and bearing checked), and a gantry in sim-core
+  lays it: 1.84 s a brick with the pattern or without.
+- **Cost and carbon per module.** Brick cells by robot $5.43M (P10-P90 $5.0-6.5M), by hand
+  $5.83M plain or $6.60M patterned; precast cells $6.04M (robot brick cheaper in 51% of draws);
+  6 m berm $2.25M but only ~1 dB. Bricks from the site's coal ash: not ready.
+- **Hearing record:** [docs/hearing-record.md](hearing-record.md). The full records are of the
+  gas plant, not the data centers. People raise jobs, water, noise, bills and taxes, but more
+  often process, the creek, the gas plant's air, monitoring, wells and cleanup. No one raised
+  how the campus looks, housing or hospitals.
+
+Next: rerun `brownfield cost` with the cells' cost in place of the $1M berm; the site's ASCE wind
+speed (Hazard Tool); a timed mason mock-up of the turned face; candidate scorecard measures
+(hearing record) for Jon.
 
 **Pass 2b, costs (Jon: "price it first"): [docs/pass2/cost.md](pass2/cost.md).** Operator: ~$56M
 less up front and ~$14M a year saved per module, +$129-201M over 20 years (positive in every
@@ -139,8 +162,11 @@ at the campus edge, funded in the community benefits agreement.
     in sim-core. Compared with the berm, a precast concrete wall, plain brick, hand-laid and
     robot-laid patterned brick, and units made on site from its coal ash or spoil in moulds
     designed in CortenForge; scored on cost, night sound at the nearest homes, land, embodied
-    carbon and upkeep. In FHWA's barrier inventory brick and concrete cost about the same per
-    square foot and berms about a quarter (RESEARCH.md).
+    carbon and upkeep. In FHWA's 2010-dollar barrier table brick and concrete cost about the same
+    per square foot and berms about a quarter; corrected 2026-11-16: FHWA's 1963-2022 averages in
+    2022 dollars put brick at $55, precast at $43 ($47 in 2020-22) and berms at $12 (RESEARCH.md).
+  - Found in pass 2d: Gantenbein's bricks were glued, not mortared. The wall here stays mortared
+    (repairable); robots lay brick in mortar (SAM, Monumental), though not yet turned brick.
   - A mason must be able to repair it: standard units and mortar.
   - The cultural case stays in the README's "Why"; reports say "architecture" and "craft".
 - **D8** (2026-11-16) Jon: a city on cheap desert land, "like 1-5k an acre, has some sort of well

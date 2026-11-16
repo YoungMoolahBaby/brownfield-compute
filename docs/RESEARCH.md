@@ -103,6 +103,83 @@ Sources, with what we took from them and their limits. Newest first within a sec
 - **WSDOT** ([noise walls & barriers](https://wsdot.wa.gov/construction-planning/protecting-environment/noise-walls-barriers)):
   current construction cost averages $51.61 per sq ft; rural barriers can cost less, urban much
   more.
+- **Correction (2026-11-16): FHWA's inventory graphs in 2022 dollars**
+  ([graph04](https://www.fhwa.dot.gov/environment/noise/noise_barriers/inventory/graphs/graph04.cfm)),
+  1963-2022 averages: brick $55.09, precast concrete $43.45 ($47.26 in 2020-2022), berm $12.37
+  per sq ft; no brick or berm barriers reported 2020-2022. So brick costs ~27% more than precast,
+  not "about the same" (that was the 2010-dollar table above). WisDOT 1060-53-70 (2022): 13 walls
+  bid since 2020 at $35-45/sq ft. WVDOT 2025 item 630006-001 masonry wall: one bid, $70/sq ft.
+
+## The wall: coolers, structure, cost, carbon, robots (pass 2d, 2026-11-16)
+
+Values and limits in [params/wall.yaml](../params/wall.yaml); the main sources:
+
+- **Dry coolers:**
+  - EVAPCO eco-Air bulletin 270B (2020): EAVWD9120ZA V-coil, 20 EC fans, 1,372 kW at 110 -> 100 F
+    fluid and 92 F air, 345,503 cfm, 12.01 x 2.38 m, ~2.88 m tall.
+  - LU-VE VXX3 leaflet: 13.34 x 2.24 m, 2.87-2.91 m tall (3.10-3.31 with its sound damper).
+  - Kelvion Select RT datasheet (2023): a 6 x 800 mm fan unit at 94 dB(A) sound power, i.e. ~86
+    a fan.
+  - ebm-papst W3G910 data sheet (2025): 910 mm EC fan, 80-82 dB(A) at 1,030 rpm, 66-69 at
+    600 rpm.
+- **Cooler layout rules:**
+  - EVAPCO Equipment Layout Manual 320A (2020): unit top level with or above adjacent walls,
+    otherwise a "well" with downward air at most 400 fpm (2.03 m/s). Clearances: 3 ft end to
+    wall, 5 ft side to wall, 6 ft end to end, 10 ft side by side.
+  - BAC Layout Guidelines (2022-03-08): the same 400 fpm.
+  - Heatcraft H-IM-FN (2025): walls one unit width away; fences no taller than the unit.
+- **Wind on freestanding walls:**
+  - ASCE 7-16 29.3, as worked by the Caltrans Temporary Structures Manual App. A Ex. 1 (2025):
+    13.9 psf, 11,910 lb.
+  - MECA "Wind Loads on Freestanding Walls": 26.6 psf, Cf 1.3 at B/s 20, the Case C end values.
+  - Indiana County: 90-115 mph adopted range, 36 in. frost (icopd.org).
+  - The site's ASCE 7-16 speed was not read from the ASCE Hazard Tool.
+- **Masonry:**
+  - BIA TN 45 and 45A (1991-92): pier-and-panel brick noise walls, joints at most 30 ft apart,
+    worked examples.
+  - BIA TN 3A (2024): unit strength table, Em = 700 f'm.
+  - BIA TN 10 (2009): 675 modular brick per 100 sq ft; 8.1 cu ft of mortar per 1,000.
+  - BIA TN 29A: garden walls.
+  - CMHA TEK 14-15B (pier-and-panel sound walls), 14-19B (ASD capacity tables), 14-07C (no 1/3
+    stress increase since 2011).
+  - LA County DPW checklist for TMS 402-16: Fs 32 ksi, Fb 0.45 f'm.
+  - Oregon DOT BR750: masonry sound wall, pilasters at 14 ft, expansion joints at 28 ft.
+- **Costs:**
+  - BLS OEWS May 2025: brickmasons $29.01/h in SW PA nonmetro (holds Indiana County), $35.87 in
+    Pittsburgh; helpers $27.91 (PA).
+  - BLS ECEC June 2026: construction compensation 1.438 x wages.
+  - WVDOT 2024-25 average unit bid prices (earthwork $4.67/cy statewide mass grading, $29-44 at
+    20-40k cy; borrow $45; topsoil $131); PennDOT item prices are not public.
+  - Face brick $350-850 per 1,000 (consumer guides).
+- **Carbon:**
+  - BIA Clay Masonry EPD11101 (2025): 31.8 kg CO2e per m2 for 112.18 kg of brick = 0.283 kg/kg.
+  - BIA 2020 EPD10447: 0.237 kg/kg, although BIA says 2025 is ~25% lower; not reconciled.
+  - General Shale Augusta EPD11265 (2026): 0.303.
+  - CPCI/PCI architectural precast EPD (2019, expired): 257.8 kg CO2e/t.
+  - Heidelberg Mitchell IN masonry cement EPD 1112 (2026): Type S 479 kg/t.
+  - EPA factors (2025): 10.49 kg CO2e per gallon of diesel.
+- **Robots:**
+  - Gramazio Kohler, Gantenbein winery (2006): 20,000 bricks, each at a programmed angle, 72
+    prefabricated elements, **joined with a two-component adhesive**, not mortar (ETH project
+    page).
+  - Construction Robotics SAM100: ~200-250 bricks/h in mortar with two workers, about $650,000
+    (The Robot Report 2015; Construction Dive 2018); no longer on the maker's site (2026-11-16).
+  - FBR Hadrian X: 300+ blocks/h, with adhesive (ASX, 2023).
+  - Monumental: robots laying in mortar on live sites, sold per brick (Fortune 2024; TNW 2026).
+  - ETH In situ Fabricator: bricks within 7 mm (2017).
+  - Sanders and Thomas (J. Constr. Eng. Manage. 1991, 11 central PA projects): layout-heavy
+    designs cut masonry productivity by up to 40%.
+- **Site-made units:**
+  - PA DEP, Homer City Station Ash Disposal Site, permit 300491: ~444,274 cy of ash and soil moved
+    from the temporary ash site (closure accepted 2025-05-19); permit area cut from 419.6 to 272.1
+    acres (Dec 2025), then 243.7 (Aug 2026). The ash is likely mixed with dry scrubber residue.
+  - 25 Pa. Code 290.106(a)(5): coal ash as a raw material for a product needs no permit.
+  - EPA's coal ash rule names bricks as an encapsulated use, but evaluated only concrete and
+    wallboard; its April 2026 proposal was not final at last check.
+  - IS 12894 (India, fly ash-lime brick): no freeze-thaw test. ASTM C216 SW face brick: 3,000 psi.
+  - CalStar (US fly ash brick) stopped in 2015.
+  - Compressed earth blocks: New Mexico code minimum 300 psi; one lab study ~2.1 MPa at 12%
+    cement; freeze-thaw evidence thin (Mak et al. 2016).
 
 ## Building codes and lumber (for pass 3)
 

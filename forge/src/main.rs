@@ -16,6 +16,8 @@ mod masonry;
 mod masonry_build;
 mod render;
 mod sequence;
+mod wall;
+mod wall_robot;
 
 use std::path::Path;
 use std::time::Instant;
@@ -475,6 +477,12 @@ fn main() {
             }
         }
         "build-probe" => build::probe(),
+        "wall" => {
+            if let Err(e) = wall::run(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         "masonry" => {
             if let Err(e) = masonry_mode(root) {
                 eprintln!("{e}");

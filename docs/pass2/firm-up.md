@@ -94,8 +94,9 @@ sound path could be.
 
 What it means for noise: a conventional module's cooling towers reach 40 dB(A) at night ~700 m
 away in open ground, and 259 homes lie within 700 m of the campus edge; the good-neighbour module
-(oversized dry coolers behind a berm) reaches it ~120 m away, and the nearest homes are ~20 m from
-the edge. So where the equipment stands matters as much as what it is: a setback from every home
+reaches it ~220 m from its cooler yard behind a berm (corrected in [pass 2d](wall.md); first given
+here as ~120 m), or 34-80 m with walls between the rows of coolers, and the nearest homes are
+~20 m from the edge. So where the equipment stands matters as much as what it is: a setback from every home
 plus the sound power budget (pass 2 README) is what an agreement can check.
 
 ## What changed in the results

@@ -79,18 +79,21 @@ pub struct Style {
     pub outline: bool,
     /// Supersampling factor (1 = none): rendered k times larger, then averaged down.
     pub ssaa: usize,
+    /// The key light's direction in the camera frame (x right, y up, z toward the viewer); None
+    /// for the default, from upper left in front. A raking light shows a brick face's relief.
+    pub key: Option<Vector3<f64>>,
 }
 
 impl Default for Style {
     fn default() -> Self {
-        Style { smooth: false, outline: false, ssaa: 1 }
+        Style { smooth: false, outline: false, ssaa: 1, key: None }
     }
 }
 
 impl Style {
     /// Smooth shading, outlines, 2x2 supersampling: for showing a design.
     pub fn pretty() -> Self {
-        Style { smooth: true, outline: true, ssaa: 2 }
+        Style { smooth: true, outline: true, ssaa: 2, key: None }
     }
 }
 
@@ -127,7 +130,7 @@ pub fn render_styled(
     let k = style.ssaa.max(1);
     let px_per_mm = px_per_mm * k as f64;
     let pad = 12 * k;
-    let light = Vector3::new(-0.3, 0.5, 0.8).normalize();
+    let light = style.key.unwrap_or(Vector3::new(-0.3, 0.5, 0.8)).normalize();
     let fill = Vector3::new(0.6, -0.2, 0.4).normalize();
     // Blinn half vector between the key light and the viewer (camera z points at the viewer).
     let half = (light + Vector3::z()).normalize();

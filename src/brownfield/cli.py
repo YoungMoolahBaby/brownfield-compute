@@ -349,6 +349,32 @@ def cmd_costcarbon(_args) -> int:
     return 0
 
 
+def cmd_wall(_args) -> int:
+    import json
+
+    from . import ROOT, build, wall
+
+    params = load_params()
+    p = values(params)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "wall.json").write_text(json.dumps(wall.forge_spec(p), indent=2) + NL, encoding="utf-8")
+    forge_path = out / "wall_forge.json"
+    forge = json.loads(forge_path.read_text(encoding="utf-8")) if forge_path.exists() else None
+    md = wall.report(p, params, forge)
+    print(md)
+    (out / "wall.md").write_text(md + NL, encoding="utf-8")
+    docs = ROOT / "docs" / "pass2"
+    wall.figure(p, docs / "wall_noise.png")
+    frames = out / "wall_frames"
+    if frames.exists() and any(frames.glob("f*.png")):
+        n = build.gif(frames, docs / "wall_build.gif", ms=320)
+        print(NL + f"docs/pass2/wall_build.gif: {n} frames")
+    print("wrote out/pass2/wall.json (forge `wall` reads it), out/pass2/wall.md, docs/pass2/wall_noise.png"
+          + ("" if forge else "; run forge `wall` then this again for the CortenForge results"))
+    return 0
+
+
 def cmd_economy(_args) -> int:
     from . import acs, econ
 
@@ -397,12 +423,13 @@ def main(argv=None) -> int:
     sub.add_parser("compare", help="pass 3b: wood, light steel and block + precast side by side")
     sub.add_parser("costcarbon", help="pass 3b: embodied carbon and cost of the three structures")
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
+    sub.add_parser("wall", help="pass 2d: the wall in front of the coolers (then forge `wall`, then this again)")
     sub.add_parser("steel", help="pass 3b: the walk-up in light steel, sized")
     sub.add_parser("masonry", help="pass 3b: the walk-up in block and precast planks, sized")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall}.get(args.cmd or "check")
     return cmd(args)
 
 

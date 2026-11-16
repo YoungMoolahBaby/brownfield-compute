@@ -87,6 +87,23 @@ the end collects the features this project wanted, with what we built instead.
   each) onto ~260-310 bearing blocks in 18-23 s, all within 0.02 mm. The overlap and support
   checks across 13,614 pieces are our own sorted sweeps (cf-spatial may have the structure for
   it; not tried).
+- **works** (2026-11-16, pass 2d, the wall robot): a four-axis gantry in MJCF carried 111 bricks
+  one at a time, with no trouble from sim-core:
+  - three nested `slide` joints and a `hinge`, each on a `<position>` servo with `kv`;
+  - a `<weld>` from the wrist to a free-body brick, its relative pose taken from the starting
+    pose as in MuJoCo (sim-mjcf builder/equality.rs:190);
+  - box geoms turned by `quat`.
+
+  The brick is let go by switching the weld off between steps: `model.eq_active[0] = false`.
+  It settled within 0.01 mm of where it was released. Each brick is a fresh model of ~12 geoms
+  (~1.6 s of sim at 0.5 ms), so 222 placements took 9.7 s.
+- **API / docs** (2026-11-16, pass 2d): `eq_active` lives on `Model`
+  (sim-core types/model.rs:815, read in constraint/assembly.rs:140). So switching a constraint on
+  or off at run time means mutating the model, which works only because `Data::step` borrows
+  `&Model`. MuJoCo 3.x keeps the run-time flag in `mjData.eq_active`, with `mjModel.eq_active0`
+  as the default (from memory). A gripper that welds and lets go, the usual pick-and-place
+  pattern, would read more naturally with the flag on `Data`, and two `Data`s sharing one
+  `Model` can't differ here. Worth a line in the docs either way.
 
 ## Expected gaps (scoping, not yet hit in code)
 
@@ -116,7 +133,10 @@ Nice-to-haves for CortenForge, with what this project built instead.
 - **Outdoor acoustics** (2026-11-15): ISO 9613-2 propagation (spreading, air absorption, ground,
   barriers) from sources placed in a CortenForge scene to receivers, ideally by octave band, with
   terrain from a height field (cf-geometry already has HeightFieldData). Instead: the standard's
-  single-band A-weighted method in Python (`src/brownfield/noise.py`).
+  single-band A-weighted method in Python (`src/brownfield/noise.py`). Pass 2d (2026-11-16) added
+  barrier diffraction (ISO 9613-2 7.4: one and two edges, the tight path over many walls, the
+  meteorological correction) over an area source in `src/brownfield/wall.py`. That is the part a
+  scene-aware acoustics module would most help: the walls are already geometry in forge.
 - **The fast mesher by default** (2026-11-15, pass 3b): turn on `parallel-meshing` in the
   `cortenforge` crate (or forward a feature), and say in `Solid::mesh`'s docs that it is a uniform
   grid and that `mesh_adaptive_par` is the choice for anything building-sized (63 min vs ~3.4
@@ -142,4 +162,12 @@ Nice-to-haves for CortenForge, with what this project built instead.
 - **Structural members and checks** (2026-11-15, pass 3b): beam and column elements with
   orthotropic wood (and steel) properties, load combinations, and code checks (NDS, AISC/AISI)
   over a frame. Instead: `src/brownfield/frame.py` (NDS 2018 ASD by hand-coded formulas, checked
-  against published span tables).
+  against published span tables). Pass 2d (2026-11-16) added reinforced masonry: cracked
+  sections, pier-and-panel walls under ASCE 7-16 wind, and drilled-shaft embedment, in
+  `src/brownfield/wallstruct.py`, checked against BIA TN 45A and CMHA TEK worked examples.
+- **Oriented boxes and plan polygons** (2026-11-16, pass 2d): bricks turned about the vertical
+  need overlap, clearance and contact-area queries between oriented boxes. Instead: separating
+  axes, point-to-segment distance and Sutherland-Hodgman clipping in `forge/src/wall.rs`
+  (~80 lines); cf-geometry not checked for these.
+- **Run-time constraint switches on `Data`** (2026-11-16, pass 2d): see the sim-core entry above.
+  Instead: mutating `Model::eq_active` between steps, one model per brick.

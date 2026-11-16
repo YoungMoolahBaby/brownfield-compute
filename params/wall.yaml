@@ -1,0 +1,531 @@
+# Pass 2d: the wall in front of the coolers (D7). The cooler yard, the barrier acoustics, the
+# wall's structure under wind, and the cost and carbon of the options (src/brownfield/wall.py,
+# src/brownfield/wallstruct.py). Prices in the year their source states.
+
+yard:
+  unit_kw:
+    value: 1372
+    unit: kW of heat per dry cooler at full fan speed (fluid 110 -> 100 F, 92 F dry bulb)
+    conf: high
+    source: "EVAPCO eco-Air Series bulletin 270B Dry Cooling (2020-05), Engineering Data, Twin Fan 8 ft wide: EAVWD9120ZA, 20 EC fans, 4,680 MBH, 345,503 cfm, 12.01 m long. One maker's V-coil unit stands in for the yard; rating conditions near pass 2's design"
+  unit_l_m:
+    value: 12.01
+    unit: m, dry cooler length
+    conf: high
+    source: "EVAPCO 270B: EAVWD9120ZA length 39'-4 7/8"
+  unit_w_m:
+    value: 2.38
+    unit: m, dry cooler width
+    conf: high
+    source: "EVAPCO 270B dimension drawings, twin fan 8 ft wide models: 7'-9 7/8"
+  fan_h_m:
+    value: 2.88
+    low: 2.87
+    high: 3.31
+    unit: m, ground to the fans' discharge (the sound source and the height walls must not exceed without a well check)
+    conf: medium
+    source: "EVAPCO 270B drawing 9'-5 1/2 (reading it as height is an interpretation of the labels); LU-VE VXX3 leaflet 31619132EN-02: 2,870 mm with 910 mm fans, 2,910 with 1,000 mm, 3,100-3,310 with the Whisperer sound damper"
+  unit_airflow_m3s:
+    value: 163.06
+    unit: m3/s of air through one dry cooler at full fan speed
+    conf: high
+    source: "EVAPCO 270B: EAVWD9120ZA 345,503 cfm"
+  side_by_side_m:
+    value: 3.05
+    unit: m clear between the long sides of neighbouring V-coil units
+    conf: high
+    source: "EVAPCO eco-Air Equipment Layout Manual 320A (2020), Table 1, D4 side-by-side 10 ft (not to be applied to other makers' equipment; more than 4 units: consult EVAPCO)"
+  end_to_end_m:
+    value: 1.83
+    unit: m clear between the ends of units in a row
+    conf: high
+    source: "EVAPCO 320A Table 1, D3 end-to-end 6 ft"
+  side_to_wall_m:
+    value: 1.52
+    unit: m clear from a unit's long side to a wall
+    conf: high
+    source: "EVAPCO 320A Table 1, D2 side-to-wall 5 ft (Heatcraft H-IM-FN asks one unit width, 2.4 m, which the court spacing below also meets with the 3.05 m aisle)"
+  end_to_wall_m:
+    value: 0.91
+    unit: m clear from a unit's end to a wall
+    conf: high
+    source: "EVAPCO 320A Table 1, D1 end-to-wall 3 ft"
+  well_v_max:
+    value: 2.03
+    unit: m/s, most downward air speed into a walled yard (airflow over the yard's area not covered by units) when walls stand above the fans
+    conf: high
+    source: "EVAPCO 320A p. 6 'Solid Wall Enclosures or Wells'; BAC Layout Guidelines (2022-03-08) 'Well Layout': 400 fpm. Both also say a unit's discharge should be level with or above adjacent walls; above that the yard is a well and this check applies"
+  rows:
+    value: 22
+    unit: rows of units across the yard, side by side (a layout choice giving a near-square yard)
+    conf: high
+    source: "design choice"
+
+acoustics:
+  ear_h_m:
+    value: 4
+    low: 1.5
+    high: 4
+    unit: m, receiver height at the home (an upstairs bedroom window)
+    conf: high
+    source: "EU Environmental Noise Directive 2002/49/EC Annex I: noise indicators assessed at 4.0 m above ground; 1.5 m is the usual ground-floor height"
+  wall_gap_m:
+    value: 1.52
+    unit: m from the yard's outer row to the perimeter wall
+    conf: high
+    source: "the side-to-wall clearance above (EVAPCO 320A D2)"
+  berm_slope:
+    value: 2.0
+    low: 2.0
+    high: 3.0
+    unit: horizontal run per unit rise of the berm's sides (2 = 2H:1V)
+    conf: low
+    source: "judgement: 2H:1V is about the steepest compacted earth slope that stays stable and grassed; 3H:1V where it must be mowed by machine; to source (state DOT embankment standards)"
+  berm_crest_m:
+    value: 2.0
+    low: 1.0
+    high: 3.0
+    unit: m, width of the berm's flat top
+    conf: low
+    source: "judgement"
+
+brick:
+  unit_l_in:
+    value: 7.625
+    unit: in., modular brick length (actual)
+    conf: high
+    source: "BIA Technical Note 10 (2009) and BIA EPD11101 (2025) conversion table: modular 9.2 x 5.7 x 19.4 cm (3 5/8 x 2 1/4 x 7 5/8 in.)"
+  unit_w_in:
+    value: 3.625
+    unit: in., modular brick bed depth (actual)
+    conf: high
+    source: "as unit_l_in"
+  unit_h_in:
+    value: 2.25
+    unit: in., modular brick height (actual)
+    conf: high
+    source: "as unit_l_in"
+  joint_in:
+    value: 0.375
+    unit: in., mortar joint
+    conf: high
+    source: "BIA TN 10: modular brick with 3/8 in. joints (8 in. module, three courses to 8 in.)"
+  collar_in:
+    value: 2.0
+    unit: in., grouted collar joint between the two wythes, holding the panel's horizontal bars
+    conf: high
+    source: "design choice; room for #4-#5 bars with grout round them and for the turned face bricks' back corners (forge `wall`: up to ~21 mm)"
+  turn_deg:
+    value: 13
+    low: 0
+    high: 15
+    unit: degrees, most a face brick is turned for the pattern
+    conf: high
+    source: "design choice, checked in forge `wall`: head joints stay 3-25 mm and every brick bears at least ~3/4 of its bed on the course below"
+
+design:
+  perimeter_h_m:
+    value: 6.0
+    low: 4.0
+    high: 8.0
+    unit: m, height of the wall around the yard (and of the berm it is compared with)
+    conf: high
+    source: "design choice: about twice the fans' height; the yard passes the well check (wall.py)"
+  court_h_m:
+    value: 6.0
+    low: 4.0
+    high: 6.0
+    unit: m, height of the walls between courts
+    conf: high
+    source: "design choice"
+  court_rows:
+    value: 2
+    low: 1
+    high: 4
+    unit: rows of coolers in each court (a wall between every this many rows)
+    conf: high
+    source: "design choice: every second row puts a wall beside every unit's long side"
+  pier_spacing_ft:
+    value: 14
+    low: 8
+    high: 20
+    unit: ft, pier (pilaster) centres along the wall
+    conf: high
+    source: "BIA Technical Note 45, Brick Masonry Noise Barrier Walls - Introduction (1991, reissued 2001): panels 'usually built from 8 to 20 ft long'; Oregon DOT standard BR750 masonry sound wall: pilasters at 14'-0 typical"
+  expansion_joint_ft:
+    value: 28
+    low: 28
+    high: 30
+    unit: ft between vertical expansion joints
+    conf: high
+    source: "BIA TN 45: not more than 30 ft on centre; ODOT BR750: 28'-0 (every second pier)"
+  pier_w_in:
+    value: 16
+    unit: in., pier width along the wall (two brick lengths with joints)
+    conf: high
+    source: "design choice; CMHA TEK 14-15B tabulates 16 and 24 in. piers; BIA TN 45A example #3 15.63 x 19.63 in."
+  pier_d_in:
+    value: 24
+    low: 20
+    high: 28
+    unit: in., pier depth through the wall (including the wall's thickness)
+    conf: high
+    source: "design choice, checked in wallstruct.py; TEK 14-15B piers 16 x 18 to 16 x 28 in. for heights to 20 ft"
+  shaft_dia_in:
+    value: 24
+    low: 18
+    high: 30
+    unit: in., drilled concrete shaft under each pier
+    conf: high
+    source: "design choice; TEK 14-15B Table 7: 18-30 in."
+  grade_beam_w_in:
+    value: 16
+    unit: in., continuous concrete grade beam under the panels, between shafts
+    conf: low
+    source: "judgement: the panel's width plus a little; BIA TN 45A lets the ground carry the panel along its base"
+  grade_beam_d_in:
+    value: 36
+    unit: in., grade beam depth (to the frost line)
+    conf: high
+    source: "Indiana County Office of Planning & Development, UCC page: adopted IRC 2018 Table R301.2(1), 'Frost Line Depth - 36 inches'"
+
+wind:
+  v_mph:
+    value: 115
+    low: 105
+    high: 115
+    unit: mph, ASCE 7-16 basic wind speed, Risk Category II, 3-s gust at 33 ft, strength level
+    conf: low
+    source: "NOT the ASCE Hazard Tool site value (not read). 115 is an upper bound: the ASCE 7-10 RC II interior value and the top of Indiana County's adopted 90-115 mph range (icopd.org); ASCE 7-16 lowered non-hurricane speeds outside the Great Plains (D.R. Scott, PCS Structural Solutions, 2019). 105 is judgement. To read: ascehazardtool.org, 40.54 N 79.16 W"
+  ke:
+    value: 0.96
+    low: 0.96
+    high: 1.0
+    unit: ground elevation factor (ASCE 7-16 Table 26.9-1) at 1,053 ft
+    conf: high
+    source: "USGS 3DEP point query at 40.54 N, 79.16 W: 1,053 ft; Caltrans Temporary Structures Manual App. A Ex. 1 (2025): 1,000 ft -> Ke 0.96"
+  kd:
+    value: 0.85
+    unit: directionality factor, solid freestanding walls (ASCE 7-16 Table 26.6-1)
+    conf: high
+    source: "Caltrans Temporary Structures Manual App. A Ex. 1; MECA 'Wind Loads on Freestanding Walls' (ASCE 7-16 example)"
+  g:
+    value: 0.85
+    unit: gust-effect factor, rigid structure (ASCE 7-16 26.11.1)
+    conf: high
+    source: "Caltrans App. A Ex. 1; MECA; CMHA TEK 14-15B"
+  cf_body:
+    value: 1.30
+    low: 1.30
+    high: 1.45
+    unit: net force coefficient, Cases A/B, wall on grade (s/h = 1), long wall (B/s >= 10)
+    conf: medium
+    source: "ASCE 7-16 Fig. 29.3-1 as read in MECA's example ('for B/s = 20 and s/h = 1 we get a force coefficient of 1.3'); high = B/s = 1 (the table from memory, cross-checked against Caltrans' 1.60 at B/s 0.36)"
+  cf_end:
+    value: 2.07
+    low: 1.94
+    high: 3.24
+    unit: net force coefficient over the first two wall heights from a corner (Case C, with the return)
+    conf: low
+    source: "derived from ASCE 7-16 Fig. 29.3-1 Case C as read in MECA's example at B/s = 20: 0-s 4.07, s-2s 2.59, times (1.8 - s/h) = 0.8 for s/h = 1 (note wording not seen): 3.26 and 2.07; a return corner at least 2s long cuts the 0-s value by 0.6 (from memory) to 1.95. Value: the larger of the two regions after both factors; high: no return-corner factor"
+  resultant:
+    value: 0.55
+    low: 0.50
+    high: 0.55
+    unit: share of the wall's height at which the wind's resultant acts (s/h = 1)
+    conf: medium
+    source: "Caltrans App. A Ex. 1: 'common practice to apply at 55% height'"
+  asd:
+    value: 0.6
+    unit: factor on strength-level wind for allowable stress design (ASCE 7-16 2.4, D + 0.6W)
+    conf: high
+    source: "Caltrans App. A Ex. 1: 'For allowable stress design the design force is multiplied by 0.6 per ASCE 2.4'"
+
+masonry:
+  fm_psi:
+    value: 2500
+    low: 1500
+    high: 3500
+    unit: psi, specified compressive strength of the brick masonry f'm
+    conf: medium
+    source: "TMS 602 unit strength method via BIA TN 3A (2024) Table 5: Type S mortar, 6,600 psi net-area units -> 2,500 psi (8,250 -> 3,000); extruded brick averages 11,305 psi gross (1993 survey, TN 3A Table 1); ASTM C216 SW asks only 3,000 psi average, so the unit's own test sets f'm"
+  fs_psi:
+    value: 32000
+    unit: psi, allowable tensile stress, Grade 60 bars (TMS 402-16 8.3.3)
+    conf: high
+    source: "County of Los Angeles DPW, Masonry Walls Plan Review List (TMS 402-16), item 13; CMHA TEK 14-07C"
+  fb_coef:
+    value: 0.45
+    unit: x f'm, allowable flexural compressive stress, reinforced masonry (TMS 402-16 8.3.4.2.2)
+    conf: high
+    source: "LA County DPW checklist item 9; TEK 14-07C; no one-third increase for wind since the 2011 MSJC (TEK 14-07C p. 1)"
+  em_coef:
+    value: 700
+    unit: x f'm, modulus of elasticity of clay masonry
+    conf: high
+    source: "BIA TN 3A (2024) Eq. 1, Em = 700 f'm (TMS 402/602-22)"
+  es_psi:
+    value: 29000000
+    unit: psi, modulus of elasticity of reinforcement
+    conf: high
+    source: "BIA TN 3A (2024): 29,000 ksi"
+  s1_psf_ft:
+    value: 300
+    low: 300
+    high: 1200
+    unit: psf per ft of depth, allowable lateral soil bearing for the drilled shafts
+    conf: medium
+    source: "CMHA TEK 14-15B Table 7 note: 300 psf/ft, increased 1/3 for wind; Oregon DOT BR750: 1,200 psf/ft in good soil, 525 average. Spoil and fill at a coal plant are likely poor: 300 as the central value"
+  wind_soil_increase:
+    value: 1.0
+    low: 1.0
+    high: 1.33
+    unit: factor on lateral soil bearing for wind
+    conf: medium
+    source: "TEK 14-15B Table 7 note uses 1.33 (S1 = 300 psf/ft x 1.33). Checked (tests/test_wall.py): with 1.33 our pole formula falls 0-0.8 ft below TEK's Table 7 depths (w = 20 psf, 10 ft wall, 10-20 ft spans), without it 0.4-0.5 ft above; 1.0 keeps the published depths inside ours"
+  cover_in:
+    value: 4.5
+    unit: in., pier face to the bars' centres
+    conf: low
+    source: "judgement: a brick skin (3 5/8 in.) with the bars just inside the grouted core"
+  pier_grout_share:
+    value: 0.25
+    low: 0.15
+    high: 0.35
+    unit: share of a pier's volume (beyond the wall) that is grouted core rather than brick
+    conf: placeholder
+    source: "judgement: a 16 x 24 in. pier with a brick skin round a core for the bars"
+  shaft_bars:
+    value: 6
+    unit: "#5 bars down each drilled shaft"
+    conf: medium
+    source: "Oregon DOT standard BR750, pile footing: 6-#4 to 6-#6 by height and wind"
+  mortar_m3_per_1000:
+    value: 0.229
+    low: 0.229
+    high: 0.275
+    unit: m3 of mortar per 1,000 modular brick (3/8 in. joints)
+    conf: high
+    source: "BIA Technical Note 10 (2009) Table 4: 8.1 cu ft per 1,000 modular brick; add 15-25% for waste (high)"
+
+cost:
+  brick_usd_per_1000:
+    value: 600
+    low: 350
+    high: 850
+    unit: USD per 1,000 modular face brick, material
+    conf: low
+    source: "consumer guides (HomeAdvisor 2025 $500-850 per thousand; HomeGuide $350-800); no western PA supplier quote; BLS PPI for brick (WPU1342) roughly flat through 2025"
+  waste:
+    value: 0.05
+    unit: share of brick added for breakage and waste
+    conf: high
+    source: "BIA Technical Note 10 (Feb 2009): add at least 5% for breakage and waste"
+  mortar_usd_m3:
+    value: 300
+    low: 200
+    high: 450
+    unit: USD per m3 of Type S mortar, material
+    conf: placeholder
+    source: "judgement: masonry cement and sand at a few hundred dollars a cubic metre; to source (supplier quote)"
+  grout_usd_m3:
+    value: 250
+    low: 196
+    high: 300
+    unit: USD per m3 of grout, delivered
+    conf: low
+    source: "ready-mix proxy: $150-220/cy delivered (consumer guides, 2025, as params/pass3.yaml) = $196-288/m3"
+  rebar_usd_kg:
+    value: 2.5
+    low: 1.8
+    high: 3.5
+    unit: USD per kg of reinforcing bar, cut, bent and placed
+    conf: placeholder
+    source: "judgement; to source (RSMeans or a local bid)"
+  mason_usd_h:
+    value: 29.01
+    low: 29.01
+    high: 35.87
+    unit: USD per hour, mean wage, brickmasons (SOC 47-2021)
+    conf: high
+    source: "BLS OEWS May 2025: Southwestern Pennsylvania nonmetropolitan area (contains Indiana County) 29.01; Pittsburgh MSA 35.87"
+  helper_usd_h:
+    value: 27.91
+    low: 24.48
+    high: 27.91
+    unit: USD per hour, mean wage, helpers to brickmasons (SOC 47-3011)
+    conf: medium
+    source: "BLS OEWS May 2025: Pennsylvania 27.91 (not published below state level); US 24.48"
+  operator_usd_h:
+    value: 29.17
+    low: 27.95
+    high: 33.01
+    unit: USD per hour, mean wage, construction equipment operators (SOC 47-2073), for the robot's crew
+    conf: high
+    source: "BLS OEWS May 2025: SW PA nonmetro 29.17; Johnstown 27.95; Pittsburgh 33.01"
+  burden:
+    value: 1.438
+    unit: total employer compensation over wages, private construction
+    conf: high
+    source: "BLS Employer Costs for Employee Compensation, June 2026, Table 4, construction: $51.96 total / $36.13 wages"
+  overhead_profit:
+    value: 0.20
+    low: 0.10
+    high: 0.35
+    unit: contractor overhead and profit added to the installed cost
+    conf: placeholder
+    source: "judgement (RSMeans 'incl. O&P' not checked)"
+  helpers_per_mason:
+    value: 0.67
+    low: 0.5
+    high: 1.0
+    unit: helpers (tenders) per mason in the crew
+    conf: low
+    source: "RSMeans crew D-8, 3 bricklayers + 2 helpers (from memory, via the cost inputs); to source"
+  brick_per_mason_day:
+    value: 500
+    low: 250
+    high: 600
+    unit: modular brick laid per mason per 8-h day, plain running bond
+    conf: low
+    source: "The Robot Report (2015-07-08, Construction Robotics figures) 400-600; Masonry Magazine (~2018) 550; Construction Dive (2018-09-05) about 250"
+  pattern_productivity:
+    value: 0.6
+    low: 0.35
+    high: 0.9
+    unit: a mason's productivity on the turned face wythe, as a share of plain work
+    conf: placeholder
+    source: "proxy: Sanders and Thomas, J. Constr. Eng. Manage. 117(4), 1991: designs needing extensive layout and cutting cut masonry productivity by as much as 40% (11 central Pennsylvania projects); no measurement exists for hand-laying bricks each at its own angle. A timed mock-up by a local mason would source it"
+  pier_brick_factor:
+    value: 1.15
+    low: 1.0
+    high: 1.3
+    unit: labour per pier brick relative to wall brick (bonding round the bars)
+    conf: placeholder
+    source: "judgement"
+  access_usd_m2:
+    value: 20
+    low: 10
+    high: 40
+    unit: USD per m2 of wall face for scaffold or lifts on a 6 m wall (hand-laid only)
+    conf: placeholder
+    source: "judgement; to source"
+  robot_bricks_per_h:
+    value: 250
+    low: 200
+    high: 400
+    unit: bricks laid per hour by a semi-automated bricklaying robot in mortar
+    conf: low
+    source: "Construction Robotics SAM100: The Robot Report (2015-07-08) ~200/h, run by two trained workers; Construction Dive (2018-09-05) 200-250/h (laid ~60,000 of 100,000 bricks on a University of Nevada building); CNBC (2018) 300-400/h (vendor claim). SAM is no longer on the maker's site (2026-11-16)"
+  robot_usd:
+    value: 650000
+    low: 400000
+    high: 1000000
+    unit: USD per bricklaying robot
+    conf: low
+    source: "The Robot Report (2015-07-08): SAM 'about $650,000 each'; Monumental (Fortune, 2024-02-15) says its robots' parts cost ~$25,000 but sells per brick; low and high are judgement"
+  robot_years:
+    value: 5
+    low: 3
+    high: 8
+    unit: years a robot is written off over
+    conf: placeholder
+    source: "judgement (SAM's maker claimed a 2-4 year payback)"
+  robot_hours_yr:
+    value: 1600
+    low: 1000
+    high: 2000
+    unit: working hours a robot lays brick in a year
+    conf: placeholder
+    source: "judgement: one shift, weather and moves between jobs"
+  robot_upkeep:
+    value: 0.10
+    low: 0.05
+    high: 0.20
+    unit: maintenance a year as a share of the robot's price
+    conf: placeholder
+    source: "judgement"
+  robot_crew:
+    value: 2
+    low: 2
+    high: 3
+    unit: workers with each robot (loading, mortar, tending)
+    conf: low
+    source: "The Robot Report (2015): SAM 'run by two trained workers'; Monumental (Fortune 2024): humans still point, strike and fit ties"
+  robot_mason_share:
+    value: 0.5
+    low: 0.25
+    high: 1.0
+    unit: masons per robot striking joints and fitting ties
+    conf: placeholder
+    source: "judgement from the same reports"
+  precast_usd_ft2:
+    value: 47.26
+    low: 35
+    high: 51.61
+    unit: USD per sq ft of barrier face, precast concrete noise wall installed (2022 $)
+    conf: medium
+    source: "FHWA Noise Barrier Inventory graph04 (2022 $): precast concrete 2020-2022 $47.26 (1963-2022 $43.45); WisDOT 1060-53-70 (2022): 13 walls bid since 2020 at $35-45/sq ft; WSDOT current average $51.61"
+  brick_fhwa_usd_ft2:
+    value: 55.09
+    low: 32
+    high: 70
+    unit: USD per sq ft of barrier face, brick noise wall installed (FHWA average, 2022 $), the known case for the bottom-up brick cost
+    conf: low
+    source: "FHWA Noise Barrier Inventory graph04: brick 1963-2022 $55.09 (2022 $), none reported 2020-2022; low FHWA stable710 all years $32 (2010 $); high WVDOT 2025 item 630006-001 masonry wall, 1 bid, $70"
+  earthwork_usd_cy:
+    value: 30
+    low: 4.67
+    high: 45
+    unit: USD per cubic yard of cut placed and compacted in the berm
+    conf: medium
+    source: "WVDOT Average Unit Bid Prices 2025 item 207001-001: statewide quantity-weighted $4.67 (mass grading dominates; the low end if the berm is built with the campus's grading); district means at 20,000-40,000 cy $29-44; PennDOT item prices not public"
+  topsoil_usd_cy:
+    value: 131
+    low: 64
+    high: 143
+    unit: USD per cubic yard of topsoil furnished and placed on the berm's faces (0.15 m deep)
+    conf: low
+    source: "WVDOT 2025 item 651001-001 $130.97 (6 bids, 341 cy); PennDOT 2013 Johnstown bid tab $63.69-140"
+  berm_fhwa_usd_ft2:
+    value: 12.37
+    low: 7
+    high: 24
+    unit: USD per sq ft of barrier face, earth berm (FHWA average, 2022 $), the known case for the bottom-up berm cost
+    conf: low
+    source: "FHWA Noise Barrier Inventory graph04: berm 1963-2022 $12.37 (2022 $); FHWA stable710 (2010 $) all years $7, 2010 row $24"
+
+carbon:
+  brick_kg_kg:
+    value: 0.283
+    low: 0.237
+    high: 0.303
+    unit: kg CO2e per kg of clay brick (A1-A3)
+    conf: medium
+    source: "BIA Clay Masonry Products Industry Average EPD, NSF EPD11101 (2025-11-07): 31.8 kg CO2e per m2 for 112.18 kg of brick; low: BIA 2020 EPD10447 503 kg/m3 at 2,120 kg/m3; high: General Shale Augusta EPD11265 (2026) 34.1 / 112.52. BIA's TN 48 says 2025 is ~25% below 2020; per tonne these go the other way, not reconciled"
+  brick_kg_each:
+    value: 1.52
+    unit: kg per modular brick (25% cored)
+    conf: high
+    source: "BIA EPD11101 conversion table, Modular: 1.52 kg, 73.81 units/m2 at 3/8 in. joints"
+  mortar_kg_m3:
+    value: 600
+    low: 240
+    high: 620
+    unit: kg CO2e per m3 of mortar (A1-A3)
+    conf: low
+    source: "derived: BIA EPD11101 A5 mortar 8.25 kg CO2e per 27.31 kg dry mortar = 0.302 kg/kg, x ~2,000 kg/m3 dry mortar (judgement) = ~600; low: a Type S masonry cement EPD (Heidelberg Mitchell IN, EPD 1112, 479 kg/t) at ~25% cement by mass = ~120 kg/t = ~240 kg/m3. Source a US mortar EPD"
+  precast_kg_m2:
+    value: 125
+    low: 80
+    high: 160
+    unit: kg CO2e per m2 of precast concrete noise wall face, panels, posts and footings (A1-A3)
+    conf: placeholder
+    source: "derived from placeholders: CPCI/PCI architectural panel EPD (ASTM EPD-116, 2019, expired) 257.8 kg CO2e/t incl. steel, x a ~0.2 m equivalent thickness (panels plus posts and footings, judgement) x 2,400 kg/m3 = ~124"
+  earthwork_kg_m3:
+    value: 3
+    low: 1.4
+    high: 6
+    unit: kg CO2e per m3 of earth dug, moved and compacted
+    conf: placeholder
+    source: "judgement around OEKOBAUDAT 2024-I 'Excavator 100kW' 1.37 kg CO2e/m3 for digging alone (via Climatiq); hauling and compacting add to it; EPA 2025: 10.49 kg CO2e per gallon of diesel"

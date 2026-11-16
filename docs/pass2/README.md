@@ -28,8 +28,8 @@ plant), so the difference is the data center.
 - **Conventional**: chillers move the heat to evaporative cooling towers; diesel generators for
   backup.
 - **Good neighbour**: direct-to-chip liquid cooling (85% of the heat) on a 40 C loop, the rest on
-  an air-side loop; dry coolers, no water, oversized so the fans turn at half speed, behind an
-  earth berm; small chillers trim the hottest hours; heat pumps lift the loop's heat to 75 C for
+  an air-side loop; dry coolers, no water, oversized so the fans turn at half speed, screened
+  (pass 2d: walled cells, not the berm first assumed); small chillers trim the hottest hours; heat pumps lift the loop's heat to 75 C for
   a district heating network (5,000 homes) and 10 ha of greenhouses; batteries bridge to the
   on-site gas plant instead of diesel.
 
@@ -46,8 +46,9 @@ plant), so the difference is the data center.
 | Homes heated | homes | 0 | 5,000 |
 | Sound power of heat rejection | dB(A) | 114 | 106 |
 |   dry coolers at minimum size instead (fans at full speed) | dB(A) |  | 118 |
-| Distance to 40 dB(A) at night | m | 698 | 116 (with berm) |
-|   without the berm | m |  | 317 |
+| Distance to 40 dB(A) at night (the module as a point, no screen) | m | 698 | 317 |
+|   from the cooler yard's edge, 6 m berm round it (pass 2d) | m |  | 218 |
+|   from the yard's edge, walled cells (pass 2d), across / along the rows | m |  | 34 / 80 |
 | Diesel generators | units | 44 | 0 |
 | Diesel test hours | engine-hours/yr | 1,056 | 0 |
 | NOx from tests | t/yr | 10.1 | 0 |
@@ -71,16 +72,21 @@ reported apart: it is spent to sell heat, replacing the town's furnaces.
   to the creek.
 - **Quiet isn't automatic.** Dry coolers need ~40 times the fans of cooling towers; at minimum
   size they are louder (118 vs 114 dB(A)). Oversized so the fans run at half speed, they are
-  8 dB quieter than the towers, and a berm takes another 10.
+  8 dB quieter than the towers.
+- **Corrected in [pass 2d](wall.md):** this report first gave the berm a flat 10 dB and put
+  40 dB(A) at ~120 m. Sized from the coolers' real layout by ISO 9613-2's barrier method, a 6 m
+  berm round the yard takes ~1 dB off at 300 m. Walls between the rows of coolers ("cells") take
+  ~12 dB off for homes across the rows and ~6.5 dB for homes off the ends.
 - **The measure that holds without vendor data is the sound power budget**: what a module may
-  emit for 40 dB(A) outside a home at night (WHO 2009), from ISO 9613-2 propagation:
+  emit for 40 dB(A) outside a home at night (WHO 2009), from ISO 9613-2 propagation, and what
+  walled cells add to it (pass 2d):
 
-  | Nearest home | Budget, open ground | Budget behind a 10 dB berm |
+  | Nearest home | Budget, open ground | Budget with walled cells (homes across / off the ends) |
   |---|---|---|
-  | 300 m | 105 dB(A) | 115 dB(A) |
-  | 500 m | 110 dB(A) | 120 dB(A) |
-  | 1,000 m | 118 dB(A) | 128 dB(A) |
-  | 2,000 m | 126 dB(A) | 136 dB(A) |
+  | 300 m | 105 dB(A) | 117 / 112 dB(A) |
+  | 500 m | 110 dB(A) | 121 / 115 dB(A) |
+  | 1,000 m | 118 dB(A) | 126 / 120 dB(A) |
+  | 2,000 m | 126 dB(A) | 131 / 127 dB(A) |
 
   A commitment written as "40 dB(A) at night at any home" can be checked against a design with
   this table.

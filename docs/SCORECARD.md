@@ -19,3 +19,10 @@ fills it. Targets come from cited guidelines, never from what our design happens
 
 Targets to source in pass 2: night noise (WHO guidelines), water (best published WUE), backup
 (battery-only data centers in service).
+
+Checked against the public record of the Homer City campus (2026-11-16,
+[hearing-record.md](hearing-record.md)): people raise jobs, water, night sound, power bills and
+taxes, but raise most often what isn't here. That covers process and transparency, the
+creek's ecology, the gas plant's air, monitoring and enforcement, private wells, local hiring and
+cleanup liability. No one raised housing, hospital access or reuse of waste heat. Candidate
+additions are listed there, for a decision.

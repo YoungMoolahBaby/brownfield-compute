@@ -28,10 +28,13 @@ def build(temp, p: dict) -> tuple[str, dict]:
     lw = {"conventional": noise.module_lw("conventional", peak_heat, p),
           "good neighbour": noise.module_lw("good neighbour", peak_heat, p)}
     dist = {"conventional": noise.distance_for(target, lw["conventional"], p),
-            "good neighbour": noise.distance_for(target, lw["good neighbour"], p, p["pass2.noise.barrier_db"])}
-    # Honest corners: dry coolers at minimum size (k = 1) and without the berm.
+            "good neighbour": noise.distance_for(target, lw["good neighbour"], p)}
+    # Honest corner: dry coolers at minimum size (k = 1). Screens: pass 2d's yard and ISO 9613-2
+    # barrier geometry (wall.py), measured from the yard's edge.
     lw_min = noise.module_lw("good neighbour", peak_heat, dict(p, **{"pass2.noise.dry_oversize": 1.0}))
-    dist_noberm = noise.distance_for(target, lw["good neighbour"], p)
+    from . import wall
+
+    ac = {(r["layout"], r["direction"]): r["dist"] for r in wall.acoustics(p)}
     bk = {d: backup(d, p) for d in lw}
     gh_ha = p["pass2.greenhouse.hectares"]
     rows = [
@@ -44,9 +47,11 @@ def build(temp, p: dict) -> tuple[str, dict]:
         ("Homes heated", "homes", "0", f"{g.town_mwh / p['pass2.town.heat_per_home_mwh']:,.0f}"),
         ("Sound power of heat rejection", "dB(A)", f"{lw['conventional']:.0f}", f"{lw['good neighbour']:.0f}"),
         ("  dry coolers at minimum size instead (fans at full speed)", "dB(A)", "", f"{lw_min:.0f}"),
-        (f"Distance to {target:.0f} dB(A) at night", "m",
-         f"{dist['conventional']:,.0f}", f"{dist['good neighbour']:,.0f} (with berm)"),
-        ("  without the berm", "m", "", f"{dist_noberm:,.0f}"),
+        (f"Distance to {target:.0f} dB(A) at night (the module as a point, no screen)", "m",
+         f"{dist['conventional']:,.0f}", f"{dist['good neighbour']:,.0f}"),
+        ("  from the cooler yard's edge, 6 m berm round it (pass 2d)", "m", "", f"{ac[('berm', 'across')]:,.0f}"),
+        ("  from the yard's edge, walled cells (pass 2d), across / along the rows", "m", "",
+         f"{ac[('cells', 'across')]:,.0f} / {ac[('cells', 'along')]:,.0f}"),
         ("Diesel generators", "units", f"{bk['conventional']['gensets']}", "0"),
         ("Diesel test hours", "engine-hours/yr", f"{bk['conventional']['diesel_hours']:,.0f}", "0"),
         ("NOx from tests", "t/yr", f"{bk['conventional']['nox_t']:.1f}", "0"),

@@ -202,13 +202,6 @@ noise:
     unit: m, mean height of the sound path above ground (source on a roof or pad, ear at 4 m)
     conf: placeholder
     source: "judgement: rooftop or pad-mounted coolers; ISO 9613-2 eq. (10) uses it"
-  barrier_db:
-    value: 10
-    low: 5
-    high: 15
-    unit: dB, a berm or wall between the coolers and the homes (good neighbour only)
-    conf: placeholder
-    source: "judgement: ISO 9613-2 caps single diffraction at 20 dB; 5-15 dB is what earth berms typically give; to size with the site's terrain"
   tower_fan_lw:
     value: 100
     low: 90
