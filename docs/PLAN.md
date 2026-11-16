@@ -125,6 +125,35 @@ at the campus edge, funded in the community benefits agreement.
   their published numbers cited, nothing about their design guessed.
 - **D5** (2026-11-15) Name `brownfield-compute`; Python (uv) for the model, Rust + CortenForge
   under `forge/` from pass 3; Apache-2.0; public on GitHub when Jon says push.
+- **D7** (2026-11-16) Architecture and craft. Jon: "do you want to show what you can do for
+  architecture/elegance for this project?"; robots that build what "even the best builders would
+  look at and be like 'yeah no fucking way i could build that'", with builders overseeing them;
+  then "if we want to like make our own bricks for cheaper and make the molds/casts for that,
+  cortenforge can do that." The steer:
+  - Ornament went because skilled hours got expensive, not because builders couldn't make it. The
+    target is detail no one could afford to build by hand, and what it costs is the result.
+  - The data hall stays a plain, repeated box; the craft goes on the edge the town sees, on parts
+    that do a job the scorecard measures.
+  - First piece: pass 2's earth berm (10 dB and $1M per module, both placeholders) replaced by a
+    patterned brick wall in front of the coolers, built in CortenForge and laid by a modelled arm
+    in sim-core. Compared with the berm, a precast concrete wall, plain brick, hand-laid and
+    robot-laid patterned brick, and units made on site from its coal ash or spoil in moulds
+    designed in CortenForge; scored on cost, night sound at the nearest homes, land, embodied
+    carbon and upkeep. In FHWA's barrier inventory brick and concrete cost about the same per
+    square foot and berms about a quarter (RESEARCH.md).
+  - A mason must be able to repair it: standard units and mortar.
+  - The cultural case stays in the README's "Why"; reports say "architecture" and "craft".
+- **D8** (2026-11-16) Jon: a city on cheap desert land, "like 1-5k an acre, has some sort of well
+  water supply, and you could use rammed earth ... going big might be the right bet ... im not
+  saying we should change the project". The steer, which Jon accepted ("for an actual town,
+  having an effect on the the actual population of america, your correction is right"): the
+  land is cheap because nothing is there, and land is a small part of what a town costs
+  (California City, Arcosanti and Telosa all stayed mostly empty or on paper); desert
+  groundwater runs out (Arizona paused new groundwater-only subdivision approvals around Phoenix
+  in 2023, RESEARCH.md); dry coolers work worst in desert heat, and empty land has no grid
+  connection. Rammed earth itself suits dry climates. Jon: the desert "might be good for some sort
+  of earthship like those tire homes, just updated": an off-grid home, closer to mothership than
+  to this project. Kept from it: making units on site in our own moulds (D7).
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

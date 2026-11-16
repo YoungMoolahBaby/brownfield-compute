@@ -81,6 +81,28 @@ Sources, with what we took from them and their limits. Newest first within a sec
 - Flyvbjerg, B. and Gardner, D., *How Big Things Get Done* (2023): plan slowly with detailed
   models, then build fast; modular projects (repeat a small unit) come in on time and budget far
   more often than one-off giants. Cited from memory for the steer (D4); page references `?`.
+- **Arizona groundwater pause** (D8; [Axios, 2023-06-01](https://www.axios.com/2023/06/01/arizona-restricts-phoenix-housing-groundwater-shortage),
+  [Western Water, 2023-06-06](https://www.western-water.com/2023/06/06/groundwater-modeling-prompts-halt-of-new-assured-water-supply-certificates-for-phoenix-area-subdivisions)):
+  Governor Hobbs paused new assured water supply determinations that rely on groundwater alone
+  in the Phoenix Active Management Area after ADWR's model projected a 4% shortfall, about 4.9
+  million acre-feet, over 100 years. The 1980 Groundwater Management Act requires a 100-year
+  assured supply to subdivide in an AMA; about 80,000 homes that already held certificates went
+  ahead; Buckeye and Queen Creek were hit hardest. In 2025 the state added an Alternative
+  Designation of Assured Water Supply for providers with other sources
+  ([KJZZ, 2025-10-15](https://www.kjzz.org/the-show/2025-10-15/groundwater-issues-have-halted-developments-in-buckeye-arizona-has-plan-to-move-forward)).
+
+## Noise barriers (for the wall, D7; 2026-11-16)
+
+- **FHWA noise barrier inventory, "Noise Barrier Construction Material Average Unit Cost by
+  Year"**, barriers built by 2010-12-31, 2010 $/sq ft
+  ([table](https://www.fhwa.dot.gov/ENVIRonment/noise/noise_barriers/inventory/summary/stable710.cfm)):
+  all years concrete 30, block 25, wood 20, metal 18, berm 7, brick 32, combination 21,
+  absorptive 28. Limits: state-reported averages, mostly older builds (one row for 1963-1999,
+  then by year); no brick barriers in 2008-2010; berm 17 (2009) and 24 (2010) in years with few
+  built; "square foot" is not defined on the table (presumably barrier face). Not a bid price.
+- **WSDOT** ([noise walls & barriers](https://wsdot.wa.gov/construction-planning/protecting-environment/noise-walls-barriers)):
+  current construction cost averages $51.61 per sq ft; rural barriers can cost less, urban much
+  more.
 
 ## Building codes and lumber (for pass 3)
 
