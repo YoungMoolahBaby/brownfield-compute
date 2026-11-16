@@ -45,8 +45,17 @@ detached homes and townhouses. With real flats, apartments win against gas only 
 0.5 km of the campus (at most ~$0.9k per dwelling, ~4%; 32% of draws), and against a heat pump (an
 all-electric neighbourhood) from 500 within 1 km or 1,000 within 1.5 km (up to ~$2.7k, ~12%; 66% of
 draws). So: dense all-electric housing right against the campus costs residents about the same or a
-little less; heat pumps for the existing town. Next in 3b: the walk-up's structure (three framing
-systems) and its build sequence in sim-core.
+little less; heat pumps for the existing town. Step 5 (3b, Jon: "commit, then start on the framing"):
+the walk-up framed in wood (`brownfield frame` sizes it by NDS 2018 / APA / ASCE 7-16, reproducing
+SFPA spans to 0.4 in. and APA I-joist spans within 2%; forge `framing` builds 3,027 members, none
+overlapping): 11-7/8 in. I-joists (no sawn joist spans the 19 ft at L/480), 2x6 facade studs at 16
+in. (ground floor limited by plate crushing), 2x4 spine rows at 12 in. on the ground floor; 51 m3 of
+wood, 69 m3 of concrete. Step 6 (3b, Jon: "do the build sequence next please"): built in order in
+sim-core (forge `build`, `brownfield build`, docs/pass3/build.gif): 138 wall panels (up to 16 ft) framed
+flat and tilted up on a hinge servo (torque = statics within 0.4%): the heaviest, a sheathed end-wall
+panel, 243 kg / 267 lbf at the top plate = a crew of 6 at NIOSH's 51 lb (4 before sheathing), no wall
+jacks; cap plates and joists set as free bodies land within 0.11 mm; joists set before the spine fall
+(132 of 142). Next in 3b: light steel and masonry + precast floors on the same plan.
 
 ## Decisions
 

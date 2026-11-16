@@ -101,6 +101,30 @@ Sources, with what we took from them and their limits. Newest first within a sec
   2x12 at 40 psf 214.1 in. by bending (17-10). The NDS values are from memory, to confirm
   against the AWC Supplement Table 4A before pass 3 relies on them.
 
+- **Confirmed** (2026-11-15, pass 3b): SFPA, *No.2 Design Value Comparisons by Species* (2013)
+  [PDF](https://www.southernpine.com/wp-content/uploads/2023/09/D_Design-Value-Comparisons-by-Species_0601131.pdf):
+  SPF No.2 size-adjusted (2012 NDS Supplement) Fb 1315 / 1140 / 1050 / 965 / 875 psi for 2x4-2x12,
+  Fc 1325 / 1265 / 1210 / 1150 / 1150, Ft 675 / 585 / 540 / 495 / 450, E 1.4e6, Fc-perp 425, Fv 135:
+  so base Fb 875, Fc 1150 and the size factors used above are right. Southern Pine No.2 (2013):
+  Fb 1100 / 1000 / 925 / 800 / 750, Fc 1450-1250, Fv 175, Fc-perp 565, E 1.4e6.
+- **APA Performance Rated I-Joists**, Form Z725E (2012)
+  [PDF](https://interfor.com/wp-content/uploads/2024/08/APA_Performance_Rated_I-Joists.pdf):
+  Table 7 design properties (EI, M, V, K, reactions) for PRI-20 to PRI-90 in 9-1/2 to 16 in.;
+  Table 1 simple spans at 40/10 psf, L/480, glue-nailed; nailed-only floors 12 in. less.
+- **Indiana County Office of Planning & Development**, commercial permit guidance
+  ([building](https://www.icopd.org/assets/commercial-building7.pdf),
+  [small](https://www.icopd.org/assets/commercial-small7.pdf)): ground snow load 35 psf, wind
+  90-115 mph by exposure, seismic design category A, frost line 36 in.
+- **Maxxon Gyp-Crete Radiant** sell sheet
+  ([PDF](https://public-assets.maxxon.com/Our+Products/Gyp-Crete/Gyp-Crete+Radiant/Sell+Sheet/SS_Maxxon_Gyp-Crete__Radiant.pdf)):
+  dry density 110-120 lb/ft3.
+- **IBC 2018 Table 1809.7** (prescriptive footings for light-frame walls, as reproduced in
+  Massachusetts 780 CMR and the Los Angeles code): 1 floor 12 x 6 in., 2 floors 15 x 6 in.,
+  3 floors 18 x 8 in.
+- **EIA RECS 2020**: Table CE3.1 space heating per household (million Btu): single-family
+  detached 44.0, attached 31.5, apartments in 2-4 unit buildings 22.6, in 5+ unit buildings 9.1;
+  Tables HC10.14 / HC10.15: heated floor area per single-family home 1,951 sq ft, per apartment 828.
+
 ## Pass 2 inputs (firmed up 2026-11-15)
 
 - **Water price**: York Water (PA) industrial tariff effective 2025-08-01, $7.755 per 1,000 gal in

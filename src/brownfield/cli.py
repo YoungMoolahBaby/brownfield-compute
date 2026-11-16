@@ -250,6 +250,46 @@ def cmd_block(_args) -> int:
     return 0
 
 
+def cmd_frame(_args) -> int:
+    import json
+
+    from . import frame, house
+
+    params = load_params()
+    p = values(params)
+    apt = house.apartment()
+    known = frame.known_cases()
+    d = frame.design(apt, p)
+    # Every load at the top of its range at once, the soil at its weakest.
+    worst = dict(p)
+    for k, v in params.items():
+        if k.startswith("pass3.frame.") and k not in ("pass3.frame.spacing_in", "pass3.frame.floor_live_defl"):
+            worst[k] = v.low if k == "pass3.frame.soil_psf" else v.high
+    w = frame.design(apt, worst)
+    md = ("Published spans, reproduced with the sizing code:" + NL + NL + frame.known_report(known) + NL + NL
+          + frame.report(d) + NL + NL + "Every load at the top of its range at once:" + NL + NL + frame.report(w))
+    print(md)
+    out = OUT_DIR / "pass3"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "frame.md").write_text(md + NL, encoding="utf-8")
+    (out / "frame.json").write_text(json.dumps(frame.for_forge(d, p), indent=2) + NL, encoding="utf-8")
+    print(NL + f"wrote {out / 'frame.json'} (forge `framing` builds it)")
+    return 0
+
+
+def cmd_build(_args) -> int:
+    from . import ROOT, build
+
+    b = build.load()
+    md = build.report(b)
+    print(md)
+    out = OUT_DIR / "pass3"
+    (out / "build.md").write_text(md + NL, encoding="utf-8")
+    n = build.gif(out / "build_frames", ROOT / "docs" / "pass3" / "build.gif")
+    print(NL + f"docs/pass3/build.gif: {n} frames")
+    return 0
+
+
 def cmd_sites(args) -> int:
     p = values(load_params())
     t = screen.plant_table(p)
@@ -279,10 +319,12 @@ def main(argv=None) -> int:
     sub.add_parser("sensitivity", help="which inputs move pass 2 most")
     sub.add_parser("house", help="pass 3: the first house's heat and radiant floor")
     sub.add_parser("block", help="pass 3: a block of new homes on the warm loop")
+    sub.add_parser("frame", help="pass 3b: the walk-up's wood frame, sized")
+    sub.add_parser("build", help="pass 3b: the build sequence (after forge `build`)")
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build}.get(args.cmd or "check")
     return cmd(args)
 
 

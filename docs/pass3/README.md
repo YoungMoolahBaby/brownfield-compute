@@ -5,9 +5,11 @@ loss (pass 2b: -$159 million on existing homes) into a win? Existing homes need 
 heat pumps to lift ~50 C water to 75 C for old radiators. A new house with a radiant floor might
 take the warm water directly.
 
-Four steps: (1) the first house in CortenForge, (2) its heat and radiant floor on the data
+Six steps: (1) the first house in CortenForge, (2) its heat and radiant floor on the data
 center's water, (3) a 12-flat walk-up in CortenForge and every flat's heat (pass 3b), (4) a block
-of new homes on that loop, priced against each home heating itself.
+of new homes on that loop, priced against each home heating itself, (5) the walk-up framed in
+wood, member by member, sized to the codes, (6) built in order in CortenForge's physics engine:
+every wall panel tilted up, every joist set down (pass 3b).
 
 **The answer: only for big blocks of apartments right beside the campus, and against gas only
 just.** A new home's floor can run on the data center's water directly (no heat pump), but
@@ -206,6 +208,116 @@ Against the heat pump only (an all-electric neighbourhood, no gas):
   (pass 2b: -$159 million) or a subdivision of detached homes; existing homes are better served
   by heat pumps.
 
+## 5. The walk-up's wood frame (pass 3b)
+
+Section 3's building is solid blocks: walls, floors and a roof that measure right but aren't
+built of anything. This step frames it in light wood platform framing, the usual way to build a
+3-storey walk-up, member by member. (Light steel and masonry with precast floors come next,
+on the same plan.)
+
+**Sizing** (`uv run brownfield frame`, `src/brownfield/frame.py`): allowable stress design by the
+2018 NDS for sawn lumber, APA's published properties for I-joists (PRI-400, Form Z725E Table 7),
+ASCE 7-16 load combinations and flat-roof snow, with Homer City's loads from Indiana County's
+permit guidance (35 psf ground snow, 36 in. frost depth). The joists span front to back, 19 ft
+from each facade to the spine wall between the front and back flats, so the facades and the spine
+carry the floors.
+
+The code first reproduces published span tables: SPF No.2 floor joists from the Southern Pine
+council's tables to within 0.4 in. (2x10 at 30 psf live: 17'-2"; 2x12 at 40 psf: 17'-10"), and all
+14 APA I-joists at 16 in. within 2% (against APA's nailed-floor spans; `out/pass3/frame.md`).
+
+| Loads | psf |
+|---|---|
+| Floor dead (structure, ceiling, finishes, partitions) | 23.0 |
+| + the radiant floor's gypsum topping (1.5 in., 115 lb/ft3) | 14.4 |
+| Floor live (dwelling units) | 40 |
+| Roof dead / snow (0.7 x 35 psf on a flat roof) | 15 / 24.5 |
+
+| Member | Chosen | Highest check |
+|---|---|---|
+| Floor joists | 11-7/8 in. I-joists (PRI-60), 16 in. apart | 99% (live-load deflection, L/480) |
+| Roof joists | SPF No.2 2x12, 16 in. | 79% (bending under snow) |
+| Facade studs, all storeys | 2x6, 16 in. | 57% on the ground floor (the plate crushing); 2x6 at 24 in. would pass (85%) |
+| Spine studs, each of two rows | 2x4 at 12 in. on the ground floor, 16 in. above | 81% / 62% / 21% |
+| Headers, 3 ft windows / 3.5 ft door / 6 ft patio doors | 2-2x6 / 2-2x6 / 3-2x8 (3-2x6 under the roof) | up to 93% |
+| Footings | facades 22 in. wide (IBC's prescriptive table: 18 in. for 3 floors), spine 35 in. | |
+
+- **No sawn joist spans the flats.** 19 ft at L/480 needs I-joists (or floor trusses); the
+  deepest sawn lumber, 2x12, stops short of 18 ft even at the code's L/360 (17'-10" in the
+  tables at 40 psf). The gypsum topping that carries the radiant tubing on the upper floors is
+  the heaviest single dead load (14.4 psf) and takes bending to 96%, but stiffness governs.
+- **The ground-floor studs are limited by the plates, not by buckling**: the studs press into
+  the bottom plate across the grain (Fc-perp 425 psi) harder than they come near buckling (35%
+  axial). The spine's rows carry the most and need 2x4s at 12 in. on the ground floor.
+- **At the worst corner** (every load at the top of its range, the softest soil) the floor
+  joists step up to PRI-80 at the same depth, the roof to an I-joist, the patio headers to
+  3-2x10, and the footings widen to 27 / 43 in.; the frame's shape holds.
+
+**The frame in CortenForge** (`cargo run --release -- framing`, `forge/src/framing.rs`): from those
+sizes, every member: plates, studs, king and jack studs, headers and cripples at each of the 114
+openings, rough sills, rim boards, joists, roof joists, footings and stem walls. The walls are
+framed in panels of up to 16 ft, the way they are built and raised (section 6), so each panel
+has its own end studs and the cap plate laps the joints between panels.
+
+![The frame](framing.png)
+
+![One corner, cut 4 m in](framing_corner.png)
+
+| Members | Count | m3 |
+|---|---|---|
+| Studs (incl. kings, jacks, cripples) | 2,197 | 20.6 |
+| Plates, cap plates, rough sills, headers (plies) | 768 | 9.1 |
+| Floor joists (I-joists) / roof joists (2x12) | 280 / 170 | 11.2 / 10.2 |
+| Rim boards | 6 | 1.5 |
+| **Wood, all** | **3,421** | **52.6** (24,745 board feet of sawn lumber) |
+| Concrete: footings, stem walls, slab | 11 | 68.8 |
+
+Checks: no two of the 3,432 members overlap; CortenForge measures one member of each kind to
+within -0.15% to +1.6% of its exact volume. Not framed yet: wall sheathing and subfloor panels,
+the stair, the walls inside the flats, roof sheathing and the slope for drainage, and the
+shear walls and hold-downs that resist wind.
+
+## 6. The build, in sim-core (pass 3b)
+
+The walk-up goes up the way a crew builds a platform frame, simulated in CortenForge's physics
+engine (sim-core): `cargo run --release -- build` in `forge/` (`forge/src/sequence.rs`,
+`forge/src/build.rs`; ~6.5 minutes), then `uv run brownfield build` for the tables and the
+animation.
+
+![The build](build.gif)
+
+1. **Foundation**: footings, stem walls and slab are the fixed ground.
+2. **Each storey's walls**, framed flat on the deck in 138 panels in all (up to 16 ft; the
+   facades and end walls sheathed while flat), then **tilted up** about their bottom edge:
+   sim-core raises every panel on a hinge with a position servo over 20 seconds. The servo's
+   torque at the start of the lift is what the crew has to supply at the top plate.
+3. **Cap plates**, then the **floor joists and rims** (the roof joists on the top storey), each
+   released 10 mm above its seat as a free body, which has to settle where the drawings put it,
+   resting on what is already built.
+
+| Walls (every storey) | Panels a storey | Heaviest | Hardest lift at the top plate | Crew at 51 lbf each |
+|---|---|---|---|---|
+| Facades, sheathed | 16 | 236 kg | 260 lbf (160 before sheathing) | 6 (4 unsheathed) |
+| End walls, sheathed | 6 | 243 kg | 267 lbf (167) | 6 (4) |
+| Spine rows | 12 | 84 kg (ground floor, 2x4 at 12 in.) / 68 kg | 93 / 75 lbf | 2 |
+| Stair walls | 12 | 68 kg | 75 lbf | 2 |
+
+- **Every panel can be raised by hand**: a crew of 6 for the heaviest, a sheathed 16 ft end-wall
+  panel (243 kg, 267 lbf), within the 6 that can get hands on one panel; none needs a wall jack.
+  NIOSH's 51 lb is the limit in ideal conditions, and lifting a wall off the floor is far from
+  ideal, so 6 is the minimum for those panels, not a comfortable crew. Raising the exterior
+  walls before sheathing them takes 4.
+- **The physics checks itself**: the servo's torque at the start of every lift matches statics
+  (weight x the lever from the hinge) within 0.4%, and every panel ends within 0.005 degrees of
+  upright.
+- **Everything placed lands on something**: 46 cap plates and 142 floor (172 roof) members a
+  storey settle within 0.11 mm of their seats, none off. **The check bites**: set the first
+  floor's joists before the spine wall is up and 132 of 142 fall (the other 10 lie along end
+  and stair walls, which hold them by themselves).
+
+Not simulated: the nailing (members placed are treated as fixed), temporary bracing, wind on
+the bare frame, the crane or forklift that brings the lumber up, and the time it all takes.
+
 ## What we don't know yet
 
 - **Small-pipe and main prices** are placeholders (no per-metre figure for new-build twin pipe
@@ -226,3 +338,7 @@ Against the heat pump only (an all-electric neighbourhood, no gas):
   temperature.
 - Hot water use per home (3 MWh a year) is a placeholder.
 - Solar gains are folded into one average; a real plan orients the glazing.
+- The frame: the wind pressure on the facades is a judgement (ASCE 7-16 components and
+  cladding, not yet computed), as are the floor, roof and wall dead loads; the presumptive soil
+  pressure and the snow factors Ce and Ct are from memory of the code tables, to confirm. The
+  spine footing and the floors' long-term sag under the topping (NDS creep) aren't checked.

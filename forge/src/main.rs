@@ -9,8 +9,11 @@
 //!   enclosed volume).
 
 mod apartment;
+mod build;
+mod framing;
 mod house;
 mod render;
+mod sequence;
 
 use std::path::Path;
 use std::time::Instant;
@@ -76,21 +79,136 @@ fn apartment_mode(root: &Path) -> std::io::Result<()> {
     std::fs::create_dir_all(root.join("docs/pass3"))?;
     let (w, h) = render::render_styled(&layers, &views, 0.025, &root.join("docs/pass3/apartment.png"), Style::pretty())?;
     println!("drew docs/pass3/apartment.png ({w} x {h})");
-    let flats: Vec<_> = b.flats.iter().map(|f| b.flat_envelope(f)).collect();
-    let env = json!({
-        "source": "forge `apartment` (CortenForge 0.9): 3-storey walk-up, 100 x 40 ft, 12 flats",
-        "depth_m": b.depth / 1e3, "length_m": b.length / 1e3, "storeys": b.storeys, "storey_m": b.storey / 1e3,
-        "frontage_per_flat_m": b.length / 1e3 / b.flats.len() as f64,
-        "flats": flats,
-    });
-    std::fs::create_dir_all(root.join("out/pass3"))?;
-    std::fs::write(root.join("out/pass3/apartment.json"), serde_json::to_string_pretty(&env)?)?;
+    let env = write_apartment_json(root, &b)?;
     for f in env["flats"].as_array().into_iter().flatten() {
         println!("{:>16}: floor {:.1} m2, wall net {:.1} m2, glazed {:.1} m2, roof {:.1} m2, slab edge {:.1} m",
                  f["name"].as_str().unwrap_or(""), f["floor_m2"].as_f64().unwrap_or(0.0), f["wall_net_m2"].as_f64().unwrap_or(0.0),
                  f["glazed_m2"].as_f64().unwrap_or(0.0), f["ceiling_m2"].as_f64().unwrap_or(0.0), f["slab_perimeter_m"].as_f64().unwrap_or(0.0));
     }
     Ok(())
+}
+
+/// The walk-up's wood frame (pass 3b, step 3), from `brownfield frame`'s sizes.
+fn framing_mode(root: &Path) -> std::io::Result<()> {
+    use framing::Kind;
+    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
+    let s = framing::Schedule::from_json(&v);
+    let b = apartment::Building::example();
+    let t = Instant::now();
+    let (members, panels) = framing::build(&b, &s);
+    println!("{} members, {} wall panels, in {:.2} s", members.len(), panels.len(), t.elapsed().as_secs_f64());
+
+    // No two members may overlap (a frame has no pieces through each other): every pair of boxes,
+    // with 0.1 mm of tolerance.
+    let boxes: Vec<(usize, Vector3<f64>, Vector3<f64>)> = members.iter().enumerate()
+        .flat_map(|(i, m)| m.boxes.iter().map(move |(lo, hi)| (i, *lo, *hi))).collect();
+    let mut overlaps = Vec::new();
+    for a in 0..boxes.len() {
+        for c in a + 1..boxes.len() {
+            let (i, lo1, hi1) = boxes[a];
+            let (j, lo2, hi2) = boxes[c];
+            if i == j { continue; }
+            let o = (hi1.inf(&hi2) - lo1.sup(&lo2)).map(|d| d - 0.1);
+            if o.x > 0.0 && o.y > 0.0 && o.z > 0.0 {
+                overlaps.push((i, j));
+            }
+        }
+    }
+    println!("overlapping members: {}", overlaps.len());
+    for (i, j) in overlaps.iter().take(8) {
+        println!("  {:?} storey {} {:?} with {:?} storey {} {:?}", members[*i].kind, members[*i].storey, members[*i].bounds(),
+                 members[*j].kind, members[*j].storey, members[*j].bounds());
+    }
+
+    // CortenForge measures one member of each kind against its exact volume.
+    let mut seen = std::collections::BTreeSet::new();
+    let mut checks = Vec::new();
+    for m in &members {
+        if !seen.insert(m.kind) { continue; }
+        let (lo, hi) = m.bounds();
+        let thin = m.boxes.iter().map(|(a, c)| (c - a).min()).fold(f64::INFINITY, f64::min);
+        let cell = (thin / 4.0).clamp(2.0, 25.0);
+        let got = volume_m3(&m.solid(), cell);
+        let want = m.volume_m3();
+        println!("  {:<16} {:>8.4} m3 by CortenForge ({cell:.1} mm cells), exact {:.4} ({:+.2}%), {:.0} x {:.0} x {:.0} mm",
+                 m.kind.name(), got, want, 100.0 * (got / want - 1.0), (hi - lo).x, (hi - lo).y, (hi - lo).z);
+        checks.push(json!({"kind": m.kind.name(), "cortenforge_m3": got, "exact_m3": want, "cell_mm": cell}));
+    }
+
+    let q = framing::quantities(&members);
+    println!("{:<18} {:>6} {:>10} {:>9} {:>11}", "", "count", "length m", "m3", "board feet");
+    for (k, n, len, vol, bf) in &q {
+        println!("{:<18} {:>6} {:>10.1} {:>9.2} {:>11.0}", k.name(), n, len, vol, bf);
+    }
+    let lumber: f64 = q.iter().filter(|r| !r.0.concrete()).map(|r| r.3).sum();
+    let concrete: f64 = q.iter().filter(|r| r.0.concrete()).map(|r| r.3).sum();
+    let bf: f64 = q.iter().map(|r| r.4).sum();
+    println!("wood {lumber:.1} m3 ({bf:.0} board feet of sawn lumber), concrete {concrete:.1} m3");
+    let per_storey: Vec<_> = (0..=b.storeys).map(|k| members.iter().filter(|m| m.storey == k).count()).collect();
+    std::fs::write(root.join("out/pass3/framing.json"), serde_json::to_string_pretty(&json!({
+        "source": "forge `framing` (CortenForge 0.9): the walk-up's wood frame from out/pass3/frame.json",
+        "members": members.len(), "overlaps": overlaps.len(), "members_by_storey": per_storey,
+        "wood_m3": lumber, "sawn_board_feet": bf, "concrete_m3": concrete,
+        "floor_joist": s.floor_joist.name, "roof_joist": s.roof_joist.name,
+        "by_kind": q.iter().map(|(k, n, len, vol, bf)| json!({"kind": k.name(), "count": n, "length_m": len, "m3": vol, "board_feet": bf})).collect::<Vec<_>>(),
+        "checks": checks,
+    }))?)?;
+
+    // Drawn: the whole frame, then one corner close up.
+    let layer_of = |k: Kind| match k {
+        Kind::Footing | Kind::Stem | Kind::Slab => 0,
+        Kind::Header => 2,
+        Kind::Rim => 3,
+        Kind::FloorJoist | Kind::RoofJoist => 4,
+        _ => 1,
+    };
+    let colours = [[0.66, 0.66, 0.64], [0.84, 0.70, 0.50], [0.62, 0.42, 0.26], [0.55, 0.45, 0.35], [0.92, 0.82, 0.62]];
+    // `cut`: keep only what lies before y = cut, cutting members at that plane (a section).
+    let draw = |cut: Option<f64>, views: &[View], px: f64, name: &str| -> std::io::Result<()> {
+        let mut meshes: Vec<IndexedMesh> = (0..5).map(|_| IndexedMesh::new()).collect();
+        for m in &members {
+            let mut m = m.clone();
+            if let Some(c) = cut {
+                if m.kind == Kind::Slab { continue; }
+                m.boxes = m.boxes.into_iter().filter(|(lo, _)| lo.y < c).map(|(lo, hi)| (lo, Vector3::new(hi.x, hi.y.min(c), hi.z))).collect();
+                if m.boxes.is_empty() { continue; }
+            }
+            m.append_mesh(&mut meshes[layer_of(m.kind)]);
+        }
+        let layers: Vec<Layer> = meshes.iter().zip(colours).filter(|(m, _)| !m.faces.is_empty()).map(|(m, c)| Layer::solid(m, c)).collect();
+        let (w, h) = render::render_styled(&layers, views, px, &root.join("docs/pass3").join(name), Style::pretty())?;
+        println!("drew docs/pass3/{name} ({w} x {h})");
+        Ok(())
+    };
+    let views = [View::looking(Vector3::new(0.8, 0.5, -0.25), Vector3::z()), View::looking(Vector3::x(), Vector3::z()),
+                 View::looking(Vector3::y(), Vector3::z())];
+    draw(None, &views, 0.025, "framing.png")?;
+    // The left end, cut 4 m in: one flat's corner on every storey, the floors and roof in section.
+    draw(Some(4000.0), &[View::looking(Vector3::new(0.75, 0.55, -0.35), Vector3::z()),
+                         View::looking(Vector3::new(-0.55, 0.75, -0.3), Vector3::z())], 0.06, "framing_corner.png")?;
+    Ok(())
+}
+
+/// The walk-up's envelope per flat and the dimensions the frame sizing needs:
+/// `../out/pass3/apartment.json`.
+fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result<serde_json::Value> {
+    let flats: Vec<_> = b.flats.iter().map(|f| b.flat_envelope(f)).collect();
+    let mut facade_widths: Vec<f64> = b.openings.iter()
+        .filter(|o| matches!(o.face, apartment::Face::Front | apartment::Face::Back))
+        .map(|o| (o.width / 1e3 * 1e4).round() / 1e4).collect();
+    facade_widths.sort_by(f64::total_cmp);
+    facade_widths.dedup();
+    let env = json!({
+        "source": "forge `apartment` (CortenForge 0.9): 3-storey walk-up, 100 x 40 ft, 12 flats",
+        "depth_m": b.depth / 1e3, "length_m": b.length / 1e3, "storeys": b.storeys, "storey_m": b.storey / 1e3,
+        "ext_t_m": b.ext_t / 1e3, "party_t_m": b.party_t / 1e3, "flat_len_m": b.flat_len / 1e3,
+        "stair_len_m": b.stair_len / 1e3, "facade_opening_widths_m": facade_widths,
+        "frontage_per_flat_m": b.length / 1e3 / b.flats.len() as f64,
+        "flats": flats,
+    });
+    std::fs::create_dir_all(root.join("out/pass3"))?;
+    std::fs::write(root.join("out/pass3/apartment.json"), serde_json::to_string_pretty(&env)?)?;
+    Ok(env)
 }
 
 /// CortenForge's parallel adaptive octree mesher: `mesh` (a uniform grid) took 63 min on the walk-up,
@@ -199,6 +317,25 @@ fn main() {
                          100.0 * (shell / shell_exact - 1.0), volume_m3(&h.walls(), cell), h.wall_volume_m3());
             }
         }
+        "member" => {
+            // One framing member, meshed three ways: can CortenForge give a box as a handful of
+            // triangles? (A frame is thousands of boxes.)
+            let stud = Solid::cuboid(Vector3::new(38.0, 140.0, 2600.0) / 2.0);
+            let (w, d, tf, bf, web) = (38.0, 302.0, 38.0, 63.5, 9.5); // a 11-7/8 in I-joist, 5.8 m long
+            let ij = Solid::cuboid(Vector3::new(5800.0, bf, tf) / 2.0).translate(Vector3::new(0.0, 0.0, (d - tf) / 2.0))
+                .union(Solid::cuboid(Vector3::new(5800.0, bf, tf) / 2.0).translate(Vector3::new(0.0, 0.0, -(d - tf) / 2.0)))
+                .union(Solid::cuboid(Vector3::new(5800.0, web, d - 2.0 * tf + 2.0) / 2.0));
+            let _ = w;
+            for (name, s, exact) in [("2x6 stud 2.6 m", &stud, 38.0 * 140.0 * 2600.0 / 1e9),
+                                     ("I-joist 5.8 m", &ij, (2.0 * bf * tf + web * (d - 2.0 * tf)) * 5800.0 / 1e9)] {
+                for (how, tol) in [("adaptive par", 19.0), ("to_tolerance", 19.0), ("to_tolerance", 10.0)] {
+                    let t = Instant::now();
+                    let m = if how == "to_tolerance" { s.mesh_to_tolerance(tol).geometry } else { mesh_of(s, tol) };
+                    println!("{name}, {how} {tol} mm: {:.3} s, {} triangles, {:.6} m3 (exact {exact:.6})",
+                             t.elapsed().as_secs_f64(), m.faces.len(), mesh_volume_m3(&m));
+                }
+            }
+        }
         "meshers" => {
             // The uniform-grid mesher (`mesh`) against the parallel adaptive octree (`mesh_adaptive_par`):
             // time, triangles and the enclosed volume, on the house's walls and the walk-up's layers.
@@ -225,6 +362,34 @@ fn main() {
                          t.elapsed().as_secs_f64(), m.faces.len(), mesh_volume_m3(&m));
             }
         }
+        "build-probe" => build::probe(),
+        "build" => {
+            // The build sequence in sim-core, from the frame `framing` builds.
+            let run = || -> std::io::Result<()> {
+                let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
+                let s = framing::Schedule::from_json(&v);
+                let b = apartment::Building::example();
+                let (members, panels) = framing::build(&b, &s);
+                sequence::run(root, &b, &members, &panels, &sequence::Settings::from_json(&v))
+            };
+            if let Err(e) = run() {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        "framing" => {
+            if let Err(e) = framing_mode(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        "apartment-json" => {
+            // The JSON alone, without meshing and drawing (~3 min).
+            if let Err(e) = write_apartment_json(root, &apartment::Building::example()) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         "apartment" => {
             if let Err(e) = apartment_mode(root) {
                 eprintln!("{e}");
@@ -232,7 +397,7 @@ fn main() {
             }
         }
         other => {
-            eprintln!("unknown mode {other}: check | house | apartment | meshers | probe");
+            eprintln!("unknown mode {other}: check | house | apartment | apartment-json | framing | member | meshers | probe");
             std::process::exit(2);
         }
     }

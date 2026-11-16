@@ -44,6 +44,16 @@ the end collects the features this project wanted, with what we built instead.
   and its floor systems (a few boxes) 2.1 s, for the same ~1.7 million triangles.
   `check` with `mass_properties` on those walls at 25 mm cells took 420.8 s in all (now 50 mm:
   +0.31%, 58 s for everything).
+- **bug** (2026-11-15, pass 3b, the frame): `Solid::mesh_to_tolerance` (solid/query.rs:230)
+  destroys boxes. A 2x6 stud (38 x 140 x 2,600 mm) at 19 mm came back as **4 triangles enclosing
+  0.0027 m3 of its 0.0138** (-80%); at 10 mm, 12 triangles but -9.5% (and 7.4 s for one stud). An
+  I-joist (three boxes) at 19 mm: 18 triangles, -38%. The adaptive mesher alone gets them right
+  (stud: 4,412 triangles, -0.04%, 6 ms). Its own docs warn the simplified surface isn't an
+  envelope; here it isn't even the right volume. `forge` mode `member`.
+- **works** (2026-11-15, pass 3b): `cortenforge::mesh::types::unit_cube()` (mesh-types mesh.rs:20),
+  scaled and moved onto each box, draws the 3,027-member frame exactly in ~43,000 triangles; the
+  members stay cf-design solids for measuring (one of each kind measured at -0.15% to +1.6% of
+  exact by `mass_properties`, thin members reading heavy as before).
 
 ## sim-therm-env, sim-thermostat
 
@@ -53,6 +63,24 @@ the end collects the features this project wanted, with what we built instead.
   (their Cargo.toml descriptions; sim-thermostat's src is Ising models, double wells, ratchets).
   A data center's heat (racks to coolant to dry coolers or a district heat network) and a house's
   heat loss need conduction, convection and fluid loops; we write those ourselves.
+
+## sim-core, sim-mjcf
+
+- **works** (2026-11-15, pass 3b, the build): MJCF from strings (`sim::mjcf::load_model`) with box
+  geoms, hinge and free joints and a `<position>` servo carried the whole build. A wall panel
+  (up to ~40 boxes) raised on a hinge by the servo: its torque matches statics within 0.4% at
+  the start of the lift and stays within ~4 N m of gravity's through it (the panel's inertia),
+  and the panel ends within 0.005 degrees of upright (138 panels, 0.03-0.06 s each). Members set down as free bodies (I-joists as three
+  boxes) on fixed boxes settle within 0.11 mm of their seats; with a support missing, 132 of 142
+  fall, as they should.
+- **docs** (2026-11-15): a `<position>` actuator's `actuator_force` includes whatever it takes to
+  move the joint, so damping on the joint shows up in it: with `damping` on the hinge the servo
+  read ~9x gravity's torque (my model's error, not sim-core's; MuJoCo behaves the same). Worth a
+  line in the docs for anyone reading actuator force as a load.
+- **perf** (2026-11-15): setting a storey's floor down (142 free bodies, ~430 boxes, on ~100
+  fixed boxes, every contact a box-box pair) runs ~0.1 s a step at 0.5 ms (800 steps: 92 s; the
+  roof's 172 bodies 137 s). Fine for a build sequence, slow next to MuJoCo for the size; contacts
+  sink ~3 mm under default contact softness at impact.
 
 ## Expected gaps (scoping, not yet hit in code)
 
@@ -95,3 +123,17 @@ Nice-to-haves for CortenForge, with what this project built instead.
   `subtract_all`, so 114 openings don't make a 114-deep binary tree; would pair with bounds
   culling. Instead: a fold over `subtract` (`forge/src/apartment.rs`), a
   114-deep chain.
+- **Assemblies of many simple parts** (2026-11-15, pass 3b): a building frame is thousands of
+  boxes. A scene or assembly type holding parts with materials, exact meshes for primitives
+  (a `cuboid` meshes to 12 triangles, not thousands), instancing of repeated parts, and part
+  metadata (kind, storey) would carry it, and the same parts could become sim-core bodies for the
+  build sequence. Instead: our own `Member` list of boxes, `unit_cube` for drawing, one cf-design
+  solid per member for measuring.
+- **Construction sequencing** (2026-11-15, pass 3b): adding and removing bodies (or switching
+  them on) between stages, so one model can carry a whole build instead of a fresh MJCF per
+  stage; joints that become welds when a member is nailed. Instead: a new model per panel lift
+  and per set-down stage, with what's built as fixed geometry.
+- **Structural members and checks** (2026-11-15, pass 3b): beam and column elements with
+  orthotropic wood (and steel) properties, load combinations, and code checks (NDS, AISC/AISI)
+  over a frame. Instead: `src/brownfield/frame.py` (NDS 2018 ASD by hand-coded formulas, checked
+  against published span tables).
