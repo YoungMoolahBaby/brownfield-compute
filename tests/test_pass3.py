@@ -42,6 +42,31 @@ def test_block_by_hand():
     assert abs(r["main"] - P[b + "main_km"] * 1000 * P[b + "main_usd_m"] / P[b + "homes"]) < 1e-9
     af = annuity(P["cost.money.discount"], P["cost.money.life_yr"])
     assert abs(r["A"] - (r["A_capex"] + r["A_year"] * af)) < 1e-6
+    assert abs(r["A_minus_B"] - (r["A"] - r["B"])) < 1e-9
     # The break-even street price really ties the loop with the cheaper alternative.
     q = dict(P, **{b + "street_usd_m": r["street_breakeven_usd_m"]})
     assert abs(block.per_home(q, 8.0, 3.0, 5.0, 80.0, 20.0)["A_minus_best"]) < 1e-6
+
+
+def _flat(name, floor, wall, glazed, ceiling, slab):
+    return {"name": name, "floor": 1, "floor_m2": floor, "interior_volume_m3": floor * 2.74, "wall_gross_m2": wall + glazed,
+            "wall_net_m2": wall, "glazed_m2": glazed, "door_m2": 0.0, "ceiling_m2": ceiling, "slab_perimeter_m": slab}
+
+
+def test_flats_middle_floor_loses_least():
+    # Same walls and windows; the ground flat adds a slab edge, the top flat a roof, the middle neither.
+    apt = {"flats": [_flat("ground", 77.7, 47.8, 12.6, 0.0, 19.8), _flat("middle", 77.7, 47.8, 12.6, 0.0, 0.0),
+                     _flat("top", 77.7, 47.8, 12.6, 83.6, 0.0)]}
+    fh = house.flats_heat(apt, np.full(8760, 0.0), P)
+    ua = {f["name"]: h["ua_w_k"] for f, h in fh["flats"]}
+    assert ua["middle"] < min(ua["ground"], ua["top"])
+    assert abs(ua["top"] - ua["middle"] - P["pass3.envelope.ceiling_u"] * house.BTU_FT2 * 83.6) < 1e-9
+    assert abs(fh["mean"]["ua_w_k"] - sum(ua.values()) / 3) < 1e-9
+    assert fh["mean"]["hardest_supply_c"] == max(h["supply_c"] for _, h in fh["flats"])
+
+
+def test_recs_ratio_by_hand():
+    # 9.1 / 828 against 44.0 / 1951 (EIA RECS 2020 CE3.1, HC10.14, HC10.15).
+    rc = house.recs_check({"space_mwh": 10.0}, 100.0, {"space_mwh": 5.0, "floor_m2": 100.0})
+    assert abs(rc["model"] - 0.5) < 1e-12
+    assert abs(rc["recs_5plus"] - (9.1 / 828) / (44.0 / 1951)) < 1e-12

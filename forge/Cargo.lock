@@ -219,6 +219,7 @@ name = "brownfield-forge"
 version = "0.1.0"
 dependencies = [
  "cortenforge",
+ "cortenforge-design",
  "nalgebra 0.34.2",
  "png",
  "serde_json",
@@ -405,6 +406,7 @@ dependencies = [
  "cortenforge-mesh-types",
  "cortenforge-sim-core",
  "nalgebra 0.34.2",
+ "rayon",
 ]
 
 [[package]]

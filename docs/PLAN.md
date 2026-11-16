@@ -31,16 +31,22 @@ sensitivity ranking (`brownfield sensitivity`), homes around the campus from cou
 (`brownfield homes`: 109 within 300 m of the edge, 259 within 700 m, nearest ~20 m), water priced
 from a PA tariff, tower fans checked against ASHRAE 90.1, chip coolant from GB200 specs. Premium
 over AI towers now ~$17M per module (ahead in 12%); conclusions stand.
-**Pass 3 in progress (Jon: "go with pass 3"): [docs/pass3/](pass3/README.md).** Step 1: the first
-house in CortenForge (`forge/`, measured to its exact dimensions; found a mass_properties pitfall
-with flush cutters). Step 2: its heat (`brownfield house`): 5.3 kW at design, 8.7 MWh of space heat
-a year; a radiant floor needs ~34 C water (43.5 C at the worst corner) against the data center's
-50 C return: new homes heat straight off the loop, no heat pump. Step 3, the money (`brownfield block`):
-the loop loses for detached homes and townhouses; it wins only for DENSE housing beside the campus
-(500+ apartments within ~1 km, 1,000+ within 1.5 km: ~$1-3k cheaper per dwelling over 20 years; 65%
-of draws for 1,000 apartments on a 0.5 km main). So: build dense affordable housing next to the
-data center; heat pumps for the existing town. Next: Jon's call (the apartment building in
-CortenForge, structure and build sequence; or pass 4, the economic base).
+**Pass 3 done, 3b in progress (Jon: "go with pass 3", then "go with the apartment building in
+CortenForge"): [docs/pass3/](pass3/README.md).** Step 1: the first house in CortenForge (`forge/`,
+measured to its exact dimensions; found a mass_properties pitfall with flush cutters). Step 2: its
+heat (`brownfield house`): 5.3 kW at design, 8.7 MWh of space heat a year; a radiant floor needs ~34
+C water (43.5 C at the worst corner) against the data center's 50 C return: new homes heat straight
+off the loop, no heat pump. Step 3 (pass 3b): a 12-flat, 3-storey walk-up in CortenForge (checked
+to +0.31% / +0.08%; meshing it took 63 min with cf-design's default mesher, ~3.4 min with the
+parallel adaptive one the `cortenforge` crate leaves off). A flat needs 3.98 MWh a year, under half
+the house; per square metre 0.49 of the house, same as RECS 2020 (5+ unit apartments vs detached,
+0.49); every flat runs on ~30 C water. Step 4, the money (`brownfield block`): the loop loses for
+detached homes and townhouses. With real flats, apartments win against gas only for ~1,000 within
+0.5 km of the campus (at most ~$0.9k per dwelling, ~4%; 32% of draws), and against a heat pump (an
+all-electric neighbourhood) from 500 within 1 km or 1,000 within 1.5 km (up to ~$2.7k, ~12%; 66% of
+draws). So: dense all-electric housing right against the campus costs residents about the same or a
+little less; heat pumps for the existing town. Next in 3b: the walk-up's structure (three framing
+systems) and its build sequence in sim-core.
 
 ## Decisions
 

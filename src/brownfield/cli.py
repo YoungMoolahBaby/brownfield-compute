@@ -192,6 +192,15 @@ def cmd_house(_args) -> int:
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)
     (out / "heat.md").write_text(md + NL, encoding="utf-8")
+    if (out / "apartment.json").exists():
+        fh = house.flats_heat(house.apartment(), climate.hourly_temp(site.lat, site.lon), p)
+        md2 = house.flats_report(fh)
+        rc = house.recs_check(h, env["floor_m2"], fh["mean"])
+        md2 += (NL + NL + f"Known case: space heat per square metre, the average flat against the house, "
+                f"{rc['model']:.2f}; RECS 2020, apartments in buildings of 5+ units against detached homes, "
+                f"{rc['recs_5plus']:.2f} (2-4 units {rc['recs_2_4']:.2f}, older stock); national averages.")
+        print(NL + "The walk-up's flats:" + NL + NL + md2)
+        (out / "flats.md").write_text(md2 + NL, encoding="utf-8")
     return 0
 
 
@@ -206,9 +215,15 @@ def cmd_block(_args) -> int:
     env = house.envelope()
     t = climate.hourly_temp(site.lat, site.lon)
     h = house.heat(env, t, p)
-    mc = block.monte_carlo(params, lambda q: house.heat(env, t, q), env["floor_m2"])
-    md = block.report(block.run(p, h, env["floor_m2"]), mc, p)
-    md += NL + NL + "What it takes (negative = the loop is cheapest):" + NL + NL + block.grid(p, h, env["floor_m2"])
+    apt = house.apartment() if (OUT_DIR / "pass3" / "apartment.json").exists() else None
+    flat_fn = (lambda q: house.flats_heat(apt, t, q)["mean"]) if apt else None
+    flat = flat_fn(p) if flat_fn else None
+    mc = block.monte_carlo(params, lambda q: house.heat(env, t, q), env["floor_m2"], flat_fn=flat_fn)
+    md = block.report(block.run(p, h, env["floor_m2"], flat), mc, p)
+    if flat:
+        md += (NL + NL + f"Apartments use the average flat of forge's walk-up ({flat['floor_m2']:.1f} m2, "
+               f"{flat['space_mwh']:.2f} MWh of space heat a year); houses and townhouses the first house.")
+    md += NL + NL + "What it takes (negative = the loop is cheapest):" + NL + NL + block.grid(p, h, env["floor_m2"], flat=flat)
     # The dense case beside the campus, with every input varying.
     dense = {k: v for k, v in params.items()}
     from .params import Param
@@ -216,11 +231,18 @@ def cmd_block(_args) -> int:
     for name, val in (("pass3.block.homes", 1000.0), ("pass3.block.main_km", 0.5)):
         old = params[name]
         dense[name] = Param(name, val, val, val, old.unit, old.conf, old.source, old.note)
-    mcd = block.monte_carlo(dense, lambda q: house.heat(env, t, q), env["floor_m2"])["apartment"]
+    mcd = block.monte_carlo(dense, lambda q: house.heat(env, t, q), env["floor_m2"], flat_fn=flat_fn)["apartment"]
     q10, q50, q90 = np.percentile(mcd, [10, 50, 90])
     md += (NL + NL + f"1,000 apartments on a 0.5 km main, every other input varying (2,000 draws): the loop minus the "
            f"cheaper alternative P10 / P50 / P90 {q10:+,.0f} / {q50:+,.0f} / {q90:+,.0f} USD per dwelling; "
            f"the loop cheapest in {(mcd < 0).mean():.0%}.")
+    # An all-electric neighbourhood (no gas line): the loop against the heat pump only.
+    md += (NL + NL + "Against the heat pump only (an all-electric neighbourhood, no gas):" + NL + NL
+           + block.grid(p, h, env["floor_m2"], flat=flat, key="A_minus_B"))
+    mce = block.monte_carlo(dense, lambda q: house.heat(env, t, q), env["floor_m2"], flat_fn=flat_fn, key="A_minus_B")["apartment"]
+    e10, e50, e90 = np.percentile(mce, [10, 50, 90])
+    md += (NL + NL + f"1,000 apartments on a 0.5 km main against the heat pump, every other input varying: P10 / P50 / P90 "
+           f"{e10:+,.0f} / {e50:+,.0f} / {e90:+,.0f} USD per dwelling; the loop cheaper in {(mce < 0).mean():.0%}.")
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)

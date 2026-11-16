@@ -8,6 +8,9 @@ publish = false
 
 [dependencies]
 cortenforge = "0.9.0"
+# Direct, only to turn on its default `parallel-meshing` feature (the umbrella crate turns it off),
+# which brings `Solid::mesh_adaptive_par`; Cargo unifies it with the umbrella's copy.
+cortenforge-design = "=0.9.0"
 nalgebra = "0.34"
 serde_json = "1"
 # Display only: PNG views (src/render.rs).

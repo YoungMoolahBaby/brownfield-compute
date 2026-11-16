@@ -22,7 +22,28 @@ the end collects the features this project wanted, with what we built instead.
 - **works** (2026-11-15, pass 3): with cutters overshooting, a 24 x 40 ft house measures to its
   exact dimensions: interior 200.899 vs 200.867 m3 (+0.02%, 50 mm cells), walls with eleven
   openings 13.718 vs 13.699 m3 (+0.14%, 25 mm), slab +0.08% (`forge` mode `check`, 2.6 s).
-  Meshing it (walls ~558k triangles at 25 mm) takes ~55 s.
+  Meshing it with `Solid::mesh` took ~60 s, nearly all of it the glass at 10 mm (53.8 s); see
+  the next two entries.
+- **perf** (2026-11-15, pass 3b, the 12-flat walk-up): `Solid::mesh` (solid/query.rs:82) is a
+  uniform grid that visits and interval-evaluates every cell of the bounding box
+  (mesher.rs:42). A 30 x 12 x 9.5 m building with 114 openings, glass at 15 mm and the rest at
+  40 mm, took **3,808.6 s** (63 min). `Solid::mesh_adaptive_par` (adaptive octree dual
+  contouring on rayon, solid/query.rs:175) meshed the same layers in ~201 s, enclosing the right
+  volumes (exterior walls 109.187 vs exact 109.262 m3, floor systems 197.182 vs 197.202). On the
+  house: walls at 25 mm 6.8 s -> 1.1 s, glass at 10 mm 53.8 s -> 0.7 s, the same triangle counts
+  within ~1% (`forge` mode `meshers`). The `mesh` docs say "tolerance (voxel size)" but not that
+  the grid is uniform, nor point to the adaptive meshers for large scenes.
+- **setup** (2026-11-15): the `cortenforge` 0.9.0 crate depends on cf-design with
+  `default-features = false` (cortenforge-0.9.0/Cargo.toml:76-79), which drops cf-design's
+  default `parallel-meshing` feature, so `Solid::mesh_adaptive_par` doesn't exist through
+  `cortenforge` (error E0599, no method). Workaround: also depend on `cortenforge-design =
+  "=0.9.0"` directly; Cargo unifies the features and the method appears (`forge/Cargo.toml`).
+- **perf** (2026-11-15, pass 3b): even adaptively, a solid's cost grows with its boolean
+  children, because `Union`/`Subtract` evaluate both sides at every point with no bounds check
+  (evaluate.rs:59-60). At 40 mm, the walk-up's exterior walls (114 opening cutters) took 83.8 s
+  and its floor systems (a few boxes) 2.1 s, for the same ~1.7 million triangles.
+  `check` with `mass_properties` on those walls at 25 mm cells took 420.8 s in all (now 50 mm:
+  +0.31%, 58 s for everything).
 
 ## sim-therm-env, sim-thermostat
 
@@ -62,3 +83,15 @@ Nice-to-haves for CortenForge, with what this project built instead.
   barriers) from sources placed in a CortenForge scene to receivers, ideally by octave band, with
   terrain from a height field (cf-geometry already has HeightFieldData). Instead: the standard's
   single-band A-weighted method in Python (`src/brownfield/noise.py`).
+- **The fast mesher by default** (2026-11-15, pass 3b): turn on `parallel-meshing` in the
+  `cortenforge` crate (or forward a feature), and say in `Solid::mesh`'s docs that it is a uniform
+  grid and that `mesh_adaptive_par` is the choice for anything building-sized (63 min vs ~3.4
+  min here). Instead: a direct `cortenforge-design` dependency to turn the feature on.
+- **Bounds culling in booleans** (2026-11-15, pass 3b): skip a `Union`/`Subtract` child when the
+  point is far outside its bounding box (or a BVH over many-child unions), so a facade with 114
+  openings evaluates about like one with a few. A building is mostly boxes cut by many small
+  boxes. Instead: we wait (~3 min a mesh, ~1 min for the checks at 50 mm cells).
+- **An n-ary union/subtract** (2026-11-15, pass 3b): `Solid::union_all(&[..])` /
+  `subtract_all`, so 114 openings don't make a 114-deep binary tree; would pair with bounds
+  culling. Instead: a fold over `subtract` (`forge/src/apartment.rs`), a
+  114-deep chain.

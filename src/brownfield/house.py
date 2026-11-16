@@ -100,3 +100,55 @@ def report(env: dict, h: dict, dc_supply_c: float) -> str:
         f"| The data center's liquid loop: supply / return | {dc_supply_c:.0f} / {dc_supply_c + 10:.0f} C |",
     ]
     return "\n".join(lines)
+
+
+def apartment() -> dict:
+    """forge's 12-flat walk-up (out/pass3/apartment.json)."""
+    path = OUT_DIR / "pass3" / "apartment.json"
+    if not path.exists():
+        raise SystemExit("no out/pass3/apartment.json: run `cargo run --release -- apartment` in forge/ first")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def flats_heat(apt: dict, temp: np.ndarray, p: dict) -> dict:
+    """Every flat's heat (party walls and floors between flats lose nothing), and the average flat
+    in the shape `heat` returns, for the block model."""
+    rows = [(f, heat(f, temp, p)) for f in apt["flats"]]
+    n = len(rows)
+    mean = {k: sum(h[k] for _, h in rows) / n for k in ("ua_w_k", "design_kw", "space_mwh", "hot_water_mwh",
+                                                         "floor_q_w_m2", "supply_c")}
+    mean["floor_m2"] = sum(f["floor_m2"] for f, _ in rows) / n
+    mean["hardest_supply_c"] = max(h["supply_c"] for _, h in rows)
+    return {"flats": rows, "mean": mean}
+
+
+# Known case: the US housing survey, space heat per household and heated floor area by type.
+RECS_2020 = {
+    "detached_mmbtu": 44.0,     # EIA RECS 2020 Table CE3.1, single-family detached, space heating, million Btu per household
+    "apt5_mmbtu": 9.1,          # same table, apartments in buildings with 5 or more units
+    "apt2_4_mmbtu": 22.6,       # same table, apartments in buildings with 2-4 units
+    "single_family_ft2": 1951,  # RECS 2020 Table HC10.14, single-family homes, heated square feet (mean)
+    "apartment_ft2": 828,       # RECS 2020 Table HC10.15, apartment units, heated square feet (mean)
+}
+
+
+def recs_check(house_h: dict, house_floor_m2: float, flat: dict) -> dict:
+    """Space heat per floor area, a flat against the house, beside the same ratio in RECS 2020
+    (national, all climates and ages; single-family area includes attached homes)."""
+    r = RECS_2020
+    sf = r["detached_mmbtu"] / r["single_family_ft2"]
+    return {"model": (flat["space_mwh"] / flat["floor_m2"]) / (house_h["space_mwh"] / house_floor_m2),
+            "recs_5plus": (r["apt5_mmbtu"] / r["apartment_ft2"]) / sf,
+            "recs_2_4": (r["apt2_4_mmbtu"] / r["apartment_ft2"]) / sf}
+
+
+def flats_report(fh: dict) -> str:
+    lines = ["| Flat | Floor m2 | UA W/K | Design kW | Space heat MWh/yr | Floor W/m2 | Water needed C |",
+             "|---|---|---|---|---|---|---|"]
+    for f, h in fh["flats"]:
+        lines.append(f"| {f['name']} | {f['floor_m2']:.1f} | {h['ua_w_k']:.1f} | {h['design_kw']:.2f} | "
+                     f"{h['space_mwh']:.2f} | {h['floor_q_w_m2']:.0f} | {h['supply_c']:.1f} |")
+    m = fh["mean"]
+    lines.append(f"| **average flat** | {m['floor_m2']:.1f} | {m['ua_w_k']:.1f} | {m['design_kw']:.2f} | "
+                 f"{m['space_mwh']:.2f} | {m['floor_q_w_m2']:.0f} | {m['supply_c']:.1f} |")
+    return "\n".join(lines)

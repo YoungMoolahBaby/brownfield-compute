@@ -10,8 +10,9 @@ included in every option so they compare like for like.
   water heater.
 - **C, gas**: a furnace with ducts, a gas water heater, a gas line, and an air conditioner.
 
-Every dwelling uses the first house's heat (step 2); townhouses and apartments would use a little
-less (shared walls), which narrows the running-cost gaps a bit and isn't modelled.
+Detached houses and townhouses use the first house's heat (step 2); apartments the average flat of
+forge's walk-up (pass 3b), when `run` is given it. Townhouses would use a little less (shared walls),
+which isn't modelled.
 """
 
 from __future__ import annotations
@@ -54,28 +55,36 @@ def per_home(p: dict, space_mwh: float, dhw_mwh: float, design_kw: float, floor_
            "street": street, "main": main, "plant": plant, "network": network}
     best_other = min(out["B"], out["C"])
     out["A_minus_best"] = out["A"] - best_other
+    out["A_minus_B"] = out["A"] - out["B"]  # against the heat pump only: an all-electric neighbourhood
     # The street price per metre at which the loop ties with the cheaper alternative (the street
     # network's upkeep scales with it too, while the cheaper alternative stays put).
     out["street_breakeven_usd_m"] = p[b + "street_usd_m"] - out["A_minus_best"] / (frontage_m * (1 + p[b + "om_share"] * af))
     return out
 
 
-def run(p: dict, h: dict, floor_m2: float) -> dict[str, dict]:
-    return {name: per_home(p, h["space_mwh"], h["hot_water_mwh"], h["design_kw"], floor_m2, p[key])
-            for name, key in DENSITIES.items()}
+def run(p: dict, h: dict, floor_m2: float, flat: dict | None = None) -> dict[str, dict]:
+    """Per dwelling for each density. `flat` (the average flat of forge's walk-up, from
+    house.flats_heat) replaces the house's heat and floor area for apartments when given."""
+    out = {}
+    for name, key in DENSITIES.items():
+        hh, fl = (flat, flat["floor_m2"]) if (name == "apartment" and flat) else (h, floor_m2)
+        out[name] = per_home(p, hh["space_mwh"], hh["hot_water_mwh"], hh["design_kw"], fl, p[key])
+    return out
 
 
-def monte_carlo(params: dict, house_fn, floor_m2: float, n: int = 2000, seed: int = 7) -> dict[str, np.ndarray]:
-    """house_fn(p) -> the house's heat dict for that draw (its envelope inputs vary too)."""
+def monte_carlo(params: dict, house_fn, floor_m2: float, n: int = 2000, seed: int = 7, flat_fn=None,
+                key: str = "A_minus_best") -> dict[str, np.ndarray]:
+    """house_fn(p) -> the house's heat dict for that draw (its envelope inputs vary too); flat_fn(p)
+    -> the average flat's, for apartments."""
     from .params import draw
 
     d = draw(params, n, seed)
     rows = {name: [] for name in DENSITIES}
     for i in range(n):
         p = {k: float(v[i]) for k, v in d.items()}
-        res = run(p, house_fn(p), floor_m2)
+        res = run(p, house_fn(p), floor_m2, flat_fn(p) if flat_fn else None)
         for name in DENSITIES:
-            rows[name].append(res[name]["A_minus_best"])
+            rows[name].append(res[name][key])
     return {k: np.array(v) for k, v in rows.items()}
 
 
@@ -104,15 +113,16 @@ GRID_HOMES = (100, 200, 500, 1000, 2000)
 GRID_KM = (0.25, 0.5, 1.0, 1.5, 3.0)
 
 
-def grid(p: dict, h: dict, floor_m2: float, density: str = "apartment") -> str:
-    """The loop minus the cheaper alternative across block size and main length (central inputs)."""
+def grid(p: dict, h: dict, floor_m2: float, density: str = "apartment", flat: dict | None = None,
+         key: str = "A_minus_best") -> str:
+    """The loop minus the cheaper alternative (or `key`) across block size and main length (central inputs)."""
     lines = [f"| {density.capitalize()}s: homes on the block | " + " | ".join(f"main {km:g} km" for km in GRID_KM) + " |",
              "|---|" + "---|" * len(GRID_KM)]
     for n in GRID_HOMES:
         cells = []
         for km in GRID_KM:
             q = dict(p, **{"pass3.block.homes": n, "pass3.block.main_km": km})
-            v = run(q, h, floor_m2)[density]["A_minus_best"]
+            v = run(q, h, floor_m2, flat)[density][key]
             cells.append(f"**{v:+,.0f}**" if v < 0 else f"{v:+,.0f}")
         lines.append(f"| {n:,} | " + " | ".join(cells) + " |")
     return "\n".join(lines)

@@ -182,12 +182,12 @@ density:
     conf: placeholder
     source: "judgement: a townhouse's width"
   apartment_m:
-    value: 2
-    low: 1
+    value: 2.54
+    low: 1.5
     high: 4
     unit: m of street network per apartment (one connection serves a building)
-    conf: placeholder
-    source: "judgement: a 12-24 unit building on a ~40 m frontage"
+    conf: medium
+    source: "forge's walk-up (pass 3b): 100 ft of frontage for 12 flats = 2.54 m; taller or deeper buildings less (low), a corner lot more (high)"
 loop_home:
   radiant_usd_ft2:
     value: 8

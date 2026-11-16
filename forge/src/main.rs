@@ -3,7 +3,12 @@
 //! - `check` (default): CortenForge's measurements of the house against its exact dimensions.
 //! - `house`: the first house, built, measured and drawn: `../out/pass3/house.json` (the envelope
 //!   the heat model reads) and `../docs/pass3/house.png`.
+//! - `apartment`: the 12-flat walk-up (pass 3b), built, measured and drawn:
+//!   `../out/pass3/apartment.json` (every flat's envelope) and `../docs/pass3/apartment.png`.
+//! - `meshers`: CortenForge's uniform-grid mesher against its parallel adaptive one (time, triangles,
+//!   enclosed volume).
 
+mod apartment;
 mod house;
 mod render;
 
@@ -42,12 +47,68 @@ fn check() -> bool {
     test("wall volume, m3 (25 mm cells)", volume_m3(&h.walls(), 25.0), h.wall_volume_m3(), 0.02);
     let slab_exact = h.width * h.length * h.slab_t / 1e9;
     test("slab volume, m3 (25 mm cells)", volume_m3(&h.slab(), 25.0), slab_exact, 0.02);
+    let b = apartment::Building::example();
+    test("apartment exterior walls, m3 (50 mm cells)", volume_m3(&b.exterior_walls(), 50.0), b.exterior_wall_volume_m3(), 0.02);
+    test("apartment floor systems, m3 (50 mm cells)", volume_m3(&b.floors(), 50.0), b.floors_volume_m3(), 0.01);
     println!("({:.1} s)", t.elapsed().as_secs_f64());
     ok
 }
 
+fn apartment_mode(root: &Path) -> std::io::Result<()> {
+    let b = apartment::Building::example();
+    let t = Instant::now();
+    let parts = [
+        (mesh_of(&b.ground_slab(), 40.0), [0.62, 0.62, 0.60], 0.0),
+        (mesh_of(&b.exterior_walls(), 40.0), [0.80, 0.70, 0.58], 0.0),
+        (mesh_of(&b.party_walls(), 40.0), [0.70, 0.70, 0.68], 0.0),
+        (mesh_of(&b.floors(), 40.0), [0.66, 0.60, 0.52], 0.0),
+        (mesh_of(&b.roof(), 40.0), [0.30, 0.30, 0.32], 0.0),
+        (mesh_of(&b.glass(), 15.0), [0.45, 0.62, 0.80], 0.6),
+        (mesh_of(&b.doors(), 15.0), [0.48, 0.34, 0.22], 0.0),
+    ];
+    println!("meshed in {:.1} s", t.elapsed().as_secs_f64());
+    let layers: Vec<Layer> = parts.iter().map(|(m, c, sp)| Layer::solid(m, *c).with_spec(*sp)).collect();
+    let views = [
+        View::looking(Vector3::new(0.8, 0.5, -0.25), Vector3::z()),
+        View::looking(Vector3::x(), Vector3::z()),
+        View::looking(Vector3::y(), Vector3::z()),
+    ];
+    std::fs::create_dir_all(root.join("docs/pass3"))?;
+    let (w, h) = render::render_styled(&layers, &views, 0.025, &root.join("docs/pass3/apartment.png"), Style::pretty())?;
+    println!("drew docs/pass3/apartment.png ({w} x {h})");
+    let flats: Vec<_> = b.flats.iter().map(|f| b.flat_envelope(f)).collect();
+    let env = json!({
+        "source": "forge `apartment` (CortenForge 0.9): 3-storey walk-up, 100 x 40 ft, 12 flats",
+        "depth_m": b.depth / 1e3, "length_m": b.length / 1e3, "storeys": b.storeys, "storey_m": b.storey / 1e3,
+        "frontage_per_flat_m": b.length / 1e3 / b.flats.len() as f64,
+        "flats": flats,
+    });
+    std::fs::create_dir_all(root.join("out/pass3"))?;
+    std::fs::write(root.join("out/pass3/apartment.json"), serde_json::to_string_pretty(&env)?)?;
+    for f in env["flats"].as_array().into_iter().flatten() {
+        println!("{:>16}: floor {:.1} m2, wall net {:.1} m2, glazed {:.1} m2, roof {:.1} m2, slab edge {:.1} m",
+                 f["name"].as_str().unwrap_or(""), f["floor_m2"].as_f64().unwrap_or(0.0), f["wall_net_m2"].as_f64().unwrap_or(0.0),
+                 f["glazed_m2"].as_f64().unwrap_or(0.0), f["ceiling_m2"].as_f64().unwrap_or(0.0), f["slab_perimeter_m"].as_f64().unwrap_or(0.0));
+    }
+    Ok(())
+}
+
+/// CortenForge's parallel adaptive octree mesher: `mesh` (a uniform grid) took 63 min on the walk-up,
+/// this ~3 min (`meshers` mode).
 fn mesh_of(s: &Solid, tol: f64) -> IndexedMesh {
+    s.mesh_adaptive_par(tol).geometry
+}
+
+fn mesh_uniform(s: &Solid, tol: f64) -> IndexedMesh {
     s.mesh(tol).geometry
+}
+
+/// Volume enclosed by a closed triangle mesh in mm (divergence theorem), in m3.
+fn mesh_volume_m3(m: &IndexedMesh) -> f64 {
+    m.faces.iter().map(|f| {
+        let [a, b, c] = f.map(|i| m.vertices[i as usize].coords);
+        a.dot(&b.cross(&c)) / 6.0
+    }).sum::<f64>() / 1e9
 }
 
 fn house(root: &Path) -> std::io::Result<()> {
@@ -138,8 +199,40 @@ fn main() {
                          100.0 * (shell / shell_exact - 1.0), volume_m3(&h.walls(), cell), h.wall_volume_m3());
             }
         }
+        "meshers" => {
+            // The uniform-grid mesher (`mesh`) against the parallel adaptive octree (`mesh_adaptive_par`):
+            // time, triangles and the enclosed volume, on the house's walls and the walk-up's layers.
+            let h = House::example();
+            let b = apartment::Building::example();
+            let cases: [(&str, Solid, f64, Option<f64>, bool); 5] = [
+                ("house walls", h.walls(), 25.0, Some(h.wall_volume_m3()), true),
+                ("house glass", h.glass(), 10.0, None, true),
+                ("walk-up exterior walls", b.exterior_walls(), 40.0, Some(b.exterior_wall_volume_m3()), false),
+                ("walk-up floor systems", b.floors(), 40.0, Some(b.floors_volume_m3()), false),
+                ("walk-up glass", b.glass(), 15.0, None, false),
+            ];
+            for (name, s, tol, exact, uniform_too) in cases {
+                let ex = exact.map_or(String::new(), |e| format!(", exact {e:.3} m3"));
+                if uniform_too {
+                    let t = Instant::now();
+                    let m = mesh_uniform(&s, tol);
+                    println!("{name} at {tol} mm, uniform: {:.1} s, {} triangles, {:.3} m3{ex}",
+                             t.elapsed().as_secs_f64(), m.faces.len(), mesh_volume_m3(&m));
+                }
+                let t = Instant::now();
+                let m = mesh_of(&s, tol);
+                println!("{name} at {tol} mm, adaptive parallel: {:.1} s, {} triangles, {:.3} m3{ex}",
+                         t.elapsed().as_secs_f64(), m.faces.len(), mesh_volume_m3(&m));
+            }
+        }
+        "apartment" => {
+            if let Err(e) = apartment_mode(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         other => {
-            eprintln!("unknown mode {other}: check | house");
+            eprintln!("unknown mode {other}: check | house | apartment | meshers | probe");
             std::process::exit(2);
         }
     }
