@@ -296,8 +296,29 @@ at the campus edge, funded in the community benefits agreement.
     houses (planted a year ahead on contracts).
   - Heated natural-grass fields (as at Lambeau Field) on the capped ash site, subject to DEP's closure terms; the
     rink makes heat rather than using it; summer heat otherwise goes to the dry coolers, using no water.
-  - Vegetarian menu built round the houses; staples bought from Pennsylvania farms; to confirm vegetarian or vegan.
+  - Vegan menu (Jon: "honestly i think it should be vegan"), built round the houses; staples (grains, beans,
+    flour) bought from Pennsylvania farms. Risk to watch: an all-vegan food hall draws fewer regulars in a rural
+    county, so it has to be the best food in the county, not a niche; track phase 1's sales.
   - Checks: rooftop-cooler noise at upper-floor windows; walk times; heat by month; cost and who pays.
+  - Housing type (Jon, the same day): narrow townhouses "san fran style" with an air gap between them, not flats,
+    so one household's noise never reaches another's sleep; modest size; a two-car garage at ground level that
+    doubles as a private workshop, two or three storeys above; workouts shared at the community center ("people
+    usually like to wrench alone, but people like to work out by eachother"). The steer:
+    - About 3 m between houses (1.5 m each side of the lot line) lets the side walls have windows; narrower
+      gaps mean fire-rated, mostly blank side walls (IRC R302.1), as in San Francisco.
+    - Twin walls with an air gap and no ties between them give nearly the same quiet at higher density and lower
+      cost: model both, draw Jon's first.
+    - A 25 ft (7.6 m) lot fits the garage and a door; 100-250 homes still sit within a few hundred metres of
+      the garden, as pass 3's loop needs. Detached houses lose more heat (more of the module's heat used; garages
+      heated off the loop too) and cost more per home than the walk-up; townhouses suit buyers where pass 4
+      found mostly renters, so phase 1 may mix them.
+    - Also a shared shop bay at the community center (Men's Sheds show some like to wrench together).
+  - Then (Jon): the shared shop is "a shenzhen x aussie makerspace/garage": the hardware-prototyping side
+    (electronics benches, 3D printers, CNC, a parts counter) with the Men's Shed side (wood and metal, a car lift,
+    a welder), heated off the loop; each home keeps "your own customizable 2 car garage" for small projects,
+    "introvert tinkering" or storage. Both housing options are in: detached with a gap, and twin walls with an
+    air gap between them. Idea to test, not a promise: the makerspace as where local people learn to run and
+    repair the machines that build and look after the campus (D7).
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
