@@ -115,6 +115,16 @@ yet.
   - With the town network, a third of the module's heat is put to use instead of a tenth.
   - The grow lights add 11% to the module's electricity.
   - The limit is the market, not the heat: that's more tomatoes than the Pittsburgh metro eats.
+  - [The neighbourhood](docs/pass3/village.md): 120 townhouses over their own garage-workshops along
+    a public street from the town to a square.
+    - Around the square: a vegan food hall, a community center with an ice rink, courts and a
+      makerspace, and heated grass fields.
+    - Native-planted gardens and green roofs instead of lawns, and big trees on greens between the
+      rows, kept clear of the foundations.
+    - All of it takes 9.4 GWh of the module's heat a year.
+    - On the loop, a home's heat costs less than its own heat pump if the operator pays for the
+      pipes.
+    - Sewage, not heat, limits growth past ~1,350 homes.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

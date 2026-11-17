@@ -73,7 +73,8 @@ def noise_by_floor(p: dict, distance_m: float, fan_cut_db: float) -> list[tuple[
 def lots(p: dict, variant: str) -> list[tuple[float, float]]:
     """Phase 1's lot centres: east-west streets south of the setback line, lots both sides, either side
     of a public spine street that runs from the town (south) straight to the square, so townspeople
-    reach the square through the neighbourhood, not round it (no gates, no private roads)."""
+    reach the square through the neighbourhood, not round it (no gates, no private roads). Between
+    each pair of back-to-back rows, a green with big trees and a path (Radburn, Savannah)."""
     t, s = "village.townhouse.", "village.site."
     n = int(p[s + "phase1_homes"])
     lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
@@ -84,7 +85,7 @@ def lots(p: dict, variant: str) -> list[tuple[float, float]]:
     out = []
     street = 0
     while len(out) < n:
-        y_street = y0 + street * (2 * p[s + "lot_depth_m"] + p[s + "street_w_m"])
+        y_street = y0 + street * (2 * p[s + "lot_depth_m"] + p[s + "street_w_m"] + p[s + "green_w_m"])
         for side in (0, 1):
             y = y_street + side * (p[s + "lot_depth_m"] + p[s + "street_w_m"])
             for k in range(per_half):
@@ -136,13 +137,13 @@ def loads_mw(p: dict, wx: dict, variant: str = "gap") -> dict[str, np.ndarray]:
     for m in list(range(0, 4)) + list(range(9, 12)):  # ice from October to April (research: 7-9 months)
         in_season[MONTHS[m]:MONTHS[m + 1]] = True
     buildings = np.clip(buildings - in_season * p[r + "heat_export_surplus"] / 1e3, 0.0, None)
-    area = p[f + "pitch_area_soccer"] + p[f + "field_area_football"]
+    area = p[f + "pitch_area_soccer"]  # one multi-use field, soccer-sized (also lined for youth and flag football, lacrosse)
     cold = np.clip(p[f + "root_zone_target_growth"] - temp, 0.0, None)
     fields = np.minimum(area * p[f + "heat_energy_grass_growth"] * 1e3 * cold / cold.sum(), area * p[f + "heat_design_load"]) / 1e6
     hs = food.house(wx, p, "lettuce", "glass")
     garden_ha = p[a + "market_garden_ha"] * 1e4
-    return {"homes": homes, "shared buildings": buildings, "fields": fields, "market garden": hs["heat_w"] * garden_ha / 1e6,
-            "market garden lamps": hs["lamp_w"] * garden_ha / 1e6}
+    return {"homes": homes, "shared buildings": buildings, "fields": fields, "market section": hs["heat_w"] * garden_ha / 1e6,
+            "market section lamps": hs["lamp_w"] * garden_ha / 1e6}
 
 
 def balance(p: dict, wx: dict) -> dict:
@@ -152,7 +153,7 @@ def balance(p: dict, wx: dict) -> dict:
 
     avail = food.dc_heat(wx["t"], p)
     ld = loads_mw(p, wx)
-    village = sum(v for k, v in ld.items() if k != "market garden lamps")
+    village = sum(v for k, v in ld.items() if k != "market section lamps")
     left = np.clip(avail - village, 0.0, None)
     short = np.clip(village - avail, 0.0, None)  # hours the neighbourhood alone exceeds the spare heat
     hs = food.house(wx, p, "tomato", "glass")
@@ -164,7 +165,7 @@ def balance(p: dict, wx: dict) -> dict:
     months = []
     for m in range(12):
         sl = slice(MONTHS[m], MONTHS[m + 1])
-        months.append({"spare": avail[sl].sum(), **{k: v[sl].sum() for k, v in ld.items() if k != "market garden lamps"},
+        months.append({"spare": avail[sl].sum(), **{k: v[sl].sum() for k, v in ld.items() if k != "market section lamps"},
                        "tomatoes": taken[sl].sum(), "left": (avail[sl] - np.minimum(village[sl], avail[sl]) - taken[sl]).sum()})
     return {"loads": ld, "village_mwh": float(village.sum()), "village_peak_mw": float(village.max()), "short_mwh": float(short.sum()),
             "ha_before": ha0, "ha_after": ha1, "run": run, "months": months, "avail": avail}
@@ -200,14 +201,16 @@ def home_cost(p: dict, variant: str = "gap") -> dict:
 
 def amenities_cost(p: dict) -> dict[str, float]:
     a, cc, f, r, m = "village.amenities.", "village.community_center.", "village.fields.", "village.rink.", "village.money."
-    area_m2 = p[f + "pitch_area_soccer"] + p[f + "field_area_football"]
+    area_m2 = p[f + "pitch_area_soccer"]
     fields = area_m2 * M2_FT2 * p[f + "field_cost_sand_based"] + area_m2 * p[f + "heat_install_cost_in_field"] * p[m + "nok_usd_2015"]
+    loop_m = 2 * (p[f + "pitch_length_soccer"] + p[f + "pitch_width_soccer"]) + 8 * 20.0  # a ring ~20 m outside the touchlines
     return {"ice rink (one sheet)": p[r + "build_cost_single_sheet"],
-            "community center (courts, roller hockey, gym, makerspace)": p[a + "center_ft2"] * p[cc + "rec_center_build_usd_ft2"],
-            "food hall": p[a + "food_hall_ft2"] * p[cc + "restaurant_build_usd_ft2"] + p["village.kitchen.infinite_kitchen_incremental_capex"],
+            "community center (courts, roller hockey, indoor pickleball, bouldering, golf simulators, gym, makerspace)": p[a + "center_ft2"] * p[cc + "rec_center_build_usd_ft2"],
+            "food court at the greenhouse's entrance": p[a + "food_hall_ft2"] * p[cc + "restaurant_build_usd_ft2"] + p["village.kitchen.infinite_kitchen_incremental_capex"],
             "makerspace tools": p[a + "makerspace_tools_usd"],
-            "two heated grass fields": fields,
-            "market-garden glasshouse": p[a + "market_garden_ha"] * 1e4 * p["food.cost.house_usd_m2"]}
+            "bouldering walls": p[a + "climbing_usd"],
+            "one heated grass field and a walking loop": fields + loop_m * p[a + "loop_usd_m"],
+            "market section inside the greenhouse": p[a + "market_garden_ha"] * 1e4 * p["food.cost.house_usd_m2"]}
 
 
 def trust_money(p: dict) -> dict:
@@ -285,11 +288,11 @@ def report(p: dict, wx: dict, variant: str = "gap") -> str:
 
     b = balance(p, wx)
     L += ["", "**Heat by month** (GWh; the module's spare heat after the town network, the neighbourhood first, then the tomato houses)", "",
-          "| Month | Spare | Homes | Shared buildings | Fields | Market garden | Tomato houses | Left to the air |",
+          "| Month | Spare | Homes | Shared buildings | Field | Market section | Tomato houses | Left to the air |",
           "|---|---|---|---|---|---|---|---|"]
     for m, r in enumerate(b["months"]):
         L.append(f"| {m + 1} | {r['spare'] / 1e3:.1f} | {r['homes'] / 1e3:.2f} | {r['shared buildings'] / 1e3:.2f} | {r['fields'] / 1e3:.2f} | "
-                 f"{r['market garden'] / 1e3:.2f} | {r['tomatoes'] / 1e3:.1f} | {r['left'] / 1e3:.1f} |")
+                 f"{r['market section'] / 1e3:.2f} | {r['tomatoes'] / 1e3:.1f} | {r['left'] / 1e3:.1f} |")
     L += ["", f"The neighbourhood takes {b['village_mwh'] / 1e3:.1f} GWh a year ({b['village_peak_mw']:.1f} MW at its peak) and is never "
           f"short; the tomato houses' design area goes from {b['ha_before']:g} ha to {b['ha_after']:g} ha."]
 
@@ -338,3 +341,34 @@ def report(p: dict, wx: dict, variant: str = "gap") -> str:
           f"({p['village.demand.tulsa_remote_but_for_rate']:.0%} wouldn't have come without it); Ascend WV "
           f"{p['village.demand.ascend_wv_participants']:,.0f} since 2021."]
     return "\n".join(L)
+
+
+def forge_spec(p: dict, variant: str = "gap") -> dict:
+    """What forge `garden` draws for the neighbourhood (metres, the campus frame)."""
+    t, s, f = "village.townhouse.", "village.site.", "village.fields."
+    homes = lots(p, variant)
+    y_rows = sorted({round(y, 3) for _, y in homes})
+    # Rows pair up across each street: the first of a pair faces south (the street below it), the second north.
+    facing = {y: (1 if i % 2 == 0 else -1) for i, y in enumerate(y_rows)}
+    streets = [(y_rows[i] + y_rows[i + 1]) / 2 for i in range(0, len(y_rows) - 1, 2)]
+    lot_d = p[s + "lot_depth_m"]
+    lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
+    gx = [x for x, _ in homes]
+    greens = [[min(gx) - lot_w, max(gx) + lot_w, y_rows[i] + lot_d / 2, y_rows[i + 1] - lot_d / 2]
+              for i in range(1, len(y_rows) - 1, 2)]
+    if len(y_rows) % 2:  # a last row on its own faces a street of its own to the south
+        streets.append(y_rows[-1] + (p[s + "lot_depth_m"] + p[s + "street_w_m"]) / 2)
+    lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
+    xs = [x for x, _ in homes]
+    soccer = (p[f + "pitch_width_soccer"], p[f + "pitch_length_soccer"])
+    football = (p[f + "field_width_football"], p[f + "field_length_football"])
+    return {"source": "brownfield village (pass 3e): phase 1 of the neighbourhood, for forge `garden`",
+            "village": {
+                "variant": variant, "house_w": p[t + "width_" + variant], "house_d": p[t + "depth_m"], "lot_w": lot_w,
+                "storeys": int(p[t + "storeys"]), "storey_m": p[t + "storey_m"], "garage_h": p[t + "garage_h_m"],
+                "homes": [{"x": x, "y": y, "facing": facing[round(y, 3)]} for x, y in homes],
+                "streets_y": streets, "greens": greens, "street_w": p[s + "street_w_m"], "street_x": [min(xs) - lot_w, max(xs) + lot_w],
+                "spine_x": p[s + "square_x"], "spine_w": p[s + "spine_w_m"], "spine_y": [120.0, max(y for _, y in homes) + 60.0],
+                "square": [0.0, 60.0, 60.0, 120.0], "food_hall": [0.0, 0.0, 0.0, 0.0], "market_garden": [0.0, 0.0, 0.0, 0.0],
+                "center": [72.0, 162.0, 12.0, 140.0],
+                "fields": [{"name": "soccer (multi-use)", "cx": -150.0, "cy": 110.0, "w": soccer[0], "l": soccer[1]}]}}

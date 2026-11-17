@@ -25,6 +25,7 @@ use nalgebra::{Point3, Vector3};
 use serde_json::json;
 
 use crate::food;
+use crate::village;
 use crate::scene::{self, Camera, Light, SLayer, add_box};
 
 /// Reflected in still water at height `zw` (mm): z -> 2 zw - z.
@@ -175,12 +176,13 @@ pub struct Garden {
     pub crown_colours: Vec<[f64; 3]>,
     pub plants: IndexedMesh,
     pub food: food::Houses,
+    pub village: Option<village::Village>,
     pub view: (f64, f64, f64, f64),
     pub stones: usize,
     pub areas: serde_json::Value,
 }
 
-pub fn build(spec: &food::Spec) -> Garden {
+pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
     let mut rng = Rng(0x9E3779B97F4A7C15);
     let mut stone: [IndexedMesh; 5] = Default::default();
     let mut concrete = IndexedMesh::new();
@@ -406,14 +408,56 @@ pub fn build(spec: &food::Spec) -> Garden {
     let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, 0.0, 0.2, hx1 + 1.5, -40.0);
     n += nf;
     let (fx0, fx1, fy0, fy1) = fh.block;
-    let built: [(f64, f64, f64, f64); 5] = [(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (-4.0, 62.6, -3.0, 34.6), (-30.0, 92.0, -3.0, 3.0),
-                                            (fx0, fx1, fy0, fy1), fh.head];
-    let eyes = [(36.0, 46.0), (62.0, 58.0), (-30.0, 95.0), (150.0, -40.0), (((fx0 + fx1) / 2.0) - 30.0, fh.head.3 + 62.0)];
-    let groves = [(-20.0, 75.0), ((hx1 + fx0) / 2.0, -70.0), (40.0, 85.0), (-75.0, -20.0), (100.0, 80.0), (-75.0, -110.0),
-                  ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), ((hx1 + fx0) / 2.0, -150.0), (fx1 + 50.0, (fy0 + fy1) / 2.0)];
-    let placed = food::arboretum(spec, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &groves,
-                                 |_x: f64, y: f64| if y < 20.0 { 0.2 } else { -2.2 });
-    let view = (hx0.min(-90.0), fx1 + 60.0, fy0.min(hy0) - 80.0, 140.0);
+    let mut built: Vec<(f64, f64, f64, f64)> = vec![(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (-4.0, 62.6, -3.0, 34.6), (-30.0, 92.0, -3.0, 3.0),
+                                                   (fx0, fx1, fy0, fy1), fh.head];
+    // The neighbourhood (pass 3e), if `brownfield village` has written its plan.
+    let vg = vspec.map(|vs| {
+        let (vg, nv) = village::build(vs, &mut stone, &mut concrete, &mut rng);
+        n += nv;
+        vg
+    });
+    let mut vg = vg;
+    if let Some(vg) = &mut vg {
+        let hx = (fh.head.0 + fh.head.1) / 2.0;
+        b(&mut vg.plaza, [60.0, 86.0, -2.2], [hx + 2.0, 92.0, -2.15]);
+        b(&mut vg.plaza, [hx - 3.0, fh.head.3, -2.2], [hx + 3.0, 92.0, -2.15]);
+    }
+    if let Some(vg) = &vg {
+        built.extend(vg.rects.iter().cloned());
+    }
+    let eyes = [(36.0, 46.0), (62.0, 58.0), (-30.0, 95.0), (150.0, -40.0), ((fh.head.0 + fh.head.1) / 2.0 - 40.0, fh.head.3 + 55.0),
+                (-130.0, 210.0), (30.0, 135.0), (-120.0, 205.0), (60.0, 271.5), (-50.0, 211.2)];
+    let groves = [(-110.0, 10.0), ((hx1 + fx0) / 2.0, -70.0), (210.0, 200.0), (-75.0, -20.0), (220.0, 90.0), (-75.0, -110.0),
+                  ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), (-330.0, 230.0), (30.0, 460.0)];
+    let mut placed = food::arboretum(spec, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &groves,
+                                     |_x: f64, y: f64| if y < 20.0 { 0.2 } else { -2.2 });
+    // Big trees on the neighbourhood's greens, each species only where its own root setback from every
+    // house holds (the same rule as the arboretum).
+    if let Some(vs) = vspec {
+        let gx: Vec<(f64, f64)> = vs.greens.iter()
+            .flat_map(|g| { let ym = (g[2] + g[3]) / 2.0; (0..5).map(move |k| (g[0] + 20.0 + k as f64 * (g[1] - g[0] - 40.0) / 4.0, ym)) })
+            .collect();
+        if !gx.is_empty() {
+            // Species whose setback fits the green's clear distance to the nearest houses, six at each spot.
+            let clear = vs.greens.first().map(|g| (g[3] - g[2]) / 2.0 + vs.house_d.min(12.0)).unwrap_or(20.0);
+            let mut extra = vec![0; spec.trees.len()];
+            for c in &gx {
+                let sub = food::Spec { ha: spec.ha, crop: spec.crop.clone(), bay: spec.bay, gutter: spec.gutter, roof_deg: spec.roof_deg,
+                    trees: spec.trees.iter().map(|t| food::TreeSpec { name: t.name.clone(), height: t.height, form: t.form.clone(), colour: t.colour,
+                        setback: t.setback, count: if t.setback <= clear { 2 } else { 0 } }).collect() };
+                let k = food::arboretum(&sub, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &vec![*c; sub.trees.len()],
+                                        |_x: f64, _y: f64| -2.2);
+                for (e, n) in extra.iter_mut().zip(k) {
+                    *e += n;
+                }
+            }
+            for (a, b) in placed.iter_mut().zip(extra) {
+                *a += b;
+            }
+        }
+    }
+    let view = (hx0.min(-90.0).min(if vg.is_some() { -320.0 } else { -90.0 }), fx1 + 60.0, fy0.min(hy0) - 80.0,
+                if vg.is_some() { 470.0 } else { 140.0 });
     let trees_json: Vec<serde_json::Value> = spec.trees.iter().zip(&placed)
         .map(|(t, k)| json!({"name": t.name, "placed": k, "height_m": t.height, "setback_m": t.setback})).collect();
 
@@ -431,7 +475,7 @@ pub fn build(spec: &food::Spec) -> Garden {
     });
     let crown_colours = spec.trees.iter().map(|t| t.colour).collect();
     Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, trunks, crowns, crowns_dark,
-             crown_colours, plants, food: fh, view, stones: n, areas }
+             crown_colours, plants, food: fh, village: vg, view, stones: n, areas }
 }
 
 fn hx_mid(_g: &Garden) -> f64 {
@@ -441,7 +485,11 @@ fn hx_mid(_g: &Garden) -> f64 {
 pub fn run(root: &Path) -> std::io::Result<()> {
     let t0 = std::time::Instant::now();
     let spec = food::spec(root);
-    let g = build(&spec);
+    let vspec = village::spec(root);
+    if vspec.is_none() {
+        println!("  (no out/pass3/village.json yet: run `brownfield village` for the neighbourhood)");
+    }
+    let g = build(&spec, vspec.as_ref());
     let tris = |m: &IndexedMesh| m.faces.len();
     let total: usize = g.stone.iter().map(tris).sum::<usize>() + tris(&g.concrete) + tris(&g.glass) + tris(&g.sash) + tris(&g.ground)
         + tris(&g.yard) + tris(&g.coolers) + tris(&g.fans) + g.crowns.iter().chain(g.crowns_dark.iter()).map(tris).sum::<usize>() + tris(&g.plants)
@@ -491,6 +539,9 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     layers.push(SLayer::solid(&g.food.crops, [0.32, 0.55, 0.25]));
     layers.push(SLayer::solid(&g.food.lamps, [1.0, 0.88, 0.66]).no_shadow());
     layers.push(SLayer::solid(&g.food.paving, [0.70, 0.66, 0.58]).no_shadow());
+    if let Some(v) = &g.village {
+        village::layers(v, &mut layers);
+    }
     layers.push(SLayer::solid(&g.plants, [0.36, 0.55, 0.30]).smooth());
     // Water reflects only part of the light: the reflections are dimmed.
     let dim = |c: [f64; 3]| c.map(|v| v * 0.62);
@@ -511,6 +562,9 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     // Translucent last: glass, the water's skin, the falling water.
     layers.push(SLayer::translucent(&g.glass, [0.70, 0.82, 0.86], 0.28));
     layers.push(SLayer::translucent(&g.food.glass, [0.78, 0.86, 0.88], 0.22));
+    if let Some(v) = &g.village {
+        village::glass_layer(v, &mut layers);
+    }
     layers.push(SLayer::water(&g.water, [0.10, 0.18, 0.20], 0.42, 1));
     layers.push(SLayer::water(&g.water_low, [0.10, 0.18, 0.20], 0.42, 2));
     layers.push(SLayer::translucent(&g.falls, [0.92, 0.95, 0.96], 0.6));
@@ -537,9 +591,22 @@ pub fn run(root: &Path) -> std::io::Result<()> {
         ("campus_front.png", Camera::Persp { eye: p(-30.0, 95.0, 14.0), target: p(28.0, -25.0, 8.0), up: V::z(), fov_deg: 52.0, w: 1600, h: 1000 }, 1.0, false),
         ("campus_food.png", Camera::Persp { eye: p(fx1 + 260.0, 330.0, 330.0), target: p((hx_mid(&g) + fxm) / 2.0, fym, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
         ("food_inside.png", Camera::Persp { eye: p(fxm + 1.2, fy1 - 4.0, 2.0), target: p(fxm + 1.0, fy1 - 60.0, 2.6), up: V::z(), fov_deg: 68.0, w: 1600, h: 1000 }, 1.3, false),
-        ("food_head.png", Camera::Persp { eye: p(fxm - 30.0, g.food.head.3 + 62.0, -0.4), target: p(fxm, fy1 + 4.0, 5.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
-        ("arboretum.png", Camera::Persp { eye: p(-30.0, 95.0, 1.7), target: p(30.0, 40.0, 6.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
+        ("food_head.png", Camera::Persp { eye: p((g.food.head.0 + g.food.head.1) / 2.0 - 40.0, g.food.head.3 + 55.0, -0.4), target: p((g.food.head.0 + g.food.head.1) / 2.0, fy1 + 6.0, 4.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
+        ("arboretum.png", Camera::Persp { eye: p(-130.0, 210.0, -0.5), target: p(30.0, 40.0, 6.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
     ];
+    let mut views: Vec<_> = Vec::from(views);
+    if g.village.is_some() {
+        views.extend([
+            ("campus_village.png", Camera::Persp { eye: p(330.0, 560.0, 330.0), target: p(-20.0, 120.0, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
+            ("village_balcony.png", Camera::Persp { eye: p(40.0, 147.5, 5.3), target: p(30.0, 30.0, 2.0), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
+            ("village_square.png", Camera::Persp { eye: p(48.0, 114.0, -0.5), target: p(22.0, 45.0, 2.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
+            ("village_street.png", Camera::Persp { eye: p(60.0, 271.5, -0.5), target: p(-40.0, 271.5, 2.5), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
+            ("village_center.png", Camera::Persp { eye: p(140.0, 132.0, 3.5), target: p(96.0, 85.0, -2.2), up: V::z(), fov_deg: 72.0, w: 1600, h: 1000 }, 1.5, false),
+            ("village_green.png", Camera::Persp { eye: p(-50.0, 211.2, -0.6), target: p(40.0, 213.0, 0.8), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
+            ("village_climbing.png", Camera::Persp { eye: p(110.0, 44.0, -0.6), target: p(100.0, 21.0, 0.6), up: V::z(), fov_deg: 66.0, w: 1600, h: 1000 }, 1.6, false),
+            ("village_fields.png", Camera::Persp { eye: p(-120.0, 205.0, 1.5), target: p(-150.0, 95.0, 0.0), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
+        ]);
+    }
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let run_dir = out.join("renders").join(stamp.to_string());
     println!("  renders to {}", run_dir.display());
@@ -558,6 +625,9 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     std::fs::write(out.join("garden.json"), serde_json::to_string_pretty(&json!({
         "source": "forge `garden` (CortenForge 0.9): the winter garden, pass 3c", "stones": g.stones, "triangles": total, "areas": g.areas,
     }))?)?;
+    if let Some(vs) = &vspec {
+        village::facade_study(root, vs)?;
+    }
     println!("garden done ({:.1} s)", t0.elapsed().as_secs_f64());
     Ok(())
 }

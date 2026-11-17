@@ -131,6 +131,13 @@ site:
     unit: m, the public spine street from the town to the square (walks, trees, a lane each way)
     conf: high
     source: "the design: shared places reached from town streets, no gates (D11, mixing not an enclave)"
+  green_w_m:
+    value: 30
+    low: 20
+    high: 40
+    unit: m, the tree green between each pair of back-to-back rows (big trees stand on its middle, clear of the houses' roots)
+    conf: high
+    source: "the design (Jon: 'neighborhoods with big trees'); Radburn NJ (1929) and Savannah's squares as precedents; tree setbacks from params/food.yaml (NHBC zones)"
   street_m:
     value: 200
     unit: m, length of each street of phase 1
@@ -1529,17 +1536,17 @@ growth_limits:
 
 amenities:
   center_ft2:
-    value: 47000
-    low: 40000
-    high: 55000
-    unit: ft2, the community center (two-court gym 15,048 + roller hockey floor 16,329 + makerspace and shop bay 3,900 + fitness 4,000, + 20% for lobby, changing and circulation)
+    value: 75000
+    low: 65000
+    high: 85000
+    unit: ft2, the community center (two-court gym 15,048 + roller hockey floor 16,329 + eight indoor pickleball courts 17,400 + bouldering 4,000 + makerspace and shop bay 3,900 + fitness 4,000, + 20% for lobby, changing and circulation; golf simulator bays on a mezzanine)
     conf: medium
     source: "the design, from the research dimensions (community_center.two_court_gym_ft2, fields.rink_roller_hockey, makerspace.fablab_floor_area)"
   food_hall_ft2:
     value: 10000
     low: 6000
     high: 15000
-    unit: ft2, the food hall with its kitchen (a robot assembly line, cooks, seating)
+    unit: ft2, the vegan food court at the greenhouse's entrance, with its kitchen (a robot assembly line, cooks, seating)
     conf: placeholder
     source: "the design (judgement)"
   building_heat_kwh_m2:
@@ -1553,9 +1560,23 @@ amenities:
     value: 0.75
     low: 0.5
     high: 1.0
-    unit: ha, the order-steered glasshouse beside the food hall (greens, herbs, strawberries)
+    unit: ha, the order-steered market section inside the big greenhouse, behind the food court (greens, herbs, strawberries)
     conf: placeholder
     source: "the design (D11)"
+  climbing_usd:
+    value: 300000
+    low: 150000
+    high: 600000
+    unit: USD, the bouldering walls (panels, holds, crash-pad flooring), beyond the building
+    conf: placeholder
+    source: "judgement, to source (climbing-wall builders' quotes)"
+  loop_usd_m:
+    value: 150
+    low: 80
+    high: 300
+    unit: USD per m of a 3 m walking and running loop round the field
+    conf: placeholder
+    source: "judgement (to source: park path costs)"
   makerspace_tools_usd:
     value: 110000
     low: 60000

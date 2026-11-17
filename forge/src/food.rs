@@ -65,13 +65,13 @@ fn p(a: [f64; 3]) -> Point3<f64> {
     Point3::new(a[0] * M, a[1] * M, a[2] * M)
 }
 
-fn tri(out: &mut IndexedMesh, a: [f64; 3], b_: [f64; 3], c: [f64; 3]) {
+pub(crate) fn tri(out: &mut IndexedMesh, a: [f64; 3], b_: [f64; 3], c: [f64; 3]) {
     let base = out.vertices.len() as u32;
     out.vertices.extend([p(a), p(b_), p(c)]);
     out.faces.push([base, base + 1, base + 2]);
 }
 
-fn quad(out: &mut IndexedMesh, a: [f64; 3], b_: [f64; 3], c: [f64; 3], d: [f64; 3]) {
+pub(crate) fn quad(out: &mut IndexedMesh, a: [f64; 3], b_: [f64; 3], c: [f64; 3], d: [f64; 3]) {
     tri(out, a, b_, c);
     tri(out, a, c, d);
 }
@@ -186,9 +186,10 @@ pub fn houses(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh
     }
     // A concrete floor through the houses (walks and the crop's footings).
     b(&mut paving, [x0 + 0.4, y0 + 0.4, z], [x1 - 0.4, y1 - 0.4, z + 0.02]);
-    // The head house: stone ends and piers, facing the town; glass between the piers on two
-    // storeys; an ochre band at the floor and a deep ochre roof slab, as on the garden and the hall.
-    let xc = (x0 + x1) / 2.0;
+    // The head house, at the corner nearest the town: the entrance, the vegan food court (a Costco-
+    // style hall at the front door) and packing; stone ends and piers, glass between them on two
+    // storeys, an ochre band and a deep ochre roof slab, as on the garden and the hall.
+    let xc = x0 + 40.0;
     let head = (xc - 32.0, xc + 32.0, y1 + 2.0, y1 + 20.0);
     let (hz1, hz2) = (z + 4.2, z + 8.4);
     n += stone_mass_s(stone, rng, [head.0, head.2, z], [head.0 + 6.0, head.3, hz2], [true, false, false, true], 1.4);
@@ -220,6 +221,7 @@ pub fn arboretum(s: &Spec, trunks: &mut IndexedMesh, crowns: &mut [IndexedMesh],
         dx.hypot(dy)
     };
     let mut placed = vec![0; s.trees.len()];
+    let mut taken: Vec<(f64, f64, f64)> = Vec::new();
     for (i, t) in s.trees.iter().enumerate() {
         let (cx, cy) = groves[i % groves.len()];
         let mut tries = 0;
@@ -229,6 +231,11 @@ pub fn arboretum(s: &Spec, trunks: &mut IndexedMesh, crowns: &mut [IndexedMesh],
             if built.iter().any(|r| gap(x, y, r) < t.setback) || eyes.iter().any(|(ex, ey)| (x - ex).hypot(y - ey) < 22.0) {
                 continue;
             }
+            // Keep crowns apart: no closer than the two crowns' radii (~0.3 of each height).
+            if taken.iter().any(|(tx, ty, th)| (x - tx).hypot(y - ty) < 0.3 * (t.height + th)) {
+                continue;
+            }
+            taken.push((x, y, t.height));
             let h = t.height * rng.range(0.85, 1.05);
             let z0 = ground_z(x, y);
             match t.form.as_str() {

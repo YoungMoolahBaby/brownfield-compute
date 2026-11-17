@@ -116,6 +116,24 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
 - Research notes (scratchpad `food_inputs.md`) are folded into params and RESEARCH is still to do.
 - **To do:** RESEARCH.md entries; SCORECARD rows (food grown, lamp power, heat put to use); README.
 
+**Pass 3e IN PROGRESS (2026-11-16), the neighbourhood (D11): [docs/pass3/village.md](pass3/village.md).**
+- `brownfield village` (`village.py`, `params/village.yaml`, 10 tests) writes out/pass3/village.json.
+- forge `village.rs` draws the townhouses, the spine and streets, the square, the food hall, the
+  glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
+  facade study.
+- Phase 1, 120 homes, 150 m back from the hall.
+- The neighbourhood takes 9.4 GWh a year, peaking at 4.8 MW; tomato houses go 43.5 -> 41 ha.
+- A home's heat over 20 years: $23k on the loop if the operator pays for the network, $32k for a
+  heat pump.
+- A townhouse ~$441k as a price against ~$360k affordable at the median income.
+- The shared places cost $52M to build; the trust's share is $1.4M a year.
+- Sewage binds growth at ~1,350 homes.
+- **To do:**
+  - Jon to choose the townhouses' look;
+  - check the held-back sources;
+  - RESEARCH.md entries for D11's cases and the village inputs;
+  - SCORECARD rows: homes heated within a 10-minute walk, and a home's heat against gas.
+
 **Pass 2b, costs (Jon: "price it first"): [docs/pass2/cost.md](pass2/cost.md).** Operator: ~$56M
 less up front and ~$14M a year saved per module, +$129-201M over 20 years (positive in every
 Monte Carlo draw, negative only in the all-worst corner); the heat network alone loses ~$159M;
@@ -300,6 +318,80 @@ at the campus edge, funded in the community benefits agreement.
     flour) bought from Pennsylvania farms. Risk to watch: an all-vegan food hall draws fewer regulars in a rural
     county, so it has to be the best food in the county, not a niche; track phase 1's sales.
   - Checks: rooftop-cooler noise at upper-floor windows; walk times; heat by month; cost and who pays.
+  - Later the same day (Jon):
+    - Homes face greens with big trees ("neighborhoods with big trees") and native gardens rather
+      than lawns ("yards are dumb").
+    - One greenhouse, with the vegan food court at its entrance "like in costco".
+    - Pickleball and golf simulators indoors.
+    - One real-grass field, multi-use, with a walking loop; a dome or field house only if bookings
+      show demand.
+    - Proposed, not yet built: the data hall's front as a monument with a working, steaming basin
+      instead of a temple; the Fallingwater garden on the community center ("the beloved 3rd
+      space"); a golf short course on the ash cap (Old Works, Anaconda MT, as precedent).
+  - The community center, later still (Jon):
+    - A bouldering section, and a traverse wall in the gym.
+    - The makerspace joined to the sports ("every sport would use the makerspace. especially hockey
+      which at an elite level is half engineering"): a clean sports lab facing the rink and courts
+      through glass (skate sharpening with extraction, sticks and fitting, 3D printing,
+      electronics, sensors, video), with the heavy shop behind a fire wall, its own extraction and
+      its own outside door.
+    - Open 24 hours ("the center should be 24 hours as a whole"): the campus works around the clock
+      (data hall, gas plant, greenhouse shifts), and people there all night are D12's natural
+      surveillance.
+    - Rules: key-card access as at 24-hour gyms; staff trained in first aid at night; the heavy
+      shop at night only for members signed off on each machine, with a second person present;
+      short overnight closures to resurface the ice; hours for under-18s.
+    - Running costs (staff, including the night shift) are still to model.
+- **D14** (2026-11-16) Cars optional, even in winter.
+  - Jon: "it being car centric is gonna be a problem. cars should be optional, even in the winter.
+    probably would start with a waymo style fleet before rolling out a rail sytem if things expanded
+    a lot".
+  - The steer:
+    - Heated walks and bike paths off the data center's warm water: the spine, the greens' walks,
+      the square, and a route to Homer City borough, as in Holland, Michigan's snowmelt system on
+      its power plant's waste heat (to source: area, loads, ASHRAE snowmelt design).
+    - Self-driving fleets are the goal, but snow is their weak point today. Start with on-demand
+      electric shuttles (driven, then driverless once proven in snow) to the borough, Indiana (the
+      university, the hospital) and the Pittsburgh bus, with the county's transit authority.
+    - Rail on the plant's freight line kept open as a later option, if the town grows.
+  - In the site plan:
+    - The three car parks become one mobility hub at the site edge: the shuttle stop, bikes, EV
+      charging and a small shared car park.
+    - Parking maximums in place of minimums (as in Buffalo 2017 and Minneapolis 2021; to source).
+    - A new rule: every door within a few minutes of a stop.
+    - The heated walks' heat counted against the module's spare heat.
+- **D13** (2026-11-16) An AI medicine facility.
+  - Jon: "there also needs to be an ai medicine facility. once people understand what ai can do for
+    medicine like what google deepmind is working on, they gonna be begging for more data centers.
+    let's make it clear we are aware of the benefits in our planning phase".
+  - The steer: state the benefits precisely and sourced, because opponents will check them.
+    - Working today: protein structure prediction (AlphaFold; the 2024 Nobel Prize in Chemistry); the
+      FDA's list of AI-enabled devices (mostly radiology); autonomous diabetic retinopathy screening
+      in primary care (IDx-DR, cleared 2018).
+    - Promising, not yet routine: AI-designed drugs (Isomorphic Labs) and diagnostic dialogue
+      (AMIE), both still research.
+    - Medical AI doesn't need to sit next to the data center; building the clinic here is a choice
+      to share the benefit locally.
+    - All figures to be sourced in the research step before they go into public docs.
+  - Plan: an AI-assisted clinic and health research center on the square, run in partnership with
+    Indiana Regional Medical Center and Pittsburgh's academic centers, not competing with them.
+    - Screening, primary care and telehealth to specialists.
+    - Research jobs and training with the university.
+    - Health data under HIPAA, used with the community's consent.
+    - Its own module in the site plan.
+    - A short, sourced README and PLAN section: what AI can and can't yet do for medicine.
+- **D12** (2026-11-16) A modular site plan, secured by design.
+  - Jon: "get everything modular so we can move things around for optimal transportation, security,
+    etc."; the optimizer suggests and Jon edits; security "like pentagon style. no fence, the
+    community will be the fence/wall".
+  - The steer: security in layers, designed in.
+    - The community is the outer ring of natural surveillance (CPTED, ISO 22341).
+    - A landscape stand-off band at a published distance (UFC 4-010-01): the basin, the pools,
+      steps, planters and a ha-ha as hidden vehicle barriers, as at the US Embassy in London.
+    - The hall's hardened skin is the inner ring.
+    - Trucks are screened at a remote delivery building, as at the Pentagon.
+  - Residents watch, they don't guard; professional security stays the operator's.
+  - The repo is public, so security stays at the level of published principles and distances.
   - Housing type (Jon, the same day): narrow townhouses "san fran style" with an air gap between them, not flats,
     so one household's noise never reaches another's sleep; modest size; a two-car garage at ground level that
     doubles as a private workshop, two or three storeys above; workouts shared at the community center ("people

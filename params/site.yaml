@@ -1,0 +1,326 @@
+# The site plan as modules (D12). Positions are the design (Jon edits them; `brownfield site` proposes
+# better ones in out/pass3/site_proposals.json and never edits this file). Frame as forge `garden`: metres,
+# x east, y south (toward the town), the hall's south face at y = -3. Module centres; rot 0 or 90.
+
+garden:
+  x:
+    value: 29.3
+    unit: m east, the winter garden and its pools against the hall's south face
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 15.8
+    unit: m south, the winter garden and its pools against the hall's south face
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the winter garden and its pools against the hall's south face
+    conf: high
+    source: "the design (the current layout)"
+
+greenhouse:
+  x:
+    value: 491.5
+    unit: m east, the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: -310.0
+    unit: m south, the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    conf: high
+    source: "the design (the current layout)"
+
+center:
+  x:
+    value: 117.0
+    unit: m east, the community center with the rink
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 76.0
+    unit: m south, the community center with the rink
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the community center with the rink
+    conf: high
+    source: "the design (the current layout)"
+
+square:
+  x:
+    value: 30.0
+    unit: m east, the square
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 90.0
+    unit: m south, the square
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the square
+    conf: high
+    source: "the design (the current layout)"
+
+field:
+  x:
+    value: -150.0
+    unit: m east, the field and its walking loop
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 110.0
+    unit: m south, the field and its walking loop
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the field and its walking loop
+    conf: high
+    source: "the design (the current layout)"
+
+homes:
+  x:
+    value: 30.0
+    unit: m east, phase 1's homes, lanes, greens and spine (village.lots)
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 298.5
+    unit: m south, phase 1's homes, lanes, greens and spine (village.lots)
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), phase 1's homes, lanes, greens and spine (village.lots)
+    conf: high
+    source: "the design (the current layout)"
+
+park_center:
+  x:
+    value: 260.0
+    unit: m east, parking for the center and rink
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 100.0
+    unit: m south, parking for the center and rink
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), parking for the center and rink
+    conf: high
+    source: "the design (the current layout)"
+
+park_field:
+  x:
+    value: -150.0
+    unit: m east, parking for the field
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 225.0
+    unit: m south, parking for the field
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), parking for the field
+    conf: high
+    source: "the design (the current layout)"
+
+park_food:
+  x:
+    value: 380.0
+    unit: m east, parking for the food court
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 70.0
+    unit: m south, parking for the food court
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), parking for the food court
+    conf: high
+    source: "the design (the current layout)"
+
+delivery:
+  x:
+    value: 850.0
+    unit: m east, the remote delivery and screening building, by the site entrance
+    conf: high
+    source: "the design (the current layout)"
+  y:
+    value: 80.0
+    unit: m south, the remote delivery and screening building, by the site entrance
+    conf: high
+    source: "the design (the current layout)"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the remote delivery and screening building, by the site entrance
+    conf: high
+    source: "the design (the current layout)"
+
+gate:
+  x:
+    value: 900.0
+    unit: m east, the site entrance from the public road
+    conf: placeholder
+    source: "schematic (the real access road is not in this model)"
+  y:
+    value: 100.0
+    unit: m south, the site entrance
+    conf: placeholder
+    source: "schematic"
+
+cap:
+  x0:
+    value: -1600.0
+    unit: m, the capped ash site's west edge (schematic, 244 acres)
+    conf: placeholder
+    source: "research notes: PA DEP permit 300491, ~1 mile (1.6 km) northwest of the generating units, 243.7 acres (~990 m square, schematic outline)"
+  x1:
+    value: -610.0
+    unit: m, east edge
+    conf: placeholder
+    source: "schematic"
+  y0:
+    value: -1700.0
+    unit: m, north edge
+    conf: placeholder
+    source: "schematic"
+  y1:
+    value: -710.0
+    unit: m, south edge
+    conf: placeholder
+    source: "schematic"
+
+bounds:
+  x0:
+    value: -1700.0
+    unit: m, the site's west limit for the search
+    conf: placeholder
+    source: "schematic"
+  x1:
+    value: 1100.0
+    unit: m, east limit
+    conf: placeholder
+    source: "schematic"
+  y0:
+    value: -1800.0
+    unit: m, north limit
+    conf: placeholder
+    source: "schematic"
+  y1:
+    value: 700.0
+    unit: m, south limit
+    conf: placeholder
+    source: "schematic"
+
+clear_m:
+  value: 5
+  low: 5
+  high: 20
+  unit: m kept clear between modules (at least a walk or a fire lane)
+  conf: placeholder
+  source: "judgement"
+standoff_m:
+  value: 15.24
+  low: 10
+  high: 45
+  unit: m from the data hall that no public vehicle enters (the landscape band)
+  conf: medium
+  source: "UFC 4-010-01 (2018, Change 3, May 2024): 15 m (50 ft) to the controlled perimeter; GSA/ISC default for new federal buildings 50 ft (15.24 m). Low: the cancelled 2003 edition's 10 m minimum to an ordinary inhabited building; high: its 45 m conventional figure for a gathering building"
+park_center_m2:
+  value: 17300
+  low: 11000
+  high: 20000
+  unit: m2 of parking for the community center and the rink (5.11 spaces per 1,000 ft2 x 75,000 + 4.0 per 1,000 ft2 x 48,800 = ~580 spaces x ~30 m2 with aisles; low = shared use between the two)
+  conf: medium
+  source: "research notes: ITE Parking Generation (6th ed.) community center 5.11/1,000 ft2; a county code's ice rink 4.0/1,000 ft2; 25-35 m2 per space with aisles (my arithmetic)"
+park_field_m2:
+  value: 600
+  low: 400
+  high: 1200
+  unit: m2 of parking for the field (20 spaces)
+  conf: medium
+  source: "research notes: a county code's 20 spaces per soccer field x ~30 m2"
+park_food_m2:
+  value: 4500
+  low: 3000
+  high: 5300
+  unit: m2 of parking for the food court (15 spaces per 1,000 ft2 x 10,000 ft2 = 150 spaces)
+  conf: medium
+  source: "research notes: fast food 15 spaces per 1,000 ft2 (county code); ~30 m2 per space"
+truck_t:
+  value: 18
+  low: 16
+  high: 20
+  unit: t of produce per truck (USDA counts produce in 40,000 lb loads; a 53 ft reefer carries up to ~44,000 lb)
+  conf: high
+  source: "research notes: USDA AMS shipment units of 40,000 lb; reefer payload ~44,000 lb"
+hall_trucks_yr:
+  value: 6570
+  low: 2000
+  high: 6570
+  unit: trucks a year serving the data hall in operation (18 a day)
+  conf: low
+  source: "research notes: AWS's Virginia campuses average ~18 truck trips a day each (a campus, not one building: high)"
+
+weights:
+  walk_min:
+    value: 1.0
+    unit: score per minute of average walk from the homes to a place
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+  parking_min:
+    value: 0.5
+    unit: score per minute of average walk from a lot to its draw
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+  truck_km:
+    value: 1.0
+    unit: score per 1,000 truck-km a year
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+  crossing:
+    value: 5.0
+    unit: score per truck route crossing the walks between homes and places
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+  main_km:
+    value: 2.0
+    unit: score per km of warm main
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+  land_ha:
+    value: 1.0
+    unit: score per 100 ha the layout spans
+    conf: placeholder
+    source: "Jon's priorities (to set)"
+
+greenhouse_ha:
+  value: 41.0
+  low: 35.0
+  high: 45.0
+  unit: ha of greenhouse (pass 3d's design point after the neighbourhood takes its heat, pass 3e)
+  conf: medium
+  source: "brownfield village: the tomato houses' design area 41 ha"
+food_t_yr:
+  value: 29509
+  low: 20000
+  high: 35000
+  unit: t of produce a year leaving by truck (pass 3d's design point)
+  conf: medium
+  source: "brownfield food: tomatoes in glass, 29,509 t a year (scaled area 43.5 ha; to rerun at 41 ha)"
