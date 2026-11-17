@@ -122,7 +122,8 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
   glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
   facade study.
 - Phase 1, 120 homes, 150 m back from the hall.
-- The neighbourhood takes 9.4 GWh a year, peaking at 4.8 MW; tomato houses go 43.5 -> 41 ha.
+- The neighbourhood takes 10.6 GWh a year with the heated walks (D14), peaking at 7.4 MW; tomato houses go
+  43.5 -> 40 ha.
 - A home's heat over 20 years: $23k on the loop if the operator pays for the network, $32k for a
   heat pump.
 - A townhouse ~$441k as a price against ~$360k affordable at the median income.

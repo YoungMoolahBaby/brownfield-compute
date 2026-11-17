@@ -121,7 +121,7 @@ yet.
       makerspace, and heated grass fields.
     - Native-planted gardens and green roofs instead of lawns, and big trees on greens between the
       rows, kept clear of the foundations.
-    - All of it takes 9.4 GWh of the module's heat a year.
+    - All of it, with snow-free heated walks, takes 10.6 GWh of the module's heat a year.
     - On the loop, a home's heat costs less than its own heat pump if the operator pays for the
       pipes.
     - Sewage, not heat, limits growth past ~1,350 homes.

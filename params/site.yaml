@@ -277,19 +277,19 @@ weights:
     source: "Jon's priorities (to set)"
 
 greenhouse_ha:
-  value: 41.0
+  value: 40.0
   low: 35.0
   high: 45.0
   unit: ha of greenhouse (pass 3d's design point after the neighbourhood takes its heat, pass 3e)
   conf: medium
-  source: "brownfield village: the tomato houses' design area 41 ha"
+  source: "brownfield village: the tomato houses' design area 40 ha after the neighbourhood and its heated walks"
 food_t_yr:
   value: 29509
   low: 20000
   high: 35000
   unit: t of produce a year leaving by truck (pass 3d's design point)
   conf: medium
-  source: "brownfield food: tomatoes in glass, 29,509 t a year (scaled area 43.5 ha; to rerun at 41 ha)"
+  source: "brownfield food: tomatoes in glass, 29,509 t a year (at 43.5 ha; ~27,100 t at 40 ha, to rerun)"
 car_share:
   value: 0.4
   low: 0.2
@@ -309,5 +309,5 @@ walk_stop_m:
   low: 300
   high: 800
   unit: m, most a door may be from a shuttle stop along the streets
-  conf: placeholder
-  source: "to source: the usual 400 m (5 minute) bus-stop planning standard"
+  conf: medium
+  source: "research notes: the usual planning standard, 400 m to a bus stop (800 m to rail)"

@@ -1628,3 +1628,33 @@ money:
     unit: USD per NOK, 2015 average (to convert the field-heating install cost)
     conf: medium
     source: "Federal Reserve H.10: 2015 average ~8.06 NOK per USD"
+
+snowmelt:
+  heated_walk_m2:
+    value: 9000
+    low: 6000
+    high: 15000
+    unit: m2 of walks kept snow-free on the warm water (the spine, the greens' walks, the square, the walk to the hub)
+    conf: medium
+    source: "brownfield site (D14): ~8,970 m2 in the current layout"
+  design_w_m2:
+    value: 280
+    low: 158
+    high: 394
+    unit: W/m2 at the surface at the design storm (high = ASHRAE 2023's snow-free class at 90% for Albany NY, a proxy; Pittsburgh's row not found)
+    conf: medium
+    source: "research notes: Holland MI's design ~90 Btu/h ft2 (~280 W/m2); ASHRAE Handbook HVAC Applications 2023, snow melting chapter"
+  energy_kwh_m2:
+    value: 180
+    low: 129
+    high: 250
+    unit: kWh/m2 a year at the surface (about two thirds of it keeping the slab warm between storms)
+    conf: medium
+    source: "research notes: a Swedish hydronic system modelled within 2% of measured, 180 kWh/m2/yr"
+  loss_share:
+    value: 0.2
+    low: 0.1
+    high: 0.3
+    unit: extra heat lost from the edges and underneath, as a share of the surface heat
+    conf: medium
+    source: "research notes (ASHRAE snow melting chapter: back and edge losses)"

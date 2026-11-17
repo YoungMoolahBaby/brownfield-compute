@@ -79,6 +79,6 @@ def test_the_neighbourhood_comes_first_and_the_tomato_houses_shrink():
     assert b["short_mwh"] == pytest.approx(0.0)
     assert b["ha_after"] <= b["ha_before"]
     for r in b["months"]:
-        used = r["homes"] + r["shared buildings"] + r["fields"] + r["market section"] + r["tomatoes"]
+        used = r["homes"] + r["shared buildings"] + r["fields"] + r["heated walks"] + r["market section"] + r["tomatoes"]
         assert used <= r["spare"] + 1e-6
         assert r["left"] == pytest.approx(r["spare"] - used, abs=1e-3)
