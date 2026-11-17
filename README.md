@@ -19,7 +19,7 @@ don't know.
 
 ## The design so far
 
-![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof behind a stone parapet, and on its town side great bronze doors between two stone pylons, above warm basins](docs/pass3/campus_aerial.png)
+![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof, ringed by glasshouses; on its town side great bronze doors between two stone pylons, warm basins, and an open mall between the glass](docs/pass3/campus_aerial.png)
 
 The campus:
 
@@ -42,17 +42,29 @@ The campus:
 
   Its two glass rooms have about 540 m² of floor between them. A stone tower rises from its back
   wall where the warm water comes in.
-- **Food houses for the winter.** About 43 ha (107 acres) of glasshouses east of the hall grow
-  tomatoes through the winter. They're heated straight off the data center's 50 °C water, with
-  grow lights where the winter sun falls short, and have a stone head house facing the town
-  ([pass 3d](docs/pass3/food.md)).
+- **Food houses round the hall, as its moat** (D16). About 38.5 ha (95 acres) of glasshouses
+  stand in a ring round the hall and grow tomatoes through the winter.
+  - They're heated straight off the data center's 50 °C water, with grow lights where the winter
+    sun falls short ([pass 3d](docs/pass3/food.md)).
+  - A fire and service road runs between the hall and the glass. The hall's trucks come through a
+    covered crossing at its back.
+  - On the town side, the warm basins' court runs on as an open mall between the glass to the
+    square, with the food court at its mouth.
+  - Public vehicles stay 320 m from the hall.
+- **Homes in rings round the centre** (D16):
+  - small flats in three-storey walk-ups nearest the square;
+  - townhouses over their own garage-workshops next;
+  - larger houses furthest out.
+  Every home stays under the WHO's 40 dB(A) night guideline at its windows.
+- **A community center open 24 hours**, paid for by memberships like a gym's, with leagues and
+  ice rental. The square, the mall, the garden and the walks stay free to everyone.
 - **An arboretum of native Pennsylvania trees:** oaks, sugar maple, black cherry, tulip poplar,
   sycamore, hemlock and white pine. Each species stands back from every foundation by its own
   root reach (UK house-building rules: up to 1.25 times a tree's mature height for oaks). Indoor
   plants grow in raised stone planters.
 
 <p>
-<img src="docs/pass3/hall_front.png" width="49%" alt="The data hall's great doors from the square: two stone pylons, bronze doors 14 m high in a deep stone reveal, warm basins either side of the causeway">
+<img src="docs/pass3/mall.png" width="49%" alt="From the square up the open mall between the glasshouses to the data hall's great doors: two stone pylons, bronze doors 14 m high in a deep stone reveal">
 <img src="docs/pass3/garden_hero.png" width="49%" alt="The winter garden from across its lower pool: concrete terraces and bands of glass against the community center">
 </p>
 
@@ -126,16 +138,23 @@ yet.
   - With the town network, a third of the module's heat is put to use instead of a tenth.
   - The grow lights add 11% to the module's electricity.
   - The limit is the market, not the heat: that's more tomatoes than the Pittsburgh metro eats.
-  - [The neighbourhood](docs/pass3/village.md): 120 townhouses over their own garage-workshops along
-    a public street from the town to a square.
-    - Around the square: a vegan food hall, a community center with an ice rink, courts and a
-      makerspace, and heated grass fields.
+  - [The neighbourhood](docs/pass3/village.md): 242 homes in rings for pass 4's newcomers (D16).
+    - 121 flats in 11 walk-ups nearest the centre, from studios to 3-beds, in the mix now built
+      to rent.
+    - 98 townhouses over their own garage-workshops, then 23 four-bedroom houses.
+    - Every home is under 40 dB(A) at night with ordinary fans. The flats' floors beat the
+      code's sound rating.
+    - Around the square: a vegan food court, a community center with an ice rink, courts and a
+      makerspace, and a heated grass field.
     - Native-planted gardens and green roofs instead of lawns, and big trees on greens between the
       rows, kept clear of the foundations.
-    - All of it, with snow-free heated walks and the hall's warm basins, takes 15.2 GWh of the
+    - All of it, with snow-free heated walks and the hall's warm basins, takes 16.8 GWh of the
       module's heat a year.
-    - On the loop, a home's heat costs less than its own heat pump if the operator pays for the
-      pipes.
+    - The flats and townhouses heat off the loop; the houses, further out, on their own heat pumps.
+    - The flats leave a $20M gap at market rents. An AWS household can afford a townhouse; the
+      county's median household is $82k short.
+    - Running the centre costs $3.2M a year: about $32 a month from 7,200 members, between
+      Planet Fitness's $15 and the local Y's $47.50.
     - Sewage, not heat, limits growth past ~1,350 homes.
   - [The site plan](docs/pass3/site.md): every piece of the campus a module that can be moved.
     - Rules every layout must pass: homes past the noise setback and on the town side, no public
@@ -146,13 +165,17 @@ yet.
       ATRI's cost, pipes and crossings paid off.
     - What matters most, by that research: no truck road crosses a main walk, then visitors' and
       residents' walks. Truck distance matters least.
-    - The chosen layout:
-      - the hall's great doors, the warm basins and the square on one axis;
-      - the winter garden on the community center, facing the square;
+    - The chosen layout (D16):
+      - the hall inside the greenhouse's moat, its great doors, the basins, the mall and the
+        square on one axis;
+      - the winter garden on the community center, looking at the flats;
       - the car park against the center's door, and the field beside the car park;
       - trucks kept to the service side, crossing no walk.
-    - With the square kept on that axis, no proposal beats it: it is the cheapest in 25 of 27
-      cases across the inputs' ranges.
+    - It was the optimizer's find, cheaper than the hand layout in all 29 cases across the
+      inputs' ranges.
+  - [What a real application needs](docs/pass3/checklist.md): Pennsylvania's and Indiana County's
+    lists, item by item, against this plan. The gap is the ground: the real site isn't mapped
+    yet.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

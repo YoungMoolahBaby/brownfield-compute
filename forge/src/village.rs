@@ -45,7 +45,10 @@ pub struct Spec {
     pub food_hall: [f64; 4],
     pub market_garden: [f64; 4],
     pub center: [f64; 4],
+    pub center_rot: i64,
     pub fields: Vec<(f64, f64, f64, f64)>, // cx, cy, width, length
+    /// The flats' and the houses' rings (D16).
+    pub rings: Vec<Ring>,
 }
 
 pub fn spec(root: &Path) -> Option<Spec> {
@@ -64,6 +67,8 @@ pub fn spec(root: &Path) -> Option<Spec> {
         greens: v["greens"].as_array().map(|a| a.iter().map(|g| [0, 1, 2, 3].map(|i| g[i].as_f64().unwrap_or(0.0))).collect()).unwrap_or_default(),
         street_w: f("street_w"), street_x: pair("street_x"), spine_x: f("spine_x"), spine_w: f("spine_w"), spine_y: pair("spine_y"),
         square: r4("square"), food_hall: r4("food_hall"), market_garden: r4("market_garden"), center: r4("center"),
+        center_rot: v["center_rot"].as_i64().unwrap_or(0),
+        rings: v["rings"].as_array().map(|a| a.iter().map(ring).collect()).unwrap_or_default(),
         fields: v["fields"].as_array()?.iter().map(|q| (q["cx"].as_f64().unwrap_or(0.0), q["cy"].as_f64().unwrap_or(0.0),
             q["w"].as_f64().unwrap_or(60.0), q["l"].as_f64().unwrap_or(100.0))).collect(),
     })
@@ -115,6 +120,8 @@ pub struct Village {
     pub deck: IndexedMesh,
     pub beds: IndexedMesh,
     pub pavers: IndexedMesh,
+    /// The outer ring's gable roofs (D16).
+    pub roofs: IndexedMesh,
     /// Footprints (x0, x1, y0, y1) the trees keep their distance from.
     pub rects: Vec<(f64, f64, f64, f64)>,
 }
@@ -335,66 +342,293 @@ fn glasshouse(v: &mut Village, r: [f64; 4]) {
     }
 }
 
-pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh, rng: &mut Rng) -> (Village, usize) {
-    let mut v = Village::default();
-    let mut n = 0;
-    let gap = 3.0_f64.min((s.homes.get(1).map(|h| (h.x - s.homes[0].x).abs()).unwrap_or(9.1) - s.house_w).max(0.0));
-    for h in &s.homes {
-        // Rows beyond ~245 m from the hall may go a storey higher (the noise check); each house steps a
-        // little in or out of line.
-        let storeys = if h.y > 245.0 { s.storeys + 1 } else { s.storeys };
-        let shift = rng.range(-0.8, 0.8);
-        let y = h.y + shift * h.facing;
-        let tone = (rng.next() * 5.0) as usize;
-        townhouse(&mut v, h.x, y, h.facing, s.house_w, s.house_d, storeys, s.storey_m, s.garage_h, Some(tone));
-        let (fr, bk) = (y + h.facing * 8.0, y + h.facing * 8.0 - h.facing * s.house_d);
-        v.rects.push((h.x - s.house_w / 2.0, h.x + s.house_w / 2.0, fr.min(bk), fr.max(bk)));
-        let top = Z + s.garage_h + s.storey_m * storeys as f64;
-        lot(&mut v, rng, h.x, y, h.facing, s.house_w, gap, s.house_d, top);
+/// A ring of homes other than the townhouses (D16): its kind ("flats" or "houses"), lots, streets,
+/// greens and spine, and its building's size.
+pub struct Ring {
+    pub kind: String,
+    pub homes: Vec<Home>,
+    pub streets_y: Vec<f64>,
+    pub greens: Vec<[f64; 4]>,
+    pub street_x: (f64, f64),
+    pub spine_x: f64,
+    pub spine_y: (f64, f64),
+    pub lot_w: f64,
+    pub lot_d: f64,
+    pub w: f64,
+    pub d: f64,
+    pub storeys: usize,
+    pub storey_m: f64,
+    pub garage: (f64, f64, f64), // the houses' garage-workshop: width, depth, height
+}
+
+fn ring(r: &serde_json::Value) -> Ring {
+    let f = |k: &str| r[k].as_f64().unwrap_or(0.0);
+    let pair = |k: &str| (r[k][0].as_f64().unwrap_or(0.0), r[k][1].as_f64().unwrap_or(0.0));
+    Ring {
+        kind: r["kind"].as_str().unwrap_or("").to_string(),
+        homes: r["homes"].as_array().map(|a| a.iter().map(|h| Home { x: h["x"].as_f64().unwrap_or(0.0), y: h["y"].as_f64().unwrap_or(0.0),
+            facing: h["facing"].as_f64().unwrap_or(1.0) }).collect()).unwrap_or_default(),
+        streets_y: r["streets_y"].as_array().map(|a| a.iter().filter_map(|y| y.as_f64()).collect()).unwrap_or_default(),
+        greens: r["greens"].as_array().map(|a| a.iter().map(|g| [0, 1, 2, 3].map(|i| g[i].as_f64().unwrap_or(0.0))).collect()).unwrap_or_default(),
+        street_x: pair("street_x"), spine_x: f("spine_x"), spine_y: pair("spine_y"), lot_w: f("lot_w"), lot_d: f("lot_d"),
+        w: f("w"), d: f("d"), storeys: r["storeys"].as_u64().unwrap_or(2) as usize, storey_m: f("storey_m"),
+        garage: (f("garage_w"), f("garage_d"), f("garage_h")),
     }
-    let xs: Vec<f64> = s.homes.iter().map(|h| h.x).collect();
-    let ys: Vec<f64> = s.homes.iter().map(|h| h.y).collect();
-    let (hx0, hx1) = (xs.iter().cloned().fold(f64::MAX, f64::min) - 4.0, xs.iter().cloned().fold(f64::MIN, f64::max) + 4.0);
-    let (hy0, hy1) = (ys.iter().cloned().fold(f64::MAX, f64::min) - 12.0, ys.iter().cloned().fold(f64::MIN, f64::max) + 12.0);
-    let _ = (hx0, hx1, hy0, hy1);
-    // Streets, the spine from the town toward the square, the square (the site plan's walks join them up).
-    // Living streets: a 5.5 m paved lane down the middle, planted swales for the rain either side, and
-    // walks; the spine the same, wider.
-    for &y in &s.streets_y {
-        let (x0, x1, hw) = (s.street_x.0, s.street_x.1, s.street_w / 2.0);
+}
+
+/// A building laid out in its own frame (x across its width `w`, y along its depth) and set on the
+/// site turned a quarter if `rot` (D16: the community center turned by the site plan): its depth then
+/// runs east-west, its own west face to the south, its north face to the west. A rotation, so faces
+/// keep their winding.
+struct Turn {
+    x0: f64,
+    y0: f64,
+    w: f64,
+    rot: bool,
+}
+
+impl Turn {
+    fn xy(&self, x: f64, y: f64) -> (f64, f64) {
+        if self.rot { (self.x0 + y, self.y0 + self.w - x) } else { (self.x0 + x, self.y0 + y) }
+    }
+    fn bx(&self, lo: [f64; 3], hi: [f64; 3]) -> ([f64; 3], [f64; 3]) {
+        let (ax, ay) = self.xy(lo[0], lo[1]);
+        let (cx, cy) = self.xy(hi[0], hi[1]);
+        ([ax.min(cx), ay.min(cy), lo[2]], [ax.max(cx), ay.max(cy), hi[2]])
+    }
+    fn b(&self, m: &mut IndexedMesh, lo: [f64; 3], hi: [f64; 3]) {
+        let (lo, hi) = self.bx(lo, hi);
+        b(m, lo, hi);
+    }
+    fn quad(&self, m: &mut IndexedMesh, a: [f64; 3], c: [f64; 3], d: [f64; 3], e: [f64; 3]) {
+        let p = |q: [f64; 3]| {
+            let (x, y) = self.xy(q[0], q[1]);
+            [x, y, q[2]]
+        };
+        quad(m, p(a), p(c), p(d), p(e));
+    }
+    /// Stone with coursed faces; the faces (west, east, north, south) turn with the building.
+    fn stone(&self, stone: &mut [IndexedMesh; 5], rng: &mut Rng, lo: [f64; 3], hi: [f64; 3], f: [bool; 4], k: f64) -> usize {
+        let (lo, hi) = self.bx(lo, hi);
+        let f = if self.rot { [f[2], f[3], f[1], f[0]] } else { f };
+        stone_mass_s(stone, rng, lo, hi, f, k)
+    }
+}
+
+/// A walk-up (pass 3b's shell, D16): a stone base, three storeys of flats with a window to each
+/// room front and back, the stair at the middle glazed full height over the entrance, balconies on
+/// the green side, a cornice and a sedum roof. Its long side faces the street; `facing` +1: the
+/// street to the south.
+#[allow(clippy::too_many_arguments)]
+fn walkup(v: &mut Village, x: f64, y: f64, facing: f64, w: f64, d: f64, storeys: usize, sh: f64, lot_d: f64, tone: usize) {
+    let (x0, x1) = (x - w / 2.0, x + w / 2.0);
+    let front = y + facing * (lot_d / 2.0 - 6.0); // 6 m of front garden
+    let back = front - facing * d;
+    let (y0, y1) = (front.min(back), front.max(back));
+    let top = Z + 0.6 + sh * storeys as f64;
+    b(&mut v.base, [x0, y0, Z], [x1, y1, Z + 0.9]);
+    b(&mut v.tones[tone % 5], [x0, y0, Z + 0.9], [x1, y1, top]);
+    b(&mut v.trim, [x0 - 0.2, y0 - 0.2, top], [x1 + 0.2, y1 + 0.2, top + 0.45]);
+    b(&mut v.sedum, [x0 + 0.3, y0 + 0.3, top + 0.45], [x1 - 0.3, y1 - 0.3, top + 0.6]);
+    let out = |face: f64, t: f64| face + facing * t;
+    let (fa, fb) = (out(front, 0.0).min(out(front, 0.04)), out(front, 0.0).max(out(front, 0.04)));
+    let inward = |t: f64| back - facing * t;
+    let (ba, bb) = (inward(0.0).min(inward(0.04)), inward(0.0).max(inward(0.04)));
+    // The stair: a glazed slot full height over the entrance, at the middle of the street face.
+    b(&mut v.windows, [x - 1.6, fa, Z + 0.9], [x + 1.6, fb, top - 0.6]);
+    b(&mut v.doors, [x - 1.0, fa - 0.02, Z], [x + 1.0, fb + 0.02, Z + 2.4]);
+    for k in 0..storeys {
+        let z0 = Z + 0.6 + sh * k as f64;
+        let mut wx = x0 + 1.4;
+        while wx < x1 - 2.4 {
+            if (wx + 0.8 - x).abs() > 2.6 {
+                b(&mut v.windows, [wx, fa, z0 + 0.9], [wx + 1.6, fb, z0 + sh - 0.6]);
+                b(&mut v.windows, [wx, ba, z0 + 0.9], [wx + 1.6, bb, z0 + sh - 0.6]);
+            }
+            wx += 3.0;
+        }
+        // Two balconies to each floor on the green side, one to each half.
+        for bx in [x0 + 4.0, x1 - 10.0] {
+            let (pa, pb) = (inward(0.0).min(inward(1.6)), inward(0.0).max(inward(1.6)));
+            b(&mut v.trim, [bx, pa, z0 + 0.6], [bx + 6.0, pb, z0 + 0.78]);
+            let (ra, rb) = (inward(1.5).min(inward(1.6)), inward(1.5).max(inward(1.6)));
+            if k > 0 || storeys == 1 {
+                b(&mut v.frame, [bx, ra, z0 + 0.78], [bx + 6.0, rb, z0 + 1.8]);
+            }
+        }
+    }
+    v.rects.push((x0, x1, y0, y1));
+}
+
+/// A walk-up's lot: the front garden of native planting with a path to the entrance, a back court of
+/// pavers (bins, bikes, drying) with a bed of planting, the side strips planted.
+#[allow(clippy::too_many_arguments)]
+fn walkup_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, w: f64, d: f64, lot_w: f64, lot_d: f64) {
+    let street = y + facing * lot_d / 2.0;
+    let front = y + facing * (lot_d / 2.0 - 6.0);
+    let back = front - facing * d;
+    let lot_back = y - facing * lot_d / 2.0;
+    let (fa, fb) = (front.min(street), front.max(street));
+    let (ba, bb) = (back.min(lot_back), back.max(lot_back));
+    meadow(v, rng, x - w / 2.0, x - 1.2, fa + 0.3, fb - 0.3);
+    meadow(v, rng, x + 1.2, x + w / 2.0, fa + 0.3, fb - 0.3);
+    b(&mut v.pavers, [x - 1.2, fa, Z], [x + 1.2, fb, Z + 0.04]);
+    b(&mut v.pavers, [x - w / 2.0, ba + 0.5, Z], [x + w / 2.0, bb - 0.5, Z + 0.03]);
+    let mid = (ba + bb) / 2.0;
+    meadow(v, rng, x - w / 2.0 + 2.0, x - 3.0, mid - 1.5, mid + 1.5);
+    let side = (lot_w - w) / 2.0;
+    if side > 1.0 {
+        meadow(v, rng, x - lot_w / 2.0 + 0.2, x - w / 2.0 - 0.2, fa.min(ba), fb.max(bb));
+        meadow(v, rng, x + w / 2.0 + 0.2, x + lot_w / 2.0 - 0.2, fa.min(ba), fb.max(bb));
+    }
+}
+
+/// A house of the outer ring (D16): two storeys under a gable roof running along the street, the
+/// garage-workshop beside it with its door to the street and a sedum roof, a front door and windows
+/// all round. The house stands 8 m back from the street.
+#[allow(clippy::too_many_arguments)]
+fn house_big(v: &mut Village, x: f64, y: f64, facing: f64, r: &Ring, tone: usize, roofs: &mut IndexedMesh) {
+    let (gw, gd, gh) = r.garage;
+    let x0 = x - (r.w + gw) / 2.0;
+    let (x1, gx1) = (x0 + r.w, x0 + r.w + gw);
+    let front = y + facing * (r.lot_d / 2.0 - 8.0);
+    let back = front - facing * r.d;
+    let (y0, y1) = (front.min(back), front.max(back));
+    let top = Z + r.storey_m * r.storeys as f64;
+    b(&mut v.base, [x0, y0, Z], [x1, y1, Z + 0.5]);
+    b(&mut v.tones[tone % 5], [x0, y0, Z + 0.5], [x1, y1, top]);
+    // The gable roof, its ridge along x at the middle of the depth, 6:12.
+    let rise = r.d / 2.0 * 0.5;
+    let ym = (y0 + y1) / 2.0;
+    let (e0, e1) = (x0 - 0.4, x1 + 0.4);
+    quad(roofs, [e0, y0 - 0.4, top], [e1, y0 - 0.4, top], [e1, ym, top + rise], [e0, ym, top + rise]);
+    quad(roofs, [e0, ym, top + rise], [e1, ym, top + rise], [e1, y1 + 0.4, top], [e0, y1 + 0.4, top]);
+    tri(&mut v.tones[tone % 5], [x0, y0, top], [x0, ym, top + rise], [x0, y1, top]);
+    tri(&mut v.tones[tone % 5], [x1, y1, top], [x1, ym, top + rise], [x1, y0, top]);
+    // The garage-workshop, set back a little, its roof planted.
+    let gfront = front - facing * 0.6;
+    let gback = gfront - facing * gd;
+    let (gy0, gy1) = (gfront.min(gback), gfront.max(gback));
+    b(&mut v.base, [x1, gy0, Z], [gx1, gy1, Z + gh]);
+    b(&mut v.trim, [x1 - 0.1, gy0 - 0.1, Z + gh], [gx1 + 0.15, gy1 + 0.1, Z + gh + 0.3]);
+    b(&mut v.sedum, [x1 + 0.2, gy0 + 0.2, Z + gh + 0.3], [gx1 - 0.2, gy1 - 0.2, Z + gh + 0.42]);
+    let (ga, gb) = (gfront.min(gfront + facing * 0.04), gfront.max(gfront + facing * 0.04));
+    b(&mut v.doors, [x1 + 0.6, ga, Z], [gx1 - 0.6, gb, Z + 2.13]);
+    // Windows front and back on each storey, the front door, windows on the far gable end.
+    let (fa, fb) = (front.min(front + facing * 0.04), front.max(front + facing * 0.04));
+    let (ba, bb) = (back.min(back - facing * 0.04), back.max(back - facing * 0.04));
+    b(&mut v.doors, [x0 + r.w / 2.0 - 0.5, fa - 0.02, Z], [x0 + r.w / 2.0 + 0.5, fb + 0.02, Z + 2.2]);
+    for k in 0..r.storeys {
+        let z0 = Z + r.storey_m * k as f64;
+        for wx in [x0 + 1.2, x0 + r.w - 2.8] {
+            b(&mut v.windows, [wx, fa, z0 + 0.9], [wx + 1.6, fb, z0 + r.storey_m - 0.6]);
+            b(&mut v.windows, [wx, ba, z0 + 0.9], [wx + 1.6, bb, z0 + r.storey_m - 0.6]);
+        }
+        b(&mut v.windows, [x0 - 0.04, ym - 0.8, z0 + 0.9], [x0, ym + 0.8, z0 + r.storey_m - 0.6]);
+    }
+    v.rects.push((x0, gx1, y0.min(gy0), y1.max(gy1)));
+}
+
+/// A house's lot: the drive to the garage, a path to the door, native planting in front with a rain
+/// garden, a back garden of grass with a small native tree and raised beds.
+fn house_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, r: &Ring) {
+    let (gw, _, _) = r.garage;
+    let x0 = x - (r.w + gw) / 2.0;
+    let x1 = x0 + r.w;
+    let street = y + facing * r.lot_d / 2.0;
+    let front = y + facing * (r.lot_d / 2.0 - 8.0);
+    let back = front - facing * r.d;
+    let lot_back = y - facing * r.lot_d / 2.0;
+    let (fa, fb) = (front.min(street), front.max(street));
+    let (ba, bb) = (back.min(lot_back), back.max(lot_back));
+    b(&mut v.pavers, [x1 + 0.3, fa, Z], [x1 + gw - 0.3, fb, Z + 0.04]);
+    b(&mut v.pavers, [x0 + r.w / 2.0 - 0.6, fa, Z], [x0 + r.w / 2.0 + 0.6, fb, Z + 0.04]);
+    meadow(v, rng, x - r.lot_w / 2.0 + 0.3, x0 + r.w / 2.0 - 0.8, fa + 0.3, fb - 0.3);
+    let ry = if facing > 0.0 { fa + 0.4 } else { fb - 1.6 };
+    b(&mut v.rain, [x0 + r.w / 2.0 + 1.0, ry, Z - 0.15], [x0 + r.w / 2.0 + 2.4, ry + 1.2, Z + 0.02]);
+    b(&mut v.sward, [x - r.lot_w / 2.0 + 0.3, ba + 0.3, Z], [x + r.lot_w / 2.0 - 0.3, bb - 0.3, Z + 0.03]);
+    let th = rng.range(7.0, 9.0);
+    small_tree(v, rng, x + r.lot_w / 2.0 - 3.0, lot_back + facing * 4.0, th);
+    let yb = back - facing * 4.0;
+    let (ya, yz) = (yb.min(yb - facing * 1.2), yb.max(yb - facing * 1.2));
+    b(&mut v.beds, [x0 + 1.0, ya, Z], [x0 + 5.0, yz, Z + 0.45]);
+    b(&mut v.greens, [x0 + 1.1, ya + 0.1, Z + 0.45], [x0 + 4.9, yz - 0.1, Z + 0.7]);
+}
+
+/// A ring's streets, greens and spine: living streets (a 5.5 m paved lane, planted swales, walks),
+/// the tree greens between back-to-back rows with a walk past the front gardens, and the spine.
+#[allow(clippy::too_many_arguments)]
+fn streets(v: &mut Village, rng: &mut Rng, streets_y: &[f64], street_x: (f64, f64), street_w: f64, greens: &[[f64; 4]],
+           spine_x: f64, spine_w: f64, spine_y: (f64, f64)) {
+    for &y in streets_y {
+        let (x0, x1, hw) = (street_x.0, street_x.1, street_w / 2.0);
         b(&mut v.pavers, [x0, y - 2.75, Z], [x1, y + 2.75, Z + 0.03]);
         for side in [-1.0, 1.0] {
             let (a, c) = (y + side * 2.75, y + side * 5.25);
-            meadow(&mut v, rng, x0, x1, a.min(c), a.max(c));
+            meadow(v, rng, x0, x1, a.min(c), a.max(c));
             let (wa, wc) = (y + side * 5.25, y + side * hw);
             b(&mut v.plaza, [x0, wa.min(wc), Z], [x1, wa.max(wc), Z + 0.03]);
         }
     }
-    for g in &s.greens {
+    for g in greens {
         let [x0, x1, y0, y1] = *g;
         b(&mut v.sward, [x0, y0, Z], [x1, y1, Z + 0.03]);
         for (wy, dir) in [(y0, 1.0), (y1, -1.0)] {
             let (a, c) = (wy, wy + dir * 2.4);
             b(&mut v.plaza, [x0, a.min(c), Z], [x1, a.max(c), Z + 0.05]); // the walk past the front gardens
             let (pa, pc) = (wy + dir * 2.4, wy + dir * 5.4);
-            meadow(&mut v, rng, x0, x1, pa.min(pc), pa.max(pc));
+            meadow(v, rng, x0, x1, pa.min(pc), pa.max(pc));
             let mut x = x0 + 4.0;
             while x < x1 - 2.0 {
                 let ty = wy + dir * 3.9;
                 let th = rng.range(7.0, 9.0);
-                if rng.next() < 0.5 { small_tree(&mut v, rng, x, ty, th); } else { shrub(&mut v, rng, x, ty); }
+                if rng.next() < 0.5 { small_tree(v, rng, x, ty, th); } else { shrub(v, rng, x, ty); }
                 x += rng.range(6.0, 9.0);
             }
         }
     }
-    let (sx, sw) = (s.spine_x, s.spine_w / 2.0);
-    b(&mut v.pavers, [sx - 3.5, s.spine_y.0, Z], [sx + 3.5, s.spine_y.1, Z + 0.03]);
+    let (sx, sw) = (spine_x, spine_w / 2.0);
+    b(&mut v.pavers, [sx - 3.5, spine_y.0, Z], [sx + 3.5, spine_y.1, Z + 0.03]);
     for side in [-1.0, 1.0] {
         let (a, c) = (sx + side * 3.5, sx + side * (sw - 3.0));
-        meadow(&mut v, rng, a.min(c), a.max(c), s.spine_y.0, s.spine_y.1);
+        meadow(v, rng, a.min(c), a.max(c), spine_y.0, spine_y.1);
         let (wa, wc) = (sx + side * (sw - 3.0), sx + side * sw);
-        b(&mut v.plaza, [wa.min(wc), s.spine_y.0, Z], [wa.max(wc), s.spine_y.1, Z + 0.03]);
+        b(&mut v.plaza, [wa.min(wc), spine_y.0, Z], [wa.max(wc), spine_y.1, Z + 0.03]);
     }
+}
+
+pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh, rng: &mut Rng) -> (Village, usize) {
+    let mut v = Village::default();
+    let mut n = 0;
+    let gap = 3.0_f64.min((s.homes.get(1).map(|h| (h.x - s.homes[0].x).abs()).unwrap_or(9.1) - s.house_w).max(0.0));
+    for h in &s.homes {
+        // Each house steps a little in or out of line.
+        let shift = rng.range(-0.8, 0.8);
+        let y = h.y + shift * h.facing;
+        let tone = (rng.next() * 5.0) as usize;
+        townhouse(&mut v, h.x, y, h.facing, s.house_w, s.house_d, s.storeys, s.storey_m, s.garage_h, Some(tone));
+        let (fr, bk) = (y + h.facing * 8.0, y + h.facing * 8.0 - h.facing * s.house_d);
+        v.rects.push((h.x - s.house_w / 2.0, h.x + s.house_w / 2.0, fr.min(bk), fr.max(bk)));
+        let top = Z + s.garage_h + s.storey_m * s.storeys as f64;
+        lot(&mut v, rng, h.x, y, h.facing, s.house_w, gap, s.house_d, top);
+    }
+    // Streets, greens and the spine of each ring (the site plan's walks join them up).
+    streets(&mut v, rng, &s.streets_y, s.street_x, s.street_w, &s.greens, s.spine_x, s.spine_w, s.spine_y);
+    let mut roofs = IndexedMesh::new();
+    for r in &s.rings {
+        for h in &r.homes {
+            let tone = (rng.next() * 5.0) as usize;
+            if r.kind == "flats" {
+                walkup(&mut v, h.x, h.y, h.facing, r.w, r.d, r.storeys, r.storey_m, r.lot_d, tone);
+                walkup_lot(&mut v, rng, h.x, h.y, h.facing, r.w, r.d, r.lot_w, r.lot_d);
+            } else {
+                house_big(&mut v, h.x, h.y, h.facing, r, tone, &mut roofs);
+                house_lot(&mut v, rng, h.x, h.y, h.facing, r);
+            }
+        }
+        streets(&mut v, rng, &r.streets_y, r.street_x, s.street_w, &r.greens, r.spine_x, s.spine_w, r.spine_y);
+    }
+    v.roofs = roofs;
     let [sx0, sx1, sy0, sy1] = s.square;
     b(&mut v.plaza, [sx0, sy0, Z], [sx1, sy1, Z + 0.04]);
     // The food hall on the square's north side: stone ends, glass to the square, a deep ochre roof.
@@ -418,50 +652,53 @@ pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh,
     }
     // The community center: a stone base, a glass band, an ochre roof; inside, the ice, the roller
     // hockey floor and two courts.
-    let [cx0, cx1, cy0, cy1] = s.center;
+    let rot = s.center_rot % 180 != 0;
+    let (cw, cd) = if rot { (s.center[3] - s.center[2], s.center[1] - s.center[0]) } else { (s.center[1] - s.center[0], s.center[3] - s.center[2]) };
+    let t = Turn { x0: s.center[0], y0: s.center[2], w: cw, rot };
+    let (cx0, cx1, cy0, cy1) = (0.0, cw, 0.0, cd);
     let (base_h, eave) = (3.0, 9.0);
     for (lo, hi, f) in [([cx0, cy0, Z], [cx1, cy0 + 0.6, Z + base_h], [false, false, true, false]),
                         ([cx0, cy1 - 0.6, Z], [cx1, cy1, Z + base_h], [false, false, false, true]),
                         ([cx0, cy0, Z], [cx0 + 0.6, cy1, Z + base_h], [true, false, false, false]),
                         ([cx1 - 0.6, cy0, Z], [cx1, cy1, Z + base_h], [false, true, false, false])] {
-        n += stone_mass_s(stone, rng, lo, hi, f, 1.4);
+        n += t.stone(stone, rng, lo, hi, f, 1.4);
     }
     for (a, c) in [([cx0, cy0], [cx1, cy0]), ([cx1, cy1], [cx0, cy1]), ([cx0, cy1], [cx0, cy0]), ([cx1, cy0], [cx1, cy1])] {
-        quad(&mut v.glass, [a[0], a[1], Z + base_h], [c[0], c[1], Z + base_h], [c[0], c[1], Z + eave], [a[0], a[1], Z + eave]);
+        t.quad(&mut v.glass, [a[0], a[1], Z + base_h], [c[0], c[1], Z + base_h], [c[0], c[1], Z + eave], [a[0], a[1], Z + eave]);
     }
     let mut x = cx0;
     while x <= cx1 + 1e-6 {
-        n += stone_mass_s(stone, rng, [x - 0.5, cy1 - 0.9, Z], [x + 0.5, cy1 + 0.1, Z + eave], [true, true, false, true], 1.4);
+        n += t.stone(stone, rng, [x - 0.5, cy1 - 0.9, Z], [x + 0.5, cy1 + 0.1, Z + eave], [true, true, false, true], 1.4);
         x += 9.0;
     }
-    b(concrete, [cx0 - 2.5, cy0 - 2.5, Z + eave], [cx1 + 2.5, cy1 + 2.5, Z + eave + 0.7]);
-    b(&mut v.plaza, [cx0 + 0.6, cy0 + 0.6, Z], [cx1 - 0.6, cy1 - 0.6, Z + 0.02]); // the floor
-    b(&mut v.ice, [cx0 + 8.0, cy0 + 12.0, Z], [cx0 + 34.0, cy0 + 73.0, Z + 0.05]);
-    b(&mut v.lines, [cx0 + 8.0, cy0 + 42.3, Z + 0.05], [cx0 + 34.0, cy0 + 42.7, Z + 0.06]);
+    t.b(concrete, [cx0 - 2.5, cy0 - 2.5, Z + eave], [cx1 + 2.5, cy1 + 2.5, Z + eave + 0.7]);
+    t.b(&mut v.plaza, [cx0 + 0.6, cy0 + 0.6, Z], [cx1 - 0.6, cy1 - 0.6, Z + 0.02]); // the floor
+    t.b(&mut v.ice, [cx0 + 8.0, cy0 + 12.0, Z], [cx0 + 34.0, cy0 + 73.0, Z + 0.05]);
+    t.b(&mut v.lines, [cx0 + 8.0, cy0 + 42.3, Z + 0.05], [cx0 + 34.0, cy0 + 42.7, Z + 0.06]);
     for (lo, hi) in [([cx0 + 7.8, cy0 + 11.8], [cx0 + 34.2, cy0 + 12.0]), ([cx0 + 7.8, cy0 + 73.0], [cx0 + 34.2, cy0 + 73.2]),
                      ([cx0 + 7.8, cy0 + 11.8], [cx0 + 8.0, cy0 + 73.2]), ([cx0 + 34.0, cy0 + 11.8], [cx0 + 34.2, cy0 + 73.2])] {
-        b(&mut v.trim, [lo[0], lo[1], Z], [hi[0], hi[1], Z + 1.07]); // the boards round the ice
+        t.b(&mut v.trim, [lo[0], lo[1], Z], [hi[0], hi[1], Z + 1.07]); // the boards round the ice
     }
-    b(&mut v.roller, [cx0 + 40.0, cy0 + 12.0, Z], [cx0 + 66.0, cy0 + 73.0, Z + 0.05]);
+    t.b(&mut v.roller, [cx0 + 40.0, cy0 + 12.0, Z], [cx0 + 66.0, cy0 + 73.0, Z + 0.05]);
     for k in 0..2 {
         let y = cy0 + 10.0 + k as f64 * 36.0;
-        b(&mut v.courts, [cx0 + 71.0, y, Z], [cx0 + 86.0, y + 28.0, Z + 0.05]);
-        b(&mut v.lines, [cx0 + 71.0, y + 13.8, Z + 0.05], [cx0 + 86.0, y + 14.2, Z + 0.06]);
+        t.b(&mut v.courts, [cx0 + 71.0, y, Z], [cx0 + 86.0, y + 28.0, Z + 0.05]);
+        t.b(&mut v.lines, [cx0 + 71.0, y + 13.8, Z + 0.05], [cx0 + 86.0, y + 14.2, Z + 0.06]);
     }
     // Bouldering along the north wall: angled panels and overhangs (~4.5 m) with coloured holds over
     // crash pads.
-    b(&mut v.pads, [cx0 + 2.0, cy0 + 0.7, Z], [cx0 + 62.0, cy0 + 9.0, Z + 0.35]);
+    t.b(&mut v.pads, [cx0 + 2.0, cy0 + 0.7, Z], [cx0 + 62.0, cy0 + 9.0, Z + 0.35]);
     let mut x = cx0 + 2.0;
     let mut k = 0;
     while x < cx0 + 60.0 {
         let lean = [0.0, 1.2, 2.2, 0.6][k % 4]; // vertical, overhang, roof, slab
         let (w0, w1) = (x, x + 6.0);
-        quad(&mut v.climb, [w0, cy0 + 0.8, Z], [w1, cy0 + 0.8, Z], [w1, cy0 + 0.8 + lean, Z + 4.5], [w0, cy0 + 0.8 + lean, Z + 4.5]);
+        t.quad(&mut v.climb, [w0, cy0 + 0.8, Z], [w1, cy0 + 0.8, Z], [w1, cy0 + 0.8 + lean, Z + 4.5], [w0, cy0 + 0.8 + lean, Z + 4.5]);
         for _ in 0..40 {
             let (u, h) = (rng.range(0.2, 0.9), rng.range(0.3, 4.3));
             let (hx, hy) = (w0 + 0.3 + u * 5.4, cy0 + 0.85 + lean * h / 4.5);
             let c = (rng.next() * 4.0) as usize % 4;
-            b(&mut v.holds[c], [hx - 0.08, hy, Z + h - 0.06], [hx + 0.08, hy + 0.08, Z + h + 0.06]);
+            t.b(&mut v.holds[c], [hx - 0.08, hy, Z + h - 0.06], [hx + 0.08, hy + 0.08, Z + h + 0.06]);
         }
         x += 6.0;
         k += 1;
@@ -470,35 +707,36 @@ pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh,
     // electronics, video), and behind a fire wall at the east end the heavy shop, with its own outside
     // door onto the mobility hub (the west face holds the winter garden, D15).
     let (ly0, ly1) = (cy0 + 76.0, cy0 + 92.0);
-    b(&mut v.plaza, [cx0 + 0.6, ly0, Z], [cx1 - 0.6, ly1, Z + 0.03]);
-    b(&mut v.trim, [cx0 + 64.0, ly0, Z], [cx0 + 64.4, ly1, Z + 5.0]); // the fire wall
-    b(&mut v.trim, [cx0 + 0.6, ly1 - 0.3, Z], [cx1 - 0.6, ly1, Z + 5.0]); // the back wall
-    quad(&mut v.glass, [cx0 + 0.6, ly0, Z], [cx0 + 64.0, ly0, Z], [cx0 + 64.0, ly0, Z + 4.0], [cx0 + 0.6, ly0, Z + 4.0]);
+    t.b(&mut v.plaza, [cx0 + 0.6, ly0, Z], [cx1 - 0.6, ly1, Z + 0.03]);
+    t.b(&mut v.trim, [cx0 + 64.0, ly0, Z], [cx0 + 64.4, ly1, Z + 5.0]); // the fire wall
+    t.b(&mut v.trim, [cx0 + 0.6, ly1 - 0.3, Z], [cx1 - 0.6, ly1, Z + 5.0]); // the back wall
+    t.quad(&mut v.glass, [cx0 + 0.6, ly0, Z], [cx0 + 64.0, ly0, Z], [cx0 + 64.0, ly0, Z + 4.0], [cx0 + 0.6, ly0, Z + 4.0]);
     for k in 0..10 {
         let x = cx0 + 3.0 + k as f64 * 6.0;
-        b(&mut v.beds, [x, ly0 + 4.0, Z], [x + 3.6, ly0 + 5.2, Z + 0.95]); // benches
-        b(&mut v.trim, [x + 0.4, ly0 + 9.0, Z], [x + 1.4, ly0 + 9.8, Z + 1.3]); // machines
+        t.b(&mut v.beds, [x, ly0 + 4.0, Z], [x + 3.6, ly0 + 5.2, Z + 0.95]); // benches
+        t.b(&mut v.trim, [x + 0.4, ly0 + 9.0, Z], [x + 1.4, ly0 + 9.8, Z + 1.3]); // machines
     }
     for k in 0..4 {
         let x = cx0 + 66.0 + k as f64 * 5.6;
-        b(&mut v.beds, [x, ly0 + 3.0, Z], [x + 4.0, ly0 + 5.0, Z + 0.9]); // shop benches
+        t.b(&mut v.beds, [x, ly0 + 3.0, Z], [x + 4.0, ly0 + 5.0, Z + 0.9]); // shop benches
     }
-    b(&mut v.trim, [cx0 + 64.4, ly0 - 0.3, Z], [cx1 - 0.6, ly0, Z + 5.0]); // the shop's wall to the hall
-    b(&mut v.doors, [cx1 - 0.6, ly0 + 5.0, Z], [cx1 + 0.02, ly0 + 9.0, Z + 3.5]); // the shop's own door
+    t.b(&mut v.trim, [cx0 + 64.4, ly0 - 0.3, Z], [cx1 - 0.6, ly0, Z + 5.0]); // the shop's wall to the hall
+    t.b(&mut v.doors, [cx1 - 0.6, ly0 + 5.0, Z], [cx1 + 0.02, ly0 + 9.0, Z + 3.5]); // the shop's own door
     // A low traverse wall along the gym's east wall.
-    quad(&mut v.climb, [cx1 - 1.0, cy0 + 10.0, Z], [cx1 - 1.0, cy0 + 74.0, Z], [cx1 - 1.0, cy0 + 74.0, Z + 2.8], [cx1 - 1.0, cy0 + 10.0, Z + 2.8]);
+    t.quad(&mut v.climb, [cx1 - 1.0, cy0 + 10.0, Z], [cx1 - 1.0, cy0 + 74.0, Z], [cx1 - 1.0, cy0 + 74.0, Z + 2.8], [cx1 - 1.0, cy0 + 10.0, Z + 2.8]);
     for _ in 0..160 {
         let (hy, h) = (rng.range(cy0 + 10.5, cy0 + 73.5), rng.range(0.3, 2.6));
         let c = (rng.next() * 4.0) as usize % 4;
-        b(&mut v.holds[c], [cx1 - 1.08, hy - 0.08, Z + h - 0.06], [cx1 - 1.0, hy + 0.08, Z + h + 0.06]);
+        t.b(&mut v.holds[c], [cx1 - 1.08, hy - 0.08, Z + h - 0.06], [cx1 - 1.0, hy + 0.08, Z + h + 0.06]);
     }
     for k in 0..8 {
         let x = cx0 + 1.0 + k as f64 * 11.0;
-        b(&mut v.roller, [x, cy1 - 32.0, Z], [x + 10.4, cy1 - 12.5, Z + 0.05]);
-        b(&mut v.courts, [x + 1.5, cy1 - 29.5, Z + 0.05], [x + 8.9, cy1 - 15.0, Z + 0.06]);
-        b(&mut v.lines, [x + 1.5, cy1 - 22.3, Z + 0.06], [x + 8.9, cy1 - 22.1, Z + 0.07]);
+        t.b(&mut v.roller, [x, cy1 - 32.0, Z], [x + 10.4, cy1 - 12.5, Z + 0.05]);
+        t.b(&mut v.courts, [x + 1.5, cy1 - 29.5, Z + 0.05], [x + 8.9, cy1 - 15.0, Z + 0.06]);
+        t.b(&mut v.lines, [x + 1.5, cy1 - 22.3, Z + 0.06], [x + 8.9, cy1 - 22.1, Z + 0.07]);
     }
-    v.rects.push((cx0, cx1, cy0, cy1));
+    let _ = (cx0, cx1, cy0, cy1);
+    v.rects.push((s.center[0], s.center[1], s.center[2], s.center[3]));
     // Two heated grass fields with their lines and goals.
     for &(fcx, fcy, w, l) in &s.fields {
         let (x0, x1, y0, y1) = (fcx - w / 2.0, fcx + w / 2.0, fcy - l / 2.0, fcy + l / 2.0);
@@ -529,6 +767,7 @@ pub fn layers<'a>(v: &'a Village, out: &mut Vec<SLayer<'a>>) {
         out.push(SLayer::solid(m, c));
     }
     out.push(SLayer::solid(&v.trim, [0.95, 0.93, 0.88]));
+    out.push(SLayer::solid(&v.roofs, [0.36, 0.33, 0.31]));
     out.push(SLayer::solid(&v.windows, [0.20, 0.25, 0.29]));
     out.push(SLayer::solid(&v.doors, [0.55, 0.52, 0.47]));
     out.push(SLayer::solid(&v.paving, [0.52, 0.52, 0.52]).no_shadow());

@@ -29,6 +29,7 @@ TABLES = {
     "b25024": [f"E{i:03d}" for i in range(2, 12)],            # units in structure
     "b25034": [f"E{i:03d}" for i in range(2, 12)],            # year built, 2020+ ... 1939 or earlier
     "b25070": [f"E{i:03d}" for i in range(1, 12)],            # gross rent as a share of income
+    "b25042": [f"E{i:03d}" for i in range(2, 16)],            # tenure by bedrooms (D16: owners 4+ bedrooms, renters by size)
 }
 
 

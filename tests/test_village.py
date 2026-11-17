@@ -41,12 +41,17 @@ def test_floor_over_the_garage_by_hand():
     assert h["floor_over_garage_w"] == pytest.approx(want)
 
 
-def test_lots_fill_phase1_clear_of_the_spine_and_behind_the_setback():
+def test_lots_fill_each_ring_clear_of_the_spine_and_behind_the_setback():
+    from brownfield import rings
+
     s = "village.site."
-    homes = village.lots(P, "gap")
-    assert len(homes) == int(P[s + "phase1_homes"])
-    assert all(abs(x - P["site.homes.x"]) > P[s + "spine_w_m"] / 2 for x, _ in homes)
-    assert min(y for _, y in homes) >= village.HALL_FACE_Y + P[s + "home_setback_m"]
+    c = rings.counts(P)
+    assert len(village.lots(P, "gap")) == c["townhouses"]
+    for kind in rings.RINGS:
+        homes = rings.lots(P, kind)
+        assert len(homes) == rings.n_lots(P, kind, c)
+        assert all(abs(x - P[f"site.{kind}.x"]) > P[s + "spine_w_m"] / 2 for x, _ in homes)
+        assert min(y for _, y in homes) >= village.HALL_FACE_Y + P[s + "home_setback_m"]
 
 
 def test_walk_minutes_by_hand():

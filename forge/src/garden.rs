@@ -16,9 +16,10 @@
 //! The data hall: one stone hall with its dry coolers in rows on the roof behind a 3 m stone
 //! parapet. Its front (D15) is a monument to the machines that keep the town warm: two stone pylons
 //! and a pair of bronze doors 14 m high on a stepped base, and before them two warm basins spilling
-//! over a ledge into two lower pools, either side of a causeway and a stair to the square. East of the
-//! hall, the food houses (food.rs, pass 3d); round it all, an arboretum of native trees kept back from
-//! every foundation.
+//! over a ledge into two lower pools, either side of a causeway and a stair to the square. Round the
+//! hall, the food houses as its moat (food.rs, pass 3d, D16: the site plan's blocks, a road between
+//! them and the hall, the mall through them to the square; east of the hall without a site plan); round
+//! it all, an arboretum of native trees kept back from every foundation.
 //!
 //! Frame: millimetres; x east along the frontage, y south toward the town, z up from the upper
 //! pool's water. Dimensions below are written in metres and scaled.
@@ -401,7 +402,7 @@ fn fallingwater(rng: &mut Rng, own_back: bool, tower: f64) -> GardenParts {
 /// Returns the stone count and the basins' open water (m2).
 #[allow(clippy::too_many_arguments)]
 fn hall_front(stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh, bronze: &mut IndexedMesh, floor: &mut IndexedMesh,
-              water: &mut IndexedMesh, water_low: &mut IndexedMesh, falls: &mut IndexedMesh, rng: &mut Rng) -> (usize, f64) {
+              water: &mut IndexedMesh, water_low: &mut IndexedMesh, falls: &mut IndexedMesh, rng: &mut Rng, end_y: f64) -> (usize, f64) {
     let mut n = 0;
     // The stepped base the width of the gateway, and three steps down to the forecourt.
     n += stone_mass(stone, rng, [13.0, -3.0, -0.6], [49.0, 4.4, 0.8], [true, true, false, true]);
@@ -432,7 +433,12 @@ fn hall_front(stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh, bronze: 
     }
     // The causeway from the steps to the stair, paved.
     b(floor, [26.4, 5.6, 0.2], [35.6, 18.0, 0.23]);
-    b(floor, [26.0, 26.0, -2.2], [36.0, 60.0, -2.17]); // on to the square
+    b(floor, [26.0, 26.0, -2.2], [36.0, end_y, -2.17]); // on to the square
+    if end_y > 60.0 {
+        // The mall between the glass (D16): a walk along each side of it.
+        b(floor, [-4.0, 36.0, -2.2], [0.0, end_y, -2.18]);
+        b(floor, [62.0, 36.0, -2.2], [66.0, end_y, -2.18]);
+    }
     let mut area = 0.0;
     // The warm basins in their stone kerbs, each spilling over its ledge.
     for r in FRONT_UP {
@@ -585,7 +591,8 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
     // --- The hall's front (D15): the great doors and the forecourt's warm basins.
     let mut bronze = IndexedMesh::new();
     let basins_m2 = if front {
-        let (nf, a) = hall_front(&mut stone, &mut concrete, &mut bronze, &mut floor, &mut water, &mut water_low, &mut falls, &mut rng);
+        let end_y = pl.and_then(|p| p.rect("square")).map(|r| r[2]).unwrap_or(60.0).max(60.0);
+        let (nf, a) = hall_front(&mut stone, &mut concrete, &mut bronze, &mut floor, &mut water, &mut water_low, &mut falls, &mut rng, end_y);
         n += nf;
         a
     } else {
@@ -674,19 +681,57 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
     // arboretum: native trees in groves, each species kept back from every foundation by its own
     // distance (params/food.yaml via food.json), none between buildings, clear of the views.
     let reach = spec.trees.iter().map(|t| t.setback).fold(10.0, f64::max);
-    let (x_food, y_food, z_food) = match pl.and_then(|p| p.rect("greenhouse")) {
-        Some(r) => {
-            let w = ((spec.ha * 1e4).sqrt() / spec.bay).ceil().max(4.0) * spec.bay;
-            ((r[0] + r[1]) / 2.0 - w / 2.0, r[3] - 20.0, site::ground_at(0.0, r[3] - 20.0))
-        }
-        None => (hx1 + 2.0 * reach + 12.0, 0.0, 0.2),
+    // With the site plan's moat (D16) the glasshouses are its blocks round the hall, the food court at
+    // the town end of the south-east block, on the mall's mouth.
+    let names = ["greenhouse west", "greenhouse east", "greenhouse north-west", "greenhouse north-east", "greenhouse south-west", "greenhouse south-east"];
+    let moat: Vec<(&str, [f64; 4])> = pl.map(|p| names.iter().filter_map(|nm| p.rect(nm).map(|r| (*nm, r))).collect()).unwrap_or_default();
+    let (fh, nf) = if !moat.is_empty() {
+        let rects: Vec<[f64; 4]> = moat.iter().map(|(_, r)| *r).collect();
+        let food_i = moat.iter().position(|(nm, _)| *nm == "greenhouse south-east")
+            .or_else(|| moat.iter().position(|(nm, _)| *nm == "greenhouse east")).unwrap_or(0);
+        food::moat(spec, &mut stone, &mut concrete, &mut rng, &rects, food_i, 20.0, |y: f64| if y < 20.0 { 0.2 } else { -2.2 })
+    } else {
+        let (x_food, y_food, z_food) = match pl.and_then(|p| p.rect("greenhouse")) {
+            Some(r) => {
+                let w = ((spec.ha * 1e4).sqrt() / spec.bay).ceil().max(4.0) * spec.bay;
+                ((r[0] + r[1]) / 2.0 - w / 2.0, r[3] - 20.0, site::ground_at(0.0, r[3] - 20.0))
+            }
+            None => (hx1 + 2.0 * reach + 12.0, 0.0, 0.2),
+        };
+        food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, y_food, z_food, hx1 + 1.5, -40.0)
     };
-    let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, y_food, z_food, hx1 + 1.5, -40.0);
     n += nf;
     let (fx0, fx1, fy0, fy1) = fh.block;
+    // The fire and service road all round the hall between it and the glass, and the covered crossing
+    // through the north blocks to the hall's service side (D16).
+    let mut ring_road = (hx0, hx1, hy0, hy1);
+    if let Some((_, w)) = moat.iter().find(|(nm, _)| *nm == "greenhouse west") {
+        let r = hx0 - w[1];
+        ring_road = (hx0 - r, hx1 + r, hy0 - r, hy1);
+        for (lo, hi) in [([hx0 - r, hy0 - r], [hx0, hy1]), ([hx1, hy0 - r], [hx1 + r, hy1]), ([hx0, hy0 - r], [hx1, hy0])] {
+            b(&mut yard, [lo[0], lo[1], 0.2], [hi[0], hi[1], 0.24]);
+        }
+        if let (Some((_, nw)), Some((_, ne))) = (moat.iter().find(|(nm, _)| *nm == "greenhouse north-west"),
+                                                moat.iter().find(|(nm, _)| *nm == "greenhouse north-east")) {
+            b(&mut yard, [nw[1], nw[2] - 30.0, 0.2], [ne[0], nw[3], 0.24]);
+            // The crossing's cover: a roof slab on stone piers between the glass either side.
+            b(&mut concrete, [nw[1] - 0.5, nw[2], 6.2], [ne[0] + 0.5, nw[3], 6.6]);
+            let mut y = nw[2] + 5.0;
+            while y < nw[3] - 2.0 {
+                n += stone_mass_s(&mut stone, &mut rng, [nw[1] - 0.2, y, 0.2], [nw[1] + 0.6, y + 0.8, 6.2], [true, true, true, true], 1.0);
+                n += stone_mass_s(&mut stone, &mut rng, [ne[0] - 0.6, y, 0.2], [ne[0] + 0.2, y + 0.8, 6.2], [true, true, true, true], 1.0);
+                y += 12.0;
+            }
+        }
+    }
+    let mall = pl.and_then(|p| p.rect("hall front")).unwrap_or([-4.0, 66.0, -3.0, 36.0]);
     let mut built: Vec<(f64, f64, f64, f64)> = vec![(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (grect[0], grect[1], grect[2], grect[3]),
-                                                   (-4.0, 66.0, -3.0, 36.0), (-30.0, 92.0, -3.0, 3.0),
-                                                   (fx0, fx1, fy0, fy1), fh.head];
+                                                   (mall[0], mall[1], mall[2], mall[3]), (-30.0, 92.0, -3.0, 3.0), ring_road, fh.head];
+    if fh.blocks.is_empty() {
+        built.push((fx0, fx1, fy0, fy1));
+    } else {
+        built.extend(fh.blocks.iter().cloned());
+    }
     // The neighbourhood (pass 3e), if `brownfield village` has written its plan.
     let vg = vspec.map(|vs| {
         let (vg, nv) = village::build(vs, &mut stone, &mut concrete, &mut rng);
@@ -712,8 +757,15 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
         built.extend(d.rects.iter().cloned());
     }
     let eyes: Vec<(f64, f64)> = views(pl, vspec, &fh).iter().map(|v| (v.1.x / M, v.1.y / M)).collect();
-    let groves = [(-110.0, 10.0), ((hx1 + fx0) / 2.0, -70.0), (210.0, 200.0), (-75.0, -20.0), (220.0, 90.0), (-75.0, -110.0),
-                  ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), (-330.0, 230.0), (30.0, 460.0)];
+    let groves: Vec<(f64, f64)> = if moat.is_empty() {
+        vec![(-110.0, 10.0), ((hx1 + fx0) / 2.0, -70.0), (210.0, 200.0), (-75.0, -20.0), (220.0, 90.0), (-75.0, -110.0),
+             ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), (-330.0, 230.0), (30.0, 460.0)]
+    } else {
+        // Round the moat's outer edge and on the town side either side of the mall's mouth.
+        let (mx, my) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
+        vec![(fx0 - 55.0, my), (fx1 + 55.0, my), (mx, fy0 - 55.0), (fx0 - 55.0, fy0 + 120.0), (fx1 + 55.0, fy0 + 120.0),
+             (fx0 - 55.0, fy1 - 60.0), (fx1 + 55.0, fy1 - 60.0), (mx - 200.0, fy0 - 55.0), (mx + 200.0, fy0 - 55.0), (-120.0, fy1 + 45.0)]
+    };
     let mut placed = food::arboretum(spec, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &groves,
                                      |_x: f64, y: f64| if y < 20.0 { 0.2 } else { -2.2 });
     // Big trees on the neighbourhood's greens, each species only where its own root setback from every
@@ -779,6 +831,12 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
     let (fxm, fym) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
     let hm = (fh.head.0 + fh.head.1) / 2.0;
     let fz = if fy1 < 20.0 { 0.2 } else { -2.2 };
+    // Inside: the largest block of glass (with the moat, one of its parts).
+    let ib = fh.blocks.iter().cloned().max_by(|a, c| ((a.1 - a.0) * (a.3 - a.2)).total_cmp(&((c.1 - c.0) * (c.3 - c.2)))).unwrap_or(fh.block);
+    // Down the walk between a bay's two crop rows (food.rs: rows at 0.6-1.3 and 2.5-3.2 m into each 4 m bay).
+    let ix = ib.0 + (((ib.0 + ib.1) / 2.0 - ib.0) / 4.0).floor() * 4.0 + 0.7;
+    let iz = if ib.3 < 20.0 { 0.2 } else { -2.2 };
+    let moat = fh.blocks.len() > 1;
     // The garden's views in its own frame, placed with it.
     let (gp, _, _) = garden_place(pl);
     let mut v = vec![
@@ -788,41 +846,64 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
         View("garden_aerial.png", gp.pt(105.0, 90.0, 62.0), gp.pt(24.0, -12.0, 0.0), 46.0, 1.0),
         View("campus_aerial.png", p(125.0, 165.0, 115.0), p(31.0, -45.0, 0.0), 50.0, 1.0),
         View("campus_hall.png", p(150.0, -40.0, 1.7), p(92.0, -80.0, 10.0), 56.0, 1.0),
-        View("campus_front.png", p(-30.0, 95.0, 14.0), p(31.0, -10.0, 9.0), 52.0, 1.0),
+        View("campus_front.png", if moat { p(-30.0, fy1 + 35.0, 16.0) } else { p(-30.0, 95.0, 14.0) }, p(31.0, -10.0, 9.0), 52.0, 1.0),
         View("campus_food.png", p(fx1 + 260.0, fy1 + 330.0, 330.0), p((31.0 + fxm) / 2.0, fym, 0.0), 50.0, 1.0),
-        View("food_inside.png", p(fxm + 1.2, fy1 - 4.0, fz + 1.8), p(fxm + 1.0, fy1 - 60.0, fz + 2.4), 68.0, 1.3),
+        View("food_inside.png", p(ix + 1.2, ib.3 - 4.0, iz + 1.8), p(ix + 1.0, ib.3 - 60.0, iz + 2.4), 68.0, 1.3),
         View("food_head.png", p(hm - 40.0, fh.head.3 + 55.0, fz - 0.6), p(hm, fy1 + 6.0, fz + 3.8), 56.0, 1.0),
         View("arboretum.png", p(-130.0, 210.0, -0.5), p(30.0, 40.0, 6.0), 60.0, 1.0),
     ];
     let r = |n: &str, d: [f64; 4]| pl.and_then(|q| q.rect(n)).unwrap_or(d);
     if let Some(vs) = vspec {
-        let homes = r("neighbourhood", [-68.0, 128.0, 147.0, 450.0]);
+        let fr = r("flats", [-110.0, 124.0, 175.0, 316.0]);
+        let th = r("townhouses", [-68.0, 128.0, 147.0, 450.0]);
         let sq = r("square", [0.0, 60.0, 60.0, 120.0]);
         let c = r("community center", [72.0, 162.0, 12.0, 140.0]);
         let fl = r("field and loop", [-207.0, -93.0, 34.0, 186.0]);
         let gd = r("winter garden", [-4.0, 63.0, -3.0, 35.0]);
-        let (hcx, sqx, sqy) = ((homes[0] + homes[1]) / 2.0, (sq[0] + sq[1]) / 2.0, (sq[2] + sq[3]) / 2.0);
+        let (tcx, sqx, sqy) = ((th[0] + th[1]) / 2.0, (sq[0] + sq[1]) / 2.0, (sq[2] + sq[3]) / 2.0);
         let (fcx, fcy) = ((fl[0] + fl[1]) / 2.0, (fl[2] + fl[3]) / 2.0);
-        let street = vs.streets_y.iter().cloned().min_by(|a, b| (a - homes[2] - 124.5).abs().total_cmp(&(b - homes[2] - 124.5).abs()))
-            .unwrap_or(homes[2] + 124.5);
-        let green = vs.greens.first().map(|g| (g[2] + g[3]) / 2.0).unwrap_or(homes[2] + 64.0);
+        // The community center's own frame, turned as the site plan turns it (village.rs, Turn).
+        let crot = vs.center_rot % 180 != 0;
+        let cw = if crot { c[3] - c[2] } else { c[1] - c[0] };
+        let cp = |lx: f64, ly: f64, z: f64| if crot { p(c[0] + ly, c[2] + cw - lx, z) } else { p(c[0] + lx, c[2] + ly, z) };
+        let mid = (th[2] + th[3]) / 2.0;
+        let street = vs.streets_y.iter().cloned().min_by(|a, b| (a - mid).abs().total_cmp(&(b - mid).abs())).unwrap_or(mid);
+        let green = vs.greens.first().map(|g| (g[2] + g[3]) / 2.0).unwrap_or(th[2] + 64.0);
         // The neighbourhood from the air: over its town side, toward its middle.
-        let ms = [homes, sq, c, fl];
-        let (mx, my) = (ms.iter().map(|q| q[0] + q[1]).sum::<f64>() / 8.0, ms.iter().map(|q| q[2] + q[3]).sum::<f64>() / 8.0);
+        let ms: Vec<[f64; 4]> = [Some(fr), Some(th), pl.and_then(|q| q.rect("houses")), Some(sq), Some(c), Some(fl)].into_iter().flatten().collect();
+        let k = ms.len() as f64 * 2.0;
+        let (mx, my) = (ms.iter().map(|q| q[0] + q[1]).sum::<f64>() / k, ms.iter().map(|q| q[2] + q[3]).sum::<f64>() / k);
         v.extend([
             View("campus_village.png", p(mx + 350.0, my + 440.0, 330.0), p(mx, my, 0.0), 50.0, 1.0),
-            View("village_balcony.png", p(hcx + 10.0, homes[2] + 0.5, 5.3), p((gd[0] + gd[1]) / 2.0, (gd[2] + gd[3]) / 2.0, 2.0), 62.0, 1.0),
+            // From an upper window of the flats nearest the garden, toward it.
+            View("village_balcony.png", p(fr[1] - 6.0, (gd[2] + gd[3]) / 2.0, 5.3), p((gd[0] + gd[1]) / 2.0, (gd[2] + gd[3]) / 2.0, 2.0), 62.0, 1.0),
             View("village_square.png", p(sqx + 18.0, sqy + 24.0, -0.5), p(sqx - 8.0, sqy - 45.0, 2.0), 60.0, 1.0),
-            View("village_street.png", p(hcx + 30.0, street, -0.5), p(hcx - 70.0, street, 2.5), 60.0, 1.0),
-            View("village_center.png", p(c[0] + 68.0, c[2] + 120.0, 3.5), p(c[0] + 24.0, c[2] + 73.0, -2.2), 72.0, 1.5),
-            View("village_green.png", p(homes[0] + 18.0, green, -0.6), p(homes[0] + 108.0, green + 1.8, 0.8), 62.0, 1.0),
-            View("village_climbing.png", p(c[0] + 38.0, c[2] + 32.0, -0.6), p(c[0] + 28.0, c[2] + 9.0, 0.6), 66.0, 1.6),
+            View("village_street.png", p(tcx + 30.0, street, -0.5), p(tcx - 70.0, street, 2.5), 60.0, 1.0),
+            View("village_center.png", cp(68.0, 120.0, 3.5), cp(24.0, 73.0, -2.2), 72.0, 1.5),
+            View("village_green.png", p(th[0] + 18.0, green, -0.6), p(th[0] + 108.0, green + 1.8, 0.8), 62.0, 1.0),
+            View("village_climbing.png", cp(38.0, 32.0, -0.6), cp(28.0, 9.0, 0.6), 66.0, 1.6),
             View("village_fields.png", p(fcx + 30.0, fcy + 95.0, 1.5), p(fcx, fcy - 15.0, 0.0), 62.0, 1.0),
         ]);
+        // A street of each outer ring (D16): the walk-ups, and the houses.
+        for (name, kind) in [("village_flats.png", "flats"), ("village_houses.png", "houses")] {
+            if let Some(rg) = vs.rings.iter().find(|q| q.kind == kind) {
+                if let Some(&st) = rg.streets_y.first() {
+                    v.push(View(name, p(rg.spine_x + 45.0, st + 1.0, -0.5), p(rg.spine_x - 70.0, st - 4.0, 3.0), 60.0, 1.0));
+                }
+            }
+        }
     }
     if let Some(q) = pl {
-        // The great doors from the north edge of the square, on the axis (D15).
-        v.push(View("hall_front.png", p(31.0, 58.0, -0.4), p(31.0, -3.0, 10.0), 55.0, 1.0));
+        // The great doors from the mall, on the axis (D15); with the moat (D16), the mall between the glass
+        // from the square, and the moat from the air.
+        if let Some(m) = q.rect("hall front").filter(|m| m[3] > 60.0) {
+            v.push(View("hall_front.png", p(31.0, m[3] - 30.0, -0.4), p(31.0, -3.0, 10.0), 50.0, 1.0));
+            let sq_y = q.rect("square").map(|s| s[2] + 15.0).unwrap_or(m[3] + 30.0);
+            v.push(View("mall.png", p(31.0, sq_y, 1.2), p(31.0, -3.0, 9.0), 42.0, 1.0));
+            v.push(View("moat_aerial.png", p(fx1 + 230.0, fy1 + 330.0, 360.0), p(31.0, -140.0, 0.0), 46.0, 1.0));
+        } else {
+            v.push(View("hall_front.png", p(31.0, 58.0, -0.4), p(31.0, -3.0, 10.0), 55.0, 1.0));
+        }
         // The whole plan from the air, from the south-east, toward its middle.
         let (mut x0, mut x1, mut y0, mut y1) = (f64::MAX, f64::MIN, f64::MAX, f64::MIN);
         for (_, r, _) in &q.modules {

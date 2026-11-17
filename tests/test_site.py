@@ -39,10 +39,9 @@ def test_public_vehicles_kept_out_of_the_standoff_band():
 
 
 def test_homes_kept_beyond_the_noise_setback():
-    i = next(k for k, m in enumerate(MODS) if m.name == "neighbourhood")
-    moved = list(MODS)
-    moved[i] = replace(MODS[i], y=MODS[i].y - 60.0)
-    assert any("noise setback" in r for r in site.rules(P, moved))
+    for ring in site.RINGS:
+        y = site.HALL[3] + 100.0 + (site.by(MODS, ring).rect[3] - site.by(MODS, ring).rect[2]) / 2  # its edge 100 m off
+        assert any(f"{ring} inside the noise setback" in r for r in site.rules(P, _moved(ring, x=site.centre(site.HALL)[0], y=y)))
 
 
 def test_moving_the_square_changes_only_the_walk_to_it():
@@ -72,7 +71,7 @@ def _moved(name: str, **kw) -> list:
 
 
 def test_the_homes_lie_between_the_hall_and_the_town():
-    assert any("between the hall and the town" in r for r in site.rules(P, _moved("neighbourhood", y=site.HALL[2] - 400.0)))
+    assert any("between the hall and the town" in r for r in site.rules(P, _moved("townhouses", y=site.HALL[2] - 400.0)))
 
 
 def test_no_public_place_behind_the_hall():
@@ -80,8 +79,11 @@ def test_no_public_place_behind_the_hall():
 
 
 def test_a_building_between_the_homes_and_the_winter_garden_blocks_the_view():
-    g = site.by(MODS, "winter garden").rect
-    between = _moved("remote delivery building", x=(g[0] + g[1]) / 2, y=g[3] + 20.0)
+    g, f = site.by(MODS, "winter garden").rect, site.by(MODS, "flats").rect
+    # On the line from the garden's middle to the nearest flats.
+    gx, gy = site.centre(g)
+    nx, ny = min(max(gx, f[0]), f[1]), min(max(gy, f[2]), f[3])
+    between = _moved("remote delivery building", x=(gx + nx) / 2, y=(gy + ny) / 2)
     assert any("remote delivery building blocks the homes' view" in r for r in site.rules(P, between))
     # The garden's own host blocks it only if the view runs through the building.
     assert not any("community center blocks" in r for r in site.rules(P, MODS))
@@ -151,7 +153,7 @@ def test_a_truck_road_goes_round_until_an_underpass_is_cheaper():
 
 
 def test_the_homes_rows_face_south():
-    assert any("facing south" in r for r in site.rules(P, _moved("neighbourhood", rot=90)))
+    assert any("facing south" in r for r in site.rules(P, _moved("flats", rot=90)))
 
 
 def test_the_score_is_the_sum_of_the_costs():
@@ -160,12 +162,44 @@ def test_the_score_is_the_sum_of_the_costs():
     assert site.score(P, m) == pytest.approx(sum(c.values()) / 1000.0)
     # A minute more on the walk to the food court costs every resident's visits a year at the value of walking time.
     m2 = {**m, "walks": {**m["walks"], "the food court": (m["walks"]["the food court"][0] + 1.0, 0.0)}}
-    per = (P["village.site.phase1_homes"] * P["site.visits.persons_per_home"] * P["site.visits.food_court_wk"] * 52 * 2
-           * P["site.value.walk_usd_h"] / 60.0)
+    m2["ring_walks"] = {k: {**v, "the food court": v["the food court"] + 1.0} for k, v in m["ring_walks"].items()}
+    per = (sum(site.ring_people(P).values()) * P["site.visits.food_court_wk"] * 52 * 2 * P["site.value.walk_usd_h"] / 60.0)
     assert site.costs(P, m2)["residents' walks"] - c["residents' walks"] == pytest.approx(per)
+
+
+def test_the_moat_holds_the_greenhouse_round_the_hall_and_leaves_the_ways_in_open():
+    r = P["site.moat.road_m"]
+    blocks = site.moat_blocks(P, P["site.greenhouse_ha"])
+    assert sum((b[1] - b[0]) * (b[3] - b[2]) for b in blocks.values()) == pytest.approx(P["site.greenhouse_ha"] * 1e4)
+    hall = site.HALL
+    # The road ring: every block's nearest edge is the road's width off the hall.
+    assert min(site.gap(b, hall) for b in blocks.values()) == pytest.approx(r)
+    # The north blocks leave the covered crossing on the hall's centre line; the town-side blocks the mall.
+    nw, ne = blocks["greenhouse north-west"], blocks["greenhouse north-east"]
+    assert ne[0] - nw[1] == pytest.approx(P["site.moat.crossing_m"]) and nw[1] < site.centre(hall)[0] < ne[0]
+    front = site.by(MODS, "hall front").rect
+    for b in blocks.values():
+        assert not site.overlaps(b, front)
+    assert front[3] == pytest.approx(hall[3] + P["site.moat.south_m"])
+    # The hall's trucks find their way in through the crossing.
+    assert site.metrics(P, MODS, 1000.0, routed=True)["routes_ok"]
+
+
+def test_glass_walls_of_touching_blocks_by_hand():
+    # Two 10 x 10 blocks side by side: 40 + 40 - 2 x 10 shared.
+    assert site.glass_walls_m([(0, 10, 0, 10), (10, 20, 0, 10)]) == pytest.approx(60.0)
 
 
 def test_the_square_stands_on_the_halls_axis():
     assert not any("axis" in r for r in site.rules(P, MODS))
     assert any("square off the hall's axis" in r for r in site.rules(P, _moved("square", x=site.by(MODS, "square").x + 60.0)))
     assert any("square off the hall's axis" in r for r in site.rules(P, _moved("square", y=site.by(MODS, "square").y + 100.0)))
+
+
+def test_the_rings_run_flats_townhouses_houses_out_from_the_square():
+    assert not any("out of order" in r for r in site.rules(P, MODS))
+    f, t = site.by(MODS, "flats"), site.by(MODS, "townhouses")
+    swapped = _moved("flats", x=t.x, y=t.y)
+    i = next(k for k, m in enumerate(swapped) if m.name == "townhouses")
+    swapped[i] = replace(swapped[i], x=f.x, y=f.y)
+    assert any("out of order" in r for r in site.rules(P, swapped))

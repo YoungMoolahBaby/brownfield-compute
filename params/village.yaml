@@ -106,7 +106,7 @@ site:
     value: 120
     low: 85
     high: 250
-    unit: homes in phase 1 (later phases follow demand)
+    unit: homes in phase 1 before D16 (since D16 the rings' counts come from pass 4's newcomers, renters and buyers, `rings.counts`; kept for the record)
     conf: high
     source: "Jon (D11): '120'; pass 4's central newcomer renters 121 (85-219)"
   home_setback_m:
@@ -1601,12 +1601,12 @@ money:
 
 snowmelt:
   heated_walk_m2:
-    value: 9000
-    low: 6000
-    high: 15000
+    value: 15000
+    low: 9000
+    high: 20000
     unit: m2 of walks kept snow-free on the warm water (the spine, the greens' walks, the square, the walk to the hub)
     conf: medium
-    source: "brownfield site (D14): ~8,970 m2 in the current layout"
+    source: "brownfield site: ~15,000 m2 with the three rings of homes, their spines and greens (D16; ~8,970 m2 with one block of townhouses, D14)"
   design_w_m2:
     value: 280
     low: 158
@@ -1628,3 +1628,366 @@ snowmelt:
     unit: extra heat lost from the edges and underneath, as a share of the surface heat
     conf: medium
     source: "research notes (ASHRAE snow melting chapter: back and edge losses)"
+
+# The rings of homes (D16, Jon 2026-11-17: "smaller apartments are closer to the city center while the
+# larger/more remote the house gets, the further away"): flats in walk-ups nearest the centre, the
+# townhouses next, larger detached houses furthest out (src/brownfield/rings.py).
+rings:
+  owners_near_share:
+    value: 0.30
+    low: 0.15
+    high: 0.50
+    unit: share of newcomer households who buy who'd buy at the campus (as pass 4's near_campus_share for renters)
+    conf: placeholder
+    source: "judgement: the same share as pass 4's renters (params/pass4.yaml near_campus_share); buyers may prefer Indiana borough or rural lots"
+  owners_4bed_share:
+    value: 0.190
+    unit: share of Indiana County's owner households in homes of 4 or more bedrooms (the houses' ring; the rest the townhouses')
+    conf: high
+    source: "ACS 2019-2023 5-year, table B25042 (tenure by bedrooms), Indiana County: owners 22,964; 4 bedrooms 3,592, 5+ 763 (src/brownfield/acs.py, table b25042); (3,592 + 763) / 22,964 = 0.190 (my arithmetic). Renters for comparison: 9,327; none 370, 1 2,410, 2 3,614, 3 2,153, 4+ 780: the old stock, larger than what is built to rent now"
+  flat_mix_0:
+    value: 0.08
+    unit: share of the flats that are studios
+    conf: high
+    source: "Census, Characteristics of New Housing 2025, mfu_bedrooms_cust.xls: new multifamily units built for rent, 2025: studio 8%, 1 bedroom 43%, 2 bedrooms 39%, 3+ 9% (2024: 7 / 46 / 37 / 9); https://www.census.gov/construction/chars/xls/mfu_bedrooms_cust.xls"
+  flat_mix_1:
+    value: 0.43
+    unit: share of the flats with 1 bedroom
+    conf: high
+    source: "as flat_mix_0"
+  flat_mix_2:
+    value: 0.39
+    unit: share of the flats with 2 bedrooms
+    conf: high
+    source: "as flat_mix_0"
+  flat_mix_3:
+    value: 0.09
+    unit: share of the flats with 3 bedrooms (the table's 3+)
+    conf: high
+    source: "as flat_mix_0 (the shares sum to 0.99 as published; the model rescales them)"
+  ft2_0:
+    value: 500
+    unit: ft2, a studio
+    conf: high
+    source: "HUD 2024 Unit Total Development Cost limits (hud.gov PIH, 2024_Units_TDC_Limits.pdf), the sizes the table assumes: 0 bedrooms 500 ft2, 1 700, 2 900, 3 1,200, 4 1,500, 5 1,700, 6 1,900"
+  ft2_1:
+    value: 700
+    unit: ft2, a 1-bedroom flat
+    conf: high
+    source: "as ft2_0"
+  ft2_2:
+    value: 900
+    unit: ft2, a 2-bedroom flat (pass 3b's corner flat, 45 x 20 ft)
+    conf: high
+    source: "as ft2_0; forge apartment.rs"
+  ft2_3:
+    value: 1200
+    unit: ft2, a 3-bedroom flat
+    conf: high
+    source: "as ft2_0"
+  persons_0:
+    value: 1.1
+    low: 1.0
+    high: 1.3
+    unit: persons in a studio household
+    conf: placeholder
+    source: "judgement (the American Housing Survey's household size by bedrooms would set these); the mix's average comes out near ACS 2024's 2.5 persons a household"
+  persons_1:
+    value: 1.4
+    low: 1.2
+    high: 1.7
+    unit: persons in a 1-bedroom household
+    conf: placeholder
+    source: "as persons_0"
+  persons_2:
+    value: 2.2
+    low: 1.9
+    high: 2.6
+    unit: persons in a 2-bedroom household
+    conf: placeholder
+    source: "as persons_0"
+  persons_3:
+    value: 2.9
+    low: 2.5
+    high: 3.3
+    unit: persons in a 3-bedroom household (flat or townhouse)
+    conf: placeholder
+    source: "as persons_0"
+  persons_4:
+    value: 3.4
+    low: 3.0
+    high: 3.9
+    unit: persons in a 4-bedroom household (the houses)
+    conf: placeholder
+    source: "as persons_0"
+  walkup_w_m:
+    value: 30.48
+    unit: m, the walk-up's length (100 ft)
+    conf: high
+    source: "pass 3b: forge apartment.rs Building::example, 100 x 40 ft, 3 storeys of 10 ft, a central stair 10 ft wide"
+  walkup_d_m:
+    value: 12.19
+    unit: m, the walk-up's depth (40 ft)
+    conf: high
+    source: "as walkup_w_m"
+  walkup_storeys:
+    value: 3
+    unit: storeys
+    conf: high
+    source: "as walkup_w_m; IBC 2021 Tables 504.3/504.4: a Type V-A R-2 building with NFPA 13R sprinklers may have 4 storeys and 60 ft, so 3 leaves room; the cap here is the hall's noise at upper windows (brownfield village)"
+  walkup_storey_m:
+    value: 3.05
+    unit: m floor to floor (10 ft)
+    conf: high
+    source: "as walkup_w_m"
+  walkup_flats_ft2:
+    value: 9450
+    unit: ft2 of flats in one walk-up (3 floors of 3,150)
+    conf: high
+    source: "the design: each floor 100 x 40 ft = 4,000 ft2 less the 10 ft stair (400) and, for small flats, a 5 ft corridor along each half (2 x 45 x 5 = 450): 3,150 ft2 of flats a floor. Pass 3b's 2-bed plan has no corridor (4 x 900 = 3,600 a floor); the corridor is kept throughout so any mix fits (my arithmetic)"
+  walkup_lot_w_m:
+    value: 42.0
+    low: 38.0
+    high: 50.0
+    unit: m of street frontage a walk-up takes (the building and a side yard)
+    conf: placeholder
+    source: "judgement: 30.5 m building and ~11.5 m between buildings for light, a path to the back and fire access; IBC Table 705.5 lets walls 10 ft or more from the lot line carry openings"
+  walkup_lot_d_m:
+    value: 32.0
+    low: 28.0
+    high: 40.0
+    unit: m, a walk-up's lot depth (a 6 m front garden, the building, a back court with bins, bikes and drying)
+    conf: placeholder
+    source: "judgement"
+  house_bedrooms:
+    value: 4
+    unit: bedrooms in a house of the outer ring
+    conf: high
+    source: "the design: the ring for owners needing 4 or more bedrooms (owners_4bed_share)"
+  house_lot_ft2:
+    value: 8543
+    low: 8021
+    high: 8543
+    unit: ft2, a house's lot (median lot of new detached single-family houses sold, 2025)
+    conf: high
+    source: "Census, Characteristics of New Housing 2025, soldlotsize_cust.xls: median lot of new single-family houses sold 8,307 ft2 (2025), detached only 8,543 (2025), 8,506 (2024); all 8,021 in 2024; https://www.census.gov/construction/chars/xls/soldlotsize_cust.xls"
+  house_lot_w_m:
+    value: 20.0
+    low: 18.0
+    high: 24.0
+    unit: m of street frontage a house takes (the lot's depth follows from its area)
+    conf: placeholder
+    source: "pass 3's detached density (params/pass3.yaml: 20 m frontage); judgement"
+  house_storeys:
+    value: 2
+    unit: storeys of home beside an attached two-car garage-workshop at grade
+    conf: high
+    source: "the design (Jon's garage-workshop kept, D11); 64% of new single-family houses have a 2-car garage (housing_cost.share_new_sf_two_car_garage)"
+  house_storey_m:
+    value: 3.0
+    unit: m floor to floor
+    conf: high
+    source: "the design (as the townhouses, params/village.yaml townhouse.storey_m)"
+  floor_stc_code:
+    value: 50
+    unit: STC (lab, ASTM E90) the code asks of a floor between flats (45 if field-tested)
+    conf: high
+    source: "IBC 2021 (Pennsylvania) section 1206.2: 'not less than 50' STC, or NNIC 45 field-tested; https://up.codes/viewer/pennsylvania/ibc-2021/chapter/12/interior-environment"
+  floor_iic_code:
+    value: 50
+    unit: IIC (lab, ASTM E492) the code asks of a floor between flats (NISR 45 if field-tested)
+    conf: high
+    source: "IBC 2021 (Pennsylvania) section 1206.3"
+  floor_stc_plain:
+    value: 48
+    unit: STC, I-joist floor, one layer of 5/8 in. Type C gypsum on resilient channel, mineral wool, carpet and pad (AWC DCA 3 assembly WIJ-1.1, joists 24 in. on centre)
+    conf: medium
+    source: "AWC, DCA 3 (Feb 2024), WIJ-1.1, values estimated with AWC's TR15 model, not tested: carpet and pad STC 48 / IIC 61; with 1 in. gypsum concrete, STC 63 / IIC 65 (cushioned vinyl 63 / 50); https://web-media.awc.org/wp-content/uploads/2021/12/17210103/AWC_DCA3_20240312_AWCWebsite.pdf. A tested check: RedBuilt's I-joist detail, resilient channel and two layers of 1/2 in. Type X: no topping STC 50, IIC 60 with carpet; with 3/4 in. gypsum concrete STC 58, IIC 54 with carpet (RedBuilt I-Joist Guide 2023)"
+  floor_iic_plain:
+    value: 61
+    unit: IIC with carpet and pad, as floor_stc_plain (45 with hard floors would be under the code)
+    conf: medium
+    source: "as floor_stc_plain"
+  floor_stc_topped:
+    value: 63
+    low: 58
+    high: 63
+    unit: STC, the same floor with 1 in. of gypsum concrete (low, RedBuilt's tested 3/4 in. detail)
+    conf: medium
+    source: "as floor_stc_plain"
+  floor_iic_topped:
+    value: 65
+    low: 54
+    high: 65
+    unit: IIC with carpet and pad, the topped floor (low, RedBuilt's tested 3/4 in. detail)
+    conf: medium
+    source: "as floor_stc_plain"
+  topping_usd_ft2:
+    value: 4.0
+    low: 2.5
+    high: 6.0
+    unit: USD per ft2 of floor, 1 in. gypsum concrete over an acoustic mat, installed
+    conf: placeholder
+    source: "judgement, to source (an installer's quote or RSMeans)"
+  kids_flat_01:
+    value: 0.127
+    unit: school-age children (5-17) per rental flat of 0-1 bedrooms in a building of 5-49 units
+    conf: medium
+    source: "Listokin and Voicu, Rutgers CUPR, 'Who Lives in New Jersey Housing?' (Nov 2018), Table II-A-2, units built 2000-2016, ACS 2012-2016: rental 5-49 units 0-1 bed 0.127, 2 bed 0.368, 3 bed 0.995; townhouse 2 bed 0.274, 3 bed 0.572; single-family detached 4-5 bed 1.044. New Jersey, not Pennsylvania; columns matched by position (check pp. 37-38). A Pennsylvania check: Montgomery County Planning Commission (2025), public-school students per new unit built 2010-2021: detached 0.61, attached 0.31, multifamily 0.07"
+  kids_flat_2:
+    value: 0.368
+    unit: school-age children per 2-bedroom rental flat (5-49 units)
+    conf: medium
+    source: "as kids_flat_01"
+  kids_flat_3:
+    value: 0.995
+    unit: school-age children per 3-bedroom rental flat (5-49 units)
+    conf: medium
+    source: "as kids_flat_01"
+  kids_townhouse:
+    value: 0.572
+    unit: school-age children per 3-bedroom townhouse
+    conf: medium
+    source: "as kids_flat_01"
+  kids_house:
+    value: 1.044
+    unit: school-age children per 4-5 bedroom detached house
+    conf: medium
+    source: "as kids_flat_01"
+
+# The centre's running costs, paid by memberships (D16; Jon: "a next generation costco x planet fitness
+# x your adult rec sports type of town"). The square, the mall, the garden, the walks and the field's
+# loop stay free to everyone; the memberships are for the facilities (src/brownfield/center.py).
+membership:
+  posts_day:
+    value: 6
+    low: 4
+    high: 9
+    unit: staff on duty at once by day (the rink's own staff counted with the rink)
+    conf: placeholder
+    source: "judgement: front desk 2, fitness floor 1, courts and leagues 1, makerspace 1 (it signs members off on each machine, D11), cleaning 1"
+  posts_night:
+    value: 2
+    low: 2
+    high: 3
+    unit: staff on duty at once overnight
+    conf: placeholder
+    source: "D11: open 24 hours with staff trained in first aid at night and the heavy shop only with a second person present; key-card entry as at 24-hour gyms (Anytime Fitness: 'staffed hours daily', then key-tag access with its security system)"
+  day_h:
+    value: 16
+    unit: hours of the day shift (6 am to 10 pm)
+    conf: placeholder
+    source: "judgement"
+  fte_h:
+    value: 2080
+    unit: hours a full-time post works a year (40 x 52)
+    conf: high
+    source: "the usual full-time year"
+  opex_per_fte:
+    value: 120639
+    unit: USD of operating expenditure per full-time staff member (staff 54%, the rest supplies, energy, upkeep)
+    conf: medium
+    source: "NRPA 2026 Agency Performance Review (median, data 2023-25): operating expenditure $120,639 per FTE; personnel 54% of operating expenditure; https://www.nrpa.org/globalassets/research/research-reports/2026-agency-performance-review.pdf"
+  rink_opex_usd:
+    value: 764000
+    low: 600000
+    high: 1000000
+    unit: USD a year to run one sheet of ice (staff, energy, resurfacing, programmes)
+    conf: placeholder
+    source: "Victus Advisors (2025), Howard County MD indoor ice feasibility study, two sheets, a stabilised year in 2025 dollars: expenses $1,528,000 (salaries $563,000, utilities $360,000, programme expenses $355,000), revenue $1,880,000 (leagues, camps and clinics $1,014,000; ice rental $630,000); halved for one sheet (judgement: a second sheet shares the building, so one costs more than half)"
+  field_upkeep_usd:
+    value: 40000
+    low: 25000
+    high: 70000
+    unit: USD a year to keep one natural-grass field (mowing, feeding, aerating, lining, repairs)
+    conf: placeholder
+    source: "judgement, to source (Sports Field Management Association cost guides)"
+  members:
+    value: 7200
+    low: 3000
+    high: 10000
+    unit: paying members
+    conf: placeholder
+    source: "Planet Fitness 10-K FY2025: 'approximately 20.8 million members and 2,896 clubs', about 7,200 a club (my arithmetic); Indiana County has ~83,000 people and the university 13 km away; the centre has more than a gym (ice, courts, climbing, the makerspace)"
+  pf_classic_usd:
+    value: 15
+    unit: USD a month, Planet Fitness's Classic membership (its low-price model)
+    conf: high
+    source: "Planet Fitness 10-K FY2025: 'starting at only $15 ... Classic Card', 'PF Black Card' $24.99, 'standard annual fees of $49'; https://www.sec.gov/Archives/edgar/data/1637207/000163720726000011/plnt-20251231.htm"
+  ymca_adult_usd:
+    value: 47.50
+    unit: USD a month, the YMCA of Indiana County's adult (30-64) membership
+    conf: medium
+    source: "YMCA of Indiana County, Become a Member (page posted 2024-09-12): Adult $47.50 a month, Young Adult $42.50, Family $73.50, Senior $37.00, Youth $20.00; joiner fee $75; financial assistance for those who can't afford it; https://icymca.org/membership/become-a-member/"
+  hockey_teams:
+    value: 12
+    low: 6
+    high: 20
+    unit: adult hockey teams a season (one season, September to April)
+    conf: placeholder
+    source: "judgement"
+  hockey_fee_usd:
+    value: 3599
+    unit: USD a team a season, adult hockey (16 games and playoffs)
+    conf: medium
+    source: "Penguins Adult League, UPMC Lemieux Sports Complex, Sept 2026 - April 2027: '$3,599 per team', '16 regular season games, plus playoffs'; https://www.upmclemieuxsportscomplex.com/pal"
+  volleyball_teams:
+    value: 16
+    low: 8
+    high: 30
+    unit: adult volleyball teams a season (three seasons a year)
+    conf: placeholder
+    source: "judgement"
+  volleyball_fee_usd:
+    value: 590
+    unit: USD a team a season, adult volleyball (7 matches, 8-12 players)
+    conf: medium
+    source: "Pittsburgh Sports League, Winter '26 volleyball: '$590' a team, 7 matches guaranteed; https://pittsburghsportsleague.leaguelab.com/league/93794/details"
+  pickleball_teams:
+    value: 24
+    low: 12
+    high: 40
+    unit: adult pickleball teams a season (three seasons a year)
+    conf: placeholder
+    source: "judgement"
+  pickleball_fee_usd:
+    value: 220
+    unit: USD a team a season, adult pickleball (8 matches, 2-4 players)
+    conf: medium
+    source: "Pittsburgh Sports League, Summer '26 pickleball: '$220' a team; https://pittsburghsportsleague.leaguelab.com/league/100468/details"
+  seasons_yr:
+    value: 3
+    unit: league seasons a year for the courts' leagues
+    conf: placeholder
+    source: "judgement (Pittsburgh Sports League runs winter, spring and summer seasons)"
+  ice_hours_week:
+    value: 30
+    low: 15
+    high: 45
+    unit: hours of ice a week rented to clubs, schools and groups (beyond the leagues and members' skating)
+    conf: placeholder
+    source: "judgement"
+  ice_weeks:
+    value: 30
+    unit: weeks of ice a year (October to April)
+    conf: placeholder
+    source: "judgement, as the heat balance's ice season (village.py: October to April)"
+  ice_usd_h:
+    value: 380
+    low: 125
+    high: 455
+    unit: USD an hour of ice
+    conf: medium
+    source: "Mt. Lebanon Ice Center, main rink 2026-27: $380 an hour residents, $420 non-residents (https://mtlebanon.org/parks-recreation/facilities/ice-center/); low: City of Pittsburgh's Schenley rink $125 (sold out); high: Victus 2025's regional average ~$455"
+  local_people:
+    value: 6103
+    unit: people in Center Township and Homer City borough (the host municipalities)
+    conf: high
+    source: "ACS 2019-2023 5-year (src/brownfield/acs.py): Center Township 4,387, Homer City borough 1,716 (docs/RESEARCH.md, pass 4)"
+  local_uptake:
+    value: 0.25
+    low: 0.10
+    high: 0.40
+    unit: share of the host municipalities' people who'd take a free membership
+    conf: placeholder
+    source: "judgement (about one in four Americans belongs to a gym; to source)"

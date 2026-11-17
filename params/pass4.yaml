@@ -75,6 +75,42 @@ cost:
     conf: high
     source: "HUD 2024 Unit TDC limits: HCC, walk-up, 2 bedrooms, Johnstown 161,169 / Pittsburgh 173,632"
 
+  tdc_walkup_0:
+    value: 164490
+    low: 164490
+    high: 176907
+    unit: USD (2024), total development cost of a walk-up studio (0 bedrooms, 500 ft2), Johnstown
+    conf: high
+    source: "HUD 2024 Unit Total Development Cost limits (hud.gov/sites/dfiles/PIH/documents/2024_Units_TDC_Limits.pdf), Region III, Pennsylvania, Johnstown, Walkup row, TDC by bedrooms 0-3: 164,490 / 223,350 / 282,045 / 370,923 (HCC 93,994 / 127,629 / 161,169 / 211,956); high Pittsburgh 176,907 / 240,468 / 303,857 / 399,808; the table assumes 500 / 700 / 900 / 1,200 ft2"
+  tdc_walkup_1:
+    value: 223350
+    low: 223350
+    high: 240468
+    unit: USD (2024), total development cost of a walk-up 1-bedroom flat (700 ft2), Johnstown
+    conf: high
+    source: "as tdc_walkup_0"
+  tdc_walkup_2:
+    value: 282045
+    low: 282045
+    high: 303857
+    unit: USD (2024), total development cost of a walk-up 2-bedroom flat (900 ft2), Johnstown
+    conf: high
+    source: "as tdc_walkup_0"
+  tdc_walkup_3:
+    value: 370923
+    low: 370923
+    high: 399808
+    unit: USD (2024), total development cost of a walk-up 3-bedroom flat (1,200 ft2), Johnstown
+    conf: high
+    source: "as tdc_walkup_0"
+  tdc_to_2026:
+    value: 1.08
+    low: 1.04
+    high: 1.12
+    unit: factor from HUD's 2024 limits to 2026 dollars
+    conf: placeholder
+    source: "judgement ~4% a year, as tdc_per_flat"
+
 rents:
   ami_usd:
     value: 83800
@@ -93,6 +129,26 @@ rents:
     unit: USD a month the tenant pays for utilities, deducted from the gross rent limit
     conf: placeholder
     source: "judgement: electricity and hot water; the warm loop makes heating cheap (pass 3)"
+  fmr_ratio_0:
+    value: 0.778
+    unit: a studio's rent as a share of a 2-bedroom's (HUD fair market rents, Indiana County, FY2026)
+    conf: medium
+    source: "HUD FY2026 Fair Market Rents, Indiana County PA: studio $763, 1 bedroom $851, 2 $981, 3 $1,329, 4 $1,510 (as listed by AffordableHousingOnline from HUD's table, https://affordablehousingonline.com/housing-search/Pennsylvania/Indiana-County; HUD USER's table not opened). Ratios to the 2-bedroom: 0.778 / 0.867 / 1 / 1.355 (my arithmetic); used to scale market_rent_usd by size"
+  fmr_ratio_1:
+    value: 0.867
+    unit: a 1-bedroom's rent as a share of a 2-bedroom's
+    conf: medium
+    source: "as fmr_ratio_0"
+  fmr_ratio_2:
+    value: 1.0
+    unit: a 2-bedroom's rent as a share of a 2-bedroom's
+    conf: high
+    source: "as fmr_ratio_0"
+  fmr_ratio_3:
+    value: 1.355
+    unit: a 3-bedroom's rent as a share of a 2-bedroom's
+    conf: medium
+    source: "as fmr_ratio_0"
   market_rent_usd:
     value: 1350
     low: 1100

@@ -122,13 +122,15 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
 - forge `village.rs` draws the townhouses, the spine and streets, the square, the food hall, the
   glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
   facade study.
-- Phase 1, 120 homes, 150 m back from the hall.
-- The neighbourhood takes 15.2 GWh a year with the heated walks (D14) and the hall's warm basins (D15),
-  peaking at 8.3 MW; tomato houses go 43.5 -> 39.5 ha.
+- Phase 1 (D16): 242 homes in rings from pass 4's newcomers. 121 flats in 11 walk-ups nearest
+  the centre, 98 townhouses, then 23 houses; the nearest are 258 m from the hall.
+- The neighbourhood takes 16.8 GWh a year with the heated walks (D14) and the hall's warm basins (D15),
+  peaking at 10.4 MW; tomato houses go 43.5 -> 38.5 ha.
 - A home's heat over 20 years: $23k on the loop if the operator pays for the network, $32k for a
   heat pump.
 - A townhouse ~$441k as a price against ~$360k affordable at the median income.
-- The shared places cost $52M to build; the trust's share is $1.4M a year.
+- The shared places cost $63.4M to build; the trust's share is $1.4M a year. Running them costs
+  $3.2M a year, about $32 a month from 7,200 members after leagues and ice (D16).
 - Sewage binds growth at ~1,350 homes.
 - **To do:**
   - Jon to choose the townhouses' look;
@@ -645,6 +647,109 @@ at the campus edge, funded in the community benefits agreement.
     - the steam, which isn't drawn;
     - the golf short course;
     - the townhouses' look.
+
+- **D16** (2026-11-17) The town centre: the hall inside a greenhouse moat, the homes in rings
+  round it, memberships for the centre, and a checklist of what a real application needs.
+  - Jon, the same day:
+    - "so maybe some people actually just will want a small apartment ... smaller apartments are
+      closer to the city center while the larger/more remote the house gets, the further away
+      from our city center we get. i think the city center should be the massive greenhouse, 3rd
+      space community center and the data center is protected within all of it too. this is
+      basically like a next generation costco x planet fitness x your adult rec sports type of
+      town. but we cant leave out any details or else it will just look like concept art
+      instead of an actual plan".
+    - Then: "i keep thinking about putting the data center inside the greenhouse. like if the
+      greenhouse was like its moat ... security on the crops and the data center perimeter
+      together. but itll require more glass. but also that solves the sound insulation too while
+      keeping the data center central".
+  - The steer:
+    - **The moat holds, partly for other reasons.**
+      - The glass doesn't stop the noise: it comes off the roof's coolers, 14-17 m up, and goes
+        over 6 m glasshouses.
+      - What quiets the homes is distance. Nobody may sleep in the ring anyway, and the moat
+        fills it.
+      - Security gains for real, kept to published principles. Public vehicles stay 320 m from
+        the hall instead of 15 m (FEMA 426: stand-off distance first). One controlled entry
+        serves the crops' biosecurity and the hall's outer layer, and the hall keeps its own
+        inner layer.
+    - **The rings hold.**
+      - The centre is where no one sleeps.
+      - The loop pays only for dense homes (pass 3).
+      - Pass 4's newcomers are mostly renters, and flats suit renters.
+    - **The changes to what Jon asked:**
+      - The flats are 3-storey walk-ups, held down by the hall's noise at upper windows.
+      - Their floors beat the code, so a neighbour's noise doesn't reach another's sleep
+        (Jon's rule for the townhouses).
+      - The public ground stays free. A members-only centre would be an enclave and lose D12's
+        natural surveillance; memberships pay for the facilities.
+      - What still makes it concept art is the land. Every position is schematic, and the
+        checklist says so.
+  - **The moat** (`brownfield site`):
+    - The greenhouse's 38.5 ha in six blocks round the hall: 285 m deep west, east and north,
+      150 m on the town side.
+    - A 20 m fire and service road all round the hall (IFC 503).
+    - The hall's trucks enter through a 15 m covered crossing in the north blocks.
+    - The court with the warm basins runs on as an open mall, 70 m wide and 150 m long, from the
+      great doors to the square. It is open rather than glazed: visitors see the crops through
+      glass but never walk among them (tomato growers bar visitors because of viruses), and the
+      basins still steam in the open air.
+    - The food court is at the town end of the south-east block, on the mall's mouth.
+    - Glass +2.0% against one block. The hall's midwinter noon shadow, 35 m, falls on 0.22 ha of
+      the north blocks: packing and loading go there, not crops.
+    - The town-side depth, tried at 40, 100, 150 and 250 m: 150 m is cheapest of those that pass
+      ($1,776k a year; 100 m $1,786k; 40 m puts the flats inside the noise setback; 250 m runs
+      off the site).
+    - At 150 m every home is under 40 dB(A) at night with pass 2's own fans. So Jon's "solves the
+      sound" holds, by distance rather than by glass.
+  - **The rings** (`brownfield village`, `src/brownfield/rings.py`):
+    - Pass 4's newcomers near the campus: 121 renting, 121 buying.
+      - Renters take flats in the mix now built to rent (Census 2025: studio 8%, 1 bed 43%, 2 bed
+        39%, 3+ 9%): 10 studios, 52 one-beds, 48 two-beds and 11 three-beds in 11 walk-ups.
+      - Buyers take townhouses (98), or houses (23) if they need 4 bedrooms, as 19% of Indiana
+        County's owners do (ACS B25042).
+      - 584 people, 117 school-age children: ~9 a grade against Homer-Center's ~60.
+    - Night noise at the worst window: flats 39.7 dB(A) at 258 m, townhouses 36.1 at 404 m,
+      houses 39.5 at 261 m, all with pass 2's fans.
+    - Sound between flats: an I-joist floor rates STC 48 / IIC 61, under the code's 50. With 1 in.
+      of gypsum concrete it rates STC 63 / IIC 65 (AWC DCA 3), so they get it.
+    - Heat:
+      - The flats beat a heat pump on the loop even paying for their pipes.
+      - The townhouses tie and stay on the loop because the operator pays the pipes (D11).
+      - The houses heat themselves: over 20 years $45,488 on the loop against $38,512 for a heat
+        pump.
+    - Money:
+      - The flats leave a gap of $20.2M at market rents, $18.7M as 4% tax-credit flats, $6.1M as
+        9%.
+      - An AWS household ($117,000) can buy a townhouse ($441k) with $60,604 to spare. The
+        county's median household is $81,866 short.
+      - A house ($617k) is $114,849 beyond an AWS household.
+    - Land: 37 homes a hectare in the flats, 20 in the townhouses, 7 in the houses.
+  - **The layout:**
+    - The optimizer's best find was cheaper than the hand layout in all 29 cases across the
+      inputs' ranges ($1,777k against $1,914k a year), so it was taken:
+      - the community center turned and south of the square, the winter garden on its west face
+        looking at the flats;
+      - the flats west of the square, the townhouses south, the houses beyond the flats.
+    - Now $1,776k a year. No proposal beats it (the best is $1,953k).
+    - Not comparable with D15's $1,500k: twice the residents (584 against 300) walk further.
+  - **Running the centre** (`src/brownfield/center.py`):
+    - It costs $3.18M a year: 19.7 full-time posts to keep it open 24 hours (NRPA's $120,639 a
+      post), the rink (a 2025 two-sheet study, halved) and the field.
+    - Leagues and ice rental cover $0.43M of that.
+    - At 7,200 members (Planet Fitness's average club) the rest is $31.78 a month each: between
+      Planet Fitness's $15 and the Indiana County Y's $47.50.
+    - Free memberships for the township and borough (1,526 people) cost the trust $0.58M of its
+      $1.41M a year.
+  - **The checklist:** [docs/pass3/checklist.md](pass3/checklist.md) lists what the county ordinance
+    (SALDO §302.6, for a land development with buildings) and the MPC (§707, §709) ask for.
+    - It is strongest where hearings press: noise, water, heat, homes, money and shared places.
+    - The gap is the ground: parcels, ground levels, wetlands, mine workings, gas wells, utilities.
+  - Open:
+    - map the real site;
+    - ask Center Township whether it has zoning here;
+    - the placeholders: people per home, members, the rink's running cost, the topping's cost;
+    - the townhouses' look; the golf short course.
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each

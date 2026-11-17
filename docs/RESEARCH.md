@@ -344,3 +344,74 @@ Values and limits in [params/wall.yaml](../params/wall.yaml); the main sources:
   had only 29 buildings within 3 km and wasn't usable.
 - **Wet bulb**: Stull, R. (2011), "Wet-bulb temperature from relative humidity and air
   temperature", J. Appl. Meteor. Climatol. 50, 2267-2269: 20 C at 50% gives 13.7 C (a test).
+
+## The town centre and the rings of homes (D16, 2026-11-17)
+
+Where each figure is used: `params/village.yaml` (rings, membership), `params/pass4.yaml` (cost,
+rents), `params/site.yaml` (moat). Read by research agents and checked where noted.
+
+- **Housing mix and sizes.** Census, Characteristics of New Housing 2025 (published 2026-07-01;
+  [squarefeet](https://www.census.gov/construction/chars/xls/squarefeet_cust.xls),
+  [lot size](https://www.census.gov/construction/chars/xls/soldlotsize_cust.xls),
+  [multifamily bedrooms](https://www.census.gov/construction/chars/xls/mfu_bedrooms_cust.xls)):
+  - new single-family homes completed, median 2,142 ft2 (2024: 2,146);
+  - lot of a new detached house sold, median 8,543 ft2 (all houses 8,307);
+  - new multifamily built for rent: median 1,000 ft2; studio 8%, 1 bedroom 43%, 2 bedrooms 39%,
+    3+ 9%.
+- **Owners by bedrooms.** ACS 2019-2023 B25042, Indiana County (`acs.py`, table b25042):
+  - owners 22,964, of which 3,592 have 4 bedrooms and 763 have 5+ (19%);
+  - renters 9,327: none 370, 1 bedroom 2,410, 2 bedrooms 3,614, 3 bedrooms 2,153, 4+ 780.
+- **Cost by size.** HUD 2024 Unit TDC limits, Johnstown
+  ([PDF](https://hud.gov/sites/dfiles/PIH/documents/2024_Units_TDC_Limits.pdf), read with pypdf):
+  - walk-up TDC by bedrooms 0-3: $164,490 / $223,350 / $282,045 / $370,923;
+  - row house, 3 bedrooms: $360,432;
+  - detached, 4 bedrooms: $465,365;
+  - the sizes assumed: 500 / 700 / 900 / 1,200 / 1,500 ft2;
+  - Pittsburgh's walk-up row for the high case.
+- **Rents by size.** HUD FY2026 fair market rents, Indiana County: studio $763, 1 bedroom $851,
+  2 $981, 3 $1,329, 4 $1,510. These were read from AffordableHousingOnline's copy of HUD's table,
+  not HUD USER itself.
+  - Tax-credit rents by size: 26 USC 42(g)(2)(C) (1.5 persons a bedroom) on HUD's household-size
+    factors (70/80/90/100/108%).
+- **Sound between flats.**
+  - IBC 2021 (Pennsylvania) 1206: STC and IIC 50 lab, 45 field.
+  - AWC DCA 3 (Feb 2024), I-joist assembly WIJ-1.1, AWC's TR15 model estimates: STC 48 / IIC 61
+    with carpet; with 1 in. of gypsum concrete STC 63 / IIC 65.
+  - RedBuilt I-Joist Guide (2023), tested: STC 50 / IIC 60 with carpet; with 3/4 in. of gypsum
+    concrete STC 58 / IIC 54.
+- **Codes for walk-ups.**
+  - IBC 2021 Tables 504.3/504.4: Type V-A R-2 with NFPA 13R sprinklers, 4 storeys and 60 ft
+    (columns matched by position; to check).
+  - Fair Housing Act, 24 CFR 100.201 and 100.205: in buildings of 4+ units without lifts, the
+    ground-floor units are covered.
+- **School-age children per new home.**
+  - Listokin & Voicu, Rutgers CUPR, "Who Lives in New Jersey Housing?" (2018), Table II-A-2:
+    - rental flats in 5-49 units: 0-1 bedrooms 0.127, 2 bedrooms 0.368, 3 bedrooms 0.995;
+    - townhouses with 3 bedrooms: 0.572;
+    - detached houses with 4-5 bedrooms: 1.044.
+  - Montgomery County Planning Commission (2025), per new unit: detached 0.61, attached 0.31,
+    multifamily 0.07.
+- **What governs the plan.**
+  - Pennsylvania MPC (Act 247) Article VII, sections 702, 707 and 709
+    ([palegis](https://www.palegis.us/statutes/unconsolidated/law-information/view-statute?txtType=PDF&SESSYR=1968&SESSIND=0&ACTNUM=247&SMTHLWIND=&CHPT=7)).
+  - Indiana County SALDO, Ord. 2023-0412
+    ([PDF](https://icopd.org/assets/0428-(saldo)-subdivision-and-land-development-ordinance-of-indiana-county-2023-0412a.pdf)):
+    the county applies it in Center Township; §302.6 covers a land development with buildings
+    (read with pypdf).
+  - AWS's Homer City campus was filed 2026-10-14; its review ends 2027-01-12 (icopd.org).
+  - Not to cite: the Center Township in Butler County (a different township).
+- **Memberships, leagues, running costs.**
+  - Costco 10-K FY2025: fees $65 and $130; fee revenue $5,323M; renewal 92.3% (US/Canada).
+  - Planet Fitness 10-K FY2025: Classic from $15, Black Card $24.99; 20.8M members in 2,896
+    clubs; clubs ~20,000 ft2.
+  - YMCA of Indiana County (page of 2024-09-12): adult $47.50 a month.
+  - Leagues and ice:
+    - Penguins Adult League (UPMC Lemieux): $3,599 a hockey team;
+    - Pittsburgh Sports League: volleyball $590 and pickleball $220 a team;
+    - Mt. Lebanon Ice Center: $380/$420 an hour.
+  - NRPA 2026 Agency Performance Review: $120,639 of operating cost per FTE, 54% of it pay;
+    cost recovery 26% (Northeast 44%).
+  - Victus Advisors (2025), Howard County MD two-sheet rink: expenses $1.528M, revenue $1.880M.
+  - Anytime Fitness FAQ: staffed hours, then key-tag access.
+- **Fire access round the hall.** IFC 2021 503.1.1 (within 150 ft of the ground storey's
+  exterior walls) and 503.2.1 (20 ft wide).

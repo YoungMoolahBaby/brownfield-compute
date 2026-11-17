@@ -3,10 +3,15 @@
 Jon, after seeing the winter garden and the food houses: "personally id wanna live by this place ...
 id be thankful for the data center. not be angry that its there." This pass designs phase 1 of a
 neighbourhood next to the campus and checks it. D11 in [PLAN.md](../PLAN.md) has Jon's brief and the
-steers. Phase 1 has:
+steers. Then (D16): "maybe some people actually just will want a small apartment ... smaller
+apartments are closer to the city center while the larger/more remote the house gets, the further
+away". Phase 1 has:
 
-- 120 townhouses, each over its own two-car garage-workshop, with no shared walls;
-- a public street from the town straight to a square;
+- 242 homes in three rings round the centre (D16):
+  - 121 flats in 11 three-storey walk-ups nearest the square;
+  - 98 townhouses, each over its own two-car garage-workshop, with no shared walls;
+  - 23 four-bedroom houses furthest out;
+- a public street from the town through each ring to a square;
 - the greenhouse's entrance with a vegan food court and a market section that grows to order;
 - a community center with an ice rink, a roller hockey floor, a two-court gym and a shared
   makerspace;
@@ -15,58 +20,138 @@ steers. Phase 1 has:
 `uv run brownfield village` (`src/brownfield/village.py`, `params/village.yaml`; output
 `out/pass3/village.md`, and `out/pass3/village.json`, which forge `garden` draws from).
 
-![The campus from the air with the neighbourhood: the hall, the winter garden, the square, the community center, the townhouses and the fields](campus_village.png)
+![The campus from the air with the neighbourhood: the hall in its ring of glass, the mall and the square, the community center with its car park and the field, and the rings of homes: walk-ups, townhouses and houses](campus_village.png)
 
 ## The answer
 
-- **The data center can heat all of it, easily.** The whole neighbourhood takes 15.2 GWh a year,
-  8.3 MW at its peak, with the hall's warm basins counted in, and the module's spare heat never
-  runs short.
-  - The heated field and the greenhouse's market section take more than the 120 homes do.
-  - The ice rink heats itself from its own refrigeration and passes its surplus on.
-  - The heated walks (D14) take about 2 GWh a year, keeping the walks snow-free all winter: 280 W/m2 at a design
-    storm. Working systems run on 25-38 C water, so the loop's 40-50 C is ample. Holland, Michigan's
-    sidewalks have run on its power plant's waste heat since 1988.
-  - The hall's warm basins (D15) take 4.6 GWh a year at 20 C: open water loses heat fast to the
-    winter air and the wind ([site plan](site.md)).
-  - The tomato houses (pass 3d) shrink from 43.5 to 39.5 ha to make room.
-- **It is quiet enough to sleep beside.** The homes start 150 m from the hall. Up to two storeys
-  over the garage stay at or under the 40 dB(A) night guideline there with fans 3 dB quieter than
-  pass 2's, an ordinary catalogue choice. With pass 2's fans they're 1.4-3.0 dB over. From about
-  245 m out, any home is under the guideline whatever the fans.
-- **Everything is a short walk.** Every door is within about 5 minutes of the square, 5.5 of the
-  winter garden (now on the community center, D15) and 6 of the field (beside the mobility hub in
-  the site plan, D12).
-- **The loop beats a heat pump in each home, if the operator pays for the pipes.** Over 20 years a
-  home's heat costs:
-  - $23,000 on the loop when the network is paid for under the benefits agreement;
-  - $34,000 when the home pays its share of the network;
-  - $32,000 for its own heat pump;
-  - $27,000 for a gas furnace.
-
-  Running costs on the loop are about $315 a year, against $1,282 for the heat pump. So who pays for
-  the network decides the price.
-- **A townhouse costs more than local incomes reach.** It is $284,000 to build, about $441,000 as a
-  price with land, fees and profit. A household on the area's median income ($83,800) can pay about
-  $360,000. The gap is about $82,000 a home: for the benefits agreement, a co-op, or a cheaper
-  design to close.
-- **The shared places cost about $61 million to build,** most of it the rink ($25M) and the
-  community center ($28M, now with indoor pickleball and golf simulators).
-  - A 5% share of the campus's county and township property tax gives a trust $1.4 million a year.
-  - A won assessment appeal could cut that to $0.14 million.
-  - So they have to be built from an endowment paid up front, with the yearly share for running
-    them.
+- **Who lives there decides the rings.**
+  - Pass 4's newcomers near the campus are about 121 households renting and 121 buying.
+  - The renters take flats, in the mix now built to rent. Census 2025 found half of new rental
+    flats are studios or 1-beds, so Jon's "small apartment" is half of what's built.
+  - The buyers take townhouses, or houses if they need 4 bedrooms, as 19% of Indiana County's
+    owners do.
+  - That makes 584 people and about 117 school-age children, ~9 a grade against Homer-Center's ~60.
+- **It is quiet enough to sleep beside, with ordinary fans.**
+  - The greenhouse rings the hall and nobody sleeps inside it (D16), so the nearest homes, the
+    flats, stand 258 m from the hall.
+  - Every ring stays under the 40 dB(A) night guideline at its worst window with pass 2's own fans:
+    flats 39.7, houses 39.5, townhouses 36.1.
+- **Neighbours stay out of each other's sleep.** The flats' floors get 1 in. of gypsum concrete
+  over a mat. That rates STC 63 / IIC 65 against the code's 50. The plain floor rates STC 48, under
+  the code.
+- **The data center heats the flats and the townhouses.**
+  - The flats beat a heat pump on the loop even paying their own share of the pipes.
+  - The townhouses tie and stay on it because the operator pays the pipes (D11).
+  - The houses, 20 m apart, heat themselves with heat pumps: the loop would cost $45,488 a house
+    over 20 years against $38,512.
+  - The whole neighbourhood takes 16.8 GWh a year, 10.4 MW at its peak, with the heated walks and
+    the hall's warm basins. The module's spare heat never runs short, and the tomato houses
+    shrink from 43.5 to 38.5 ha.
+- **Everything is a short walk.**
+  - From the average home: 2.3 minutes to the community center and the winter garden, 4.0 to the
+    square, 5.0 to the food court.
+  - From the far end of each ring's spine, at most 7.5 minutes to any of them
+    ([site plan](site.md)). Door by door along the streets, the furthest house is 11.9 minutes
+    from the field.
+- **What it costs, and who can pay:**
+  - **Flats** don't pencil here, small or large. At market rents the 121 flats leave a $20.2M gap;
+    as 4% tax-credit flats $18.7M; as 9% $6.1M (scarce, competitive credits). That gap is for the
+    benefits agreement.
+  - **A townhouse** ($441k as a price) is in reach of an AWS household ($117,000 a year, with
+    $60,604 to spare). The county's median household is $81,866 short.
+  - **A house** ($617k) is $114,849 beyond even an AWS household. The outer ring is the smallest
+    for a reason.
+- **The centre pays its way with memberships** (Jon: "costco x planet fitness x your adult rec
+  sports").
+  - Running it 24 hours costs $3.18M a year. Leagues and ice rental bring $0.43M.
+  - At 7,200 members, Planet Fitness's average club, the rest is $31.78 a month each: between
+    Planet Fitness's $15 and the Indiana County Y's $47.50.
+  - The square, the mall, the garden and the walks stay free to everyone.
 - **Sewage, not heat, limits growth.**
   - The module's spare heat could carry about 7,500 townhouses if the tomato houses gave way.
   - Homer City's sewage plant has average headroom for about 1,350 homes, and a wet month has
     already reached its rating (DEP consent order since 2022).
   - A town beyond phases 1-2 needs a new plant or the leaks into the sewers fixed.
 
+## The rings of homes (D16)
+
+<p>
+<img src="village_flats.png" width="49%" alt="A street of the flats' ring: three-storey walk-ups either side, planted swales and walks">
+<img src="village_houses.png" width="49%" alt="A street of the outer ring: two-storey houses under gable roofs, each with its garage-workshop beside it">
+</p>
+
+`src/brownfield/rings.py`, in `brownfield village`.
+
+| Ring | Homes | People | Each home | Lots | Land | Homes a hectare | School-age children |
+|---|---|---|---|---|---|---|---|
+| Flats | 121 | 221 | 10 studios, 52 1-beds, 48 2-beds, 11 3-beds in 11 walk-ups | 42 x 32 m | 3.3 ha | 37 | 36 |
+| Townhouses | 98 | 284 | 1,445 ft2 over a garage-workshop | 9 x 24 m | 4.9 ha | 20 | 56 |
+| Houses | 23 | 78 | 2,142 ft2, 4 bedrooms, a garage-workshop beside | 20 x 40 m | 3.3 ha | 7 | 24 |
+
+- **The flats** are pass 3b's walk-up shell: 100 x 40 ft, three storeys, a central stair.
+  - The flats are 500, 700, 900 and 1,200 ft2 for a studio to a 3-bed, the sizes HUD's cost
+    limits assume; the 2-bed is pass 3b's corner flat.
+  - With small flats each floor has a short corridor, leaving 3,150 ft2 of flats a floor.
+  - A wood-frame building with NFPA 13R sprinklers may rise 4 storeys (IBC Tables 504.3-4). Three
+    keep the top windows under the night guideline nearer the hall.
+  - Without a lift, the ground-floor flats are built accessible (Fair Housing Act).
+  - No garages: a storage locker each, and the hub's shared car park (D14).
+- **The houses** are the median new American house on the median new lot (Census 2025): two
+  storeys under a gable roof, with Jon's garage-workshop beside them.
+- **School children** are from Rutgers' New Jersey multipliers by type and bedrooms. Montgomery
+  County's 2025 Pennsylvania figures are lower for flats (0.07 a unit).
+
+**Heat, one home a year** (pass 3's model):
+
+| Home | Floor | Space heat | Garage | Hot water | Design load | On the loop |
+|---|---|---|---|---|---|---|
+| Studio flat | 46 m2 | 2.4 MWh | | 1.3 MWh | 1.9 kW | yes |
+| 1-bed flat | 65 m2 | 3.3 MWh | | 1.7 MWh | 2.7 kW | yes |
+| 2-bed flat | 84 m2 | 4.3 MWh | | 2.6 MWh | 3.4 kW | yes |
+| 3-bed flat | 111 m2 | 5.7 MWh | | 3.5 MWh | 4.6 kW | yes |
+| Townhouse | 134 m2 | 12.8 MWh | 2.2 MWh | 3.0 MWh | 8.8 kW | yes |
+| House | 199 m2 | 20.4 MWh | 2.3 MWh | 4.1 MWh | 12.3 kW | no: its own heat pump |
+
+**The loop against a home's own heat pump** (over 20 years, at each type's frontage):
+
+| Home | Frontage | The loop, its share of the pipes in | The loop, the operator paying the pipes | Its own heat pump |
+|---|---|---|---|---|
+| 1-bed flat | 3.8 m | $20,671 | $16,260 | $21,809 |
+| 2-bed flat | 3.8 m | $22,976 | $18,389 | $23,143 |
+| Townhouse | 9.1 m | $32,052 | $23,151 | $31,743 |
+| House | 20.0 m | $45,488 | $29,461 | $38,512 |
+
+**The hall at night** (the loudest window of each ring's nearest homes; WHO 40 dB(A)):
+
+| Ring | From the hall | Windows up to | Pass 2's fans | Fans 3 dB quieter |
+|---|---|---|---|---|
+| Flats | 258 m | 7.6 m | 39.7 dB(A) | 36.7 dB(A) |
+| Townhouses | 404 m | 10.5 m | 36.1 dB(A) | 33.1 dB(A) |
+| Houses | 261 m | 4.5 m | 39.5 dB(A) | 36.5 dB(A) |
+
+**The flats' money** (pass 4's method by size: HUD's 2024 walk-up total development cost for
+Johnstown, to 2026, with the gypsum-concrete floors; market rents scaled by HUD's fair market rents
+for the county; tax-credit rents at 60% of the median income):
+
+| Flat | To build | Market rent | Gap at market rent | Tax-credit rent | Gap, 4% credits | Gap, 9% credits |
+|---|---|---|---|---|---|---|
+| Studio | $178,983 | $1,050 | $110,161 | $785 | $108,140 | $41,201 |
+| 1-bed | $243,085 | $1,170 | $153,190 | $850 | $144,289 | $53,375 |
+| 2-bed | $307,009 | $1,350 | $185,624 | $1,044 | $162,765 | $47,944 |
+| 3-bed | $403,797 | $1,829 | $198,359 | $1,225 | $206,027 | $55,007 |
+
+**To buy** (NAHB's cost a square foot, the garage-workshop at ICC's; at 28% of income):
+
+| Home | Price | The county's median household can pay | An AWS household | Gap (median) | Gap (AWS) |
+|---|---|---|---|---|---|
+| Townhouse | $441,475 | $359,609 | $502,079 | $81,866 | none ($60,604 to spare) |
+| House | $616,929 | $359,609 | $502,079 | $257,320 | $114,849 |
+
 ## The townhouses
 
 Narrow houses with an air gap between them, so one household's noise never reaches another's sleep.
-Each stands over its own two-car garage that doubles as a workshop, with two storeys above (three
-further back). Three ways to build them:
+Each stands over its own two-car garage that doubles as a workshop, with two storeys above. Three
+ways to build them:
 
 | Variant | Living floor | Home's heat a year | Per m2 | Garage at 10 C | Hot water | Design load | Water needed |
 |---|---|---|---|---|---|---|---|
@@ -96,20 +181,20 @@ looks to choose from:
 ## The plan
 
 <p>
-<img src="village_square.png" width="49%" alt="The square, looking north up the causeway between the warm basins to the hall's great doors">
-<img src="village_balcony.png" width="49%" alt="From an upper window of the first row: the square, the winter garden and the hall">
+<img src="village_square.png" width="49%" alt="From the square, up the open mall between the glass to the hall's great doors, the food court on the right">
+<img src="village_balcony.png" width="49%" alt="From an upper window of a walk-up, across to the winter garden on the community center's west face">
 </p>
 
-- **The homes' setback.** The homes start 150 m from the hall. Between them and the garden is the
-  band where people don't sleep: the square, the food hall, the community center and the
-  glasshouse. Busy uses in the louder band, bedrooms beyond it, is ordinary planning for noise.
+- **The homes' setback.** No home stands within 150 m of the hall. With the greenhouse round the
+  hall (D16), the nearest homes are 258 m out. Between them and the hall are the uses where people
+  don't sleep: the glass, the mall, the square, the food court and the community center. Busy uses
+  in the louder band and bedrooms beyond it is ordinary planning for noise.
 - **Gardens, not lawns** (Jon: "some sort of green/property for the townhome"). Each lot has:
   - native meadow planting in front (grasses, goldenrod, coneflower), with a small rain garden that
     takes the roof's water;
   - planting and raised kitchen-garden beds behind;
   - the strip beside the house planted;
-  - on the roof, a sedum green roof with a private deck at the back, looking north over the square
-    to the winter garden on the community center and the hall's great doors.
+  - on the roof, a sedum green roof with a private deck at the back.
 
   Nothing deep-rooted stands near a foundation (Jon's rule since pass 3c). The new homes send their
   rain to rain gardens and street swales, not to the sewers.
@@ -180,19 +265,21 @@ the tomato houses take theirs.
 
 | Month | Spare | Homes | Shared buildings | Field | Heated walks | Warm basins | Market section | Tomato houses | Left to the air |
 |---|---|---|---|---|---|---|---|---|---|
-| Jan | 40.8 | 0.33 | 0.06 | 0.25 | 0.33 | 0.64 | 0.81 | 26.4 | 11.9 |
-| Feb | 34.9 | 0.36 | 0.07 | 0.29 | 0.69 | 0.65 | 0.77 | 24.4 | 7.6 |
-| Mar | 40.7 | 0.33 | 0.06 | 0.25 | 0.33 | 0.61 | 0.71 | 24.5 | 14.0 |
-| Apr | 44.7 | 0.15 | 0.01 | 0.08 | 0.03 | 0.43 | 0.32 | 11.6 | 32.1 |
-| May | 48.0 | 0.10 | 0.04 | 0.03 | 0.00 | 0.30 | 0.20 | 6.9 | 40.4 |
-| Jun | 48.0 | 0.05 | 0.01 | 0.00 | 0.00 | 0.16 | 0.06 | 1.8 | 45.9 |
-| Jul | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.09 | 0.01 | 0.1 | 49.5 |
-| Aug | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.09 | 0.02 | 0.3 | 49.3 |
-| Sep | 47.5 | 0.06 | 0.02 | 0.01 | 0.00 | 0.25 | 0.15 | 3.4 | 43.7 |
-| Oct | 47.9 | 0.10 | 0.00 | 0.04 | 0.00 | 0.33 | 0.23 | 6.5 | 40.7 |
-| Nov | 42.2 | 0.23 | 0.03 | 0.15 | 0.10 | 0.50 | 0.55 | 18.2 | 22.4 |
-| Dec | 39.9 | 0.36 | 0.07 | 0.28 | 0.45 | 0.60 | 0.88 | 29.1 | 8.2 |
+| Jan | 40.8 | 0.37 | 0.06 | 0.25 | 0.55 | 0.64 | 0.81 | 25.9 | 12.2 |
+| Feb | 34.9 | 0.42 | 0.07 | 0.29 | 1.15 | 0.65 | 0.77 | 23.8 | 7.7 |
+| Mar | 40.7 | 0.37 | 0.06 | 0.25 | 0.55 | 0.61 | 0.71 | 23.9 | 14.2 |
+| Apr | 44.7 | 0.17 | 0.01 | 0.08 | 0.05 | 0.43 | 0.32 | 11.3 | 32.3 |
+| May | 48.0 | 0.12 | 0.04 | 0.03 | 0.00 | 0.30 | 0.20 | 6.7 | 40.6 |
+| Jun | 48.0 | 0.06 | 0.01 | 0.00 | 0.00 | 0.16 | 0.06 | 1.8 | 45.9 |
+| Jul | 49.8 | 0.06 | 0.00 | 0.00 | 0.00 | 0.09 | 0.01 | 0.1 | 49.5 |
+| Aug | 49.8 | 0.06 | 0.00 | 0.00 | 0.00 | 0.09 | 0.02 | 0.3 | 49.3 |
+| Sep | 47.5 | 0.08 | 0.02 | 0.01 | 0.00 | 0.25 | 0.15 | 3.3 | 43.7 |
+| Oct | 47.9 | 0.12 | 0.00 | 0.04 | 0.00 | 0.33 | 0.23 | 6.4 | 40.8 |
+| Nov | 42.2 | 0.26 | 0.03 | 0.15 | 0.17 | 0.50 | 0.55 | 17.8 | 22.7 |
+| Dec | 39.9 | 0.41 | 0.07 | 0.28 | 0.75 | 0.60 | 0.88 | 28.4 | 8.5 |
 
+- **The homes** on the loop are the flats and the townhouses; the houses run their own heat pumps.
+- **The heated walks** grow with three rings' spines and greens to about 15,000 m2.
 - **The fields** are kept growing (root zone 13 C) at up to 90 W/m2. That's about 195 kWh/m2 over a
   winter, a figure from a European stadium case (low confidence).
 - **The rink** heats itself from its refrigeration. CO2 rinks meet 88-100% of their own heat and
@@ -222,12 +309,13 @@ In short:
 | To build | USD |
 |---|---|
 | ice rink (one sheet) | $24.7M |
-| community center (courts, roller hockey, indoor pickleball, golf simulators, gym, makerspace) | $28.0M |
+| community center (courts, roller hockey, indoor pickleball, bouldering, golf simulators, gym, makerspace) | $30.0M |
 | food court at the greenhouse's entrance | $5.5M |
 | makerspace tools | $0.1M |
+| bouldering walls | $0.3M |
 | one heated grass field and a walking loop | $0.8M |
 | market section inside the greenhouse | $2.0M |
-| **In all** | **$61.1M** |
+| **In all** | **$63.4M** |
 
 The campus's county and township tax is about $28.3M a year. Its school tax, $67.7M more, can't pay
 for these. With a 5% share the trust gets:
@@ -237,6 +325,42 @@ for these. With a 5% share the trust gets:
 | As assessed | $1.41M |
 | After a won appeal cutting the assessment 24% | $1.08M |
 | After a 90% cut | $0.14M |
+
+## Running the centre (D16)
+
+Jon: "a next generation costco x planet fitness x your adult rec sports type of town."
+`src/brownfield/center.py`.
+- **What's free and what isn't.**
+  - Costco is members-only. A members-only town centre would be an enclave and would lose the
+    natural surveillance that guards the hall (D12).
+  - So the square, the mall, the winter garden, the walks and the field's loop are free to
+    everyone.
+  - Memberships pay for the gym, the courts, the rink, the climbing walls and the makerspace.
+
+| A year | USD |
+|---|---|
+| The building: 19.7 full-time posts (6 on duty by day, 2 at night), at NRPA's $120,639 of operating cost a post, 54% of it pay | $2,371,020 |
+| The rink (one sheet: a 2025 two-sheet study halved) | $764,000 |
+| The field's upkeep | $40,000 |
+| **Running cost** | **$3,175,020** |
+| Adult hockey (12 teams at the Penguins Adult League's $3,599) | -$43,188 |
+| Volleyball (16 teams, 3 seasons at $590) and pickleball (24 teams, 3 seasons at $220) | -$44,160 |
+| Ice rented by the hour (30 hours a week for 30 weeks at Mt. Lebanon's $380) | -$342,000 |
+| **Left for memberships** | **$2,745,672** |
+
+| Paying members | The fee a month that covers it |
+|---|---|
+| 3,000 | $76.27 |
+| 7,200 (Planet Fitness's average club) | $31.78 |
+| 10,000 | $22.88 |
+
+- **Against the market:** Planet Fitness's Classic is $15 a month; the YMCA of Indiana County's
+  adult rate is $47.50.
+  - At a Planet Fitness-sized membership the centre runs at about two thirds of the Y's price,
+    with an ice rink, courts, climbing and a makerspace the Y doesn't have.
+- **The host township and borough's people get it free.** At 25% uptake that is 1,526 people,
+  costing the trust $0.58M a year at that fee, out of its $1.41M ($1.08M after a won appeal).
+- **The food court** is a business of its own and isn't counted.
 
 ## How far it could grow
 
@@ -251,7 +375,7 @@ for later phases. What binds first:
   - A wet month already reached the rating.
 - **Schools:** Homer-Center has 766 pupils, about 60 a grade; its capacity wasn't found.
 - **People:**
-  - Pass 4's jobs bring about 121 renter households near the campus.
+  - Pass 4's jobs bring about 121 renter households and 121 buyers near the campus (D16).
   - Programmes that pay people to move for a place work at a modest scale. Tulsa Remote has brought
     3,972 since 2018 at $10,000 each, 64% of whom wouldn't have come without the money. Ascend WV
     has brought about 700 since 2021.
@@ -266,9 +390,15 @@ for later phases. What binds first:
   - the construction share of price (64%) is from NAHB's 2024 survey and still to confirm;
   - there's no Pennsylvania townhouse discount.
 - **The shared places' running costs:**
-  - the rink's energy is known (~1,040 MWh a year for a single sheet);
-  - staff and upkeep aren't modelled;
+  - staffing is set as posts on duty, by judgement; the rink's cost halves a two-sheet study; the
+    field's upkeep and the members' count are placeholders;
   - the shared buildings' heat use (100 kWh/m2) is a placeholder.
+- **The rings (D16):**
+  - people per home by size, and buyers' share near the campus, are placeholders;
+  - school children per home are New Jersey's (Rutgers), not Pennsylvania's;
+  - the gypsum-concrete topping's cost ($4 a square foot) is a placeholder, and the floors'
+    ratings are AWC's model estimates, with RedBuilt's tested detail a little lower;
+  - the county's rents by size are from a copy of HUD's table.
 - **Heated grass:** a field at 195 kWh/m2 comes from one stadium case.
 - **The ash site:** its real outline, and whether DEP's closure terms allow a second field or the
   golf course there.

@@ -434,14 +434,14 @@ def cmd_food(_args) -> int:
 
 
 def cmd_village(_args) -> int:
-    from . import climate, food, village
+    from . import center, climate, food, rings, village
 
     params = load_params()
     p = values(params)
     village.set_ranges(params)
     site = screen.plant_table(p).loc[HOMER_CITY]
     wx = food.local(climate.hourly_weather(site.lat, site.lon), -5)
-    md = village.report(p, wx)
+    md = rings.report(p, wx) + NL + NL + village.report(p, wx) + NL + NL + center.report(p)
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)
@@ -463,7 +463,8 @@ def cmd_site(_args) -> int:
     mods = site.modules(p, p["site.greenhouse_ha"], site.homes_rect(p))
     m = site.metrics(p, mods, food_t, routed=True)
     proposals = site.optimise(p, mods, food_t)
-    md = site.report(p, mods, m, proposals)
+    deep = site.depths(p, mods, food_t) if site.moat_on(p) else None
+    md = site.report(p, mods, m, proposals, deep)
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)

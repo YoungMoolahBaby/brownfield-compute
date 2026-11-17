@@ -180,4 +180,8 @@ Nice-to-haves for CortenForge, with what this project built instead.
   plan positions rather than moved. cf-geometry not checked for a sweep. Then (D15) the whole
   winter garden had to move and turn to the community center: `Place` in `forge/src/garden.rs`
   turns a built part's vertices a quarter-turn about z and moves them (~40 lines, quarter-turns
-  only).
+  only). Then (D16) the site plan turned the community center itself: `Turn` in
+  `forge/src/village.rs` (~40 lines) maps each box, quad and stone face as it is drawn, a second
+  quarter-turn helper because the center's meshes are shared with the rest of the neighbourhood
+  and can't be moved after the fact. One isometry on a set of meshes, applied while building or
+  after, would have covered both.

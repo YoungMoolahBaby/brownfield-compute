@@ -26,34 +26,84 @@ greenhouse:
     conf: high
     source: "the design (the current layout)"
 
+# The greenhouse as the hall's moat (D16): its blocks round the hall, a fire and service road between,
+# the court and mall to the square on the town side, a covered service crossing on the north.
+moat:
+  "on":
+    value: 1
+    unit: 1 the greenhouse stands round the hall as its moat; 0 one block beside it (as before D16)
+    conf: high
+    source: "the design (D16, 2026-11-17): Jon, 'putting the data center inside the greenhouse. like if the greenhouse was like its moat'"
+  south_m:
+    value: 150.0
+    low: 40.0
+    high: 250.0
+    unit: m from the hall's south face to the moat's town edge (the court and mall run through it to the square)
+    conf: medium
+    source: "brownfield site (2026-11-17, the final layout): the depths tried with the town side moved with them: 40 m puts the flats inside the 150 m noise setback; 100 m $1,786k a year; 150 m $1,776k; 250 m runs the townhouses off the site. At 150 m the first homes stand 258 m from the hall, 39.7 dB(A) at night with pass 2's own fans: no quieter fans needed"
+  road_m:
+    value: 20.0
+    low: 15.0
+    high: 30.0
+    unit: m between the hall and the glass all round (the fire and service road, and clear air for the coolers)
+    conf: placeholder
+    source: "IFC 2021 503.1.1: fire apparatus access within 150 ft of every part of the ground storey's exterior walls (the hall is ~400 ft deep, so a road all round), 503.2.1: at least 20 ft (6.1 m) wide; the rest kept clear so greenhouse vents don't feed warm, humid air to the coolers' intakes (judgement)"
+  crossing_m:
+    value: 15.0
+    low: 10.0
+    high: 25.0
+    unit: m, the covered service crossing through the north blocks to the hall's service side
+    conf: placeholder
+    source: "judgement: a two-lane service road (2 x 3.6 m) with kerbs and walls"
+  gutter_m:
+    value: 6.0
+    unit: m, glasshouse gutter height (side walls)
+    conf: high
+    source: "the design (forge food.rs: Venlo ridges on 4 m bays, 6 m gutters, 22 degree roofs); params/food.yaml height_m"
+  roof_deg:
+    value: 22.0
+    unit: degrees, glasshouse roof pitch
+    conf: high
+    source: "the design (forge food.rs)"
+  hall_top_m:
+    value: 17.0
+    unit: m, the hall's parapet top above the ground (its winter shadow on the glass to its north)
+    conf: high
+    source: "the design (forge garden.rs: roof deck 14 m, parapet 3 m)"
+  lat_deg:
+    value: 40.513
+    unit: degrees north, the site
+    conf: high
+    source: "EIA-860 plant location, Homer City Generating Station (pass 1's table: 40.512825, -79.19611)"
+
 center:
   x:
-    value: 148.0
+    value: 128.0
     unit: m east, the community center with the rink
     conf: high
-    source: "the design; moved 31 m east on 2026-11-17 (D15) so the winter garden fits on its west face, 5 m off the square"
+    source: "the design; moved 31 m east on 2026-11-17 (D15) so the winter garden fits on its west face, 5 m off the square; D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 148)"
   y:
-    value: 76.0
+    value: 346.0
     unit: m south, the community center with the rink
     conf: high
-    source: "the design (the current layout)"
+    source: "the design; D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 76)"
   rot:
-    value: 0
+    value: 90
     unit: degrees (0 or 90), the community center with the rink
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 0)"
 
 square:
   x:
-    value: 30.0
+    value: 40.0
     unit: m east, the square
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 30)"
   y:
-    value: 90.0
+    value: 210.0
     unit: m south, the square
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 90)"
   rot:
     value: 0
     unit: degrees (0 or 90), the square
@@ -67,32 +117,66 @@ field:
     conf: high
     source: "the design (2026-11-17): moved from x -150, y 110 to just south of the mobility hub, where its visitors park (the optimizer's best proposals all put it beside the hub); 55 m from the nearest homes"
   y:
-    value: 256.0
+    value: 496.0
     unit: m south, the field and its walking loop
     conf: high
-    source: "the design (2026-11-17), as x"
+    source: "the design (2026-11-17), as x; D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 256)"
   rot:
     value: 0
     unit: degrees (0 or 90), the field and its walking loop
     conf: high
     source: "the design (the current layout)"
 
-homes:
+flats:
   x:
-    value: 30.0
-    unit: m east, phase 1's homes, lanes, greens and spine (village.lots)
+    value: -103.0
+    unit: m east, the flats' ring (walk-ups; rings.lots)
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (D16): the ring nearest the square and the center, just south of them (nothing that sleeps within 150 m of the hall); then set to the optimizer's proposal 1, cheapest in all 29 cases (x 7.0 by hand)"
   y:
-    value: 298.5
-    unit: m south, phase 1's homes, lanes, greens and spine (village.lots)
+    value: 325.5
+    unit: m south, the flats' ring
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (D16); then set to the optimizer's proposal 1, cheapest in all 29 cases"
   rot:
     value: 0
-    unit: degrees (0 or 90), phase 1's homes, lanes, greens and spine (village.lots)
+    unit: degrees (0 or 90), the flats' ring
+    conf: high
+    source: "the design (D16)"
+
+townhouses:
+  x:
+    value: 77.0
+    unit: m east, the townhouses' ring (village.lots)
+    conf: high
+    source: "the design (D16): south of the flats, on the same spine; then set to the optimizer's proposal 1, cheapest in all 29 cases (x 7.0 by hand)"
+  y:
+    value: 525.5
+    unit: m south, the townhouses' ring
+    conf: high
+    source: "the design (D16); then set to the optimizer's proposal 1, cheapest in all 29 cases"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the townhouses' ring
     conf: high
     source: "the design (the current layout)"
+
+houses:
+  x:
+    value: -328.0
+    unit: m east, the houses' ring (detached; rings.lots)
+    conf: high
+    source: "the design (D16): the outer ring, west of the townhouses, furthest from the square; then set to the optimizer's proposal 1, cheapest in all 29 cases (x -208.0 by hand)"
+  y:
+    value: 252.0
+    unit: m south, the houses' ring
+    conf: high
+    source: "the design (D16); then set to the optimizer's proposal 1, cheapest in all 29 cases"
+  rot:
+    value: 0
+    unit: degrees (0 or 90), the houses' ring
+    conf: high
+    source: "the design (D16)"
 
 hub:
   x:
@@ -101,10 +185,10 @@ hub:
     conf: high
     source: "the design (D14); on 2026-11-17 moved to stand against the community center's door (6 m apart), where most of its visitors go, and 31 m east with the center (D15)"
   y:
-    value: 120.0
+    value: 350.0
     unit: m south, the mobility hub
     conf: high
-    source: "the design (D14)"
+    source: "the design (D14); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 120)"
   rot:
     value: 0
     unit: degrees (0 or 90), the mobility hub
@@ -113,20 +197,20 @@ hub:
 
 delivery:
   x:
-    value: 850.0
+    value: 820.0
     unit: m east, the remote delivery and screening building, by the site entrance
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 850)"
   y:
-    value: 80.0
+    value: 100.0
     unit: m south, the remote delivery and screening building, by the site entrance
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 80)"
   rot:
-    value: 0
+    value: 90
     unit: degrees (0 or 90), the remote delivery and screening building, by the site entrance
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (the current layout); D16 (2026-11-17): moved with the moat's town side (150 m), then set to the optimizer's proposal 1, cheapest in all 29 cases across the inputs' ranges (before D16: 0)"
 
 gate:
   x:
@@ -415,12 +499,12 @@ car_detour_m:
   source: "a drawing choice: it keeps the public road from running along a walk; where it must cross, a raised crossing (priced above), as the Safe System approach slows vehicles where people cross"
 
 greenhouse_ha:
-  value: 40.0
+  value: 38.5
   low: 35.0
   high: 45.0
   unit: ha of greenhouse (pass 3d's design point after the neighbourhood takes its heat, pass 3e)
   conf: medium
-  source: "brownfield village: the tomato houses' design area 40 ha after the neighbourhood and its heated walks"
+  source: "brownfield village: the tomato houses' design area 38.5 ha after the neighbourhood's three rings, their heated walks and the hall's warm basins (D16; 39.5 ha with D15's 120 townhouses)"
 food_t_yr:
   value: 29509
   low: 20000

@@ -25,10 +25,15 @@ from . import OUT_DIR
 
 HALL = (-30.0, 92.0, -132.0, -3.0)  # the data hall (fixed: the anchor)
 # The hall's front (D15): the great doors on its stepped base, and the forecourt's warm basins and falls
-# down to the square, on the hall's centre line (forge `garden`, hall_front).
+# down to the square, on the hall's centre line (forge `garden`, hall_front). With the moat (D16) the
+# court runs on as an open mall between the glass to the moat's town edge.
 FRONT = (-4.0, 66.0, -3.0, 36.0)
 GARDEN_HOST = "community center"  # the winter garden is built against its face (D15)
-ATTACHED = {frozenset(("data hall", "hall front")), frozenset((GARDEN_HOST, "winter garden"))}  # built against each other
+# The greenhouse as the hall's moat (D16): blocks round the hall, joined into one glasshouse.
+MOAT = ["greenhouse west", "greenhouse east", "greenhouse north-west", "greenhouse north-east",
+        "greenhouse south-west", "greenhouse south-east"]
+ATTACHED = ({frozenset(("data hall", "hall front")), frozenset((GARDEN_HOST, "winter garden"))}  # built against each other
+            | {frozenset((a, b)) for a in MOAT for b in MOAT if a < b})
 
 
 @dataclass(frozen=True)
@@ -70,11 +75,14 @@ def manhattan(a: tuple[float, float], b: tuple[float, float]) -> float:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
-def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
-    """The modules, sized from their own models, placed from params/site.yaml."""
+RINGS = ("flats", "townhouses", "houses")  # the rings of homes, nearest the centre first (D16)
+
+
+def modules(p: dict, greenhouse_ha: float, homes: dict) -> list[Module]:
+    """The modules, sized from their own models, placed from params/site.yaml. `homes`: each ring's
+    footprint (`homes_rect`)."""
     s = "site."
     side = math.sqrt(greenhouse_ha * 1e4)
-    hw, hd = homes_rect[1] - homes_rect[0], homes_rect[3] - homes_rect[2]
     f = "village.fields."
     pos = lambda k: (p[s + k + ".x"], p[s + k + ".y"], int(p[s + k + ".rot"]))
     # One mobility hub (D14): a shared car park at a share of the code minimums for the center and
@@ -83,17 +91,22 @@ def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
     hub_side = hub_m2 ** 0.5
     # The community center and its rink under one roof, 90 m wide (forge `garden` draws the same).
     center_m2 = (p["village.amenities.center_ft2"] + p["village.rink.building_area_single_sheet"]) / 10.7639
+    moat = moat_on(p)
+    front = (FRONT[0], FRONT[1], FRONT[2], HALL[3] + p[s + "moat.south_m"]) if moat else FRONT
     out = [Module("data hall", HALL[1] - HALL[0], HALL[3] - HALL[2], *centre(HALL), movable=False),
-           Module("hall front", FRONT[1] - FRONT[0], FRONT[3] - FRONT[2], *centre(FRONT), movable=False),
+           Module("hall front", front[1] - front[0], front[3] - front[2], *centre(front), movable=False),
            # The Fallingwater garden, 66.6 m along its back wall and 37.6 m from it to its lower pool's
            # edge; placed against the community center by `attach`.
            Module("winter garden", 66.6, 37.6, 0.0, 0.0, movable=False, faces=int(p[s + "garden.faces_deg"]))]
+    if moat:
+        for name, r in moat_blocks(p, greenhouse_ha).items():
+            out.append(Module(name, r[1] - r[0], r[3] - r[2], *centre(r), movable=False))
     for name, key, w, d, kw in [
-        ("greenhouse", "greenhouse", side, side + 20.0, {}),  # the head house and food court on its town side
+        *([] if moat else [("greenhouse", "greenhouse", side, side + 20.0, {})]),  # the head house and food court on its town side
         ("community center", "center", 90.0, center_m2 / 90.0, {}),
         ("square", "square", 60.0, 60.0, {}),
         ("field and loop", "field", p[f + "pitch_width_soccer"] + 46.0, p[f + "pitch_length_soccer"] + 46.0, {"on_cap_ok": True}),
-        ("neighbourhood", "homes", hw, hd, {"sleeps": True}),
+        *[(k, k, homes[k][1] - homes[k][0], homes[k][3] - homes[k][2], {"sleeps": True}) for k in RINGS],
         ("mobility hub", "hub", hub_side, hub_side, {"vehicles": True}),
         ("remote delivery building", "delivery", 40.0, 30.0, {"vehicles": True}),
     ]:
@@ -117,14 +130,87 @@ def attach(mods: list[Module]) -> list[Module]:
     return [garden_on(m, host) if m.name == "winter garden" else m for m in mods]
 
 
+def moat_on(p: dict) -> bool:
+    return bool(p.get("site.moat.on", 0))
+
+
+def moat_blocks(p: dict, greenhouse_ha: float) -> dict[str, tuple]:
+    """The greenhouse round the hall (D16), as blocks: a column west and east of the hall, a band north
+    of it split by the service crossing, and two blocks either side of the court and mall on the town
+    side, the road ring between them and the hall. West, east and north are the same depth `b`, found
+    so the blocks hold the greenhouse's area."""
+    s = "site.moat."
+    r, g, c, south = p[s + "road_m"], p["site.clear_m"], p[s + "crossing_m"], p[s + "south_m"]
+    hx0, hx1, hy0, hy1 = HALL
+    cx = centre(HALL)[0]
+    ys = hy1 + south  # the moat's town edge
+    sw, se = (FRONT[0] - g) - (hx0 - r), (hx1 + r) - (FRONT[1] + g)
+    town = (sw + se) * max(south - r, 0.0)
+    inner_w = hx1 - hx0 + 2 * r
+    # Area: 2 b (ys - (hy0 - r - b)) + (inner_w - c) b + town = A, a quadratic in b.
+    qa, qb, qc = 2.0, 2.0 * (ys - hy0 + r) + inner_w - c, town - greenhouse_ha * 1e4
+    b = (-qb + math.sqrt(qb * qb - 4 * qa * qc)) / (2 * qa)
+    y0 = hy0 - r - b
+    out = {"greenhouse west": (hx0 - r - b, hx0 - r, y0, ys), "greenhouse east": (hx1 + r, hx1 + r + b, y0, ys),
+           "greenhouse north-west": (hx0 - r, cx - c / 2, y0, hy0 - r), "greenhouse north-east": (cx + c / 2, hx1 + r, y0, hy0 - r)}
+    if south > r:
+        out["greenhouse south-west"] = (hx0 - r, FRONT[0] - g, hy1 + r, ys)
+        out["greenhouse south-east"] = (FRONT[1] + g, hx1 + r, hy1 + r, ys)
+    return out
+
+
+def gh_rects(mods: list[Module]) -> list[tuple]:
+    """The greenhouse's footprint: its one block, or the moat's blocks."""
+    return [m.rect for m in mods if m.name == "greenhouse" or m.name in MOAT]
+
+
+def gh_centre(mods: list[Module]) -> tuple[float, float]:
+    """The greenhouse's middle, weighted by area (where its heat goes, on average)."""
+    rs = gh_rects(mods)
+    a = [(r[1] - r[0]) * (r[3] - r[2]) for r in rs]
+    return (sum(w * centre(r)[0] for w, r in zip(a, rs)) / sum(a), sum(w * centre(r)[1] for w, r in zip(a, rs)) / sum(a))
+
+
+def food_door(mods: list[Module]) -> tuple[float, float]:
+    """The food court's door: in the head house on the greenhouse's town-side corner (forge food.rs);
+    with the moat, on the south-east block's town edge beside the mall, at the square (D16)."""
+    if any(m.name == "greenhouse south-east" for m in mods):
+        r = by(mods, "greenhouse south-east").rect
+        return (r[0] + 20.0, r[3])
+    if any(m.name in MOAT for m in mods):  # a moat too shallow for town-side blocks: the east block's town corner
+        r = by(mods, "greenhouse east").rect
+        return (r[0] + 20.0, r[3])
+    gh = by(mods, "greenhouse").rect
+    return (gh[0] + 40.0, gh[3])
+
+
+def produce_dock(mods: list[Module], gate: tuple) -> tuple[float, float]:
+    """Where the produce trucks load: the side of the greenhouse nearest their way in, never its town
+    side; with the moat, the east block's outer side."""
+    if any(m.name in MOAT for m in mods):
+        return docks(by(mods, "greenhouse east").rect)[1]
+    return min(docks(by(mods, "greenhouse").rect), key=lambda q: manhattan(q, gate))
+
+
+def glass_walls_m(rects: list[tuple]) -> float:
+    """The outside walls of touching blocks: their perimeters less twice each shared edge."""
+    per = sum(2 * ((r[1] - r[0]) + (r[3] - r[2])) for r in rects)
+    shared = 0.0
+    for i, a in enumerate(rects):
+        for b in rects[i + 1:]:
+            if abs(a[1] - b[0]) < 1e-6 or abs(b[1] - a[0]) < 1e-6:
+                shared += max(0.0, min(a[3], b[3]) - max(a[2], b[2]))
+            if abs(a[3] - b[2]) < 1e-6 or abs(b[3] - a[2]) < 1e-6:
+                shared += max(0.0, min(a[1], b[1]) - max(a[0], b[0]))
+    return per - 2 * shared
+
+
 BEARING = {0: "north", 90: "east", 180: "south", 270: "west"}
 PUBLIC = ["square", "community center", "field and loop", "mobility hub"]
-VIEW_BLOCKERS = ["greenhouse", "community center", "remote delivery building"]
 
 
-def food_door(gh: tuple) -> tuple[float, float]:
-    """The food court's door: the head house on the greenhouse's town-side corner (forge food.rs)."""
-    return (gh[0] + 40.0, gh[3])
+def view_blockers(mods: list[Module]) -> list[str]:
+    return [m.name for m in mods if m.name == "greenhouse" or m.name in MOAT] + ["community center", "remote delivery building"]
 
 
 def blocks_view(garden: tuple, homes: tuple, r: tuple, half_w: float = 20.0) -> bool:
@@ -151,15 +237,21 @@ def rules(p: dict, mods: list[Module]) -> list[str]:
     """What a layout breaks (empty: it passes)."""
     s = "site."
     bad = module_rules(p, mods)
-    # The homes look out on the winter garden (Jon: homes round the garden, "having that as a view").
-    # The garden's own host blocks it only if the view runs through the building itself.
-    for n in VIEW_BLOCKERS:
-        if blocks_view(by(mods, "winter garden").rect, by(mods, "neighbourhood").rect, by(mods, n).rect,
+    # The homes look out on the winter garden (Jon: homes round the garden, "having that as a view"):
+    # the nearest ring, the flats. The garden's own host blocks it only if the view runs through the
+    # building itself.
+    for n in view_blockers(mods):
+        if blocks_view(by(mods, "winter garden").rect, by(mods, "flats").rect, by(mods, n).rect,
                        0.0 if n == GARDEN_HOST else 20.0):
             bad.append(f"{n} blocks the homes' view of the winter garden")
     mm = metrics(p, mods, 0.0)
     if mm["stop_m"] > p[s + "walk_stop_m"]:
         bad.append(f"a door {mm['stop_m']:.0f} m from the nearest shuttle stop (> {p[s + 'walk_stop_m']:g} m)")
+    # The rings in order (D16): the flats nearest the centre, then the townhouses, the houses furthest.
+    sq = centre(by(mods, "square").rect)
+    d = [manhattan(centre(by(mods, k).rect), sq) for k in RINGS]
+    if not d[0] < d[1] < d[2]:
+        bad.append("the rings out of order (flats, townhouses, houses: " + " / ".join(f"{x:.0f}" for x in d) + " m from the square)")
     return bad
 
 
@@ -173,12 +265,13 @@ def module_rules(p: dict, mods: list[Module]) -> list[str]:
             if overlaps(a.rect, b.rect, margin):
                 bad.append(f"{a.name} overlaps {b.name}")
     hall = HALL
+    front = next((m.rect for m in mods if m.name == "hall front"), FRONT)
     for m in mods:
         if m.sleeps and gap(m.rect, hall) < p["village.site.home_setback_m"]:
             bad.append(f"{m.name} inside the noise setback ({gap(m.rect, hall):.0f} m < {p['village.site.home_setback_m']:g} m)")
-        if m.name == "neighbourhood" and m.rot % 180:
+        if m.name in RINGS and m.rot % 180:
             bad.append(f"{m.name} turned: its rows must run east-west so every house has a wall facing south (DOE)")
-        if m.name == "neighbourhood" and m.rect[2] < hall[3]:
+        if m.name in RINGS and m.rect[2] < hall[3]:
             bad.append(f"{m.name} not between the hall and the town (it must lie on the town side, y > {hall[3]:g})")
         if m.vehicles and gap(m.rect, hall) < p[s + "standoff_m"]:
             bad.append(f"{m.name} (public vehicles) inside the stand-off band ({gap(m.rect, hall):.0f} m < {p[s + 'standoff_m']:g} m)")
@@ -190,14 +283,14 @@ def module_rules(p: dict, mods: list[Module]) -> list[str]:
         # The public side faces the town (D12's rings): no public place behind the hall, its service side.
         if m.name in PUBLIC and centre(m.rect)[1] < hall[2]:
             bad.append(f"{m.name} behind the hall (its service side)")
-        # The square stands before the hall's front, on its axis: the forecourt's stair comes down into
-        # it from the great doors (D15).
+        # The square stands before the hall's front, on its axis: the forecourt's stair (and with the
+        # moat, the mall) comes down into it from the great doors (D15, D16).
         if m.name == "square":
             sx, _ = centre(m.rect)
-            if abs(sx - centre(FRONT)[0]) > p[s + "axis_m"] or not 0.0 <= m.rect[2] - FRONT[3] <= p[s + "forecourt_gap_m"]:
-                bad.append(f"square off the hall's axis (its middle {sx - centre(FRONT)[0]:+.0f} m across, its edge "
-                           f"{m.rect[2] - FRONT[3]:.0f} m from the forecourt)")
-        if m.name == "greenhouse" and food_door(m.rect)[1] < hall[2]:
+            if abs(sx - centre(front)[0]) > p[s + "axis_m"] or not 0.0 <= m.rect[2] - front[3] <= p[s + "forecourt_gap_m"]:
+                bad.append(f"square off the hall's axis (its middle {sx - centre(front)[0]:+.0f} m across, its edge "
+                           f"{m.rect[2] - front[3]:.0f} m from the forecourt)")
+        if m.name == "greenhouse" and food_door([m])[1] < hall[2]:
             bad.append("the food court behind the hall (its service side)")
         # Trucks are screened where they come in (D12, as at the Pentagon): unscreened trucks never
         # drive into the site's interior.
@@ -242,24 +335,27 @@ def metrics(p: dict, mods: list[Module], food_t: float, routed: bool = False) ->
     """The scores of a layout: along the street grid (fast, for the search), or with the truck
     routes found on the grid round the buildings (`routed`, for the layouts reported)."""
     s, w = "site.", p["village.walking.speed_hcm_sidewalk"] * 60.0
-    homes = by(mods, "neighbourhood").rect
-    near_home = (centre(homes)[0], homes[2])  # the neighbourhood's edge nearest the hall
-    far_home = (centre(homes)[0], homes[3])
-    gh = by(mods, "greenhouse").rect
-    fd = food_door(gh)
+    ring = {k: by(mods, k).rect for k in RINGS}
+    fd = food_door(mods)
     # Walks end at a building's nearest door (the field's and the garden's nearest edge), the square's
-    # middle (its shuttle stop) and the food court's door.
+    # middle (its shuttle stop) and the food court's door; from each ring's middle (its average door) and
+    # its far edge on the spine (its furthest door).
     cen, fld, gdn = by(mods, "community center").rect, by(mods, "field and loop").rect, by(mods, "winter garden").rect
-    hc = centre(homes)
-    places = {"the square": centre(by(mods, "square").rect), "the food court": fd, "the community center": door(cen, hc, 0.0),
-              "the field": door(fld, hc, 0.0), "the winter garden": door(gdn, hc, 0.0)}
-    walks = {k: (manhattan(centre(homes), v) / w, manhattan(far_home, v) / w) for k, v in places.items()}
+    sq = centre(by(mods, "square").rect)
+    to = lambda hc: {"the square": sq, "the food court": fd, "the community center": door(cen, hc, 0.0),
+                     "the field": door(fld, hc, 0.0), "the winter garden": door(gdn, hc, 0.0)}
+    ring_walks = {k: {pl: manhattan(centre(r), v) / w for pl, v in to(centre(r)).items()} for k, r in ring.items()}
+    far_walks = {k: {pl: manhattan((centre(r)[0], r[3]), v) / w for pl, v in to(centre(r)).items()} for k, r in ring.items()}
+    people = ring_people(p)
+    places = to(centre(ring["flats"]))
+    walks = {pl: (sum(people[k] * ring_walks[k][pl] for k in RINGS) / sum(people.values()), max(far_walks[k][pl] for k in RINGS))
+             for pl in places}
     gate = (p[s + "gate.x"], p[s + "gate.y"])
     dock = centre(by(mods, "remote delivery building").rect)
     # Loading docks on a side away from the town (the town side holds the food court and the garden):
     # the side nearest the truck's way in. The hall's trucks are screened at the delivery building first;
     # the produce trucks go from the entrance straight to the greenhouse.
-    gh_dock = min(docks(gh), key=lambda q: manhattan(q, gate))
+    gh_dock = produce_dock(mods, gate)
     hall_dock = docks(HALL)[2]  # the hall's trucks come in on its service side, behind it
     food_trips, hall_trips = food_t / p[s + "truck_t"], p[s + "hall_trucks_yr"]
     truck_km = (food_trips * manhattan(gate, gh_dock) + hall_trips * (manhattan(gate, dock) + manhattan(dock, hall_dock))) / 1000.0
@@ -269,34 +365,39 @@ def metrics(p: dict, mods: list[Module], food_t: float, routed: bool = False) ->
     car_legs = [(gate, hub), (town, hub)]  # visitors' cars and the shuttle to the mobility hub
     # Walks a road cuts across whichever way round it goes: each leg runs x-then-y or y-then-x,
     # whichever cuts fewer; a walk is cut if it is cut whichever way round it goes too.
-    walk_legs = [(near_home, v) for v in places.values()]
+    walk_legs = [((centre(r)[0], r[2]), v) for r in ring.values() for v in to(centre(r)).values()]
     cuts = lambda legs: sum(min(sum(1 for wa, wb in walk_legs if all(_paths_cross(lp, wp) for wp in _ls(wa, wb))) for lp in _ls(a, b))
                             for a, b in legs)
     crossings, car_crossings = cuts(truck_legs), cuts(car_legs)
     town_walk = {k: manhattan(town, v) / w for k, v in [("the square", places["the square"]), ("the food court", fd),
                                                          ("the community center", door(cen, town, 0.0)), ("the field", door(fld, town, 0.0))]}
     src = (centre(HALL)[0], HALL[3])
-    heated = ["hall front", "winter garden", "greenhouse", "community center", "field and loop", "neighbourhood"]
-    main_m = sum(manhattan(src, centre(by(mods, n).rect)) for n in heated)
+    # The houses heat themselves (`rings.houses_on_loop`: pass 3's comparison at their frontage), so the
+    # warm main runs to the flats and the townhouses.
+    heated = ["hall front", "winter garden", "community center", "field and loop", "flats", "townhouses"]
+    main_m = sum(manhattan(src, centre(by(mods, n).rect)) for n in heated) + manhattan(src, gh_centre(mods))
     # From the hub's middle (the average parking space) to the door.
     parking_walk = {k: manhattan(hub, v) / w for k, v in [("center and rink", door(cen, hub, 0.0)),
                                                          ("field", door(fld, hub, 0.0)), ("food court", fd)]}
-    # Shuttle stops: the hub, the square, and the spine's far end where the town begins.
-    stops = [hub, places["the square"], (centre(homes)[0], homes[3])]
-    corners = [(homes[0], homes[2]), (homes[1], homes[2]), (homes[0], homes[3]), (homes[1], homes[3])]
+    # Shuttle stops: the hub, the square, and on each ring's spine at its far end (the last where the
+    # town begins).
+    stops = [hub, sq] + [(centre(r)[0], r[3]) for r in ring.values()]
+    corners = [(r[i], r[j]) for r in ring.values() for i in (0, 1) for j in (2, 3)]
     stop_m = max(min(manhattan(c, st) for st in stops) for c in corners)
-    # Heated walks (D14): the spine, a walk on each side of every green, the square, and the walk to the hub.
+    # Heated walks (D14): each ring's spine and a walk on each side of every green, the square, and the
+    # walk to the hub.
     s2 = "village.site."
-    rows = max(1, round((homes[3] - homes[2]) / (2 * p[s2 + "lot_depth_m"] + p[s2 + "street_w_m"] + p[s2 + "green_w_m"])))
-    walk_m2 = ((homes[3] - homes[2]) * 6.0 + rows * 2 * (homes[1] - homes[0]) * 2.4 + 60.0 * 60.0
-               + manhattan(hub, places["the square"]) * 3.0)
+    walk_m2 = 60.0 * 60.0 + manhattan(hub, sq) * 3.0
+    for r in ring.values():
+        rows = max(1, round((r[3] - r[2]) / (2 * p[s2 + "lot_depth_m"] + p[s2 + "street_w_m"] + p[s2 + "green_w_m"])))
+        walk_m2 += (r[3] - r[2]) * 6.0 + rows * 2 * (r[1] - r[0]) * 2.4
     xs = [v for m in mods for v in m.rect[:2]]
     ys = [v for m in mods for v in m.rect[2:]]
-    out = {"walks": walks, "truck_km_yr": truck_km, "truck_crossings": crossings, "car_crossings": car_crossings,
+    out = {"walks": walks, "ring_walks": ring_walks, "truck_km_yr": truck_km, "truck_crossings": crossings, "car_crossings": car_crossings,
            "truck_legs": truck_legs, "town_walk": town_walk,
            "main_m": main_m, "main_usd": main_m * p["pass3.block.main_usd_m"], "parking_walk": parking_walk,
            "land_ha": (max(xs) - min(xs)) * (max(ys) - min(ys)) / 1e4, "stop_m": stop_m, "heated_walk_m2": walk_m2,
-           "homes_from_hall_m": gap(homes, HALL), "routed": False}
+           "homes_from_hall_m": min(gap(r, HALL) for r in ring.values()), "routed": False}
     if routed:
         out.update(routes(p, mods, food_t), routed=True)
     return out
@@ -419,14 +520,17 @@ def routes(p: dict, mods: list[Module], food_t: float) -> dict:
     s = "site."
     g = Grid(p, mods)
     rect = lambda n: by(mods, n).rect
-    homes, gh, cen = rect("neighbourhood"), rect("greenhouse"), rect("community center")
-    fd = (food_door(gh)[0], gh[3] + 1.5 * g.cell)
+    homes, cen = [rect(k) for k in RINGS], rect("community center")
+    ghs = gh_rects(mods)
+    fd0 = food_door(mods)
+    fd = (fd0[0], fd0[1] + 1.5 * g.cell)
     hub = centre(rect("mobility hub"))
-    walk_block = g.mask([HALL, gh, cen, rect("remote delivery building")])
+    walk_block = g.mask([HALL, *ghs, cen, rect("remote delivery building")])
     ones = np.ones(g.X.shape)
-    places = [centre(rect("square")), fd, door(cen, centre(homes), 1.5 * g.cell), centre(rect("field and loop")),
-              centre(rect("winter garden"))]
-    walks = g.paths(walk_block, ones, centre(homes), places)
+    walks = []
+    for h in homes:
+        walks += g.paths(walk_block, ones, centre(h), [centre(rect("square")), fd, door(cen, centre(h), 1.5 * g.cell),
+                                                       centre(rect("field and loop")), centre(rect("winter garden"))])
     walks += g.paths(walk_block, ones, hub, [door(cen, hub, 1.5 * g.cell), fd, centre(rect("field and loop"))])
     on_walk = np.zeros(g.X.size, bool)
     for w in walks:
@@ -444,14 +548,19 @@ def routes(p: dict, mods: list[Module], food_t: float) -> dict:
     gate = (p[s + "gate.x"], p[s + "gate.y"])
     dl = rect("remote delivery building")
     dl_door = door(dl, gate, road + 1.5 * g.cell)
-    gh_dock = door(gh, min(docks(gh), key=lambda q: manhattan(q, gate)), road + 1.5 * g.cell)
-    hall_dock = door(HALL, docks(HALL)[2], road + 1.5 * g.cell)  # the hall's service side, behind it
+    gd = produce_dock(mods, gate)
+    gh_dock = door(min(ghs, key=lambda r: gap(r, (gd[0], gd[0], gd[1], gd[1]))), gd, road + 1.5 * g.cell)
+    # The hall's service side, behind it; with the moat, its trucks reach it through the covered
+    # crossing in the north blocks, the glass's edge as the road's kerb (D16).
+    hall_dock = door(HALL, docks(HALL)[2], road + 1.5 * g.cell)
+    moat = [m.rect for m in mods if m.name in MOAT]
+    to_hall_block = (g.mask([m.rect for m in mods if m.name not in MOAT], road) | g.mask(moat)) if moat else blocked
     public = blocked | g.mask([HALL], p[s + "standoff_m"])  # unscreened vehicles stay out of the stand-off band
     # Trucks stay on the service side: no truck road near the homes or the public places.
-    away = g.mask([homes, cen, rect("square"), rect("field and loop")], p[s + "truck_clear_m"])
+    away = g.mask([*homes, cen, rect("square"), rect("field and loop")], p[s + "truck_clear_m"])
     (produce,) = g.paths(public | away, mult(truck_detour_m(p, food_trips)), gate, [gh_dock])
     (to_dl,) = g.paths(blocked | away, mult(truck_detour_m(p, hall_trips)), gate, [dl_door])
-    (to_hall,) = g.paths(blocked | away, mult(truck_detour_m(p, hall_trips)), dl_door, [hall_dock])
+    (to_hall,) = g.paths(to_hall_block | away, mult(truck_detour_m(p, hall_trips)), dl_door, [hall_dock])
     trucks = [produce, to_dl, to_hall]
     # Visitors' cars and the shuttle: from the public road and from the town to the mobility hub.
     town = (p[s + "town.x"], p[s + "town.y"])
@@ -532,8 +641,8 @@ def costs(p: dict, m: dict) -> dict:
     crossings (the public road) paid off over their life."""
     v, s = "site.value.", "site.visits."
     per_min = p[v + "walk_usd_h"] / 60.0
-    residents = p["village.site.phase1_homes"] * p[s + "persons_per_home"]
-    walk = sum(residents * p[s + k] * 52.0 * 2.0 * m["walks"][place][0] for place, k in PLACE_VISITS.items()) * per_min
+    people = ring_people(p)
+    walk = sum(people[r] * p[s + k] * 52.0 * 2.0 * m["ring_walks"][r][place] for r in RINGS for place, k in PLACE_VISITS.items()) * per_min
     hub = sum(n * m["parking_walk"][k] for k, n in hub_visitors(p).items()) * 365.0 * 2.0 * per_min
     town = p[s + "town_walkers_day"] * 365.0 * 2.0 * float(np.mean(list(m["town_walk"].values()))) * per_min
     k = crf(p[v + "discount"], p[v + "life_yr"])
@@ -599,23 +708,100 @@ def optimise(p: dict, mods: list[Module], food_t: float, n_starts: int = 16, ste
     return out[:3]
 
 
-def homes_rect(p: dict) -> tuple:
-    from . import village
+def homes_rect(p: dict) -> dict[str, tuple]:
+    """Each ring's footprint from its lots (`rings.rect`)."""
+    from . import rings
 
-    homes = village.lots(p, "gap")
-    xs, ys = [x for x, _ in homes], [y for _, y in homes]
-    lot_w = p["village.townhouse.width_gap"] + p["village.townhouse.gap_gap"]
-    return (min(xs) - lot_w, max(xs) + lot_w, min(ys) - 12.0, max(ys) + 12.0)
+    return {k: rings.rect(p, k) for k in RINGS}
+
+
+def ring_people(p: dict) -> dict[str, float]:
+    """The people living in each ring (`rings.persons`)."""
+    from . import rings
+
+    return rings.persons(p)
+
+
+TOWN_SIDE = ["square", "community center", "winter garden", "mobility hub", "field and loop", *RINGS]
+
+
+def depths(p: dict, mods: list[Module], food_t: float, tries=(40.0, 100.0, 150.0, 250.0)) -> list[dict]:
+    """The moat's town side at other depths (D16): the town-side modules moved by the change in depth,
+    the rest as they are; each layout's rules, cost and the night noise at the first homes' windows."""
+    from . import rings
+
+    s = "site.moat.south_m"
+    out = []
+    for south in tries:
+        q = dict(p, **{s: south})
+        dy = south - p[s]
+        ms = [replace(m, y=m.y + dy) if m.name in TOWN_SIDE else m for m in modules(q, p["site.greenhouse_ha"], homes_rect(p))]
+        ms = attach(ms)
+        mm = metrics(q, ms, food_t, routed=True)
+        d = min(gap(by(ms, k).rect, HALL) for k in RINGS)
+        loud = {cut: max(rings.night_db(q, k, gap(by(ms, k).rect, HALL), cut) for k in RINGS) for cut in (0.0, 3.0)}
+        vehicles = min(gap(m.rect, HALL) for m in ms if m.vehicles)
+        out.append({"south_m": south, "rules": rules(q, ms), "score": score(q, mm), "metrics": mm, "homes_m": d,
+                    "night_db": loud, "vehicles_m": vehicles, "band_m": moat_band(q)})
+    return out
+
+
+def moat_band(p: dict) -> float:
+    """The moat's depth west, east and north of the road ring."""
+    r = moat_blocks(p, p["site.greenhouse_ha"])["greenhouse west"]
+    return r[1] - r[0]
+
+
+def moat_lines(p: dict, mods: list[Module]) -> list[str]:
+    """The moat's glass against one block of the same area, and the hall's winter shadow on it."""
+    s = "site.moat."
+    rs = gh_rects(mods)
+    area = sum((r[1] - r[0]) * (r[3] - r[2]) for r in rs)
+    side = math.sqrt(area)
+    one = 2 * (side + side + 20.0)  # one block (side x side + 20 m), as before D16
+    roof = area / math.cos(math.radians(p[s + "roof_deg"]))
+    h = p[s + "gutter_m"]
+    walls = glass_walls_m(rs)
+    extra = (walls - one) * h / (roof + one * h)
+    sun = 90.0 - p[s + "lat_deg"] - 23.44  # noon on the winter solstice
+    shadow = p[s + "hall_top_m"] / math.tan(math.radians(sun))
+    north = [r for n, r in zip([m.name for m in mods if m.name in MOAT], [m.rect for m in mods if m.name in MOAT]) if "north" in n]
+    shade = sum((r[1] - r[0]) for r in north) * max(shadow - p[s + "road_m"], 0.0)
+    front = by(mods, "hall front").rect
+    return [f"- **The greenhouse is the hall's moat** (D16): {len(rs)} blocks, {area / 1e4:.1f} ha, "
+            f"{moat_band(p):.0f} m deep west, east and north of a {p[s + 'road_m']:g} m fire and service road round the hall, "
+            f"{p[s + 'south_m']:g} m on the town side, where the court and an open mall {front[1] - front[0]:.0f} m wide run "
+            f"{front[3] - front[2]:.0f} m from the great doors to the square. The hall's trucks come through a "
+            f"{p[s + 'crossing_m']:g} m covered crossing in the north blocks.",
+            f"- Glass: {walls:,.0f} m of outside wall against {one:,.0f} m for one block of the same area, so "
+            f"{extra:+.1%} more glass in all ({h:g} m walls, roofs at {p[s + 'roof_deg']:g} degrees).",
+            f"- The hall's shadow at noon on the shortest day (sun {sun:.0f} degrees up, parapet {p[s + 'hall_top_m']:g} m): "
+            f"{shadow:.0f} m, so {shade / 1e4:.2f} ha of the north blocks beyond the road is in its shade at midwinter noon "
+            "(longer morning and evening): for packing, cold store and loading, not crops."]
 
 
 def same(a: list[Module], b: list[Module]) -> bool:
     return all(round(m.x, -1) == round(n.x, -1) and round(m.y, -1) == round(n.y, -1) and m.rot == n.rot for m, n in zip(a, b))
 
 
-def report(p: dict, mods: list[Module], m: dict, proposals: list[tuple]) -> str:
+def report(p: dict, mods: list[Module], m: dict, proposals: list[tuple], deep: list[dict] | None = None) -> str:
     L = ["**The current layout** (params/site.yaml)", ""]
     bad = rules(p, mods)
     L.append("Rules: " + ("all pass." if not bad else "; ".join(bad)))
+    if any(x.name in MOAT for x in mods):
+        L += [""] + moat_lines(p, mods)
+    if deep:
+        L += ["", "**The moat's town side at other depths** (the town-side modules moved with its edge; night noise at the "
+              "first homes' worst window, WHO's guideline 40 dB(A))", "",
+              "| Town side | Band W/E/N | Cost a year | Walks: square / food court / center / field / garden (min) | First homes "
+              "| Night, pass 2's fans | Fans 3 dB quieter | Public vehicles kept off | Rules |",
+              "|---|---|---|---|---|---|---|---|---|"]
+        for r in deep:
+            w = " / ".join(f"{v[0]:.1f}" for v in r["metrics"]["walks"].values())
+            cost = f"${r['score']:,.0f}k" if math.isfinite(r["score"]) else "no route"
+            L.append(f"| {r['south_m']:g} m | {r['band_m']:.0f} m | {cost} | {w} | {r['homes_m']:.0f} m "
+                     f"| {r['night_db'][0.0]:.1f} dB(A) | {r['night_db'][3.0]:.1f} dB(A) | {r['vehicles_m']:.0f} m "
+                     f"| {'pass' if not r['rules'] else '; '.join(r['rules'])} |")
     L += ["", "| Walk from the homes to | Average | Furthest door |", "|---|---|---|"]
     L += [f"| {k} | {v[0]:.1f} min | {v[1]:.1f} min |" for k, v in m["walks"].items()]
     L += ["", "- Walk from where the town's way comes in: " + ", ".join(f"{k} {v:.1f} min" for k, v in m["town_walk"].items()) + ".",

@@ -71,35 +71,11 @@ def noise_by_floor(p: dict, distance_m: float, fan_cut_db: float) -> list[tuple[
 
 
 def lots(p: dict, variant: str) -> list[tuple[float, float]]:
-    """Phase 1's lot centres: east-west streets (every house has a wall facing south), lots both sides,
-    either side of a public spine street that runs from the town (south) toward the square, so
-    townspeople cross the neighbourhood, not go round it (no gates, no private roads). Between each
-    pair of back-to-back rows, a green with big trees and a path (Radburn, Savannah). The block's
-    middle stands where the site plan puts the neighbourhood (params/site.yaml, D12)."""
-    t, s = "village.townhouse.", "village.site."
-    n = int(p[s + "phase1_homes"])
-    lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
-    half = (p[s + "street_m"] - p[s + "spine_w_m"]) / 2
-    per_half = int(half // lot_w)
-    y0 = HALL_FACE_Y + p[s + "home_setback_m"] + p[s + "lot_depth_m"] / 2
-    xc = 0.0
-    out = []
-    street = 0
-    while len(out) < n:
-        y_street = y0 + street * (2 * p[s + "lot_depth_m"] + p[s + "street_w_m"] + p[s + "green_w_m"])
-        for side in (0, 1):
-            y = y_street + side * (p[s + "lot_depth_m"] + p[s + "street_w_m"])
-            for k in range(per_half):
-                for sign in (-1, 1):
-                    if len(out) < n:
-                        out.append((xc + sign * (p[s + "spine_w_m"] / 2 + (k + 0.5) * lot_w), y))
-        street += 1
-    # Centre the block (its lots, a lot's width either side, 12 m beyond the end rows) on the plan's
-    # position for it.
-    xs, ys = [x for x, _ in out], [y for _, y in out]
-    dx = p["site.homes.x"] - (min(xs) + max(xs)) / 2
-    dy = p["site.homes.y"] - (min(ys) + max(ys)) / 2
-    return [(x + dx, y + dy) for x, y in out]
+    """The townhouses' lot centres (their ring, D16): east-west streets, lots both sides, either side of
+    the public spine, greens between back-to-back rows (`rings.rows`), where the site plan puts them."""
+    from . import rings
+
+    return rings.lots(p, "townhouses", variant)
 
 
 def places(p: dict) -> dict[str, tuple[float, float]]:
@@ -142,8 +118,9 @@ def loads_mw(p: dict, wx: dict, variant: str = "gap") -> dict[str, np.ndarray]:
     from . import food
 
     temp, a, r, f = wx["t"], "village.amenities.", "village.rink.", "village.fields."
-    per_home, _ = home_hourly_w(p, temp, variant)
-    homes = per_home * p["village.site.phase1_homes"] / 1e6
+    from . import rings
+
+    homes = sum(rings.hourly_w(p, temp, variant).values()) / 1e6  # the rings on the loop (D16)
     floor_m2 = (p[a + "center_ft2"] + p[a + "food_hall_ft2"]) / M2_FT2
     deg = np.clip(p["pass3.loads.indoor_c"] - temp, 0.0, None)
     buildings = floor_m2 * p[a + "building_heat_kwh_m2"] * 1e3 * deg / deg.sum() / 1e6  # MW, shaped by degree-hours
@@ -203,7 +180,10 @@ def price_ceiling(p: dict, temp: np.ndarray, variant: str = "gap") -> dict:
     from . import block
 
     _, h = home_hourly_w(p, temp, variant)
-    q = dict(p, **{"pass3.block.homes": p["village.site.phase1_homes"], "pass3.block.main_km": p["village.money.main_km"]})
+    from . import rings
+
+    c = rings.counts(p)
+    q = dict(p, **{"pass3.block.homes": c["flats"] + c["townhouses"] + c["houses"], "pass3.block.main_km": p["village.money.main_km"]})
     frontage = p["village.townhouse.width_" + variant] + p["village.townhouse.gap_" + variant]
     return block.per_home(q, h["house_mwh"] + h["garage_mwh"], h["hot_water_mwh"], h["design_kw"], townhouse_env(p, variant)["floor_m2"], frontage)
 
@@ -304,9 +284,11 @@ def report(p: dict, wx: dict, variant: str = "gap") -> str:
     for i, (h, _) in enumerate(rows[0.0]):
         L.append(f"| {h:.1f} m up | " + " | ".join(f"{rows[c][i][1]:.1f} dB(A)" for c in (0.0, 3.0, 6.0)) + " |")
 
-    homes = lots(p, variant)
+    from . import rings
+
+    homes = [xy for k in rings.RINGS for xy in rings.lots(p, k, variant)]
     w = walks(p, homes)
-    L += ["", f"**Walks** from phase 1's {len(homes)} doors (minutes, along the streets)", "",
+    L += ["", f"**Walks** from phase 1's {len(homes)} front doors (each walk-up's stair counted once; minutes, along the streets)", "",
           "| To | Nearest | Furthest |", "|---|---|---|"]
     L += [f"| {k} | {v.min():.1f} | {v.max():.1f} |" for k, v in w.items()]
 
@@ -367,42 +349,57 @@ def report(p: dict, wx: dict, variant: str = "gap") -> str:
     return "\n".join(L)
 
 
-def forge_spec(p: dict, variant: str = "gap") -> dict:
-    """What forge `garden` draws for the neighbourhood (metres, the campus frame)."""
-    t, s, f = "village.townhouse.", "village.site.", "village.fields."
-    homes = lots(p, variant)
+def ring_layout(p: dict, kind: str, variant: str = "gap") -> dict:
+    """One ring's lots, streets, greens and spine for forge (D16): rows pair up across each street,
+    the first of a pair facing south (the street below it), the second north."""
+    from . import rings
+
+    s = "village.site."
+    homes = rings.lots(p, kind, variant)
+    lot_w, lot_d = rings.lot(p, kind, variant)
     y_rows = sorted({round(y, 3) for _, y in homes})
-    # Rows pair up across each street: the first of a pair faces south (the street below it), the second north.
     facing = {y: (1 if i % 2 == 0 else -1) for i, y in enumerate(y_rows)}
     streets = [(y_rows[i] + y_rows[i + 1]) / 2 for i in range(0, len(y_rows) - 1, 2)]
-    lot_d = p[s + "lot_depth_m"]
-    lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
     gx = [x for x, _ in homes]
     greens = [[min(gx) - lot_w, max(gx) + lot_w, y_rows[i] + lot_d / 2, y_rows[i + 1] - lot_d / 2]
               for i in range(1, len(y_rows) - 1, 2)]
     if len(y_rows) % 2:  # a last row on its own faces a street of its own to the south
-        streets.append(y_rows[-1] + (p[s + "lot_depth_m"] + p[s + "street_w_m"]) / 2)
-    lot_w = p[t + "width_" + variant] + p[t + "gap_" + variant]
-    xs = [x for x, _ in homes]
-    soccer = (p[f + "pitch_width_soccer"], p[f + "pitch_length_soccer"])
-    from . import site
+        streets.append(y_rows[-1] + (lot_d + p[s + "street_w_m"]) / 2)
+    top = min(y for _, y in homes) - lot_d / 2 - p[s + "street_w_m"]
+    return {"kind": kind, "lot_w": lot_w, "lot_d": lot_d,
+            "homes": [{"x": x, "y": y, "facing": facing[round(y, 3)]} for x, y in homes],
+            "streets_y": streets, "greens": greens, "street_x": [min(gx) - lot_w, max(gx) + lot_w],
+            "spine_x": p[f"site.{kind}.x"], "spine_y": [top, max(y for _, y in homes) + lot_d / 2 + p[s + "street_w_m"]]}
 
+
+def forge_spec(p: dict, variant: str = "gap") -> dict:
+    """What forge `garden` draws for the neighbourhood (metres, the campus frame)."""
+    from . import rings, site
+
+    t, s, f, r = "village.townhouse.", "village.site.", "village.fields.", "village.rings."
+    town = ring_layout(p, "townhouses", variant)
+    soccer = (p[f + "pitch_width_soccer"], p[f + "pitch_length_soccer"])
     mods = site.modules(p, p["site.greenhouse_ha"], site.homes_rect(p))
     rect = lambda n: list(site.by(mods, n).rect)
     sq, fld = rect("square"), site.by(mods, "field and loop")
-    spine_x = p["site.homes.x"]
-    # The spine starts at the square when the square stands at the neighbourhood's hall end, on the
-    # spine's line; otherwise at the first row.
-    top = min(y for _, y in homes) - p[s + "lot_depth_m"] / 2 - p[s + "street_w_m"]
-    start = sq[3] if sq[0] < spine_x < sq[1] and 0 <= top - sq[3] < 60.0 else top
     fw, fl = (soccer[1], soccer[0]) if fld.rot % 180 else soccer
-    return {"source": "brownfield village (pass 3e): phase 1 of the neighbourhood, for forge `garden`",
+    flats, houses = ring_layout(p, "flats", variant), ring_layout(p, "houses", variant)
+    flats.update(w=p[r + "walkup_w_m"], d=p[r + "walkup_d_m"], storeys=int(p[r + "walkup_storeys"]), storey_m=p[r + "walkup_storey_m"])
+    env = rings.house_env(p)
+    houses.update(w=env["width_m"], d=env["depth_m"], storeys=int(p[r + "house_storeys"]), storey_m=p[r + "house_storey_m"],
+                  garage_w=p[t + "width_gap"], garage_d=p[t + "depth_m"], garage_h=p[t + "garage_h_m"])
+    # A ring's spine starts at the square when the square stands at its hall end on the spine's line;
+    # otherwise at its first row (the site plan's walks join the rest up).
+    for ring in (flats, town, houses):
+        if sq[0] < ring["spine_x"] < sq[1] and 0 <= ring["spine_y"][0] - sq[3] < 60.0:
+            ring["spine_y"][0] = sq[3]
+    return {"source": "brownfield village (pass 3e, D16): phase 1 of the neighbourhood in its rings, for forge `garden`",
             "village": {
-                "variant": variant, "house_w": p[t + "width_" + variant], "house_d": p[t + "depth_m"], "lot_w": lot_w,
+                "variant": variant, "house_w": p[t + "width_" + variant], "house_d": p[t + "depth_m"], "lot_w": town["lot_w"],
                 "storeys": int(p[t + "storeys"]), "storey_m": p[t + "storey_m"], "garage_h": p[t + "garage_h_m"],
-                "homes": [{"x": x, "y": y, "facing": facing[round(y, 3)]} for x, y in homes],
-                "streets_y": streets, "greens": greens, "street_w": p[s + "street_w_m"], "street_x": [min(xs) - lot_w, max(xs) + lot_w],
-                "spine_x": spine_x, "spine_w": p[s + "spine_w_m"], "spine_y": [start, max(y for _, y in homes) + 60.0],
+                "homes": town["homes"], "streets_y": town["streets_y"], "greens": town["greens"], "street_w": p[s + "street_w_m"],
+                "street_x": town["street_x"], "spine_x": town["spine_x"], "spine_w": p[s + "spine_w_m"], "spine_y": town["spine_y"],
+                "rings": [flats, houses],
                 "square": sq, "food_hall": [0.0, 0.0, 0.0, 0.0], "market_garden": [0.0, 0.0, 0.0, 0.0],
                 "center": rect("community center"), "center_rot": site.by(mods, "community center").rot,
                 "fields": [{"name": "soccer (multi-use)", "cx": fld.x, "cy": fld.y, "w": fw, "l": fl}]}}

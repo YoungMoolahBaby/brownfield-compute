@@ -216,9 +216,15 @@ _ROUTES = [("cars", "#2a78d6", "-", 1.6, "public road to the mobility hub"), ("t
            ("walks", "#1baf7a", (0, (2.0, 1.4)), 1.3, "main walks")]
 _NAMES = {"data hall": "data\nhall", "winter garden": "winter garden", "greenhouse": "greenhouse\n(food court on its town side)",
           "community center": "center\n+ rink", "square": "square", "field and loop": "field", "neighbourhood": "homes",
-          "mobility hub": "hub", "remote delivery building": "delivery"}
+          "mobility hub": "hub", "remote delivery building": "delivery", "hall front": "mall",
+          # The greenhouse as the hall's moat (D16): named once on its big blocks, the food court on its town corner.
+          "greenhouse west": "greenhouse\n(the hall's moat)", "greenhouse east": "greenhouse\n(the hall's moat)",
+          "greenhouse south-east": "food court", "greenhouse north-west": "", "greenhouse north-east": "", "greenhouse south-west": "",
+          "flats": "flats", "townhouses": "townhouses", "houses": "houses"}
+# The rings of homes (D16) in one warm hue, darker nearer the centre.
 _FILLS = {"data hall": "#3d3c39", "neighbourhood": "#efe4d2", "greenhouse": "#e2ebe0", "field and loop": "#dbe8d2",
-          "winter garden": "#dbe8d2", "square": "#ebe8e1"}
+          "winter garden": "#dbe8d2", "square": "#ebe8e1", "flats": "#e3cfae", "townhouses": "#ecdcc3", "houses": "#f4ecdd",
+          **{f"greenhouse {s}": "#e2ebe0" for s in ("west", "east", "north-west", "north-east", "south-west", "south-east")}}
 
 
 def site_plans(spec: dict, path) -> None:
@@ -261,6 +267,8 @@ def site_plans(spec: dict, path) -> None:
                                    edgecolor=INK2, linewidth=0.6, zorder=3))
             cx, cy = (r[0] + r[1]) / 2, (r[2] + r[3]) / 2
             name = _NAMES.get(m["name"], m["name"])
+            if not name:
+                continue
             if min(r[1] - r[0], r[3] - r[2]) >= 85.0 and m["name"] != "data hall":
                 inside.append(ax.text(cx, cy, name, ha="center", va="center", fontsize=7.5, color=INK, zorder=6, linespacing=1.1))
             elif m["name"] == "data hall":
