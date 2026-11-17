@@ -402,7 +402,7 @@ def cmd_garden(_args) -> int:
 
     p = values(load_params())
     site = screen.plant_table(p).loc[HOMER_CITY]
-    md = garden.report(p, climate.hourly_temp(site.lat, site.lon))
+    md = garden.report(p, climate.hourly_temp(site.lat, site.lon), climate.hourly_weather(site.lat, site.lon))
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)

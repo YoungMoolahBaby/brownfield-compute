@@ -19,20 +19,24 @@ steers. Phase 1 has:
 
 ## The answer
 
-- **The data center can heat all of it, easily.** The whole neighbourhood takes 10.6 GWh a year,
-  7.4 MW at its peak, and the module's spare heat never runs short.
+- **The data center can heat all of it, easily.** The whole neighbourhood takes 15.2 GWh a year,
+  8.3 MW at its peak, with the hall's warm basins counted in, and the module's spare heat never
+  runs short.
   - The heated field and the greenhouse's market section take more than the 120 homes do.
   - The ice rink heats itself from its own refrigeration and passes its surplus on.
   - The heated walks (D14) take about 2 GWh a year, keeping the walks snow-free all winter: 280 W/m2 at a design
     storm. Working systems run on 25-38 C water, so the loop's 40-50 C is ample. Holland, Michigan's
     sidewalks have run on its power plant's waste heat since 1988.
-  - The tomato houses (pass 3d) shrink from 43.5 to 40 ha to make room.
+  - The hall's warm basins (D15) take 4.6 GWh a year at 20 C: open water loses heat fast to the
+    winter air and the wind ([site plan](site.md)).
+  - The tomato houses (pass 3d) shrink from 43.5 to 39.5 ha to make room.
 - **It is quiet enough to sleep beside.** The homes start 150 m from the hall. Up to two storeys
   over the garage stay at or under the 40 dB(A) night guideline there with fans 3 dB quieter than
   pass 2's, an ordinary catalogue choice. With pass 2's fans they're 1.4-3.0 dB over. From about
   245 m out, any home is under the guideline whatever the fans.
-- **Everything is a short walk.** Every door is within about 5 minutes of the square, 6 of the
-  winter garden and 6 of the field (beside the mobility hub in the site plan, D12).
+- **Everything is a short walk.** Every door is within about 5 minutes of the square, 5.5 of the
+  winter garden (now on the community center, D15) and 6 of the field (beside the mobility hub in
+  the site plan, D12).
 - **The loop beats a heat pump in each home, if the operator pays for the pipes.** Over 20 years a
   home's heat costs:
   - $23,000 on the loop when the network is paid for under the benefits agreement;
@@ -92,7 +96,7 @@ looks to choose from:
 ## The plan
 
 <p>
-<img src="village_square.png" width="49%" alt="The square, looking north to the food hall, with the winter garden and the hall's stone face beyond">
+<img src="village_square.png" width="49%" alt="The square, looking north up the causeway between the warm basins to the hall's great doors">
 <img src="village_balcony.png" width="49%" alt="From an upper window of the first row: the square, the winter garden and the hall">
 </p>
 
@@ -105,7 +109,7 @@ looks to choose from:
   - planting and raised kitchen-garden beds behind;
   - the strip beside the house planted;
   - on the roof, a sedum green roof with a private deck at the back, looking north over the square
-    to the winter garden.
+    to the winter garden on the community center and the hall's great doors.
 
   Nothing deep-rooted stands near a foundation (Jon's rule since pass 3c). The new homes send their
   rain to rain gardens and street swales, not to the sewers.
@@ -174,20 +178,20 @@ looks to choose from:
 GWh. The module's spare heat after the town network; the neighbourhood takes its share first, then
 the tomato houses take theirs.
 
-| Month | Spare | Homes | Shared buildings | Field | Heated walks | Market section | Tomato houses | Left to the air |
-|---|---|---|---|---|---|---|---|---|
-| Jan | 40.8 | 0.33 | 0.06 | 0.25 | 0.33 | 0.81 | 26.9 | 12.1 |
-| Feb | 34.9 | 0.36 | 0.07 | 0.29 | 0.69 | 0.77 | 24.9 | 7.8 |
-| Mar | 40.7 | 0.33 | 0.06 | 0.25 | 0.33 | 0.71 | 24.8 | 14.2 |
-| Apr | 44.7 | 0.15 | 0.01 | 0.08 | 0.03 | 0.32 | 11.8 | 32.3 |
-| May | 48.0 | 0.10 | 0.04 | 0.03 | 0.00 | 0.20 | 7.0 | 40.6 |
-| Jun | 48.0 | 0.05 | 0.01 | 0.00 | 0.00 | 0.06 | 1.8 | 46.0 |
-| Jul | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.01 | 0.1 | 49.6 |
-| Aug | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.02 | 0.3 | 49.4 |
-| Sep | 47.5 | 0.06 | 0.02 | 0.01 | 0.00 | 0.15 | 3.4 | 43.9 |
-| Oct | 47.9 | 0.10 | 0.00 | 0.04 | 0.00 | 0.23 | 6.6 | 40.9 |
-| Nov | 42.2 | 0.23 | 0.03 | 0.15 | 0.10 | 0.55 | 18.5 | 22.6 |
-| Dec | 39.9 | 0.36 | 0.07 | 0.28 | 0.45 | 0.88 | 29.5 | 8.4 |
+| Month | Spare | Homes | Shared buildings | Field | Heated walks | Warm basins | Market section | Tomato houses | Left to the air |
+|---|---|---|---|---|---|---|---|---|---|
+| Jan | 40.8 | 0.33 | 0.06 | 0.25 | 0.33 | 0.64 | 0.81 | 26.4 | 11.9 |
+| Feb | 34.9 | 0.36 | 0.07 | 0.29 | 0.69 | 0.65 | 0.77 | 24.4 | 7.6 |
+| Mar | 40.7 | 0.33 | 0.06 | 0.25 | 0.33 | 0.61 | 0.71 | 24.5 | 14.0 |
+| Apr | 44.7 | 0.15 | 0.01 | 0.08 | 0.03 | 0.43 | 0.32 | 11.6 | 32.1 |
+| May | 48.0 | 0.10 | 0.04 | 0.03 | 0.00 | 0.30 | 0.20 | 6.9 | 40.4 |
+| Jun | 48.0 | 0.05 | 0.01 | 0.00 | 0.00 | 0.16 | 0.06 | 1.8 | 45.9 |
+| Jul | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.09 | 0.01 | 0.1 | 49.5 |
+| Aug | 49.8 | 0.04 | 0.00 | 0.00 | 0.00 | 0.09 | 0.02 | 0.3 | 49.3 |
+| Sep | 47.5 | 0.06 | 0.02 | 0.01 | 0.00 | 0.25 | 0.15 | 3.4 | 43.7 |
+| Oct | 47.9 | 0.10 | 0.00 | 0.04 | 0.00 | 0.33 | 0.23 | 6.5 | 40.7 |
+| Nov | 42.2 | 0.23 | 0.03 | 0.15 | 0.10 | 0.50 | 0.55 | 18.2 | 22.4 |
+| Dec | 39.9 | 0.36 | 0.07 | 0.28 | 0.45 | 0.60 | 0.88 | 29.1 | 8.2 |
 
 - **The fields** are kept growing (root zone 13 C) at up to 90 W/m2. That's about 195 kWh/m2 over a
   winter, a figure from a European stadium case (low confidence).

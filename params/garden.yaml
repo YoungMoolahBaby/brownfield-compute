@@ -137,3 +137,34 @@ acoustics:
     unit: dB(A), night level outside a home (WHO 2009), as pass 2
     conf: high
     source: "params/pass2.yaml noise.target_night_db"
+
+# The hall's warm basins (D15): twin basins either side of the causeway to the great door, spilling
+# over the ledge into twin lower pools; held warm off the chip loop through a heat exchanger (the chip
+# loop is closed). Their heat and the water they evaporate (src/brownfield/garden.py, basins).
+basin:
+  area_m2:
+    value: 1272
+    unit: m2 of open warm water (two upper basins 26 x 11 m and two lower pools 25 x 14 m)
+    conf: high
+    source: "the design (forge `garden`, hall_front)"
+  water_c:
+    value: 20.0
+    low: 15.0
+    high: 30.0
+    unit: C, the basins' water (warm enough to steam on cold days)
+    conf: placeholder
+    source: "the design: steam fog forms when cold air passes over much warmer water (AMS Glossary of Meteorology, 'steam fog'), so 20 C water steams through a Pennsylvania winter; the chip loop's warm water (~50 C, pass 2) heats the basins through a heat exchanger. Low: the least that would still steam on most winter days; high: a warm pool (judgement)"
+  wind_factor:
+    value: 0.5
+    low: 0.3
+    high: 1.0
+    unit: wind over the water as a share of PVGIS's wind at 10 m (the forecourt is sheltered by the hall and the pylons)
+    conf: placeholder
+    source: "judgement: the wind near the ground is weaker than at 10 m (about 0.75 at 2 m by the usual log law over open grass) and the forecourt lies in the lee of a 17 m hall to its north; high: no shelter"
+  emissivity:
+    value: 0.95
+    low: 0.92
+    high: 0.97
+    unit: long-wave emissivity of a water surface
+    conf: high
+    source: "Duffie & Beckman, Solar Engineering of Thermal Processes (water ~0.95); standard tables give 0.92-0.97"

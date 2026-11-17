@@ -80,3 +80,24 @@ def test_quieter_fans_shift_every_level():
     a = garden.rooftop_noise(P, fan_cut_db=0.0, distances=[100.0, 400.0])
     b = garden.rooftop_noise(P, fan_cut_db=6.0, distances=[100.0, 400.0])
     assert np.allclose(a["levels"] - b["levels"], 6.0)
+
+
+def test_the_warm_basins_by_hand():
+    # One hour at 0 C, 50% humidity, 2 m/s; 1 m2 of water at 20 C, no shelter, a black surface.
+    b = "garden.basin."
+    p = dict(P, **{b + "area_m2": 1.0, b + "water_c": 20.0, b + "wind_factor": 1.0, b + "emissivity": 1.0})
+    wx = {"t": np.array([0.0]), "rh": np.array([50.0]), "ws": np.array([2.0])}
+    pw = 0.61078 * math.exp(17.27 * 20 / 257.3)  # 2.34 kPa
+    pa = 0.61078 * 0.5  # saturated at 0 C, half
+    y = 2501.0 - 2.361 * 20
+    evap = (pw - pa) * (0.089 + 0.0782 * 2.0) / y  # kg/s, ASHRAE's pool equation
+    conv = (2.8 + 3.0 * 2.0) * 20.0
+    sky = 0.0552 * 273.15 ** 1.5  # Swinbank: ~249 K
+    rad = 5.670374419e-8 * (293.15 ** 4 - sky ** 4)
+    r = garden.basins(p, wx)
+    assert sky == pytest.approx(249.2, abs=0.1)
+    assert r["heat_w"][0] == pytest.approx(evap * y * 1e3 + conv + rad)
+    assert r["water_m3"] == pytest.approx(evap * 3600 / 1000)
+    # Warmer water loses more heat and water.
+    hot = garden.basins(dict(p, **{b + "water_c": 30.0}), wx)
+    assert hot["mwh"] > r["mwh"] and hot["water_m3"] > r["water_m3"]

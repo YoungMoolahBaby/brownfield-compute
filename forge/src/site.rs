@@ -27,6 +27,8 @@ pub struct Plan {
     pub gate: Pt,
     pub town: Pt,
     pub standoff: f64,
+    /// The bearing the winter garden faces (D15; 180 south, 270 west).
+    pub garden_faces: i64,
 }
 
 impl Plan {
@@ -56,6 +58,8 @@ pub fn plan(root: &Path) -> Option<Plan> {
         trucks: lines("trucks"), cars: lines("cars"), walks: lines("walks"),
         underpasses: pts("underpasses"), raised: pts("raised_crossings"),
         hall: r4(&j["hall"]), gate: pt(&j["gate"]), town: pt(&j["town"]), standoff: j["standoff_m"].as_f64().unwrap_or(15.24),
+        garden_faces: c["modules"].as_array()?.iter().find(|m| m["name"] == "winter garden")
+            .and_then(|m| m["faces"].as_i64()).unwrap_or(180),
     })
 }
 

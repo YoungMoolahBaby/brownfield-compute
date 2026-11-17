@@ -4,13 +4,15 @@ Jon, after the neighbourhood drawings: "get everything modular so we can move th
 optimal transportation, security, etc." The optimizer suggests and Jon edits. On security: "like
 pentagon style. no fence, the community will be the fence/wall". Then, on the weights and the pick
 (2026-11-17): "i will let you decide what matters most given the research backing it. same with
-layout." D12 and D14 in [PLAN.md](../PLAN.md) have the brief and the steers.
+layout." Then the hall's front: "the larger doors like we had talked about earlier", with the
+Fallingwater garden moved to the community center (D15). D12, D14 and D15 in [PLAN.md](../PLAN.md)
+have the brief and the steers.
 
 Every piece of the campus is a module: a rectangle sized by its own model, at a position and a
 turn (0 or 90 degrees) set in `params/site.yaml`.
 - The modules:
-  - the data hall (fixed);
-  - the winter garden;
+  - the data hall and its front, the great doors and the warm basins (fixed);
+  - the winter garden, built against the community center (it moves with it);
   - the greenhouse with its food court;
   - the community center and rink;
   - the square;
@@ -29,58 +31,53 @@ turn (0 or 90 degrees) set in `params/site.yaml`.
 
 ## The answer
 
-**The layout: the current one with two edits taken from the optimizer.** It costs $1,462k a year in
-walking time, truck running and pipe, against $1,714k before the edits.
-- **The field moves beside the mobility hub,** where its visitors park. It now stands 55 m from the
-  nearest homes, close enough to overlook, far enough off their windows. All of the optimizer's
-  early best finds had put it there. This saves $66k a year.
-- **The hub moves 21 m west, against the community center's door** (6 m apart). The center and rink
-  draw about 1,450 visitors a day, so each minute of their walk from the car park costs about
-  $712,000 a year at US DOT's value of walking time. This saves $186k a year.
+**The layout: the hall's great doors and the square on one axis, with the winter garden on the
+community center (D15).** It costs $1,500k a year in walking time, truck running and pipe.
+- **The hall's front faces the town.** Its bronze doors, 10 m wide and 14 m high, stand between
+  two stone pylons. Before them, two warm basins spill over a ledge into two lower pools, either
+  side of a causeway and a stair. The stair comes down into the square.
+- **The winter garden stands against the community center's west face**, its terraces reaching
+  out over its pools toward the square. Jon moved it from the hall's face: the center is "the
+  beloved 3rd space of the community".
+  - To make room, the center moved 31 m east, with the car park against its door.
+  - The greenhouse moved 25 m east to clear the center.
+- **The field stands beside the car park**, 55 m from the nearest homes.
+- **No truck goes near the homes, and none crosses a walk.** The hall's trucks come in at its
+  back, round the greenhouse's far side.
+  - All the site's trucks cost $40k a year to run.
+  - One underpass would cost $177k a year.
 
-**What it keeps:**
-- **The line from the town to the garden.** The public street runs from the town through the homes
-  to the square, then on to the winter garden. The square stays the neighbourhood's heart, between
-  the homes and the garden, with the center beside it.
-- **Short walks:**
-  - 3.3 minutes to the winter garden;
-  - 2.6 to the square;
-  - 2.5 to the center;
-  - 1.9 to the field;
-  - 5.8 to the food court.
-- **No truck near the homes, and none across a walk.** The hall's trucks come in at its back, round
-  the greenhouse's far side. All the site's trucks cost $40k a year to run; an underpass would cost
-  $177k a year.
+**Short walks** from the homes:
+- 2.6 minutes to the square;
+- 2.8 to the winter garden;
+- 2.9 to the center;
+- 1.9 to the field;
+- 6.1 to the food court.
 
 | | Cost a year | Walk from the homes to the square / food court / center / field / garden (min) | From the town (min) | Truck-km a year | Underpasses / raised crossings | Warm main |
 |---|---|---|---|---|---|---|
-| **Chosen** | **$1,462k** | 2.6 / 5.8 / 2.5 / 1.9 / 3.3 | 8.1 | 13,708 | 0 / 2 | 1,724 m |
-| Before the two edits | $1,714k | 2.6 / 5.8 / 2.5 / 2.9 / 3.3 | 8.5 | 13,708 | 0 / 1 | 1,550 m |
-| Proposal 1 | $1,456k | 3.2 / 3.0 / 5.5 / 2.8 / 5.5 | 6.2 | 8,300 | 0 / 3 | 1,438 m |
-| Proposal 2 | $1,806k | 2.4 / 8.8 / 4.4 / 6.2 / 9.8 | 7.0 | 7,218 | 0 / 5 | 2,224 m |
-| Proposal 3 | $1,867k | 2.4 / 10.1 / 3.4 / 5.8 / 3.5 | 7.9 | 8,886 | 0 / 1 | 2,506 m |
+| **Chosen** | **$1,500k** | 2.6 / 6.1 / 2.9 / 1.9 / 2.8 | 8.3 | 13,727 | 0 / 2 | 1,911 m |
+| With the garden on the hall (before D15) | $1,462k | 2.6 / 5.8 / 2.5 / 1.9 / 3.3 | 8.1 | 13,708 | 0 / 2 | 1,724 m |
+| Proposal 1 | $1,578k | 3.5 / 1.9 / 6.1 / 2.2 / 5.8 | 4.8 | 9,994 | 0 / 1 | 3,359 m |
+| Proposal 2 | $1,589k | 4.5 / 3.2 / 3.6 / 2.6 / 5.4 | 6.5 | 9,889 | 0 / 6 | 2,150 m |
+| Proposal 3 | $1,625k | 3.1 / 2.0 / 2.6 / 4.2 / 2.2 | 7.6 | 9,842 | 0 / 0 | 2,493 m |
 
-**Proposal 1 ties it, and the model can't tell them apart.** It is $6k a year cheaper (0.4%).
-Moving each uncertain input to its low and its high (27 cases), proposal 1 is cheaper in 15 and the
-chosen layout in 12. They stay within 6% of each other in all but two cases:
-- with 400 walkers a day from the town, proposal 1 is 11% cheaper;
-- with none, the chosen layout is 8% cheaper.
+**What the move costs: $38k a year.** The center stands further from the homes, and the warm
+main is longer. The garden is closer to the homes.
 
-What proposal 1 does:
-- puts the greenhouse against the hall's east side, with its food court beside the homes (3.0
-  minutes);
-- puts the center and the hub on the hall's west side, 5.5 minutes from the homes;
-- puts the square at the town end of the neighbourhood.
+**No proposal beats the chosen layout once the square has to stand on the hall's axis.** The
+inputs were each moved to their low and their high (27 cases). The chosen layout is the cheapest
+in 25 of them. Proposal 1 wins only two:
+- 400 walkers a day from the town;
+- residents going to the food court twice as often as assumed.
 
-Its edge is the town's walk in, which rests on a placeholder count of walkers. With no walkers from
-the town, the chosen layout is $87k a year cheaper. The residents walk less in the chosen layout
-($354k a year of their time against $396k). And it keeps the square between the homes and the
-garden. So the chosen layout stays.
+Without the axis rule, the optimizer found a layout 2.5% cheaper. It moved the square to the far
+end of the homes, so the stair from the great doors led nowhere.
 
-**An earlier find turned down.** An earlier search found a layout about 6% cheaper ($1,370k). It
-moves the square to the town end and puts the 24-hour center and rink 6 m from the first row of
-homes. Its whole advantage is the town's walk in again. With no walkers from the town, the chosen
-layout is cheaper ($1,066k against $1,070k).
+**Earlier the same day,** before D15, the chosen layout came from two edits to the optimizer's
+finds. The field moved beside the car park, which saved $66k a year. The car park moved against
+the center's door, which saved $186k a year. A proposal then tied it ($1,456k against $1,462k),
+and was turned down because its edge rested on the placeholder count of walkers from the town.
 
 ## What matters most, by the research
 
@@ -92,7 +89,7 @@ The score is what a layout costs a year, in dollars. Each term rests on a publis
 | Running a truck | $2.336 a mile, $1.45 a km (2025), driver's pay included | ATRI, Operational Costs of Trucking, 2026 Update |
 | An underpass | $2.2M (2024 dollars) | Bushell et al. 2013 (UNC HSRC): pedestrian underpasses $1.6-10.7M (2012 dollars), the low end brought to 2024 with the CPI |
 | A raised crossing | $9,700 | Bushell et al. 2013: median $7,110 over 14 (2012 dollars), to 2024 with the CPI |
-| The warm main | $1,100 a metre | pass 3 (a placeholder) |
+| The warm main | $1,100 a metre | pass 3 (a placeholder); to the hall's basins, the garden, the greenhouse, the center, the field and the homes |
 | Paying off pipes and structures | 7% real, over 30 years | US DOT's rate since May 2025; the 30 years is a placeholder |
 | Residents' visits | 300 people, 2.5 a home | ACS 2024 household size; trips by purpose from NHTS 2022, shared among the places by judgement |
 | Visitors | about 1,450 a day to the center and rink, 36 to the field | ITE trip rates: community center 28.82 a day per 1,000 ft2; the rink scaled by its evening peak; soccer 71.33 a field |
@@ -108,12 +105,12 @@ What this says matters most, in order:
    No layout above needs one. Many people won't use a bridge or tunnel if crossing at street level
    takes about the same time (FHWA, PEDSAFE). So where one is built, the walk stays level and the
    road dips.
-2. **Visitors' walks:** the largest cost, $913k a year in the chosen layout.
-   - About $520k is the walk from the car park to the doors (about 1,450 visitors a day). The hub
+2. **Visitors' walks:** the largest cost, $922k a year in the chosen layout.
+   - About $518k is the walk from the car park to the doors (about 1,450 visitors a day). The hub
      belongs against the center.
    - The rest is the town's walk in, on a placeholder count.
-3. **Residents' walks:** $354k a year. A minute more to the food court costs $29k a year.
-4. **The warm main:** $153k a year.
+3. **Residents' walks:** $367k a year. A minute more to the food court costs $29k a year.
+4. **The warm main:** $169k a year.
 5. **Truck distance matters least:** $40k a year. The trucks' extra kilometres round the
    greenhouse are cheap next to anything else.
 
@@ -123,8 +120,8 @@ cars where people cross (Safe System: manage speeds where users mix).
 ## The rules
 
 A layout that breaks any of these is never proposed:
-- **Modules don't overlap.** Each keeps 5 m clear of the next; the winter garden is built
-  against the hall.
+- **Modules don't overlap.** Each keeps 5 m clear of the next. The winter garden is built against
+  the community center, and the hall's front against the hall.
 - **Homes:**
   - none inside the 150 m noise setback (pass 3e);
   - all on the town side of the hall, so the neighbourhood grows toward Homer City borough;
@@ -133,6 +130,9 @@ A layout that breaks any of these is never proposed:
     ([Energy Saver](https://www.energy.gov/energysaver/passive-solar-homes)). A skinny townhouse's windows are at its
     front and back, so rows running north-south would face east and west.
   - every door within 400 m of a shuttle stop (D14).
+- **The square stands before the hall's front, on its axis (D15)**, within 15 m of the hall's
+  centre line and 40 m of the forecourt, so the stair from the great doors comes down into it. Both
+  distances are judgement.
 - **The public side faces the town (D12's rings).** The square, the center, the field, the hub
   and the food court never stand behind the hall, which is its service side.
 - **The stand-off band.** No public vehicle within 15.24 m (50 ft) of the hall, the distance in
@@ -152,8 +152,16 @@ capital, now requires growers to cover ceilings, side walls and end walls from a
 to an hour after sunrise
 ([Greenhouse Canada](https://www.greenhousecanada.com/north-americas-greenhouse-capital-passes-light-abatement-by-law/)).
 
-The winter garden stays on the hall's face, where the warm water comes in, until Jon chooses
-whether it moves to the community center.
+**The warm basins cost heat and water** (`brownfield garden`). The method is ASHRAE's pool
+evaporation equation, with convection and radiation to the sky, over PVGIS's typical year, with no
+sun, so the heat is an upper bound. The water is not: the summer sun warms the basins past 20 C,
+and the falls throw spray, so they lose more than shown.
+- At 20 C, the four basins (1,272 m2) take 4.6 GWh a year, 1.7 MW at the coldest, windiest hour.
+- They evaporate 3,725 m3 of water a year. That is about nine families' home use (EPA WaterSense:
+  over 300 gallons a day each); the hall itself evaporates none (pass 2).
+- At 30 C they would take 9.8 GWh and 9,400 m3. So 20 C, which still steams through a Pennsylvania
+  winter, is the design value.
+- A smaller warm basin, or a cover at night, would cut both. That choice is open.
 
 ## How the routes are found
 
@@ -183,7 +191,7 @@ whether it moves to the community center.
 
 ## The drawings
 
-![The chosen layout from the air, from the town side: the hall and the winter garden, the square, the community center with the car park at its door, the field, the homes, and the greenhouse with the trucks' road round its far side to the hall's back](site_aerial.png)
+![The chosen layout from the air, from the town side: the hall with its great doors and warm basins, the square, the winter garden against the community center, the car park at the center's door, the field, the homes, and the greenhouse with the trucks' road round its far side to the hall's back](site_aerial.png)
 
 Forge `garden` now places every module from `out/pass3/site.json`, so moving a module in
 `params/site.yaml` and rerunning `brownfield site` and `brownfield village` moves it in the
@@ -192,7 +200,11 @@ drawings. They also draw:
 - the hub's car park with its shuttle stop;
 - the remote delivery building;
 - the raised crossings;
-- stone planters along the stand-off line.
+- stone planters along the stand-off line;
+- the hall's front (D15) and the winter garden where the plan puts it. The garden is built in its
+  own frame, then turned and moved onto its place.
+
+![The hall's great doors from the north edge of the square: two stone pylons, bronze doors 14 m high in a deep reveal, the warm basins either side of the causeway](hall_front.png)
 
 ![The mobility hub: the car park with trees in islands and the shuttle stop's canopy, the community center beyond it, the field in front](site_hub.png)
 
@@ -220,3 +232,8 @@ redrawn.
   Truck counts are pass 3d's produce at 29,509 t a year (to rerun at 40 ha) and about 18 a day for
   the hall.
 - **The walks** start from the middle of the neighbourhood, not from each door.
+- **The warm basins:**
+  - the wind over the water (taken as half PVGIS's at 10 m, for the hall's shelter) is a
+    placeholder;
+  - the falls' spray and the sun aren't modelled;
+  - the steam isn't drawn.

@@ -3,45 +3,35 @@
 # x east, y south (toward the town), the hall's south face at y = -3. Module centres; rot 0 or 90.
 
 garden:
-  x:
-    value: 29.3
-    unit: m east, the winter garden and its pools against the hall's south face
+  faces_deg:
+    value: 270
+    unit: bearing the winter garden's terraces face (90 east, 180 south, 270 west); its back stands against the community center's opposite face
     conf: high
-    source: "the design (the current layout)"
-  y:
-    value: 15.8
-    unit: m south, the winter garden and its pools against the hall's south face
-    conf: high
-    source: "the design (the current layout)"
-  rot:
-    value: 0
-    unit: degrees (0 or 90), the winter garden and its pools against the hall's south face
-    conf: high
-    source: "the design (the current layout)"
+    source: "the design (D15, 2026-11-17): Jon moved the Fallingwater garden from the hall's face to the community center, 'the beloved 3rd space of the community'; it faces west onto the square, so the hall's door, its basins, the square and the garden share one place"
 
 greenhouse:
   x:
-    value: 491.5
-    unit: m east, the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    value: 516.5
+    unit: m east, the greenhouse block (x 200-833, y -636-16) with its head house and food court on the town side
     conf: high
-    source: "the design (the current layout)"
+    source: "the design; moved 25 m east on 2026-11-17 (D15) to clear the community center, which moved east to make room for the winter garden"
   y:
     value: -310.0
-    unit: m south, the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    unit: m south, the greenhouse block (x 200-833, y -636-16) with its head house and food court on the town side
     conf: high
     source: "the design (the current layout)"
   rot:
     value: 0
-    unit: degrees (0 or 90), the greenhouse block (x 171-812, y -640-0) with its head house and food court on the town side
+    unit: degrees (0 or 90), the greenhouse block (x 200-833, y -636-16) with its head house and food court on the town side
     conf: high
     source: "the design (the current layout)"
 
 center:
   x:
-    value: 117.0
+    value: 148.0
     unit: m east, the community center with the rink
     conf: high
-    source: "the design (the current layout)"
+    source: "the design; moved 31 m east on 2026-11-17 (D15) so the winter garden fits on its west face, 5 m off the square"
   y:
     value: 76.0
     unit: m south, the community center with the rink
@@ -106,10 +96,10 @@ homes:
 
 hub:
   x:
-    value: 219.0
+    value: 250.0
     unit: m east, the mobility hub (shared car park, shuttle stop, bikes, charging)
     conf: high
-    source: "the design (D14); moved 21 m west on 2026-11-17 to stand against the community center's door (6 m apart), where most of its visitors go"
+    source: "the design (D14); on 2026-11-17 moved to stand against the community center's door (6 m apart), where most of its visitors go, and 31 m east with the center (D15)"
   y:
     value: 120.0
     unit: m south, the mobility hub
@@ -176,6 +166,20 @@ truck_clear_m:
   unit: m a truck road keeps from the homes, the square, the community center and the field
   conf: placeholder
   source: "a design rule (D12's rings): trucks stay on the service side, off the residential and public side, as town truck routes keep off residential streets; the distance is judgement"
+axis_m:
+  value: 15.0
+  low: 5.0
+  high: 30.0
+  unit: m the square's middle may stand off the hall's centre line (the axis from the great doors through the forecourt)
+  conf: placeholder
+  source: "a design rule (D15): the forecourt's stair leads from the great doors straight into the square; the tolerance is judgement"
+forecourt_gap_m:
+  value: 40.0
+  low: 15.0
+  high: 80.0
+  unit: m at most between the forecourt's south edge and the square
+  conf: placeholder
+  source: "a design rule (D15), as axis_m; the distance is judgement (a short walk, the doors still large in view)"
 delivery_gate_m:
   value: 150.0
   low: 50.0

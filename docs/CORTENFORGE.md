@@ -177,4 +177,7 @@ Nice-to-haves for CortenForge, with what this project built instead.
   swept along a 2D polyline over a height function, and an `IndexedMesh` moved and turned by an
   isometry, would cover both. Instead: `forge/src/site.rs` lays 2 m quads along each segment with
   an octagon at each corner, and turned boxes by hand (~60 lines); modules are rebuilt at their
-  plan positions rather than moved. cf-geometry not checked for a sweep.
+  plan positions rather than moved. cf-geometry not checked for a sweep. Then (D15) the whole
+  winter garden had to move and turn to the community center: `Place` in `forge/src/garden.rs`
+  turns a built part's vertices a quarter-turn about z and moves them (~40 lines, quarter-turns
+  only).

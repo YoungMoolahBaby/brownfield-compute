@@ -467,22 +467,24 @@ pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh,
         k += 1;
     }
     // The sports lab, facing the ice through glass (skate sharpening, sticks and fitting, 3D printing,
-    // electronics, video), and behind a fire wall the heavy shop with its own outside door (west).
+    // electronics, video), and behind a fire wall at the east end the heavy shop, with its own outside
+    // door onto the mobility hub (the west face holds the winter garden, D15).
     let (ly0, ly1) = (cy0 + 76.0, cy0 + 92.0);
-    b(&mut v.plaza, [cx0 + 0.6, ly0, Z], [cx0 + 58.0, ly1, Z + 0.03]);
-    b(&mut v.trim, [cx0 + 22.0, ly0, Z], [cx0 + 22.4, ly1, Z + 5.0]); // the fire wall
-    b(&mut v.trim, [cx0 + 0.6, ly1 - 0.3, Z], [cx0 + 58.0, ly1, Z + 5.0]); // the back wall
-    quad(&mut v.glass, [cx0 + 22.4, ly0, Z], [cx0 + 58.0, ly0, Z], [cx0 + 58.0, ly0, Z + 4.0], [cx0 + 22.4, ly0, Z + 4.0]);
-    for k in 0..6 {
-        let x = cx0 + 25.0 + k as f64 * 5.5;
+    b(&mut v.plaza, [cx0 + 0.6, ly0, Z], [cx1 - 0.6, ly1, Z + 0.03]);
+    b(&mut v.trim, [cx0 + 64.0, ly0, Z], [cx0 + 64.4, ly1, Z + 5.0]); // the fire wall
+    b(&mut v.trim, [cx0 + 0.6, ly1 - 0.3, Z], [cx1 - 0.6, ly1, Z + 5.0]); // the back wall
+    quad(&mut v.glass, [cx0 + 0.6, ly0, Z], [cx0 + 64.0, ly0, Z], [cx0 + 64.0, ly0, Z + 4.0], [cx0 + 0.6, ly0, Z + 4.0]);
+    for k in 0..10 {
+        let x = cx0 + 3.0 + k as f64 * 6.0;
         b(&mut v.beds, [x, ly0 + 4.0, Z], [x + 3.6, ly0 + 5.2, Z + 0.95]); // benches
         b(&mut v.trim, [x + 0.4, ly0 + 9.0, Z], [x + 1.4, ly0 + 9.8, Z + 1.3]); // machines
     }
-    for k in 0..3 {
-        let x = cx0 + 3.0 + k as f64 * 6.0;
+    for k in 0..4 {
+        let x = cx0 + 66.0 + k as f64 * 5.6;
         b(&mut v.beds, [x, ly0 + 3.0, Z], [x + 4.0, ly0 + 5.0, Z + 0.9]); // shop benches
     }
-    b(&mut v.doors, [cx0 - 0.02, ly0 + 5.0, Z], [cx0 + 0.6, ly0 + 9.0, Z + 3.5]); // the shop's own door
+    b(&mut v.trim, [cx0 + 64.4, ly0 - 0.3, Z], [cx1 - 0.6, ly0, Z + 5.0]); // the shop's wall to the hall
+    b(&mut v.doors, [cx1 - 0.6, ly0 + 5.0, Z], [cx1 + 0.02, ly0 + 9.0, Z + 3.5]); // the shop's own door
     // A low traverse wall along the gym's east wall.
     quad(&mut v.climb, [cx1 - 1.0, cy0 + 10.0, Z], [cx1 - 1.0, cy0 + 74.0, Z], [cx1 - 1.0, cy0 + 74.0, Z + 2.8], [cx1 - 1.0, cy0 + 10.0, Z + 2.8]);
     for _ in 0..160 {

@@ -64,6 +64,36 @@ def heat(g: dict, temp: np.ndarray, p: dict, set_c: float) -> dict:
             "design_kw": total_ua * (set_c - design) / 1e3, "floors": floors}
 
 
+# --- The hall's warm basins (D15) ------------------------------------------------------------------
+
+SIGMA = 5.670374419e-8  # Stefan-Boltzmann, W/m2K4
+
+
+def sat_kpa(t_c):
+    """Saturation vapour pressure over water (kPa): Tetens' formula as Murray (1967) gives it."""
+    return 0.61078 * np.exp(17.27 * np.asarray(t_c, float) / (np.asarray(t_c, float) + 237.3))
+
+
+def basins(p: dict, wx: dict) -> dict:
+    """The basins held at their set temperature, hour by hour over the typical year. Evaporation by
+    ASHRAE's pool equation (HVAC Applications, natatoriums; Carrier's): w = A (p_w - p_a)
+    (0.089 + 0.0782 V) / Y kg/s, with p_w saturated at the water, p_a the air's vapour pressure, V the
+    wind over the water (m/s), Y the latent heat (kJ/kg). Convection at h = 2.8 + 3.0 V W/m2K (Watmuff,
+    Charters & Proctor 1977, as Duffie & Beckman give it); long-wave radiation to Swinbank's (1963)
+    clear sky, T_sky = 0.0552 T_air^1.5 (K). No sun and no cover: an upper bound on the heat."""
+    b = "garden.basin."
+    area, tw = p[b + "area_m2"], p[b + "water_c"]
+    ta, v = wx["t"], wx["ws"] * p[b + "wind_factor"]
+    y = 2501.0 - 2.361 * tw  # kJ/kg at the water's temperature
+    pa = sat_kpa(ta) * np.clip(wx["rh"], 0.0, 100.0) / 100.0
+    evap = np.clip(area * (sat_kpa(tw) - pa) * (0.089 + 0.0782 * v) / y, 0.0, None)  # kg/s
+    conv = area * (2.8 + 3.0 * v) * (tw - ta)
+    rad = area * p[b + "emissivity"] * SIGMA * ((tw + 273.15) ** 4 - (0.0552 * (ta + 273.15) ** 1.5) ** 4)
+    heat = np.clip(evap * y * 1e3 + conv + rad, 0.0, None)  # W
+    return {"heat_w": heat, "mwh": float(heat.sum() / 1e6), "peak_kw": float(heat.max() / 1e3),
+            "water_m3": float(evap.sum() * 3600.0 / 1000.0), "evap_kg_s": evap}
+
+
 # --- The cantilever --------------------------------------------------------------------------------
 
 def cantilever(p: dict, span_m: float | None = None, depth_mm: float | None = None, as_mm2_m: float | None = None) -> dict:
@@ -182,7 +212,20 @@ def ground_cells(p: dict, fan_cut_db: float = 0.0, distances=None) -> list[dict]
     return out
 
 
-def report(p: dict, temp: np.ndarray) -> str:
+def basins_lines(p: dict, wx: dict) -> list[str]:
+    b = "garden.basin."
+    runs = {t: basins(dict(p, **{b + "water_c": t}), wx) for t in (p[b + "water_c"], 15.0, 30.0)}
+    r = runs[p[b + "water_c"]]
+    return ["", f"**The hall's warm basins** (D15: {p[b + 'area_m2']:,.0f} m2 of open water at {p[b + 'water_c']:g} C, warmed off the "
+            "chip loop through a heat exchanger; PVGIS typical year; no sun and no cover, so the heat is an upper bound; the water is not, as the summer sun warms the basins past their "
+            "set point and the falls throw spray)", "",
+            f"- Heat: {r['mwh']:,.0f} MWh a year, {r['peak_kw']:,.0f} kW at the coldest, windiest hour "
+            f"({runs[15.0]['mwh']:,.0f} MWh at 15 C, {runs[30.0]['mwh']:,.0f} MWh at 30 C).",
+            f"- Water evaporated: {r['water_m3']:,.0f} m3 a year ({runs[15.0]['water_m3']:,.0f} at 15 C, {runs[30.0]['water_m3']:,.0f} at 30 C), "
+            f"topped up from the mains; the wind over the water taken as {p[b + 'wind_factor']:g} of PVGIS's at 10 m."]
+
+
+def report(p: dict, temp: np.ndarray, wx: dict | None = None) -> str:
     g = geometry()
     lines = []
     rs = rooms(g)
@@ -202,6 +245,8 @@ def report(p: dict, temp: np.ndarray) -> str:
     warm = p["pass2.good_neighbour.liquid_supply_c"] + p["pass2.good_neighbour.liquid_rise_k"]
     lines += ["", f"The data center's warm water leaves the chips at about {warm:.0f} C (pass 2: {p['pass2.good_neighbour.liquid_supply_c']:g} C "
               f"supply + {p['pass2.good_neighbour.liquid_rise_k']:g} K)."]
+    if wx is not None:
+        lines += basins_lines(p, wx)
     cv = cantilever(p)
     lines += ["", "**Level 1's cantilever** (a 1 m strip; ACI 318-19)", "",
               f"- {cv['span_mm'] / 1e3:.1f} m beyond the pier, {cv['depth_mm']:.0f} mm deep: factored moment {cv['mu_knm']:.0f} kN m per m; "

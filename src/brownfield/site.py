@@ -4,7 +4,7 @@ to edit (`brownfield site`).
 
 Security is designed in, in rings (D12): the community outside (natural surveillance), a landscape
 stand-off band round the data hall that no public vehicle enters (pedestrian places such as the
-square and the winter garden may sit in it), and trucks screened at a remote delivery building.
+hall's front and its basins may sit in it), and trucks screened at a remote delivery building.
 Only published principles and distances are used: this repo is public.
 
 Distances in the search are along the street grid (Manhattan), which is fast; the layouts reported
@@ -24,7 +24,11 @@ import numpy as np
 from . import OUT_DIR
 
 HALL = (-30.0, 92.0, -132.0, -3.0)  # the data hall (fixed: the anchor)
-ATTACHED = {frozenset(("data hall", "winter garden")), frozenset(("data hall", "front"))}  # built against each other
+# The hall's front (D15): the great doors on its stepped base, and the forecourt's warm basins and falls
+# down to the square, on the hall's centre line (forge `garden`, hall_front).
+FRONT = (-4.0, 66.0, -3.0, 36.0)
+GARDEN_HOST = "community center"  # the winter garden is built against its face (D15)
+ATTACHED = {frozenset(("data hall", "hall front")), frozenset((GARDEN_HOST, "winter garden"))}  # built against each other
 
 
 @dataclass(frozen=True)
@@ -39,6 +43,7 @@ class Module:
     vehicles: bool = False  # public vehicles come to it (parking, roads): kept out of the stand-off band
     on_cap_ok: bool = False  # may stand on the capped ash site (open uses only)
     sleeps: bool = False  # people sleep there: kept beyond the noise setback
+    faces: int = 180  # the bearing its front faces (180: south, toward the town; 270: west)
 
     @property
     def rect(self) -> tuple[float, float, float, float]:
@@ -78,9 +83,12 @@ def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
     hub_side = hub_m2 ** 0.5
     # The community center and its rink under one roof, 90 m wide (forge `garden` draws the same).
     center_m2 = (p["village.amenities.center_ft2"] + p["village.rink.building_area_single_sheet"]) / 10.7639
-    out = [Module("data hall", HALL[1] - HALL[0], HALL[3] - HALL[2], *centre(HALL), movable=False)]
+    out = [Module("data hall", HALL[1] - HALL[0], HALL[3] - HALL[2], *centre(HALL), movable=False),
+           Module("hall front", FRONT[1] - FRONT[0], FRONT[3] - FRONT[2], *centre(FRONT), movable=False),
+           # The Fallingwater garden, 66.6 m along its back wall and 37.6 m from it to its lower pool's
+           # edge; placed against the community center by `attach`.
+           Module("winter garden", 66.6, 37.6, 0.0, 0.0, movable=False, faces=int(p[s + "garden.faces_deg"]))]
     for name, key, w, d, kw in [
-        ("winter garden", "garden", 66.6, 37.6, {"movable": False}),  # built against the hall (or the center: Jon to choose)
         ("greenhouse", "greenhouse", side, side + 20.0, {}),  # the head house and food court on its town side
         ("community center", "center", 90.0, center_m2 / 90.0, {}),
         ("square", "square", 60.0, 60.0, {}),
@@ -91,9 +99,25 @@ def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
     ]:
         x, y, rot = pos(key)
         out.append(Module(name, w, d, x, y, rot, **kw))
-    return out
+    return attach(out)
 
 
+def garden_on(g: Module, host: tuple) -> Module:
+    """The winter garden with its back to the host's face opposite the way it faces, centred on it."""
+    hx, hy = centre(host)
+    half = g.d / 2  # from its back wall to its lower pool's edge
+    at = {180: (hx, host[3] + half, 0), 0: (hx, host[2] - half, 0), 270: (host[0] - half, hy, 90), 90: (host[1] + half, hy, 90)}
+    x, y, rot = at[g.faces % 360]
+    return replace(g, x=x, y=y, rot=rot)
+
+
+def attach(mods: list[Module]) -> list[Module]:
+    """The layout with the winter garden moved to its host (it moves when the host does)."""
+    host = by(mods, GARDEN_HOST).rect
+    return [garden_on(m, host) if m.name == "winter garden" else m for m in mods]
+
+
+BEARING = {0: "north", 90: "east", 180: "south", 270: "west"}
 PUBLIC = ["square", "community center", "field and loop", "mobility hub"]
 VIEW_BLOCKERS = ["greenhouse", "community center", "remote delivery building"]
 
@@ -128,8 +152,10 @@ def rules(p: dict, mods: list[Module]) -> list[str]:
     s = "site."
     bad = module_rules(p, mods)
     # The homes look out on the winter garden (Jon: homes round the garden, "having that as a view").
+    # The garden's own host blocks it only if the view runs through the building itself.
     for n in VIEW_BLOCKERS:
-        if blocks_view(by(mods, "winter garden").rect, by(mods, "neighbourhood").rect, by(mods, n).rect):
+        if blocks_view(by(mods, "winter garden").rect, by(mods, "neighbourhood").rect, by(mods, n).rect,
+                       0.0 if n == GARDEN_HOST else 20.0):
             bad.append(f"{n} blocks the homes' view of the winter garden")
     mm = metrics(p, mods, 0.0)
     if mm["stop_m"] > p[s + "walk_stop_m"]:
@@ -164,6 +190,13 @@ def module_rules(p: dict, mods: list[Module]) -> list[str]:
         # The public side faces the town (D12's rings): no public place behind the hall, its service side.
         if m.name in PUBLIC and centre(m.rect)[1] < hall[2]:
             bad.append(f"{m.name} behind the hall (its service side)")
+        # The square stands before the hall's front, on its axis: the forecourt's stair comes down into
+        # it from the great doors (D15).
+        if m.name == "square":
+            sx, _ = centre(m.rect)
+            if abs(sx - centre(FRONT)[0]) > p[s + "axis_m"] or not 0.0 <= m.rect[2] - FRONT[3] <= p[s + "forecourt_gap_m"]:
+                bad.append(f"square off the hall's axis (its middle {sx - centre(FRONT)[0]:+.0f} m across, its edge "
+                           f"{m.rect[2] - FRONT[3]:.0f} m from the forecourt)")
         if m.name == "greenhouse" and food_door(m.rect)[1] < hall[2]:
             bad.append("the food court behind the hall (its service side)")
         # Trucks are screened where they come in (D12, as at the Pentagon): unscreened trucks never
@@ -180,8 +213,9 @@ def scatter(p: dict, mods: list[Module], rng: np.random.Generator, tries: int = 
     within 500 m of a module already placed) where the part-built layout still passes."""
     s = "site.bounds."
     movable = [i for i, m in enumerate(mods) if m.movable]
+    gi = next(k for k, m in enumerate(mods) if m.name == "winter garden")  # placed with its host
     for _ in range(tries):
-        cur, placed = list(mods), [i for i, m in enumerate(mods) if not m.movable]
+        cur, placed = list(mods), [i for i, m in enumerate(mods) if not m.movable and i != gi]
         for i in movable:
             for _ in range(300):
                 if rng.random() < 0.5:
@@ -190,9 +224,11 @@ def scatter(p: dict, mods: list[Module], rng: np.random.Generator, tries: int = 
                 else:
                     x, y = rng.uniform(p[s + "x0"], p[s + "x1"]), rng.uniform(p[s + "y0"], p[s + "y1"])
                 cand = replace(mods[i], x=float(round(x, -1)), y=float(round(y, -1)), rot=int(rng.choice([0, 90])))
-                if not module_rules(p, [cur[j] for j in placed] + [cand]):
-                    cur[i] = cand
-                    placed.append(i)
+                new = [(i, cand)] + ([(gi, garden_on(mods[gi], cand.rect))] if cand.name == GARDEN_HOST else [])
+                if not module_rules(p, [cur[j] for j in placed] + [m for _, m in new]):
+                    for j, m in new:
+                        cur[j] = m
+                        placed.append(j)
                     break
             else:
                 break
@@ -240,7 +276,7 @@ def metrics(p: dict, mods: list[Module], food_t: float, routed: bool = False) ->
     town_walk = {k: manhattan(town, v) / w for k, v in [("the square", places["the square"]), ("the food court", fd),
                                                          ("the community center", door(cen, town, 0.0)), ("the field", door(fld, town, 0.0))]}
     src = (centre(HALL)[0], HALL[3])
-    heated = ["winter garden", "greenhouse", "community center", "field and loop", "neighbourhood"]
+    heated = ["hall front", "winter garden", "greenhouse", "community center", "field and loop", "neighbourhood"]
     main_m = sum(manhattan(src, centre(by(mods, n).rect)) for n in heated)
     # From the hub's middle (the average parking space) to the door.
     parking_walk = {k: manhattan(hub, v) / w for k, v in [("center and rink", door(cen, hub, 0.0)),
@@ -539,6 +575,7 @@ def optimise(p: dict, mods: list[Module], food_t: float, n_starts: int = 16, ste
             dx, dy = rng.choice([-1, 0, 1], 2) * step
             trial = list(cur)
             trial[i] = replace(cur[i], x=cur[i].x + dx, y=cur[i].y + dy, rot=cur[i].rot if rng.random() > 0.1 else 90 - cur[i].rot)
+            trial = attach(trial)
             if rules(p, trial):
                 continue
             sc = score(p, metrics(p, trial, food_t))
@@ -596,8 +633,8 @@ def report(p: dict, mods: list[Module], m: dict, proposals: list[tuple]) -> str:
           f"- The layout spans {m['land_ha']:.0f} ha.",
           f"- **What it costs a year: ${score(p, m):,.0f}k** (lower is better): "
           + ", ".join(f"{k} ${v / 1000:,.0f}k" for k, v in costs(p, m).items()) + ".",
-          "- The winter garden stays against the hall's face (its warm water comes in at the hearth tower) until Jon chooses "
-          "whether it moves to the community center."]
+          f"- The winter garden stands against the community center, facing {BEARING[by(mods, 'winter garden').faces % 360]}, "
+          "and moves with it; the hall's front holds the great doors and the warm basins (D15)."]
     L += ["", "**Proposals** (simulated annealing on the street grid, then every find and the current layout checked with the "
           "routes found round the buildings; every one passes every rule)", "",
           "| | Cost a year | Walk to the square / food court / center / field / garden (min) | From the town (min) | Truck-km a year "
@@ -615,7 +652,7 @@ def report(p: dict, mods: list[Module], m: dict, proposals: list[tuple]) -> str:
 
 def spec(p: dict, mods: list[Module], m: dict, proposals: list[tuple]) -> dict:
     """out/pass3/site.json for forge and the plan figure: each layout's module rectangles and routes."""
-    lay = lambda ms, mm: {"modules": [{"name": n.name, "rect": list(n.rect), "rot": n.rot} for n in ms], **mm["lines"],
+    lay = lambda ms, mm: {"modules": [{"name": n.name, "rect": list(n.rect), "rot": n.rot, "faces": n.faces} for n in ms], **mm["lines"],
                           "crossings": mm["truck_crossings"], "car_crossings": mm["car_crossings"], "truck_km_yr": mm["truck_km_yr"],
                           "costs_usd_yr": costs(p, mm)}
     return {"source": "brownfield site (D12): the modular site plan", "hall": list(HALL), "cap": list(cap_rect(p)),

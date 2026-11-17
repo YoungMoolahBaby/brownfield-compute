@@ -19,22 +19,29 @@ don't know.
 
 ## The design so far
 
-![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof behind a stone parapet, and a winter garden with pools on the side facing the town](docs/pass3/campus_aerial.png)
+![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof behind a stone parapet, and on its town side great bronze doors between two stone pylons, above warm basins](docs/pass3/campus_aerial.png)
 
-The campus is one building:
+The campus:
 
 - **A stone data hall**, about 120 by 130 m, which holds the computers. Its coolers stand in rows
   on the roof behind a 3 m stone parapet, with planted strips between the rows. From the ground
   you see stone walls and towers, not machinery.
-- **A public winter garden** on the side facing the town, kept warm all winter by the data
-  center's waste heat. It draws on Fallingwater, the Frank Lloyd Wright house in the same western
-  Pennsylvania sandstone country:
+- **Its front, facing the town, is a monument to the machines that keep the town warm.**
+  - Two stone pylons stand on a stepped base. Between them is a pair of bronze doors 10 m wide
+    and 14 m high.
+  - Before them, two warm basins steam on cold days. They spill over a ledge into two lower pools,
+    either side of a stair down to the square.
+  - The tradition is the great waterworks and pumping stations, such as Philadelphia's Fairmount
+    Water Works, not a temple.
+- **A public winter garden on the community center**, the neighbourhood's shared building, facing
+  the square. It is kept warm all winter by the data center's waste heat. It draws on
+  Fallingwater, the Frank Lloyd Wright house in the same western Pennsylvania sandstone country:
   - concrete terraces reaching out over pools that step down through a waterfall;
   - coursed sandstone;
   - long bands of glass.
 
-  Its two glass rooms have about 540 m² of floor between them. A stone tower climbs the hall's
-  face where the warm water comes in.
+  Its two glass rooms have about 540 m² of floor between them. A stone tower rises from its back
+  wall where the warm water comes in.
 - **Food houses for the winter.** About 43 ha (107 acres) of glasshouses east of the hall grow
   tomatoes through the winter. They're heated straight off the data center's 50 °C water, with
   grow lights where the winter sun falls short, and have a stone head house facing the town
@@ -45,8 +52,8 @@ The campus is one building:
   plants grow in raised stone planters.
 
 <p>
-<img src="docs/pass3/garden_hero.png" width="49%" alt="The winter garden from across its lower pool: concrete terraces and bands of glass against the hall's stone face">
-<img src="docs/pass3/garden_inside.png" width="49%" alt="Inside the winter garden's lower room: glass on one side, a stone wall on the other, plants in stone planters">
+<img src="docs/pass3/hall_front.png" width="49%" alt="The data hall's great doors from the square: two stone pylons, bronze doors 14 m high in a deep stone reveal, warm basins either side of the causeway">
+<img src="docs/pass3/garden_hero.png" width="49%" alt="The winter garden from across its lower pool: concrete terraces and bands of glass against the community center">
 </p>
 
 Built and rendered in CortenForge (`cargo run --release -- garden` in `forge/`).
@@ -67,8 +74,12 @@ What the numbers say so far (in progress; [plan](docs/PLAN.md)):
   ground are quieter at the distances where homes are. The roof was chosen for the building: one
   roofed hall, no walls standing in the open. Homes higher up, looking down on the roof, would
   get less shielding.
+- **The warm basins.** Held at 20 °C, they take 4.6 GWh of heat a year and evaporate about
+  3,700 m³ of water, about nine families' home use, and more in summer, when the sun warms them.
+  The hall itself evaporates none. At 30 °C they would take twice the heat and 2.5 times the
+  water, so they are kept at 20 °C, which still steams in a Pennsylvania winter.
 - **Not known yet:**
-  - what a stone hall and the garden cost to build and to run, against a plain box;
+  - what a stone hall, its front and the garden cost to build and to run, against a plain box;
   - their carbon;
   - who would pay.
 
@@ -121,7 +132,8 @@ yet.
       makerspace, and heated grass fields.
     - Native-planted gardens and green roofs instead of lawns, and big trees on greens between the
       rows, kept clear of the foundations.
-    - All of it, with snow-free heated walks, takes 10.6 GWh of the module's heat a year.
+    - All of it, with snow-free heated walks and the hall's warm basins, takes 15.2 GWh of the
+      module's heat a year.
     - On the loop, a home's heat costs less than its own heat pump if the operator pays for the
       pipes.
     - Sewage, not heat, limits growth past ~1,350 homes.
@@ -134,9 +146,13 @@ yet.
       ATRI's cost, pipes and crossings paid off.
     - What matters most, by that research: no truck road crosses a main walk, then visitors' and
       residents' walks. Truck distance matters least.
-    - The chosen layout puts the car park against the community center's door and the field
-      beside the car park. Trucks keep to the service side and cross no walk. The optimizer's best
-      proposal ties it; the chosen one keeps the square between the homes and the garden.
+    - The chosen layout:
+      - the hall's great doors, the warm basins and the square on one axis;
+      - the winter garden on the community center, facing the square;
+      - the car park against the center's door, and the field beside the car park;
+      - trucks kept to the service side, crossing no walk.
+    - With the square kept on that axis, no proposal beats it: it is the cheapest in 25 of 27
+      cases across the inputs' ranges.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

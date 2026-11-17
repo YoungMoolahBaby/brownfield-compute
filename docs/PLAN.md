@@ -69,7 +69,8 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
       parapet;
     - stone piers, ochre bands and towers;
     - the Fallingwater-inspired winter garden built into its south face: trays, tray 1 900 mm deep;
-      a hearth tower up the hall's face; pools with a 2.4 m fall;
+      a hearth tower up the hall's face; pools with a 2.4 m fall (moved whole to the community
+      center on 2026-11-17, D15; the hall's front now holds the great doors);
     - trees at least 10 m from anything built.
   - `src/brownfield/garden.py` with `params/garden.yaml`: heat 36-64 MWh/yr; floor water 23-31 C
     against the ~50 C loop.
@@ -122,8 +123,8 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
   glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
   facade study.
 - Phase 1, 120 homes, 150 m back from the hall.
-- The neighbourhood takes 10.6 GWh a year with the heated walks (D14), peaking at 7.4 MW; tomato houses go
-  43.5 -> 40 ha.
+- The neighbourhood takes 15.2 GWh a year with the heated walks (D14) and the hall's warm basins (D15),
+  peaking at 8.3 MW; tomato houses go 43.5 -> 39.5 ha.
 - A home's heat over 20 years: $23k on the loop if the operator pays for the network, $32k for a
   heat pump.
 - A townhouse ~$441k as a price against ~$360k affordable at the median income.
@@ -326,9 +327,10 @@ at the campus edge, funded in the community benefits agreement.
     - Pickleball and golf simulators indoors.
     - One real-grass field, multi-use, with a walking loop; a dome or field house only if bookings
       show demand.
-    - Proposed, not yet built: the data hall's front as a monument with a working, steaming basin
-      instead of a temple; the Fallingwater garden on the community center ("the beloved 3rd
-      space"); a golf short course on the ash cap (Old Works, Anaconda MT, as precedent).
+    - Proposed: the data hall's front as a monument with a working, steaming basin instead of a
+      temple; the Fallingwater garden on the community center ("the beloved 3rd space"), both
+      built on 2026-11-17 (D15); a golf short course on the ash cap (Old Works, Anaconda MT, as
+      precedent), still open.
   - The community center, later still (Jon):
     - A bouldering section, and a traverse wall in the gym.
     - The makerspace joined to the sports ("every sport would use the makerspace. especially hockey
@@ -603,6 +605,46 @@ at the campus edge, funded in the community benefits agreement.
     - A new rule: every door within a few minutes of a stop.
     - The heated walks' heat counted against the module's spare heat.
 
+- **D15** (2026-11-17) The hall's great doors; the Fallingwater garden on the community center.
+  - Jon, early on 2026-11-17, with a reference image: "what if we did something liek this to the
+    front of it instead, as its kind of like the store of our sacred compute, then the frank lloyd
+    wright front off the data center went on the front of the community center? as its the beloved
+    3rd space of the community". Later: "we still have the frank lloyd wright doors on the front of
+    the data center and not the larger doors like we had talked about earlier".
+  - The steer: his reference's qualities, not the temple itself. The temple is a sacred form, and
+    "a temple to AI" would hand opponents a headline. Instead, the tradition of monuments to
+    infrastructure: Philadelphia's Fairmount Water Works, London's Abbey Mills pumping station.
+  - Built:
+    - **The hall's front:** a stepped stone base and two stone pylons to 26.5 m, past the hall's
+      towers. Between them, in a deep stone reveal under a lintel and a cornice, a pair of bronze
+      doors 10 m wide and 14 m high. They are for people; the hall's working doors are at its back.
+    - **The forecourt:** two warm basins either side of a causeway, spilling over the ledge into
+      two lower pools, and a stair down to the square on the hall's axis. Pedestrians only, inside
+      the stand-off band.
+    - **The winter garden moved whole** to the community center's west face, onto the square.
+      - The center moved 31 m east, the hub with it, and the greenhouse 25 m east.
+      - The center's heavy shop moved to its east end, its own door onto the hub, so no shop door
+        opens into the garden.
+    - **A new rule:** the square stands before the forecourt, on the hall's axis. Without it the
+      optimizer moved the square away from the doors.
+      - With it, the hand layout is the cheapest in 25 of 27 cases across the inputs' ranges.
+      - It costs $1,500k a year against $1,462k before: the center is further from the homes and
+        the warm main is longer.
+  - The warm basins, checked (`brownfield garden`):
+    - The method: ASHRAE's pool evaporation equation, convection and sky radiation, over PVGIS's
+      typical year, with no sun. The heat is an upper bound; the water is not, since the summer sun
+      warms the basins past 20 C and the falls throw spray.
+    - At 20 C: 4.6 GWh a year, 1.7 MW at the coldest, windiest hour, and 3,725 m3 of water
+      evaporated a year. That is about nine families' home use (EPA WaterSense: over 300 gallons a
+      day each). The hall itself evaporates none (pass 2).
+    - At 30 C: 9.8 GWh and 9,400 m3.
+    - The basins now count in the neighbourhood's heat balance: 15.2 GWh a year in all; tomato
+      houses 43.5 -> 39.5 ha.
+  - Open:
+    - whether a smaller warm basin, or a cover at night, keeps the meaning for less heat and water;
+    - the steam, which isn't drawn;
+    - the golf short course;
+    - the townhouses' look.
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each

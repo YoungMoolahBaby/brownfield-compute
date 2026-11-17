@@ -8,11 +8,17 @@
 //! - glass running between the trays and turning the corners: the winter garden's rooms;
 //! - water under and in front of it: two pools stepping down over a stone ledge.
 //!
-//! It is built against the data hall's south face: one stone hall with its dry coolers in rows on
-//! the roof behind a 3 m stone parapet. A stone hearth tower climbs the hall's face where the data
-//! center's warm water comes in; the rooms' stone floors are heated by it. East of the hall, the
-//! food houses (food.rs, pass 3d); round it all, an arboretum of native trees kept back from every
-//! foundation.
+//! It is built in its own frame and placed where the site plan puts it (D15: against the community
+//! center's west face, onto the square), its back to the building, a stone hearth tower where the
+//! data center's warm water comes in; the rooms' stone floors are heated by it. Without a site plan
+//! it stands against the data hall's south face, as first drawn.
+//!
+//! The data hall: one stone hall with its dry coolers in rows on the roof behind a 3 m stone
+//! parapet. Its front (D15) is a monument to the machines that keep the town warm: two stone pylons
+//! and a pair of bronze doors 14 m high on a stepped base, and before them two warm basins spilling
+//! over a ledge into two lower pools, either side of a causeway and a stair to the square. East of the
+//! hall, the food houses (food.rs, pass 3d); round it all, an arboretum of native trees kept back from
+//! every foundation.
 //!
 //! Frame: millimetres; x east along the frontage, y south toward the town, z up from the upper
 //! pool's water. Dimensions below are written in metres and scaled.
@@ -156,104 +162,152 @@ pub(crate) fn tree(trunk: &mut IndexedMesh, crowns: &mut IndexedMesh, shade: &mu
     append(shade, &d.expect("lumps").mesh_adaptive_par(tol).geometry);
 }
 
-pub struct Garden {
+/// The forecourt (D15), symmetric about the hall's centre line x = 31: two warm basins on the upper
+/// ground either side of the causeway to the great doors (x0, x1, y0, y1), spilling over the ledge at
+/// y = 20 into two lower pools; the stair down the step on the axis between them.
+const FRONT_UP: [[f64; 4]; 2] = [[0.0, 26.0, 7.0, 18.0], [36.0, 62.0, 7.0, 18.0]];
+const FRONT_LOW: [[f64; 4]; 2] = [[0.0, 25.0, 20.0, 34.0], [37.0, 62.0, 20.0, 34.0]];
+const FRONT_STAIR: [f64; 4] = [26.0, 36.0, 18.0, 26.0];
+
+/// The garden's own frame: x along its back wall (-4 to 62.6 m), y out from it (-3 to 34.6 m), the
+/// way it faces. A quarter-turn about z and a move put it where the plan says.
+#[derive(Clone, Copy)]
+pub struct Place {
+    ox: f64,
+    oy: f64,
+    c: f64,
+    s: f64,
+}
+
+impl Place {
+    /// Onto the rectangle `r` (m), facing the bearing `faces` (180 south, as first drawn; 270 west).
+    pub fn new(r: [f64; 4], faces: i64) -> Place {
+        let th = ((faces - 180) as f64).to_radians();
+        let (c, s) = (th.cos().round(), th.sin().round());
+        let (mut mx, mut my) = (f64::MAX, f64::MAX);
+        for (x, y) in [(-4.0, -3.0), (62.6, -3.0), (-4.0, 34.6), (62.6, 34.6)] {
+            mx = mx.min(c * x - s * y);
+            my = my.min(s * x + c * y);
+        }
+        Place { ox: r[0] - mx, oy: r[2] - my, c, s }
+    }
+    /// A point in the garden's frame (m) on the site (m).
+    pub fn xy(&self, x: f64, y: f64) -> (f64, f64) {
+        (self.ox + self.c * x - self.s * y, self.oy + self.s * x + self.c * y)
+    }
+    pub fn pt(&self, x: f64, y: f64, z: f64) -> Point3<f64> {
+        let (u, v) = self.xy(x, y);
+        Point3::new(u * M, v * M, z * M)
+    }
+    /// A mesh (mm) in the garden's frame, on the site: turned (a rotation, so the faces keep their
+    /// winding) and moved.
+    pub fn mesh(&self, m: &IndexedMesh) -> IndexedMesh {
+        let mut out = m.clone();
+        for p in out.vertices.iter_mut() {
+            let (x, y) = (p.x, p.y);
+            p.x = self.ox * M + self.c * x - self.s * y;
+            p.y = self.oy * M + self.s * x + self.c * y;
+        }
+        out
+    }
+}
+
+/// Where the plan puts the winter garden (its rectangle and bearing), and its placing.
+fn garden_place(pl: Option<&site::Plan>) -> (Place, [f64; 4], i64) {
+    let (r, f) = pl.and_then(|p| p.rect("winter garden").map(|r| (r, p.garden_faces))).unwrap_or(([-4.0, 62.6, -3.0, 34.6], 180));
+    (Place::new(r, f), r, f)
+}
+
+/// The winter garden's meshes in its own frame (m, scaled to mm), its stone count, glass areas and trays.
+pub struct GardenParts {
     pub stone: [IndexedMesh; 5],
     pub concrete: IndexedMesh,
     pub glass: IndexedMesh,
     pub sash: IndexedMesh,
     pub floor: IndexedMesh,
     pub ground: IndexedMesh,
-    pub yard: IndexedMesh,
-    pub coolers: IndexedMesh,
-    pub fans: IndexedMesh,
-    pub halls: IndexedMesh,
-    pub roofs: IndexedMesh,
     pub water: IndexedMesh,
     pub water_low: IndexedMesh,
     pub falls: IndexedMesh,
-    pub trunks: IndexedMesh,
-    pub crowns: Vec<IndexedMesh>,
-    pub crowns_dark: Vec<IndexedMesh>,
-    pub crown_colours: Vec<[f64; 3]>,
     pub plants: IndexedMesh,
-    pub food: food::Houses,
-    pub village: Option<village::Village>,
-    pub site: Option<site::Drawn>,
-    pub view: (f64, f64, f64, f64),
-    pub stones: usize,
-    pub areas: serde_json::Value,
+    pub trunks: IndexedMesh,
+    pub n: usize,
+    pub g1: f64,
+    pub g2: f64,
+    pub trays: [([f64; 3], [f64; 3]); 3],
 }
 
-pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site::Plan>) -> Garden {
-    let mut rng = Rng(0x9E3779B97F4A7C15);
+/// The winter garden (pass 3c, D9), in its own frame: its upper level on a stone podium at +0.2 with
+/// the upper pool at 0, the lower pool at -2.4 below a ledge at y = 20 (the heights of the site's own
+/// step, so the reflections hold wherever it stands). `own_back`: its own stone back wall (against the
+/// community center); without it, the hall's bluff is its back. `tower`: the hearth tower's top (m).
+fn fallingwater(rng: &mut Rng, own_back: bool, tower: f64) -> GardenParts {
     let mut stone: [IndexedMesh; 5] = Default::default();
-    let mut concrete = IndexedMesh::new();
-    let (mut glass, mut sash, mut floor, mut ground) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
-    let (mut yard, mut coolers, mut fans, mut halls) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
-    let mut roofs = IndexedMesh::new();
-    let (mut water, mut falls, mut trunks, mut plants) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
-    let mut water_low = IndexedMesh::new();
-    let ns = spec.trees.len();
-    let mut crowns: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
-    let mut crowns_dark: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
+    let (mut concrete, mut glass, mut sash, mut floor, mut ground) =
+        (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
+    let (mut water, mut water_low, mut falls, mut plants, mut trunks) =
+        (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
     let mut n = 0;
 
-    // --- The land and the water: upper ground +0.2 and the upper pool at 0 north of the ledge
-    // (y < 20); lower ground -2.2 and the lower pool at -2.4 south of it: the water falls 2.4 m.
-    let pools = [([-4.0, 1.0], [52.0, 18.0]), ([8.0, 20.0], [62.0, 34.0])];
-    let (gx0, gx1, gy0, gy1) = (-60.0, 130.0, -3.0, 110.0);
-    let top = |y: f64| if y < 20.0 { 0.2 } else { -2.2 };
-    let mut y = gy0;
-    while y < gy1 {
-        let mut x = gx0;
-        while x < gx1 {
-            let inside = pools.iter().any(|(lo, hi)| x + 1.0 > lo[0] && x + 1.0 < hi[0] && y + 1.0 > lo[1] && y + 1.0 < hi[1]);
-            let ledge = x + 1.0 > 14.0 && x + 1.0 < 40.0 && y + 1.0 > 18.0 && y + 1.0 < 20.0;
-            if !inside && !ledge {
-                let t = top(y + 1.0);
-                b(&mut ground, [x, y, t - 0.6], [x + 2.0, y + 2.0, t]);
+    // --- Its ground: the podium's top at +0.2 round the upper pool, the lower ground (-2.19, just
+    // over the site's) west of the lower pool, and a skirt just under the site's ground round its edge.
+    let rows: Vec<(f64, f64, f64)> = (0..20).map(|k| (k as f64, k as f64 + 1.0, 0.2))
+        .chain((20..34).map(|k| (k as f64, k as f64 + 1.0, -2.19))).chain([(34.0, 34.6, -2.19)]).collect();
+    for (y0, y1, t) in rows {
+        let cy = (y0 + y1) / 2.0;
+        let cut = |x: f64| if t > 0.0 {
+            (x > -4.0 && x < 52.0 && cy > 1.0 && cy < 18.0) || (x > 14.0 && x < 40.0 && cy > 18.0)
+        } else {
+            x > 7.4
+        };
+        let mut run: Option<f64> = None;
+        let mut x = -4.0;
+        while x <= 62.6 + 1e-9 {
+            let keep = x < 62.6 - 1e-9 && !cut(x + 0.1);
+            match (keep, run) {
+                (true, None) => run = Some(x),
+                (false, Some(x0)) => {
+                    b(&mut ground, [x0, y0, t - 0.6], [x.min(62.6), y1, t]);
+                    run = None;
+                }
+                _ => {}
             }
-            x += 2.0;
+            x += 0.2;
         }
-        y += 2.0;
     }
-    // Ground out to the horizon round the site.
-    let far = 3000.0;
-    for (lo, hi) in [([-far, -far, -0.6], [gx0, 20.0, 0.2]), ([-far, 20.0, -2.8], [gx0, far, -2.2]), ([gx1, -far, -0.6], [far, 20.0, 0.2]),
-                     ([gx1, 20.0, -2.8], [far, far, -2.2]), ([gx0, -far, -0.6], [gx1, gy0, 0.2]), ([gx0, gy1, -2.8], [gx1, far, -2.2])] {
+    for (lo, hi) in [([-5.0, -3.0, -2.81], [-4.0, 35.6, -2.21]), ([62.6, -3.0, -2.81], [63.6, 35.6, -2.21]),
+                     ([-4.0, 34.6, -2.81], [62.6, 35.6, -2.21])] {
         b(&mut ground, lo, hi);
     }
-    // The step continues beyond the site as earth.
-    b(&mut ground, [-far, 19.4, -2.8], [gx0, 20.0, 0.2]);
-    b(&mut ground, [gx1, 19.4, -2.8], [far, 20.0, 0.2]);
-    // The step in the land along y = 20, in stone, either side of the ledge.
-    n += stone_mass(&mut stone, &mut rng, [-60.0, 19.4, -2.8], [14.0, 20.0, 0.2], [false, false, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [40.0, 19.4, -2.8], [130.0, 20.0, 0.2], [false, false, false, true]);
+    // The podium's stone sides, and its south face either side of the ledge.
+    n += stone_mass(&mut stone, rng, [-4.6, -3.0, -2.8], [-4.0, 20.0, 0.2], [true, false, false, false]);
+    n += stone_mass(&mut stone, rng, [62.6, -3.0, -2.8], [63.2, 20.0, 0.2], [false, true, false, false]);
+    n += stone_mass(&mut stone, rng, [-4.6, 19.4, -2.8], [14.0, 20.0, 0.2], [false, false, false, true]);
+    n += stone_mass(&mut stone, rng, [40.0, 19.4, -2.8], [63.2, 20.0, 0.2], [false, false, false, true]);
     // Water surfaces, and the falling water over the ledge (y = 20) into the lower pool.
     b(&mut water, [-4.0, 1.0, -0.02], [52.0, 18.0, 0.0]);
     b(&mut water_low, [8.0, 20.0, -2.42], [62.0, 34.0, -2.4]);
     b(&mut falls, [14.0, 20.0, -2.4], [40.0, 20.08, -0.02]);
     // The ledge the water spills over, and the lower pool's stone banks.
-    n += stone_mass(&mut stone, &mut rng, [14.0, 18.0, -2.8], [40.0, 19.95, -0.06], [false, false, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [8.0, 34.0, -2.9], [62.0, 34.6, -2.12], [false, false, true, false]);
-    n += stone_mass(&mut stone, &mut rng, [7.4, 20.0, -2.9], [8.0, 34.6, -2.12], [false, true, false, false]);
-    n += stone_mass(&mut stone, &mut rng, [62.0, 20.0, -2.9], [62.6, 34.6, -2.12], [true, false, false, false]);
+    n += stone_mass(&mut stone, rng, [14.0, 18.0, -2.8], [40.0, 19.95, -0.06], [false, false, false, true]);
+    n += stone_mass(&mut stone, rng, [8.0, 34.0, -2.9], [62.0, 34.6, -2.12], [false, false, true, false]);
+    n += stone_mass(&mut stone, rng, [7.4, 20.0, -2.9], [8.0, 34.6, -2.12], [false, true, false, false]);
+    n += stone_mass(&mut stone, rng, [62.0, 20.0, -2.9], [62.6, 34.6, -2.12], [true, false, false, false]);
 
-    // --- The bluff: the data hall's stone base along its whole south face; the garden is built
-    // against it.
-    n += stone_mass(&mut stone, &mut rng, [-30.0, -3.0, -0.6], [92.0, 0.0, 8.0], [true, true, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [11.0, -3.0, 8.0], [35.0, 0.0, 9.0], [true, true, false, true]); // behind the upper room
-    n += stone_mass(&mut stone, &mut rng, [-30.0, 0.0, 0.2], [-4.0, 2.4, 3.2], [true, true, false, true]); // lower ledges
-    n += stone_mass(&mut stone, &mut rng, [52.0, 0.0, 0.2], [92.0, 2.0, 2.6], [true, true, false, true]);
+    // --- Its back: its own stone wall against the community center, or the hall's bluff.
+    if own_back {
+        n += stone_mass(&mut stone, rng, [-4.6, -3.0, -2.8], [63.2, 0.0, 8.0], [true, true, false, true]);
+    }
+    n += stone_mass(&mut stone, rng, [11.0, -3.0, 8.0], [35.0, 0.0, 9.0], [true, true, false, true]); // behind the upper room
 
     // --- Stone masses: three piers out of the upper pool, and the hearth tower.
-    n += stone_mass(&mut stone, &mut rng, [6.0, 0.0, -0.6], [8.5, 12.0, 2.1], [true, true, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [22.0, 0.0, -0.6], [24.5, 13.0, 2.1], [true, true, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [37.0, 0.0, -0.6], [39.5, 11.0, 2.1], [true, true, false, true]);
-    n += stone_mass(&mut stone, &mut rng, [48.0, 0.0, -0.6], [50.5, 10.0, 5.9], [true, true, false, true]); // under level 2's east end
-    n += stone_mass(&mut stone, &mut rng, [23.0, -2.5, 0.0], [26.2, 0.7, 21.0], [true, true, false, true]); // up the hall's face, past its roof
+    n += stone_mass(&mut stone, rng, [6.0, 0.0, -0.6], [8.5, 12.0, 2.1], [true, true, false, true]);
+    n += stone_mass(&mut stone, rng, [22.0, 0.0, -0.6], [24.5, 13.0, 2.1], [true, true, false, true]);
+    n += stone_mass(&mut stone, rng, [37.0, 0.0, -0.6], [39.5, 11.0, 2.1], [true, true, false, true]);
+    n += stone_mass(&mut stone, rng, [48.0, 0.0, -0.6], [50.5, 10.0, 5.9], [true, true, false, true]); // under level 2's east end
+    n += stone_mass(&mut stone, rng, [23.0, -2.5, 0.0], [26.2, 0.7, tower], [true, true, false, true]); // where the warm water comes in
     // A stone wall closing the lower room's west end, and one between the upper room's ends.
-    n += stone_mass(&mut stone, &mut rng, [7.4, 0.0, 3.0], [8.0, 6.0, 5.9], [true, true, false, true]);
+    n += stone_mass(&mut stone, rng, [7.4, 0.0, 3.0], [8.0, 6.0, 5.9], [true, true, false, true]);
 
     // --- The trays: light ochre concrete, rounded edges, each crossing the one below.
     let t1 = ([0.0, 0.0, 2.1], [44.0, 18.5, 3.0]); // level 1: east-west, out over the falls; 900 mm deep (ACI 318 deflection)
@@ -263,12 +317,11 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
         b(&mut concrete, lo, hi);
     }
     // Parapets round the terraces (0.3 m thick, 0.95 m high).
-    let par = |c: &mut IndexedMesh, lo: [f64; 3], hi: [f64; 3]| b(c, lo, hi);
-    par(&mut concrete, [0.0, 18.2, 3.0], [44.0, 18.5, 3.95]); // level 1, south
-    par(&mut concrete, [0.0, 6.0, 3.0], [0.3, 15.6, 3.95]); // level 1, west (open for the stair at its south end)
-    par(&mut concrete, [43.7, 12.0, 3.0], [44.0, 18.5, 3.95]); // level 1, east
-    par(&mut concrete, [34.0, 11.7, 6.5], [54.0, 12.0, 7.45]); // level 2, south of the east terrace
-    par(&mut concrete, [53.7, 0.0, 6.5], [54.0, 12.0, 7.45]); // level 2, east
+    b(&mut concrete, [0.0, 18.2, 3.0], [44.0, 18.5, 3.95]); // level 1, south
+    b(&mut concrete, [0.0, 6.0, 3.0], [0.3, 15.6, 3.95]); // level 1, west (open for the stair at its south end)
+    b(&mut concrete, [43.7, 12.0, 3.0], [44.0, 18.5, 3.95]); // level 1, east
+    b(&mut concrete, [34.0, 11.7, 6.5], [54.0, 12.0, 7.45]); // level 2, south of the east terrace
+    b(&mut concrete, [53.7, 0.0, 6.5], [54.0, 12.0, 7.45]); // level 2, east
     // Trellis over the east terrace: slender beams on a beam along y = 10.4.
     b(&mut concrete, [35.5, 10.2, 9.0], [53.0, 10.6, 9.4]);
     let mut x = 36.4;
@@ -322,7 +375,7 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
     b(&mut floor, [8.0, 0.0, 3.0], [40.0, 11.0, 3.04]);
     b(&mut floor, [12.0, 0.0, 6.5], [34.0, 8.5, 6.54]);
     for (x0, x1, y0, y1) in [(10.0, 16.0, 1.0, 3.5), (28.0, 36.0, 1.0, 3.0), (17.0, 21.0, 6.0, 8.5)] {
-        n += stone_mass(&mut stone, &mut rng, [x0, y0, 3.04], [x1, y1, 3.55], [true, true, true, true]);
+        n += stone_mass(&mut stone, rng, [x0, y0, 3.04], [x1, y1, 3.55], [true, true, true, true]);
         let mut x = x0 + 0.6;
         while x < x1 - 0.4 {
             let s = Solid::ellipsoid(V::new(0.55, 0.5, rng.range(0.4, 0.9)) * M).translate(V::new(x, rng.range(y0 + 0.5, y1 - 0.5), 3.7) * M);
@@ -332,10 +385,225 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
     }
     for (x, y) in [(13.0, 2.2), (32.0, 2.0), (19.0, 7.2)] {
         let (mut cr, mut cd) = (IndexedMesh::new(), IndexedMesh::new());
-        tree(&mut trunks, &mut cr, &mut cd, &mut rng, x, y, 3.55, 2.3, 0.30, 0.27);
+        tree(&mut trunks, &mut cr, &mut cd, rng, x, y, 3.55, 2.3, 0.30, 0.27);
         append(&mut plants, &cr);
         append(&mut plants, &cd);
     }
+    GardenParts { stone, concrete, glass, sash, floor, ground, water, water_low, falls, plants, trunks, n, g1, g2, trays: [t1, t2, t3] }
+}
+
+/// The hall's front (D15): a monument to the machines that keep the town warm, in the line of the
+/// great waterworks and pumping stations (Fairmount, Abbey Mills) rather than a temple. On a stepped
+/// stone base, two stone pylons rise past the hall's towers; between them, in a deep stone reveal
+/// under a lintel and a heavy cornice, a pair of bronze doors 10 m wide and 14 m high (for people:
+/// the hall's working doors are at its back, on the service side). In front, the
+/// forecourt's warm basins (`FRONT_UP`, `FRONT_LOW`). Pedestrians only, inside the stand-off band.
+/// Returns the stone count and the basins' open water (m2).
+#[allow(clippy::too_many_arguments)]
+fn hall_front(stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh, bronze: &mut IndexedMesh, floor: &mut IndexedMesh,
+              water: &mut IndexedMesh, water_low: &mut IndexedMesh, falls: &mut IndexedMesh, rng: &mut Rng) -> (usize, f64) {
+    let mut n = 0;
+    // The stepped base the width of the gateway, and three steps down to the forecourt.
+    n += stone_mass(stone, rng, [13.0, -3.0, -0.6], [49.0, 4.4, 0.8], [true, true, false, true]);
+    b(&mut stone[2], [13.0, 4.4, -0.6], [49.0, 5.0, 0.6]);
+    b(&mut stone[2], [13.0, 5.0, -0.6], [49.0, 5.6, 0.4]);
+    // The pylons, 7 m square, to 26.5 m (the hall's towers reach 21 m), capped.
+    for x0 in [17.0, 38.0] {
+        n += stone_mass_s(stone, rng, [x0, -3.0, 0.8], [x0 + 7.0, 4.0, 26.5], [true, true, false, true], 1.4);
+        b(concrete, [x0 - 0.6, -3.0, 26.5], [x0 + 7.6, 4.6, 27.2]);
+    }
+    // The portal: deep reveals either side of the doors, the head over them, the lintel between the
+    // pylons, and the cornice across the gateway.
+    n += stone_mass_s(stone, rng, [24.0, -3.0, 0.8], [26.0, 2.0, 14.8], [false, true, false, true], 1.4);
+    n += stone_mass_s(stone, rng, [36.0, -3.0, 0.8], [38.0, 2.0, 14.8], [true, false, false, true], 1.4);
+    n += stone_mass_s(stone, rng, [24.0, -3.0, 14.8], [38.0, 2.0, 16.0], [false, false, false, true], 1.4);
+    n += stone_mass_s(stone, rng, [24.0, -3.0, 16.0], [38.0, 4.0, 19.0], [false, false, false, true], 1.4);
+    b(concrete, [16.0, -3.0, 19.0], [46.0, 5.0, 19.9]);
+    // The great doors: two bronze leaves, each 5 m by 14 m, in raised panels three across and seven up.
+    for (x0, x1) in [(26.0, 30.97), (31.03, 36.0)] {
+        b(bronze, [x0, -0.9, 0.8], [x1, -0.6, 14.8]);
+        let pw = (x1 - x0 - 0.6) / 3.0;
+        for i in 0..3 {
+            for j in 0..7 {
+                let (px, pz) = (x0 + 0.3 + i as f64 * pw, 1.3 + j as f64 * 1.9);
+                b(bronze, [px + 0.12, -0.6, pz], [px + pw - 0.12, -0.52, pz + 1.6]);
+            }
+        }
+    }
+    // The causeway from the steps to the stair, paved.
+    b(floor, [26.4, 5.6, 0.2], [35.6, 18.0, 0.23]);
+    b(floor, [26.0, 26.0, -2.2], [36.0, 60.0, -2.17]); // on to the square
+    let mut area = 0.0;
+    // The warm basins in their stone kerbs, each spilling over its ledge.
+    for r in FRONT_UP {
+        b(water, [r[0], r[2], -0.02], [r[1], r[3], 0.0]);
+        area += (r[1] - r[0]) * (r[3] - r[2]);
+        n += stone_mass(stone, rng, [r[0] - 0.4, r[2] - 0.4, -0.6], [r[1] + 0.4, r[2], 0.45], [true, true, true, true]);
+        n += stone_mass(stone, rng, [r[0] - 0.4, r[2], -0.6], [r[0], r[3], 0.45], [true, true, false, false]);
+        n += stone_mass(stone, rng, [r[1], r[2], -0.6], [r[1] + 0.4, r[3], 0.45], [true, true, false, false]);
+        n += stone_mass(stone, rng, [r[0], r[3], -2.8], [r[1], 19.95, -0.06], [false, false, false, true]);
+        b(falls, [r[0] + 1.0, 20.0, -2.4], [r[1] - 1.0, 20.08, -0.02]);
+    }
+    // The lower pools and their banks.
+    for r in FRONT_LOW {
+        b(water_low, [r[0], r[2], -2.42], [r[1], r[3], -2.4]);
+        area += (r[1] - r[0]) * (r[3] - r[2]);
+        n += stone_mass(stone, rng, [r[0] - 0.6, r[3], -2.9], [r[1] + 0.6, r[3] + 0.6, -2.12], [false, false, false, true]);
+    }
+    n += stone_mass(stone, rng, [-0.6, 20.0, -2.9], [0.0, 34.0, -2.12], [true, false, false, false]);
+    n += stone_mass(stone, rng, [62.0, 20.0, -2.9], [62.6, 34.0, -2.12], [false, true, false, false]);
+    n += stone_mass(stone, rng, [25.0, 26.0, -2.9], [25.6, 34.0, -2.12], [false, true, false, false]);
+    n += stone_mass(stone, rng, [36.4, 26.0, -2.9], [37.0, 34.0, -2.12], [true, false, false, false]);
+    // The stair down the step on the axis, twelve risers of 0.2 m, between stone cheek walls.
+    let [sx0, sx1, sy0, sy1] = FRONT_STAIR;
+    for k in 0..12 {
+        let y0 = sy0 + k as f64 * (sy1 - sy0) / 12.0;
+        b(&mut stone[2], [sx0, y0, -2.8], [sx1, sy1, 0.2 - 0.2 * (k + 1) as f64]);
+    }
+    n += stone_mass(stone, rng, [sx0 - 1.0, sy0, -2.8], [sx0, sy1, 0.45], [true, false, false, true]);
+    n += stone_mass(stone, rng, [sx1, sy0, -2.8], [sx1 + 1.0, sy1, 0.45], [false, true, false, true]);
+    (n, area)
+}
+
+pub struct Garden {
+    pub stone: [IndexedMesh; 5],
+    pub concrete: IndexedMesh,
+    pub glass: IndexedMesh,
+    pub sash: IndexedMesh,
+    pub floor: IndexedMesh,
+    pub ground: IndexedMesh,
+    pub yard: IndexedMesh,
+    pub coolers: IndexedMesh,
+    pub fans: IndexedMesh,
+    pub halls: IndexedMesh,
+    pub roofs: IndexedMesh,
+    pub water: IndexedMesh,
+    pub water_low: IndexedMesh,
+    pub falls: IndexedMesh,
+    pub bronze: IndexedMesh,
+    pub trunks: IndexedMesh,
+    pub crowns: Vec<IndexedMesh>,
+    pub crowns_dark: Vec<IndexedMesh>,
+    pub crown_colours: Vec<[f64; 3]>,
+    pub plants: IndexedMesh,
+    pub food: food::Houses,
+    pub village: Option<village::Village>,
+    pub site: Option<site::Drawn>,
+    pub view: (f64, f64, f64, f64),
+    pub stones: usize,
+    pub areas: serde_json::Value,
+}
+
+pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site::Plan>) -> Garden {
+    let mut rng = Rng(0x9E3779B97F4A7C15);
+    let mut stone: [IndexedMesh; 5] = Default::default();
+    let mut concrete = IndexedMesh::new();
+    let (mut glass, mut sash, mut floor, mut ground) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
+    let (mut yard, mut coolers, mut fans, mut halls) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
+    let mut roofs = IndexedMesh::new();
+    let (mut water, mut falls, mut trunks, mut plants) = (IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new(), IndexedMesh::new());
+    let mut water_low = IndexedMesh::new();
+    let ns = spec.trees.len();
+    let mut crowns: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
+    let mut crowns_dark: Vec<IndexedMesh> = (0..ns).map(|_| IndexedMesh::new()).collect();
+    let mut n = 0;
+
+    // --- Where things stand (D15): the winter garden where the site plan puts it, turned the way it
+    // faces; without a plan, against the hall's south face as first drawn. With a plan, the hall's
+    // front holds the great doors and the forecourt's warm basins.
+    let (place, grect, _) = garden_place(pl);
+    let front = pl.is_some();
+
+    // --- The land: upper ground +0.2 north of the step at y = 20, lower ground -2.2 south of it, in
+    // 1 m strips round the hall's front; the forecourt's basins, ledges and stair cut out, and the
+    // garden's footprint (it brings its own ground).
+    let (up, low) = if front { (FRONT_UP.to_vec(), FRONT_LOW.to_vec()) } else { (vec![], vec![]) };
+    let inside = |r: &[f64; 4], x: f64, y: f64| x > r[0] && x < r[1] && y > r[2] && y < r[3];
+    let cut = |x: f64, y: f64| {
+        up.iter().chain(low.iter()).any(|r| inside(r, x, y))
+            || (front && y > 18.0 && y < 20.0 && up.iter().any(|r| x > r[0] && x < r[1])) // the ledges
+            || (front && inside(&FRONT_STAIR, x, y))
+            || inside(&grect, x, y)
+    };
+    let (gx0, gx1) = ((-60.0f64).min(grect[0] - 4.0).floor(), 130.0f64.max(grect[1] + 4.0).ceil());
+    let (gy0, gy1) = (-3.0, 110.0f64.max(grect[3] + 4.0).ceil());
+    let top = |y: f64| if y < 20.0 { 0.2 } else { -2.2 };
+    let mut y = gy0;
+    while y < gy1 {
+        let (cy, t) = (y + 0.5, top(y + 0.5));
+        let mut run: Option<f64> = None;
+        let mut x = gx0;
+        while x <= gx1 {
+            let keep = x < gx1 && !cut(x + 0.5, cy);
+            match (keep, run) {
+                (true, None) => run = Some(x),
+                (false, Some(x0)) => {
+                    b(&mut ground, [x0, y, t - 0.6], [x, y + 1.0, t]);
+                    run = None;
+                }
+                _ => {}
+            }
+            x += 1.0;
+        }
+        y += 1.0;
+    }
+    // Ground out to the horizon round the site.
+    let far = 3000.0;
+    for (lo, hi) in [([-far, -far, -0.6], [gx0, 20.0, 0.2]), ([-far, 20.0, -2.8], [gx0, far, -2.2]), ([gx1, -far, -0.6], [far, 20.0, 0.2]),
+                     ([gx1, 20.0, -2.8], [far, far, -2.2]), ([gx0, -far, -0.6], [gx1, gy0, 0.2]), ([gx0, gy1, -2.8], [gx1, far, -2.2])] {
+        b(&mut ground, lo, hi);
+    }
+    // The step continues beyond the site as earth.
+    b(&mut ground, [-far, 19.4, -2.8], [gx0, 20.0, 0.2]);
+    b(&mut ground, [gx1, 19.4, -2.8], [far, 20.0, 0.2]);
+    // The step in the land along y = 20, in stone, except where the forecourt or the garden meets it.
+    let mut gaps: Vec<(f64, f64)> = Vec::new();
+    if front {
+        gaps.push((-0.6, 62.6));
+    }
+    if grect[2] < 20.0 && grect[3] > 20.0 {
+        gaps.push((grect[0] - 0.6, grect[1] + 0.6));
+    }
+    gaps.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut x0 = gx0;
+    for (a, c) in gaps.iter().cloned().chain([(gx1, gx1)]) {
+        if a > x0 + 0.1 {
+            n += stone_mass(&mut stone, &mut rng, [x0, 19.4, -2.8], [a, 20.0, 0.2], [false, false, false, true]);
+        }
+        x0 = x0.max(c);
+    }
+
+    // --- The bluff: the data hall's stone base along its south face; with the great doors, it stops
+    // at the pylons.
+    let bluff: Vec<(f64, f64)> = if front { vec![(-30.0, 17.0), (45.0, 92.0)] } else { vec![(-30.0, 92.0)] };
+    for (a, c) in bluff {
+        n += stone_mass(&mut stone, &mut rng, [a, -3.0, -0.6], [c, 0.0, 8.0], [true, true, false, true]);
+    }
+    n += stone_mass(&mut stone, &mut rng, [-30.0, 0.0, 0.2], [-4.0, 2.4, 3.2], [true, true, false, true]); // lower ledges
+    n += stone_mass(&mut stone, &mut rng, [52.0, 0.0, 0.2], [92.0, 2.0, 2.6], [true, true, false, true]);
+
+    // --- The hall's front (D15): the great doors and the forecourt's warm basins.
+    let mut bronze = IndexedMesh::new();
+    let basins_m2 = if front {
+        let (nf, a) = hall_front(&mut stone, &mut concrete, &mut bronze, &mut floor, &mut water, &mut water_low, &mut falls, &mut rng);
+        n += nf;
+        a
+    } else {
+        0.0
+    };
+
+    // --- The winter garden, built in its own frame and placed.
+    let gp = fallingwater(&mut rng, front, if front { 15.0 } else { 21.0 });
+    n += gp.n;
+    for (i, m) in gp.stone.iter().enumerate() {
+        append(&mut stone[i], &place.mesh(m));
+    }
+    for (out, m) in [(&mut concrete, &gp.concrete), (&mut glass, &gp.glass), (&mut sash, &gp.sash), (&mut floor, &gp.floor),
+                     (&mut ground, &gp.ground), (&mut water, &gp.water), (&mut water_low, &gp.water_low), (&mut falls, &gp.falls),
+                     (&mut plants, &gp.plants), (&mut trunks, &gp.trunks)] {
+        append(out, &place.mesh(m));
+    }
+    let (g1, g2, [t1, t2, t3]) = (gp.g1, gp.g2, gp.trays);
 
     // --- The data hall: one stone building holding the IT, the cooler courts on its roof (the
     // makers' clearances and the walled cells of pass 2d, on the roof deck); the courts' outer
@@ -416,7 +684,8 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
     let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, y_food, z_food, hx1 + 1.5, -40.0);
     n += nf;
     let (fx0, fx1, fy0, fy1) = fh.block;
-    let mut built: Vec<(f64, f64, f64, f64)> = vec![(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (-4.0, 62.6, -3.0, 34.6), (-30.0, 92.0, -3.0, 3.0),
+    let mut built: Vec<(f64, f64, f64, f64)> = vec![(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (grect[0], grect[1], grect[2], grect[3]),
+                                                   (-4.0, 66.0, -3.0, 36.0), (-30.0, 92.0, -3.0, 3.0),
                                                    (fx0, fx1, fy0, fy1), fh.head];
     // The neighbourhood (pass 3e), if `brownfield village` has written its plan.
     let vg = vspec.map(|vs| {
@@ -491,11 +760,12 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site:
         "trays": {"level1": {"lo": t1.0, "hi": t1.1}, "level2": {"lo": t2.0, "hi": t2.1}, "roof": {"lo": t3.0, "hi": t3.1}},
         "cantilevers_m": {"level1_south_beyond_piers": 18.5 - 13.0, "level2_east_beyond_pier": 54.0 - 50.5},
         "level1_tray_depth_m": 0.9,
+        "basins_m2": basins_m2,
         "food_houses": {"floor_m2": fh.floor_m2, "block": [fx0, fx1, fy0, fy1], "head_house": [fh.head.0, fh.head.1, fh.head.2, fh.head.3]},
         "arboretum": trees_json,
     });
     let crown_colours = spec.trees.iter().map(|t| t.colour).collect();
-    Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, trunks, crowns, crowns_dark,
+    Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, bronze, trunks, crowns, crowns_dark,
              crown_colours, plants, food: fh, village: vg, site: sd, view, stones: n, areas }
 }
 
@@ -509,14 +779,16 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
     let (fxm, fym) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
     let hm = (fh.head.0 + fh.head.1) / 2.0;
     let fz = if fy1 < 20.0 { 0.2 } else { -2.2 };
+    // The garden's views in its own frame, placed with it.
+    let (gp, _, _) = garden_place(pl);
     let mut v = vec![
-        View("garden_falls.png", p(36.0, 46.0, -0.6), p(23.0, 10.0, 3.6), 52.0, 1.0),
-        View("garden_hero.png", p(62.0, 58.0, 4.0), p(24.0, 8.0, 3.0), 46.0, 1.0),
-        View("garden_inside.png", p(11.0, 8.6, 4.7), p(40.0, 5.5, 3.9), 70.0, 1.7),
-        View("garden_aerial.png", p(105.0, 90.0, 62.0), p(24.0, -12.0, 0.0), 46.0, 1.0),
-        View("campus_aerial.png", p(190.0, 90.0, 120.0), p(30.0, -70.0, 0.0), 50.0, 1.0),
+        View("garden_falls.png", gp.pt(36.0, 46.0, -0.6), gp.pt(23.0, 10.0, 3.6), 52.0, 1.0),
+        View("garden_hero.png", gp.pt(62.0, 58.0, 4.0), gp.pt(24.0, 8.0, 3.0), 46.0, 1.0),
+        View("garden_inside.png", gp.pt(11.0, 8.6, 4.7), gp.pt(40.0, 5.5, 3.9), 70.0, 1.7),
+        View("garden_aerial.png", gp.pt(105.0, 90.0, 62.0), gp.pt(24.0, -12.0, 0.0), 46.0, 1.0),
+        View("campus_aerial.png", p(125.0, 165.0, 115.0), p(31.0, -45.0, 0.0), 50.0, 1.0),
         View("campus_hall.png", p(150.0, -40.0, 1.7), p(92.0, -80.0, 10.0), 56.0, 1.0),
-        View("campus_front.png", p(-30.0, 95.0, 14.0), p(28.0, -25.0, 8.0), 52.0, 1.0),
+        View("campus_front.png", p(-30.0, 95.0, 14.0), p(31.0, -10.0, 9.0), 52.0, 1.0),
         View("campus_food.png", p(fx1 + 260.0, fy1 + 330.0, 330.0), p((31.0 + fxm) / 2.0, fym, 0.0), 50.0, 1.0),
         View("food_inside.png", p(fxm + 1.2, fy1 - 4.0, fz + 1.8), p(fxm + 1.0, fy1 - 60.0, fz + 2.4), 68.0, 1.3),
         View("food_head.png", p(hm - 40.0, fh.head.3 + 55.0, fz - 0.6), p(hm, fy1 + 6.0, fz + 3.8), 56.0, 1.0),
@@ -539,7 +811,7 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
         let (mx, my) = (ms.iter().map(|q| q[0] + q[1]).sum::<f64>() / 8.0, ms.iter().map(|q| q[2] + q[3]).sum::<f64>() / 8.0);
         v.extend([
             View("campus_village.png", p(mx + 350.0, my + 440.0, 330.0), p(mx, my, 0.0), 50.0, 1.0),
-            View("village_balcony.png", p(hcx + 10.0, homes[2] + 0.5, 5.3), p((gd[0] + gd[1]) / 2.0, gd[3] - 5.0, 2.0), 62.0, 1.0),
+            View("village_balcony.png", p(hcx + 10.0, homes[2] + 0.5, 5.3), p((gd[0] + gd[1]) / 2.0, (gd[2] + gd[3]) / 2.0, 2.0), 62.0, 1.0),
             View("village_square.png", p(sqx + 18.0, sqy + 24.0, -0.5), p(sqx - 8.0, sqy - 45.0, 2.0), 60.0, 1.0),
             View("village_street.png", p(hcx + 30.0, street, -0.5), p(hcx - 70.0, street, 2.5), 60.0, 1.0),
             View("village_center.png", p(c[0] + 68.0, c[2] + 120.0, 3.5), p(c[0] + 24.0, c[2] + 73.0, -2.2), 72.0, 1.5),
@@ -549,6 +821,8 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
         ]);
     }
     if let Some(q) = pl {
+        // The great doors from the north edge of the square, on the axis (D15).
+        v.push(View("hall_front.png", p(31.0, 58.0, -0.4), p(31.0, -3.0, 10.0), 55.0, 1.0));
         // The whole plan from the air, from the south-east, toward its middle.
         let (mut x0, mut x1, mut y0, mut y1) = (f64::MAX, f64::MIN, f64::MAX, f64::MIN);
         for (_, r, _) in &q.modules {
@@ -587,27 +861,30 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     // set shows only where its own pool's water does (the renderer's stencil).
     let reflect = |zw: f64| -> Vec<IndexedMesh> {
         let ns = g.crowns.len();
-        let mut v: Vec<IndexedMesh> = (0..8 + 2 * ns).map(|_| IndexedMesh::new()).collect();
+        let mut v: Vec<IndexedMesh> = (0..9 + 2 * ns).map(|_| IndexedMesh::new()).collect();
         for (i, m) in g.stone.iter().enumerate() {
             add_mirrored_at(&mut v[i], m, zw);
         }
         add_mirrored_at(&mut v[5], &g.concrete, zw);
         add_mirrored_at(&mut v[6], &g.sash, zw);
         add_mirrored_at(&mut v[7], &g.trunks, zw);
+        add_mirrored_at(&mut v[8], &g.bronze, zw);
         for (i, m) in g.crowns.iter().chain(g.crowns_dark.iter()).enumerate() {
-            add_mirrored_at(&mut v[8 + i], m, zw);
+            add_mirrored_at(&mut v[9 + i], m, zw);
         }
         v
     };
     let refl = [reflect(0.0), reflect(-2.4 * M)];
     const CONCRETE: [f64; 3] = [0.94, 0.85, 0.66];
     const SASH: [f64; 3] = [0.46, 0.17, 0.12];
+    const BRONZE: [f64; 3] = [0.50, 0.34, 0.19];
     let mut layers: Vec<SLayer> = Vec::new();
     for (i, m) in g.stone.iter().enumerate() {
         layers.push(SLayer::solid(m, STONE[i]));
     }
     layers.push(SLayer::solid(&g.concrete, CONCRETE));
     layers.push(SLayer::solid(&g.sash, SASH));
+    layers.push(SLayer::solid(&g.bronze, BRONZE));
     layers.push(SLayer::solid(&g.floor, [0.72, 0.64, 0.53]));
     layers.push(SLayer::solid(&g.ground, [0.44, 0.50, 0.30]).no_shadow());
     layers.push(SLayer::solid(&g.yard, [0.66, 0.63, 0.58]).no_shadow());
@@ -653,10 +930,11 @@ pub fn run(root: &Path) -> std::io::Result<()> {
         layers.push(SLayer::solid(&set[5], dim(CONCRETE)).mirrored(zw, pool));
         layers.push(SLayer::solid(&set[6], dim(SASH)).mirrored(zw, pool));
         layers.push(SLayer::solid(&set[7], dim([0.30, 0.24, 0.19])).mirrored(zw, pool));
+        layers.push(SLayer::solid(&set[8], dim(BRONZE)).mirrored(zw, pool));
         let ns = g.crowns.len();
         for i in 0..2 * ns {
             let c = g.crown_colours[i % ns].map(|v| if i >= ns { v * 0.8 } else { v });
-            layers.push(SLayer::solid(&set[8 + i], dim(c)).smooth().mirrored(zw, pool));
+            layers.push(SLayer::solid(&set[9 + i], dim(c)).smooth().mirrored(zw, pool));
         }
     }
     // Translucent last: glass, the water's skin, the falling water.
@@ -678,7 +956,10 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     light.shadow_px = 8192;
     let (vx0, vx1, vy0, vy1) = g.view;
     light.shadow_focus = Some((V::new(vx0, vy0, -5.0) * M, V::new(vx1, vy1, 40.0) * M));
+    // GARDEN_VIEWS=a.png,b.png renders only those (for checking a change before the whole set).
+    let only: Option<Vec<String>> = std::env::var("GARDEN_VIEWS").ok().map(|s| s.split(',').map(|v| v.trim().to_string()).collect());
     let views: Vec<_> = views(pl.as_ref(), vspec.as_ref(), &g.food).into_iter()
+        .filter(|v| only.as_ref().is_none_or(|o| o.iter().any(|n| n == v.0)))
         .map(|v| (v.0, Camera::Persp { eye: v.1, target: v.2, up: V::z(), fov_deg: v.3, w: 1600, h: 1000 }, v.4, false))
         .collect();
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);

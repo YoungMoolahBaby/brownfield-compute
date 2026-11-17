@@ -80,7 +80,21 @@ def test_no_public_place_behind_the_hall():
 
 
 def test_a_building_between_the_homes_and_the_winter_garden_blocks_the_view():
-    assert any("blocks the homes' view" in r for r in site.rules(P, _moved("community center", x=30.0, y=90.0)))
+    g = site.by(MODS, "winter garden").rect
+    between = _moved("remote delivery building", x=(g[0] + g[1]) / 2, y=g[3] + 20.0)
+    assert any("remote delivery building blocks the homes' view" in r for r in site.rules(P, between))
+    # The garden's own host blocks it only if the view runs through the building.
+    assert not any("community center blocks" in r for r in site.rules(P, MODS))
+
+
+def test_the_winter_garden_stands_against_the_community_center_and_moves_with_it():
+    c, g = site.by(MODS, "community center").rect, site.by(MODS, "winter garden").rect
+    assert g[1] == pytest.approx(c[0]) and c[2] < (g[2] + g[3]) / 2 < c[3]  # on its west face, facing west
+    moved = site.attach(_moved("community center", x=site.by(MODS, "community center").x + 100.0, y=site.by(MODS, "community center").y + 10.0))
+    g2 = site.by(moved, "winter garden").rect
+    assert (g2[0] - g[0], g2[2] - g[2]) == pytest.approx((100.0, 10.0))
+    south = site.garden_on(replace(site.by(MODS, "winter garden"), faces=180), c)
+    assert south.rect[2] == pytest.approx(c[3]) and south.rot == 0
 
 
 def _grid(nx: int, ny: int) -> site.Grid:
@@ -149,3 +163,9 @@ def test_the_score_is_the_sum_of_the_costs():
     per = (P["village.site.phase1_homes"] * P["site.visits.persons_per_home"] * P["site.visits.food_court_wk"] * 52 * 2
            * P["site.value.walk_usd_h"] / 60.0)
     assert site.costs(P, m2)["residents' walks"] - c["residents' walks"] == pytest.approx(per)
+
+
+def test_the_square_stands_on_the_halls_axis():
+    assert not any("axis" in r for r in site.rules(P, MODS))
+    assert any("square off the hall's axis" in r for r in site.rules(P, _moved("square", x=site.by(MODS, "square").x + 60.0)))
+    assert any("square off the hall's axis" in r for r in site.rules(P, _moved("square", y=site.by(MODS, "square").y + 100.0)))

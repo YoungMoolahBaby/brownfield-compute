@@ -72,16 +72,17 @@ def hourly_temp_rh(lat: float, lon: float) -> tuple[np.ndarray, np.ndarray]:
 
 def hourly_weather(lat: float, lon: float) -> dict[str, np.ndarray]:
     """8760 hours of the typical year, cached: air temperature `t` (C), relative humidity `rh` (%),
-    global horizontal irradiance `ghi` (W/m2), and `hour_utc` (0-23). PVGIS times are UTC."""
+    global horizontal irradiance `ghi` (W/m2), wind speed at 10 m `ws` (m/s), and `hour_utc` (0-23).
+    PVGIS times are UTC."""
     lat, lon = round(lat, 3), round(lon, 3)
     path = CACHE_DIR / f"{lat:.3f}_{lon:.3f}_wx.json"
-    if not path.exists():
+    if not path.exists() or "ws" not in json.loads(path.read_text()):
         resp = requests.get(PVGIS_TMY, params={"lat": lat, "lon": lon, "outputformat": "json", "usehorizon": 0},
                             headers={"User-Agent": USER_AGENT}, timeout=120)
         resp.raise_for_status()
         rows = resp.json()["outputs"]["tmy_hourly"]
         data = {"t": [round(float(r["T2m"]), 1) for r in rows], "rh": [round(float(r["RH"]), 1) for r in rows],
-                "ghi": [round(float(r["G(h)"]), 1) for r in rows],
+                "ghi": [round(float(r["G(h)"]), 1) for r in rows], "ws": [round(float(r["WS10m"]), 2) for r in rows],
                 "hour_utc": [int(r["time(UTC)"][9:11]) for r in rows]}
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data))

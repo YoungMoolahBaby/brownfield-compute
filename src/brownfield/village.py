@@ -162,7 +162,10 @@ def loads_mw(p: dict, wx: dict, variant: str = "gap") -> dict[str, np.ndarray]:
     freeze = np.clip(2.0 - temp, 0.0, None)  # kept above freezing below ~2 C
     walks = np.minimum(walk_m2 * p[sm + "energy_kwh_m2"] * gain * 1e3 * freeze / freeze.sum(),
                        walk_m2 * p[sm + "design_w_m2"] * gain) / 1e6
-    return {"homes": homes, "shared buildings": buildings, "fields": fields, "heated walks": walks,
+    from . import garden
+
+    basins = garden.basins(p, wx)["heat_w"] / 1e6  # the hall's warm basins (D15)
+    return {"homes": homes, "shared buildings": buildings, "fields": fields, "heated walks": walks, "warm basins": basins,
             "market section": hs["heat_w"] * garden_ha / 1e6,
             "market section lamps": hs["lamp_w"] * garden_ha / 1e6}
 
@@ -309,11 +312,11 @@ def report(p: dict, wx: dict, variant: str = "gap") -> str:
 
     b = balance(p, wx)
     L += ["", "**Heat by month** (GWh; the module's spare heat after the town network, the neighbourhood first, then the tomato houses)", "",
-          "| Month | Spare | Homes | Shared buildings | Field | Heated walks | Market section | Tomato houses | Left to the air |",
-          "|---|---|---|---|---|---|---|---|---|"]
+          "| Month | Spare | Homes | Shared buildings | Field | Heated walks | Warm basins | Market section | Tomato houses | Left to the air |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
     for m, r in enumerate(b["months"]):
         L.append(f"| {m + 1} | {r['spare'] / 1e3:.1f} | {r['homes'] / 1e3:.2f} | {r['shared buildings'] / 1e3:.2f} | {r['fields'] / 1e3:.2f} | "
-                 f"{r['heated walks'] / 1e3:.2f} | {r['market section'] / 1e3:.2f} | {r['tomatoes'] / 1e3:.1f} | {r['left'] / 1e3:.1f} |")
+                 f"{r['heated walks'] / 1e3:.2f} | {r['warm basins'] / 1e3:.2f} | {r['market section'] / 1e3:.2f} | {r['tomatoes'] / 1e3:.1f} | {r['left'] / 1e3:.1f} |")
     L += ["", f"The neighbourhood takes {b['village_mwh'] / 1e3:.1f} GWh a year ({b['village_peak_mw']:.1f} MW at its peak) and is never "
           f"short; the tomato houses' design area goes from {b['ha_before']:g} ha to {b['ha_after']:g} ha."]
 
