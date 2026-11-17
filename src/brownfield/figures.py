@@ -314,3 +314,125 @@ def site_plans(spec: dict, path) -> None:
     fig.tight_layout(rect=(0, 0.07, 1, 1))
     fig.savefig(path, facecolor=SURFACE)
     plt.close(fig)
+
+
+# D17, the real land: what limits building round the plant, and AWS's six sites on it.
+def land_map(a: dict, sites: dict, layers: dict, power_block, path, extent=(-5500.0, 4500.0, -4900.0, 5100.0),
+             extra=None, title: str = "The real land round the Homer City plant, and AWS's six sites") -> None:
+    """Hillshade; land homes could go on (green); flood, wetlands and streams; steep and undermined
+    ground; wells; roads; AWS's six sites and the power block; the towns."""
+    from matplotlib.colors import ListedColormap
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    from shapely.geometry import shape
+
+    from .land import local_geoms
+
+    g = a["grid"]
+    x0, x1, y0, y1 = extent
+    # Cell centres to the axes' extent (the grid is a lon/lat raster; at this scale an affine is exact enough).
+    (ax0, ay0), (ax1, ay1) = g.xy(0, g.ny - 1), g.xy(g.nx - 1, 0)
+    ext = (ax0 - g.dx / 2, ax1 + g.dx / 2, ay0 - g.dy / 2, ay1 + g.dy / 2)
+    z = np.nan_to_num(g.z, nan=float(np.nanmean(g.z)))
+    gy, gx = np.gradient(z, g.dy, g.dx)
+    az, alt = np.radians(315.0), np.radians(45.0)
+    slope = np.arctan(np.hypot(gx, gy))
+    aspect = np.arctan2(-gx, gy)
+    shade = np.sin(alt) * np.cos(slope) + np.cos(alt) * np.sin(slope) * np.cos(az - aspect)
+    fig, ax = plt.subplots(figsize=(11, 9.4), dpi=150, facecolor=SURFACE)
+    _style(ax)
+    ax.imshow(shade, cmap="gray", vmin=-0.2, vmax=1.1, extent=ext, origin="upper", alpha=0.55, zorder=0)
+    def tint(mask, colour, alpha, z):
+        ax.imshow(np.ma.masked_where(~mask, mask), cmap=ListedColormap([colour]), extent=ext, origin="upper", alpha=alpha,
+                  interpolation="nearest", zorder=z)
+    tint(a["buildable"], "#7fb069", 0.45, 1)
+    tint(a["masks"]["steep slopes"], "#6b5a4a", 0.35, 1)
+    tint(a["flags"]["undermined"], "#a57c52", 0.18, 2)
+    tint(a["masks"]["flood zone"] | a["masks"]["lakes and ponds"], "#5b9bd5", 0.55, 2)
+    tint(a["masks"]["wetlands"], "#2a9d8f", 0.55, 2)
+    loc = g.loc
+    for geom in local_geoms(layers["streams"], loc):
+        for part in getattr(geom, "geoms", [geom]):
+            if part.geom_type == "LineString":
+                xs, ys = part.xy
+                ax.plot(xs, ys, color="#3a7cc0", lw=0.5, zorder=3)
+    for name, lw in (("local_roads", 0.5), ("state_roads", 1.2)):
+        for geom in local_geoms(layers[name], loc):
+            for part in getattr(geom, "geoms", [geom]):
+                if part.geom_type == "LineString":
+                    xs, ys = part.xy
+                    ax.plot(xs, ys, color=INK2, lw=lw, zorder=4)
+    act = [loc.geom(shape(f["geometry"])) for f in layers["wells"] if f.get("geometry") and f["properties"].get("WELL_STATU") == "Active"]
+    ax.scatter([q.x for q in act], [q.y for q in act], s=2, color="#7a3e9d", zorder=4, linewidths=0)
+    px, py = power_block.exterior.xy
+    ax.fill(px, py, facecolor="#cfccc4", edgecolor=INK, lw=0.8, zorder=5, alpha=0.9)
+    ax.text(*power_block.centroid.coords[0], "power block\n(gas plant, old plant)", ha="center", va="center", fontsize=7.5, color=INK, zorder=7)
+    for name, s in sites.items():
+        fx, fy = s["footprint"].exterior.xy
+        ax.fill(fx, fy, facecolor="#f2a541", edgecolor="#8a5a12", lw=0.9, zorder=6, alpha=0.95)
+        cx, cy = s["centre"]
+        ax.text(cx, cy, f"{name}\n{s['n']} buildings", ha="center", va="center", fontsize=7.5, color=INK, zorder=7, linespacing=1.1)
+    for key in ("places", "cdps"):
+        for f in layers[key]:
+            c = loc.geom(shape(f["geometry"])).representative_point()
+            if x0 < c.x < x1 and y0 < c.y < y1:
+                ax.text(c.x, c.y, f["properties"]["BASENAME"], fontsize=8.5, color=INK, style="italic", ha="center", zorder=8,
+                        bbox=dict(boxstyle="round,pad=0.2", facecolor=SURFACE, edgecolor="none", alpha=0.75))
+    ax.plot([0], [0], marker="^", color=INK, ms=7, zorder=8)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y0, y1)
+    ax.set_aspect("equal")
+    ax.set_xlabel("km east of the old plant", fontsize=9, color=INK2)
+    ax.set_ylabel("km north", fontsize=9, color=INK2)
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v / 1000:g}"))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v / 1000:g}"))
+    handles = [Patch(color="#f2a541", label="AWS's six sites, as drawn on the county's posted master plan (approximate)"),
+               Patch(color="#cfccc4", label="the power block (HCR's gas plant and the old plant)"),
+               Patch(color="#7fb069", alpha=0.6, label="land homes could go on (no constraint below)"),
+               Patch(color="#6b5a4a", alpha=0.5, label="steep (over 25%)"),
+               Patch(color="#a57c52", alpha=0.35, label="undermined (old coal mines): build with a subsidence check"),
+               Patch(color="#5b9bd5", alpha=0.7, label="1% flood zone, lakes and ponds"),
+               Patch(color="#2a9d8f", alpha=0.7, label="wetlands"),
+               Line2D([], [], color="#3a7cc0", lw=1, label="streams (kept 30 m clear)"),
+               Line2D([], [], color="#7a3e9d", marker="o", ls="none", ms=3, label="active gas wells"),
+               Line2D([], [], color=INK2, lw=1.2, label="roads")]
+    if extra is not None:
+        handles = extra(ax) + handles
+    ax.legend(handles=handles, loc="lower left", fontsize=7.5, frameon=True, facecolor=SURFACE, edgecolor=GRID)
+    ax.set_title(title, fontsize=11, color=INK, loc="left")
+    fig.text(0.01, 0.005, "USGS 3DEP 10 m; FEMA NFHL; USFWS NWI; USGS NHD; PA DEP wells and mining (PASDA); PennDOT roads; Census places. "
+             "Sites traced from Kimley-Horn sheet C050.00 (Indiana County, 2026), fitted to the roads.", fontsize=6.5, color=MUTED)
+    fig.tight_layout(rect=(0, 0.015, 1, 1))
+    fig.savefig(path, facecolor=SURFACE)
+    plt.close(fig)
+
+
+def conference_map(a: dict, sites: dict, layers: dict, power_block, comm: dict, gates: dict, arena: tuple, homes: dict, path) -> None:
+    """D17: the land map with the conference on it: each site's food gate (its share of the glass), its
+    community and the town it joins, and the arena."""
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    def extra(ax):
+        for g in gates.values():
+            for part in getattr(g, "geoms", [g]):
+                xs, ys = part.exterior.xy
+                ax.fill(xs, ys, facecolor="#8ecae6", edgecolor="#1d6f94", lw=0.6, zorder=6)
+        for name, c in comm.items():
+            for part in getattr(c["poly"], "geoms", [c["poly"]]):
+                xs, ys = part.exterior.xy
+                ax.fill(xs, ys, facecolor="#d1495b", edgecolor="#7a1f2b", lw=0.8, zorder=6)
+            cx, cy = c["centre"]
+            ax.annotate(f"{homes[name]['homes']} homes", (cx, cy), xytext=(6, -10), textcoords="offset points", fontsize=7,
+                        color="#7a1f2b", zorder=9, fontweight="bold")
+            sx, sy = sites[name]["centre"]
+            ax.plot([sx, cx], [sy, cy], color="#7a1f2b", lw=0.6, ls=(0, (2, 2)), zorder=5)
+        ax.plot([arena[0]], [arena[1]], marker="*", ms=16, color="#ffd166", markeredgecolor=INK, zorder=10)
+        ax.annotate("the arena", arena, xytext=(10, 4), textcoords="offset points", fontsize=8.5, color=INK, zorder=10, fontweight="bold")
+        return [Line2D([], [], marker="*", ms=12, color="#ffd166", markeredgecolor=INK, ls="none",
+                       label="the conference's arena (D16's centre: rink, courts, field)"),
+                Patch(facecolor="#d1495b", label="each site's community, by its share of the jobs (base case)"),
+                Patch(facecolor="#8ecae6", edgecolor="#1d6f94", label="each site's food gate: its share of the 38.5 ha of glass")]
+
+    land_map(a, sites, layers, power_block, path, extent=(-5500.0, 4500.0, -4900.0, 5100.0), extra=extra,
+             title="The conference of communities on the real land (D17)")

@@ -122,6 +122,9 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
 - forge `village.rs` draws the townhouses, the spine and streets, the square, the food hall, the
   glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
   facade study.
+- The real land (D17, [land](pass3/land.md)): AWS's six sites mapped from the county's master plan on
+  public data. The conference ([conference](pass3/conference.md)) is the towns already there, with each
+  site's new homes joining the nearest one.
 - Phase 1 (D16): 242 homes in rings from pass 4's newcomers. 121 flats in 11 walk-ups nearest
   the centre, 98 townhouses, then 23 houses; the nearest are 258 m from the hall.
 - The neighbourhood takes 16.8 GWh a year with the heated walks (D14) and the hall's warm basins (D15),
@@ -749,6 +752,47 @@ at the campus edge, funded in the community benefits agreement.
     - ask Center Township whether it has zoning here;
     - the placeholders: people per home, members, the rink's running cost, the topping's cost;
     - the townhouses' look; the golf short course.
+
+- **D17** (2026-11-17) The real land, AWS's six sites, and the conference of communities.
+  - Jon: "so what about building communities that are pulling heat and eating the food from the
+    greenhouse? ... so its like a conference of communities, which makes it fun. your community can
+    play the other community in your sport, etc. also defense wise i like that more". Then, on the
+    steer to map the real sites first: "let's go with your plan".
+  - The steer:
+    - The economics don't come from heat or food. The greenhouse grows enough tomatoes for ~3 million
+      people, and a home's heat on the loop costs about what a heat pump does.
+    - People are the limit (pass 4: 808 newcomer households, 2,215 in the high case), then sewage
+      and schools.
+    - So: map the real ground first, then size each site's community by its jobs.
+  - **The land** (`brownfield land`, [docs/pass3/land.md](pass3/land.md)):
+    - Every layer the county's ordinance asks for, from public services: 10 m ground levels, flood
+      zones, wetlands, streams, wells, old mines, roads, power lines, towns.
+    - AWS's six sites, from the county's posted master plan (sheet C050.00), fitted to the roads:
+      9.47 m a pixel, half the line work within 30 m of a real line. The township line and DEP's
+      permit points agree.
+    - Buildings by drawn area: Bruner 12, West 7, and Helen, Green, Harvey/Gaston and Rura 5 each
+      (39); 1,314 acres drawn.
+    - Half the 22,639 ha box is clear. Old mines lie under 10,940 ha. There are 1,414 active
+      conventional gas wells. Every site has 70-186 ha buildable within 700 m.
+  - **The conference** (`brownfield conference`, [docs/pass3/conference.md](pass3/conference.md)):
+    - Each site's homes by its buildings: 30-74 homes a site, 242 in all (84-205 in the high case).
+    - They stand 700 m from AWS's buildings (pass 2's conventional cooling), on flat clear land,
+      next to the nearest town.
+    - Six clubhouses would cost $12,597 a new home a year to run. Too small to stand alone.
+    - The towns already there have 3,794 people, six times the newcomers. So the conference is three
+      members, the new homes joining them:
+      - Homer City and Lucerne Mines (Bruner's homes);
+      - Graceton and Coral (West's, Helen's, Green's and Rura's);
+      - Black Lick (Harvey/Gaston's).
+    - Three clubhouses cost $866 a household a year. The arena (D16's centre) stands between Homer
+      City and the plant.
+    - The 38.5 ha of glass is shared by homes, each share a food gate beside its site.
+  - Open:
+    - the real setback, which depends on AWS's cooling (150 m with the good-neighbour design);
+    - the full application package and its parcels;
+    - who owns the communities' land;
+    - soils and the 1 m lidar there;
+    - the 3D drawings of each member's new homes and clubhouse.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

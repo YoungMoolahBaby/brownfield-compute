@@ -1991,3 +1991,62 @@ membership:
     unit: share of the host municipalities' people who'd take a free membership
     conf: placeholder
     source: "judgement (about one in four Americans belongs to a gym; to source)"
+
+# The conference of communities on the real land (D17; Jon, 2026-11-17: "a conference of communities ...
+# your community can play the other community in your sport"): a community at each of AWS's six sites,
+# sized by the site's share of the jobs, with its share of the market-limited glass between it and the
+# site, a clubhouse each, and one shared arena (src/brownfield/conference.py).
+conference:
+  setback_m:
+    value: 700.0
+    low: 150.0
+    high: 900.0
+    unit: m from AWS's buildings to the nearest homes (night noise under 40 dB(A))
+    conf: medium
+    source: "pass 2 (docs/pass2/firm-up.md): a conventional module's cooling reaches 40 dB(A) at night ~700 m out in open ground; AWS's filing is a conventional, water-cooled design whose equipment isn't specified. Low: the good-neighbour design's roof coolers with quieter fans (150 m, D11) or walled cells (34-80 m, pass 2d)"
+  reach_m:
+    value: 900.0
+    low: 500.0
+    high: 1500.0
+    unit: m beyond the setback a community may stand from its site
+    conf: placeholder
+    source: "judgement: close enough to walk or cycle to work (a 15-minute walk is ~1.2 km)"
+  clubhouse_ft2:
+    value: 12000
+    low: 8000
+    high: 20000
+    unit: ft2, a community's clubhouse (a cafe, one court, a small gym, a workshop corner)
+    conf: placeholder
+    source: "judgement: one basketball court with run-off ~4,700 ft2 (FIBA court 28 x 15 m plus 2 m round it), a cafe and gym ~5,000, a workshop ~1,500, entry and toilets ~800"
+  clubhouse_posts:
+    value: 1.5
+    low: 1.0
+    high: 2.5
+    unit: staff on duty at once, 16 hours a day (key-card access at night, as the centre)
+    conf: placeholder
+    source: "judgement, as village.membership.posts_day"
+  town_pop_homer_city:
+    value: 1716
+    unit: people, Homer City borough
+    conf: high
+    source: "ACS 2019-2023 5-year B01003 (src/brownfield/acs.py; place GEO_ID 1600000US4235408)"
+  town_pop_black_lick:
+    value: 1008
+    unit: people, Black Lick CDP
+    conf: high
+    source: "ACS 2019-2023 5-year B01003 (1600000US4206744)"
+  town_pop_lucerne_mines:
+    value: 764
+    unit: people, Lucerne Mines CDP
+    conf: high
+    source: "ACS 2019-2023 5-year B01003 (1600000US4245312)"
+  town_pop_coral:
+    value: 206
+    unit: people, Coral CDP
+    conf: high
+    source: "ACS 2019-2023 5-year B01003 (1600000US4216136)"
+  town_pop_graceton:
+    value: 100
+    unit: people, Graceton CDP
+    conf: high
+    source: "ACS 2019-2023 5-year B01003 (1600000US4230224)"

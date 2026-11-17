@@ -453,6 +453,55 @@ def cmd_village(_args) -> int:
     return 0
 
 
+def cmd_conference(_args) -> int:
+    """D17: the conference of communities on the real land."""
+    from . import ROOT, conference as cf, figures, land
+
+    params = load_params()
+    p = values(params)
+    layers = land.fetch_all(p)
+    sites = land.aws_sites(p)
+    land.site_counts(p, sites)
+    a = land.analysis(p, layers, sites)
+    base, high = cf.site_homes(p, sites), cf.site_homes(cf.high_case(p, params), sites)
+    town = cf.towns(p, layers)
+    comm = cf.place(p, a, sites, base, town)
+    gl = cf.glass(p, base)
+    ar = cf.arena(p, a, comm, base, town, sites)
+    mem = cf.members(p, comm, base, town)
+    gates = cf.gates(p, a, sites, comm, gl)
+    md = cf.report(p, base, high, comm, town, gl, ar) + NL + cf.members_report(p, mem)
+    print(md)
+    out = OUT_DIR / "pass3"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "conference.md").write_text(md + NL, encoding="utf-8")
+    figures.conference_map(a, sites, layers, land.power_block(), comm, gates, ar, base, ROOT / "docs" / "pass3" / "conference.png")
+    print(NL + "wrote out/pass3/conference.md, docs/pass3/conference.png")
+    return 0
+
+
+def cmd_land(_args) -> int:
+    """D17: the real land round the plant and AWS's six sites."""
+    import json
+
+    from . import ROOT, figures, land
+
+    p = values(load_params())
+    layers = land.fetch_all(p)
+    sites = land.aws_sites(p)
+    land.site_counts(p, sites)
+    a = land.analysis(p, layers, sites)
+    md = land.report(p, a, sites)
+    print(md)
+    out = OUT_DIR / "pass3"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "land.md").write_text(md + NL, encoding="utf-8")
+    (ROOT / "data" / "aws_sites.geojson").write_text(json.dumps(land.sites_geojson(sites), indent=1) + NL, encoding="utf-8")
+    figures.land_map(a, sites, layers, land.power_block(), ROOT / "docs" / "pass3" / "land.png")
+    print(NL + "wrote out/pass3/land.md, data/aws_sites.geojson, docs/pass3/land.png")
+    return 0
+
+
 def cmd_site(_args) -> int:
     import json
 
@@ -529,6 +578,8 @@ def main(argv=None) -> int:
     sub.add_parser("costcarbon", help="pass 3b: embodied carbon and cost of the three structures")
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
     sub.add_parser("site", help="D12: the modular site plan: rules, scores, and proposed layouts")
+    sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
+    sub.add_parser("conference", help="D17: the conference of communities on the real land")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
     sub.add_parser("food", help="pass 3d: winter food houses on the data center's warm water, and the arboretum")
     sub.add_parser("garden", help="pass 3c: the winter garden's heat, its cantilever, the rooftop coolers' noise (after forge `garden`)")
@@ -539,7 +590,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference}.get(args.cmd or "check")
     return cmd(args)
 
 

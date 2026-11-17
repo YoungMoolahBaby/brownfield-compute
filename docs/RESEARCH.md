@@ -415,3 +415,36 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - Anytime Fitness FAQ: staffed hours, then key-tag access.
 - **Fire access round the hall.** IFC 2021 503.1.1 (within 150 ft of the ground storey's
   exterior walls) and 503.2.1 (20 ft wide).
+
+## The real land and AWS's six sites (D17, 2026-11-17)
+
+- **AWS Project Narrative**, Homer City Energy Campus (Indiana County Office of Planning and
+  Development; dated 2026-08-27, accepted 2026-10-14, review to 2027-01-12;
+  https://www.icopd.org/assets/pit100_project-narrative_082726.pdf):
+  - "approximately 2,200 acres ... six sites: Bruner, Helen, Green, West, Harvey/Gaston, and Rura";
+  - "39 data centers", two storeys (~70 ft), 112,500 ft2 footprints, "50 employees per building
+    during a peak shift";
+  - phasing from Rura and West (Dec 2026) to Helen (2032-36);
+  - non-contact cooling water through the station's existing withdrawal rights.
+- **The county's posted master plan**, Kimley-Horn sheet C050.00, "PIT100 Master Plan, Overall
+  Campus Site Plan" (https://www.icopd.org/images/overall_site_new.jpg, 1,031 x 682 px). It labels
+  "Westfield" and "Greenfield".
+- **DEP permits with points:**
+  - Rura Field grading, PAC320065 (91.8 ac, centre 40.50361, -79.18379);
+  - West Field, PAC320066 (169.2 ac, 40.5088, -79.2042);
+  - HCR's gas plant, E3206225-004 (40.517958, -79.196697; seven combined-cycle turbines under air
+    Plan Approval 32-00457A).
+- **Public map services** (no key; queried 2026-11-17):
+  - USGS 3DEP elevation ImageServer (10 m);
+  - FEMA NFHL layer 28;
+  - USFWS NWI Wetlands MapServer/0;
+  - USGS NHD MapServer/6 and /12;
+  - PASDA: DEP/22 wells, DEP2/0, /1, /5, /22 and DEP/1 mining, PennDOT/3, /4, /22, HIFLD_FEMA_PA/215,
+    IndianaCounty/5 parcels (owners ~2021);
+  - Census TIGERweb places, CDPs and county subdivisions.
+- **Wells setback:** 58 Pa.C.S. 3215(a): 500 ft for unconventional wells, 200 ft for others, from
+  existing buildings (applied the other way here).
+- **Towns' people:** ACS 2019-2023 B01003: Homer City borough 1,716; Black Lick CDP 1,008; Lucerne
+  Mines CDP 764; Coral CDP 206; Graceton CDP 100.
+- **Recreation provision:** NRPA 2026 Agency Performance Review: one recreation centre per 33,231
+  residents (median).

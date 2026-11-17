@@ -1,0 +1,124 @@
+# The real land round the Homer City plant (D17): what limits where things can be built, from public
+# map services (src/brownfield/land.py). Distances in metres.
+
+box:
+  west:
+    value: -79.285
+    unit: degrees longitude, the map's west edge (a ~15 x 15 km box round the plant)
+    conf: high
+    source: "the design: wide enough for AWS's six sites, the towns round them and their roads"
+  east:
+    value: -79.107
+    unit: degrees longitude, east edge
+    conf: high
+    source: "the design"
+  south:
+    value: 40.445
+    unit: degrees latitude, south edge
+    conf: high
+    source: "the design"
+  north:
+    value: 40.580
+    unit: degrees latitude, north edge
+    conf: high
+    source: "the design"
+
+dem_px:
+  value: 1500
+  unit: pixels a side of the 3DEP elevation grid over the box (about 10 m cells)
+  conf: high
+  source: "USGS 3DEP 1/3 arc-second, the national 10 m product; the 1 m lidar here (PA_WesternPA_2019) would be ~0.9 GB for the box and isn't needed at this scale"
+
+slope_hard:
+  value: 25.0
+  low: 20.0
+  high: 30.0
+  unit: percent slope above which land is left unbuilt (steep slope)
+  conf: medium
+  source: "common practice in Pennsylvania steep-slope ordinances: 15-25% limited, over 25% prohibited (e.g. Pennsylvania Land Trust Association model ordinance guidance); Indiana County's SALDO asks slopes over 20% be marked; judgement for the threshold"
+slope_soft:
+  value: 15.0
+  low: 10.0
+  high: 20.0
+  unit: percent slope above which building needs grading or terraces (counted as buildable, flagged)
+  conf: medium
+  source: "as slope_hard"
+
+stream_buffer_m:
+  value: 30.0
+  low: 15.0
+  high: 45.0
+  unit: m kept unbuilt either side of a stream
+  conf: placeholder
+  source: "judgement: PA Chapter 102 asks a 150 ft riparian buffer only beside exceptional-value and high-quality waters; Chapter 105 regulates the stream itself; a 100 ft (30 m) buffer is common in county ordinances"
+wetland_buffer_m:
+  value: 15.0
+  low: 10.0
+  high: 30.0
+  unit: m kept unbuilt round a mapped wetland
+  conf: placeholder
+  source: "judgement: PA Chapter 105 regulates wetlands themselves; buffers are set locally"
+well_setback_m:
+  value: 152.4
+  unit: m from homes to an active unconventional (Marcellus-type) gas well (500 ft)
+  conf: high
+  source: "58 Pa.C.S. 3215(a): no unconventional well within 500 ft of an existing building; applied here the other way, homes kept that far from such wells"
+conventional_well_m:
+  value: 61.0
+  low: 30.0
+  high: 152.4
+  unit: m from homes to an active conventional gas well (200 ft)
+  conf: medium
+  source: "58 Pa.C.S. 3215(a): no well within 200 ft of an existing building or water well; applied here the other way. Most wells in the box are shallow conventional gas and coalbed methane wells (DEP: 1,414 active conventional, 10 active unconventional)"
+plugged_well_m:
+  value: 15.0
+  low: 5.0
+  high: 30.0
+  unit: m kept clear round a plugged, abandoned or orphaned well (found and left reachable before building)
+  conf: placeholder
+  source: "judgement: DEP asks builders to locate and avoid old wells; no state setback"
+home_lot_max_ac:
+  value: 5.0
+  low: 2.0
+  high: 10.0
+  unit: acres, the largest parcel with a house counted as a home lot (larger ones are farms and estates with a house, flagged, not excluded)
+  conf: placeholder
+  source: "judgement: Indiana County's house parcels have a median of 0.42 acres; 11% are over 5 acres (PASDA parcels)"
+transmission_m:
+  value: 30.0
+  low: 20.0
+  high: 50.0
+  unit: m kept clear either side of a transmission line's centre (its right of way)
+  conf: placeholder
+  source: "judgement: 345 kV and 230 kV rights of way are typically 100-150 ft wide"
+
+aws:
+  footprint_ft2:
+    value: 112500
+    unit: ft2, one data center building's footprint (two storeys, 225,000 ft2 of floor)
+    conf: high
+    source: "AWS Project Narrative, Homer City Energy Campus (Indiana County Office of Planning and Development, 2026-08-27): 'a building footprint of approximately 112,500 square feet per structure (225,000 square feet total per building)', 'two stories in height (approximately 70 feet)'"
+  buildings:
+    value: 39
+    low: 36
+    high: 39
+    unit: data center buildings at full build-out, all six sites
+    conf: high
+    source: "AWS Project Narrative (2026-08-27): '39 data centers' on 'six sites: Bruner, Helen, Green, West, Harvey/Gaston, and Rura'; news reports (Baxtel, Data Center Dynamics, citing PennLive) give 36 on ~1,100 acres"
+  acres:
+    value: 2200
+    unit: acres AWS proposes to acquire across the six sites
+    conf: high
+    source: "AWS Project Narrative (2026-08-27): 'approximately 2,200 acres situated in Center and Blacklick Townships'"
+  staff_per_building:
+    value: 50
+    unit: employees a building at a peak shift
+    conf: high
+    source: "AWS Project Narrative (2026-08-27): '50 employees per building during a peak shift'"
+  margin_m:
+    value: 15.0
+    low: 10.0
+    high: 30.0
+    unit: m added round a site's drawn development (half a perimeter road and its verge)
+    conf: placeholder
+    source: "judgement"

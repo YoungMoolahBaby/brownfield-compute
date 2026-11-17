@@ -174,8 +174,15 @@ yet.
     - It was the optimizer's find, cheaper than the hand layout in all 29 cases across the
       inputs' ranges.
   - [What a real application needs](docs/pass3/checklist.md): Pennsylvania's and Indiana County's
-    lists, item by item, against this plan. The gap is the ground: the real site isn't mapped
-    yet.
+    lists, item by item, against this plan.
+  - [The real land](docs/pass3/land.md) (D17): AWS's six sites mapped on public data, fitted from
+    the county's posted master plan.
+    - Half the ground round the plant is clear to build on. Old coal mines lie under the other half
+      in places, and there are 1,400 active gas wells.
+    - [The conference of communities](docs/pass3/conference.md): each site's newcomers, 30-74 homes
+      a site, are too few to stand alone. They join the towns already there (3,794 people):
+      Homer City and Lucerne Mines, Graceton and Coral, Black Lick. Each member gets a clubhouse,
+      the arena is shared, and the members play each other.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their
