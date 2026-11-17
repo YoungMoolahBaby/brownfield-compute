@@ -1,19 +1,17 @@
-"""D17, step 2: the conference of communities on the real land. Jon, 2026-11-17: "communities that
-are pulling heat and eating the food from the greenhouse ... like a conference of communities ...
-your community can play the other community in your sport".
+"""D17-D18: the conference of communities on the real land. Jon, 2026-11-17: "communities that are
+pulling heat and eating the food from the greenhouse ... like a conference of communities ... your
+community can play the other community in your sport"; then "draw the 3D homes and clubhouses".
 
-- **Homes by site.** Pass 4's newcomers who'd live near the campus (renting and buying, D16's rings)
-  shared among AWS's six sites by their buildings (AWS: 50 staff a building a shift), in pass 4's
-  base case and its high case.
-- **Where they go.** On land with no constraint and under 15% slope (`land.analysis`), beyond the
-  night-noise setback from every site and within a walk or a bike ride of their own, as close as
-  that allows to the nearest existing town.
-- **The glass.** The market sets how much greenhouse can be sold (pass 3d; `site.greenhouse_ha`), not
-  the heat, so the campus's glass is shared among the sites by their homes and stands between each
-  site and its community, as the community's food gate.
-- **Third spaces.** A clubhouse in each community (a cafe, a court, a small gym, a workshop corner),
-  and one arena for the conference (D16's community center: the rink, the big courts, the field),
-  where the most people are. The leagues run between the communities and the towns already there.
+- **The jobs by site.** AWS's six sites share pass 4's jobs by their buildings (AWS: 50 staff a
+  building a shift), and the campus's glass by the same shares: each site's food gate (`gates`).
+- **The homes by town (D18).** D17 put each site's homes beside it, which left Bruner's 74 in the woods
+  3 km from Homer City. The newcomers instead join the towns already there in proportion to their
+  people (`town_homes`), so every town grows by the same share and none is doubled; each town's homes
+  are laid out at its edge on the real ground (`neighbourhood`).
+- **Third spaces.** A clubhouse (a cafe, a court, a fitness room, a workshop) for each member that can
+  run one for under `clubhouse_max_usd_household` a household a year; one arena for the conference
+  (D16's community center: the rink, the big courts, the field), where the most people are. The
+  leagues run between the members.
 """
 
 from __future__ import annotations
@@ -68,6 +66,30 @@ def site_homes(p: dict, sites: dict) -> dict[str, dict]:
     return out
 
 
+def town_homes(p: dict, town: dict) -> dict[str, dict]:
+    """D18: the newcomers shared among the towns by their people, so every town grows by the same
+    share and none is doubled; each town's homes by type (D16's mix), people and school children."""
+    from . import rings
+
+    c = rings.counts(p)
+    names = list(town)
+    tot = sum(town[k]["people"] for k in names)
+    share = [town[k]["people"] / tot for k in names]
+    flat_beds = [rings._apportion(nb, share) for nb in c["flats_by_bed"]]
+    per = {kind: rings._apportion(c[kind], share) for kind in ("townhouses", "houses")}
+    apm = area_per_home(p)
+    out = {}
+    for i, k in enumerate(names):
+        fb = [b[i] for b in flat_beds]
+        cc = dict(c, flats_by_bed=fb, flats=sum(fb), townhouses=per["townhouses"][i], houses=per["houses"][i])
+        homes = cc["flats"] + cc["townhouses"] + cc["houses"]
+        people = sum(rings.persons(p, cc).values())
+        out[k] = {"homes": homes, "flats_by_bed": fb, **{kind: cc[kind] for kind in KINDS}, "people": people,
+                  "children": sum(rings.children(p, cc).values()), "ha": sum(cc[kind] * apm[kind] for kind in KINDS) / 1e4,
+                  "growth": people / town[k]["people"]}
+    return out
+
+
 def towns(p: dict, layers: dict) -> dict[str, dict]:
     """The towns already there, their middles (m from the plant) and people."""
     from shapely.geometry import shape
@@ -118,53 +140,16 @@ def glass_ok(a: dict) -> np.ndarray:
     return ~bad & ~a["flags"]["sloping (15-25%)"] & ~np.isnan(a["grid"].z)
 
 
-def place(p: dict, a: dict, sites: dict, homes: dict, town: dict) -> dict[str, dict]:
-    """Each community on flat, unconstrained land between the setback and the setback plus its reach
-    from its own site, beyond the setback from every site, as near the nearest town as it can be,
-    in one compact patch; communities don't share land."""
-    g = a["grid"]
-    rows, cols = np.mgrid[0:g.ny, 0:g.nx]
-    X, Y = g.xy(cols, rows)
-    ok = a["buildable"] & ~a["flags"]["sloping (15-25%)"]
-    any_site = g.draw([s["footprint"] for s in sites.values()])
-    d_any = g.distance(any_site, p[C + "setback_m"] + p[C + "reach_m"] + 100.0)
-    ok &= d_any >= p[C + "setback_m"]
-    taken = np.zeros(ok.shape, bool)
-    out = {}
-    tx = np.array([t["xy"] for t in town.values()])
-    # The largest communities choose first.
-    for name in sorted(sites, key=lambda k: -homes[k]["ha"]):
-        own = g.distance(g.draw([sites[name]["footprint"]]), p[C + "setback_m"] + p[C + "reach_m"])
-        cand = ok & ~taken & (own <= p[C + "setback_m"] + p[C + "reach_m"])
-        if not cand.any():
-            continue
-        cx, cy = X[cand], Y[cand]
-        dt = np.min(np.hypot(cx[:, None] - tx[None, :, 0], cy[:, None] - tx[None, :, 1]), axis=1)
-        seed = int(np.argmin(dt))
-        need = int(math.ceil(homes[name]["ha"] / g.cell_ha))
-        order = np.argsort(np.hypot(cx - cx[seed], cy - cy[seed]))[:need]
-        pick = np.zeros(cand.sum(), bool)
-        pick[order] = True
-        idx = np.flatnonzero(cand.ravel())[pick]
-        taken.ravel()[idx] = True
-        poly = cells_poly(g, idx, X, Y)
-        near_town = min(town, key=lambda t: math.dist(town[t]["xy"], (poly.centroid.x, poly.centroid.y)))
-        out[name] = {"poly": poly, "centre": (poly.centroid.x, poly.centroid.y), "town": near_town,
-                     "town_m": math.dist(town[near_town]["xy"], (poly.centroid.x, poly.centroid.y)),
-                     "site_m": float(own.ravel()[idx].min()), "undermined": float(a["flags"]["undermined"].ravel()[idx].mean())}
-    return out
-
-
 def glass(p: dict, homes: dict) -> dict[str, float]:
     """The campus's market-limited glass (ha) shared among the sites by their homes."""
     tot = sum(h["homes"] for h in homes.values())
     return {k: p["site.greenhouse_ha"] * h["homes"] / tot for k, h in homes.items()}
 
 
-def arena(p: dict, a: dict, comm: dict, homes: dict, town: dict, sites: dict) -> tuple[float, float]:
+def arena(p: dict, a: dict, where: dict, th: dict, town: dict, sites: dict) -> tuple[float, float]:
     """The conference's arena: on flat, unconstrained land beyond the setback, nearest the middle of
-    everyone (the communities' and the towns' people)."""
-    w = [(c["centre"], homes[k]["people"]) for k, c in comm.items()] + [(t["xy"], t["people"]) for t in town.values()]
+    everyone (each town's people where they are, and its newcomers at their new homes, `where`)."""
+    w = [(where[k], th[k]["people"]) for k in where] + [(t["xy"], t["people"]) for t in town.values()]
     mx = sum(xy[0] * n for xy, n in w) / sum(n for _, n in w)
     my = sum(xy[1] * n for xy, n in w) / sum(n for _, n in w)
     g = a["grid"]
@@ -186,34 +171,45 @@ def clubhouse(p: dict) -> dict[str, float]:
     return {"build": build, "run": fte * p["village.membership.opex_per_fte"], "fte": fte}
 
 
-def report(p: dict, base: dict, high: dict, comm: dict, town: dict, gl: dict, ar: tuple) -> str:
+def report(p: dict, sites_h: dict, base: dict, high: dict, town: dict, lays: dict, gl: dict, ar: tuple, a: dict) -> str:
+    """The jobs and glass by site; the homes by town, where they stand and what they need."""
+    import math as _m
+
     g = "village.growth_limits."
-    L = ["**The conference of communities** (D17: a community at each of AWS's six sites, sized by its share of the jobs)", "",
-         f"Homes keep {p[C + 'setback_m']:,.0f} m from AWS's buildings (pass 2's conventional cooling at night); each community stands "
-         f"within {p[C + 'reach_m']:,.0f} m beyond that of its site, on flat land with no constraint, as near a town as it can be.", "",
-         "| Site | Buildings | Jobs | Homes (base) | People | School children | Land | Homes (high case) | Glass | Nearest town |",
-         "|---|---|---|---|---|---|---|---|---|---|"]
+    L = ["**The jobs and the glass, by AWS's site**", "",
+         "| Site | Buildings | Jobs | Glass (its food gate) |", "|---|---|---|---|"]
+    for k, h in sites_h.items():
+        L.append(f"| {k} | {h['buildings']} | {h['jobs']:.0f} | {gl[k]:.1f} ha |")
+    L += [f"| **All six** | **{sum(h['buildings'] for h in sites_h.values())}** | **{sum(h['jobs'] for h in sites_h.values()):,.0f}** | "
+          f"**{sum(gl.values()):.1f} ha** |", "",
+          "**The new homes, by town** (D18: shared by the towns' people, so each grows by the same share; laid out at its edge)", "",
+          "| Town | People now | New homes (base) | People | School children | Growth | Homes (high case) | Lots | Clusters | "
+          "From the town's middle | Over old mines |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+    grid = a["grid"]
     for k, h in base.items():
-        c = comm.get(k)
-        where = f"{c['town']}, {c['town_m'] / 1000:.1f} km" if c else "no room found"
-        L.append(f"| {k} | {h['buildings']} | {h['jobs']:.0f} | {h['homes']} ({h['flats']} flats, {h['townhouses']} townhouses, "
-                 f"{h['houses']} houses) | {h['people']:.0f} | {h['children']:.0f} | {h['ha']:.1f} ha | {high[k]['homes']} | "
-                 f"{gl[k]:.1f} ha | {where} |")
+        lay = lays.get(k)
+        homes_lots = [l for l in lay.lots if l.kind != "club"] if lay else []
+        if homes_lots:
+            cx, cy = lay.centre()
+            d = _m.dist((cx, cy), town[k]["xy"])
+            und = grid.draw([l.polygon() for l in homes_lots]) & a["flags"]["undermined"]
+            under = und.sum() / max(1, grid.draw([l.polygon() for l in homes_lots]).sum())
+            where, mines, n = f"{d / 1000:.1f} km", f"{under:.0%}", len(lay.mouths) - (1 if any(l.kind == "club" for l in lay.lots) else 0)
+        else:
+            where, mines, n = "not placed", "", 0
+        mix = ", ".join(f"{h[kd]} {kd if h[kd] != 1 else kd[:-1]}" for kd in KINDS)
+        L.append(f"| {k} | {town[k]['people']:,.0f} | {h['homes']} ({mix}) | "
+                 f"{h['people']:.0f} | {h['children']:.0f} | {h['growth']:.0%} | {high[k]['homes']} | {len(homes_lots)} | {n} | {where} | {mines} |")
     hb, hh = sum(h["homes"] for h in base.values()), sum(h["homes"] for h in high.values())
     people = sum(h["people"] for h in base.values())
     kids = sum(h["children"] for h in base.values())
     tpeople = sum(t["people"] for t in town.values())
-    cl = clubhouse(p)
-    L += [f"| **All six** | **{sum(h['buildings'] for h in base.values())}** | **{sum(h['jobs'] for h in base.values()):,.0f}** | "
-          f"**{hb}** | **{people:,.0f}** | **{kids:.0f}** | **{sum(h['ha'] for h in base.values()):.1f} ha** | **{hh}** | "
-          f"**{sum(gl.values()):.1f} ha** | |", "",
-          f"- The towns already there: " + ", ".join(f"{k} {t['people']:,.0f}" for k, t in town.items())
-          + f": {tpeople:,.0f} people, against {people:,.0f} in the new communities (base case).",
-          f"- Over old mines: " + ", ".join(f"{k} {c['undermined']:.0%}" for k, c in comm.items()) + " of each community's land.",
-          f"- A clubhouse ({p[C + 'clubhouse_ft2']:,.0f} ft2) costs about ${cl['build'] / 1e6:,.1f}M to build and "
-          f"${cl['run'] / 1e3:,.0f}k a year to run ({cl['fte']:.1f} full-time posts); six cost ${6 * cl['build'] / 1e6:,.0f}M and "
-          f"${6 * cl['run'] / 1e6:,.1f}M a year: ${6 * cl['run'] / hb:,.0f} a home a year in the base case, ${6 * cl['run'] / hh:,.0f} "
-          "in the high case.",
+    missing = {k: lay.missing() for k, lay in lays.items() if lay.missing()}
+    L += [f"| **All five** | **{tpeople:,.0f}** | **{hb}** | **{people:,.0f}** | **{kids:.0f}** | **{people / tpeople:.0%}** | **{hh}** | | | | |", "",
+          f"- Every home placed." if not missing else f"- Not placed: {missing}.",
+          f"- Homes keep {p[C + 'setback_m']:,.0f} m from AWS's buildings (pass 2's conventional cooling at night), {p[C + 'building_clear_m']:.0f} m "
+          f"from existing buildings and 30 m from US 119 and US 22; each lot is at least 95% clear land, within a {p[C + 'walk_m']:.0f} m walk "
+          f"of its spine's mouth, and its building's ground falls no more than {p[C + 'pad_fall_max_m']:.1f} m.",
           f"- The arena (D16's community center, rink and field) stands at {ar[0] / 1000:.1f} km east, {ar[1] / 1000:.1f} km north of "
           "the old plant, nearest the middle of everyone.",
           f"- Limits: {hb} new homes in the base case and {hh} in the high case, against room for about "
@@ -223,45 +219,66 @@ def report(p: dict, base: dict, high: dict, comm: dict, town: dict, gl: dict, ar
     return "\n".join(L)
 
 
+def clubs_report(p: dict, lays: dict, town: dict) -> str:
+    """Where each clubhouse stands."""
+    import math as _m
+
+    L = []
+    for k, lay in lays.items():
+        for c in (l for l in lay.lots if l.kind == "club"):
+            d = _m.dist((c.x, c.y), town[k]["xy"])
+            near = _m.dist((c.x, c.y), lay.centre())
+            L.append(f"- {k}'s clubhouse stands {d:,.0f} m from the town's middle and {near:,.0f} m from the middle of its new homes.")
+    return "\n".join(L)
+
+
 # The towns grouped as the conference's members, by where they stand: Homer City with Lucerne Mines just
 # north of it; the villages by Route 119 south-east of the plant (Graceton, Coral); Black Lick to the south.
 MEMBERS = {"Homer City and Lucerne Mines": ("Homer City", "Lucerne Mines"), "Graceton and Coral": ("Graceton", "Coral"),
            "Black Lick": ("Black Lick",)}
 
 
-def members(p: dict, comm: dict, homes: dict, town: dict) -> dict[str, dict]:
-    """The conference as the towns already there, each with the new homes that stand nearest it: their
-    people, households and the cost a household of a clubhouse each."""
+def members(p: dict, th: dict, town: dict) -> dict[str, dict]:
+    """The conference as the towns already there, each with its new homes (`town_homes`): people,
+    households, and a clubhouse where it costs a household no more than `clubhouse_max_usd_household`
+    a year to run (in its largest town); a member without one plays at the arena."""
     hh_per = p["site.visits.persons_per_home"]
     out = {}
     cl = clubhouse(p)
     for m, names in MEMBERS.items():
-        new = [k for k, c in comm.items() if c["town"] in names]
-        people0 = sum(town[n]["people"] for n in names if n in town)
-        new_people = sum(homes[k]["people"] for k in new)
-        new_homes = sum(homes[k]["homes"] for k in new)
+        names = tuple(n for n in names if n in town)
+        people0 = sum(town[n]["people"] for n in names)
+        new_people = sum(th[n]["people"] for n in names)
+        new_homes = sum(th[n]["homes"] for n in names)
         households = people0 / hh_per + new_homes
-        out[m] = {"towns": names, "sites": new, "people": people0 + new_people, "new_people": new_people, "new_homes": new_homes,
-                  "households": households, "clubhouse_per_household": cl["run"] / households if households else math.inf}
+        per = cl["run"] / households if households else math.inf
+        out[m] = {"towns": names, "people": people0 + new_people, "new_people": new_people, "new_homes": new_homes,
+                  "households": households, "clubhouse_per_household": per,
+                  "clubhouse": per <= p[C + "clubhouse_max_usd_household"],
+                  "club_town": max(names, key=lambda n: town[n]["people"]) if names else None}
     return out
 
 
-def gates(p: dict, a: dict, sites: dict, comm: dict, gl: dict) -> dict:
+def club_towns(mem: dict) -> set[str]:
+    return {r["club_town"] for r in mem.values() if r["clubhouse"]}
+
+
+def gates(p: dict, a: dict, sites: dict, toward: dict, gl: dict) -> dict:
     """Each site's share of the glass as a block on flat, dry land within 300 m of the site (`glass_ok`),
-    grown from the side facing its community: its food gate."""
+    grown from the side facing `toward` (the nearest town's new homes): its food gate."""
     g = a["grid"]
     rows, cols = np.mgrid[0:g.ny, 0:g.nx]
     X, Y = g.xy(cols, rows)
     ok = glass_ok(a)
     taken = np.zeros(ok.shape, bool)
     out = {}
-    for name, c in comm.items():
+    for name, xy in toward.items():
         own = g.distance(g.draw([sites[name]["footprint"]]), 310.0)
         cand = ok & ~taken & (own <= 300.0)
         if not cand.any():
             continue
         cx, cy = X[cand], Y[cand]
-        seed = int(np.argmin(np.hypot(cx - c["centre"][0], cy - c["centre"][1])))
+        seed = int(np.argmin(np.hypot(cx - xy[0], cy - xy[1])))
         need = int(math.ceil(gl[name] * 1e4 / (g.cell_ha * 1e4)))
         order = np.argsort(np.hypot(cx - cx[seed], cy - cy[seed]))[:need]
         idx = np.flatnonzero(cand.ravel())[order]
@@ -272,13 +289,16 @@ def gates(p: dict, a: dict, sites: dict, comm: dict, gl: dict) -> dict:
 
 def members_report(p: dict, mem: dict) -> str:
     cl = clubhouse(p)
-    L = ["", "**The conference as the towns already there** (each community joins the town it stands nearest; one clubhouse a member)", "",
-         "| Member | Towns | New homes from | People (new) | Households | A clubhouse's running cost a household a year |",
-         "|---|---|---|---|---|---|"]
+    L = ["", "**The conference as the towns already there** (D18: the new homes shared among the towns by their people; "
+         f"a clubhouse where it costs a household under ${p[C + 'clubhouse_max_usd_household']:,.0f} a year to run)", "",
+         "| Member | Towns | New homes | People (newcomers) | Households | A clubhouse's running cost a household a year | Home ground |",
+         "|---|---|---|---|---|---|---|"]
     for m, r in mem.items():
-        L.append(f"| {m} | {', '.join(r['towns'])} | {', '.join(r['sites']) or 'none'} | {r['people']:,.0f} ({r['new_people']:,.0f}) | "
-                 f"{r['households']:,.0f} | ${r['clubhouse_per_household']:,.0f} |")
+        home = f"its clubhouse, in {r['club_town']}" if r["clubhouse"] else "the arena"
+        L.append(f"| {m} | {', '.join(r['towns'])} | {r['new_homes']} | {r['people']:,.0f} ({r['new_people']:,.0f}) | "
+                 f"{r['households']:,.0f} | ${r['clubhouse_per_household']:,.0f} | {home} |")
     hh = sum(r["households"] for r in mem.values())
-    L += ["", f"Three clubhouses cost ${3 * cl['run'] / 1e6:,.1f}M a year to run, ${3 * cl['run'] / hh:,.0f} a household across the "
-          f"conference's {hh:,.0f} households, against ${6 * cl['run'] / 1e6:,.1f}M for six apart."]
+    n = sum(r["clubhouse"] for r in mem.values())
+    L += ["", f"{n} clubhouses cost ${n * cl['build'] / 1e6:,.1f}M to build and ${n * cl['run'] / 1e6:,.2f}M a year to run: "
+          f"${n * cl['run'] / hh:,.0f} a household across the conference's {hh:,.0f} households."]
     return "\n".join(L)

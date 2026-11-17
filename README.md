@@ -179,10 +179,13 @@ yet.
     the county's posted master plan.
     - Half the ground round the plant is clear to build on. Old coal mines lie under the other half
       in places, and there are 1,400 active gas wells.
-    - [The conference of communities](docs/pass3/conference.md): each site's newcomers, 30-74 homes
-      a site, are too few to stand alone. They join the towns already there (3,794 people):
-      Homer City and Lucerne Mines, Graceton and Coral, Black Lick. Each member gets a clubhouse,
-      the arena is shared, and the members play each other.
+    - [The conference of communities](docs/pass3/conference.md) (D17-D18): the newcomers join the
+      towns already there (3,794 people) by the towns' size, so each grows about 15%.
+      - Each town's homes are laid out at its edge on the real ground and drawn in 3D.
+      - Homer City and Black Lick get clubhouses; Graceton and Coral play at the shared arena; the
+        members play each other.
+
+      ![Homer City from the south-east: the new walk-ups, townhouses and houses at the borough's edge, drawn on the real ground in autumn](docs/pass3/conference_homer_city.png)
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

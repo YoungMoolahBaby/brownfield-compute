@@ -454,8 +454,14 @@ def cmd_village(_args) -> int:
 
 
 def cmd_conference(_args) -> int:
-    """D17: the conference of communities on the real land."""
-    from . import ROOT, conference as cf, figures, land
+    """D17-D18: the conference of communities on the real land, each town's new homes laid out at its
+    edge, and the drawing data for forge `conference`."""
+    import math
+
+    from shapely.geometry import Polygon
+
+    from . import ROOT, conference as cf, figures, land, neighbourhood as nb
+    from .homes import Local
 
     params = load_params()
     p = values(params)
@@ -463,20 +469,30 @@ def cmd_conference(_args) -> int:
     sites = land.aws_sites(p)
     land.site_counts(p, sites)
     a = land.analysis(p, layers, sites)
-    base, high = cf.site_homes(p, sites), cf.site_homes(cf.high_case(p, params), sites)
+    loc = Local(*land.PLANT)
+    raw = land.buildings(p)
+    blds = [Polygon([loc.xy(lo, la) for lo, la in b["lonlat"]]) for b in raw]
+    blds = [b if b.is_valid else b.buffer(0) for b in blds]
     town = cf.towns(p, layers)
-    comm = cf.place(p, a, sites, base, town)
-    gl = cf.glass(p, base)
-    ar = cf.arena(p, a, comm, base, town, sites)
-    mem = cf.members(p, comm, base, town)
-    gates = cf.gates(p, a, sites, comm, gl)
-    md = cf.report(p, base, high, comm, town, gl, ar) + NL + cf.members_report(p, mem)
+    sites_h = cf.site_homes(p, sites)
+    base, high = cf.town_homes(p, town), cf.town_homes(cf.high_case(p, params), town)
+    mem = cf.members(p, base, town)
+    lays = nb.lay_out_all(p, a, sites, layers, blds, town, base, cf.club_towns(mem))
+    where = {k: lay.centre() for k, lay in lays.items()}
+    gl = cf.glass(p, sites_h)
+    ar = cf.arena(p, a, where, base, town, sites)
+    toward = {s: min(where.values(), key=lambda xy: math.dist(xy, sites[s]["centre"])) for s in sites}
+    gates = cf.gates(p, a, sites, toward, gl)
+    md = (cf.report(p, sites_h, base, high, town, lays, gl, ar, a) + NL + cf.clubs_report(p, lays, town) + NL
+          + cf.members_report(p, mem))
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)
     (out / "conference.md").write_text(md + NL, encoding="utf-8")
-    figures.conference_map(a, sites, layers, land.power_block(), comm, gates, ar, base, ROOT / "docs" / "pass3" / "conference.png")
-    print(NL + "wrote out/pass3/conference.md, docs/pass3/conference.png")
+    figures.conference_map(a, sites, layers, land.power_block(), lays, gates, ar, ROOT / "docs" / "pass3" / "conference.png")
+    summary = nb.drawing(p, a, layers, blds, [b["height"] for b in raw], town, lays, out / "conference")
+    print(NL + "drawing data: " + ", ".join(f"{k} ({v['lots']} lots, {v['trees']:,} trees, {v['buildings']:,} buildings)" for k, v in summary.items()))
+    print("wrote out/pass3/conference.md, docs/pass3/conference.png, out/pass3/conference/ (draw with forge `conference`)")
     return 0
 
 
@@ -579,7 +595,7 @@ def main(argv=None) -> int:
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
     sub.add_parser("site", help="D12: the modular site plan: rules, scores, and proposed layouts")
     sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
-    sub.add_parser("conference", help="D17: the conference of communities on the real land")
+    sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
     sub.add_parser("food", help="pass 3d: winter food houses on the data center's warm water, and the arboretum")
     sub.add_parser("garden", help="pass 3c: the winter garden's heat, its cantilever, the rooftop coolers' noise (after forge `garden`)")

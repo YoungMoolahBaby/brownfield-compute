@@ -35,7 +35,7 @@ Status key:
 | (i) Location, size and topography of the site; the landowner's interest | Partial | D17 maps AWS's six sites on the real ground, from the county's posted master plan fitted to the roads, with 10 m ground levels ([land.md](land.md)). Owners are PASDA's, as of ~2021; AWS's purchases aren't in it |
 | (ii) Density of land use for each part | Have | The rings: homes a hectare for the flats, the townhouses and the houses (`brownfield village`, [village.md](village.md)) |
 | (iii) Common open space: where, how big, who owns and keeps it | Partial | The square, the mall, the winter garden, the field and its loop, the greens between rows ([site.md](site.md)); owned by the trust (D11). The field's upkeep is costed (`brownfield village`, running the centre); the greens' upkeep isn't |
-| (iv) Buildings' use, approximate height, bulk and location | Partial | Every type is sized: 3-storey walk-ups, the townhouses, 2-storey houses, the community center, the 17 m hall and its 26.5 m pylons, the glasshouses. Locations are schematic |
+| (iv) Buildings' use, approximate height, bulk and location | Partial | Every type is sized: 3-storey walk-ups, the townhouses, 2-storey houses, the community center, the 17 m hall and its 26.5 m pylons, the glasshouses, the clubhouses (D18). D18 lays each town's new homes and clubhouse out lot by lot on the real ground ([conference.md](conference.md)); the campus itself is still schematic |
 | (v) Water supply, sewage and stormwater | Partial | Sewage: Homer City's plant has room for ~1,350 homes on average, but a wet month already reached its rating ([village.md](village.md)). Water supply for the homes and the basins' top-up isn't sized against a source. Stormwater: rain gardens and swales named, not calculated |
 | (vi) Covenants, easements and other restrictions, utility easements | Missing | The trust's set share of the campus tax (D11) and free public ground (D16) are principles, not drafted covenants. Easements for the warm loop, power and the service road through the moat aren't drawn |
 | (vii) Parking; location and width of streets and public ways | Partial | Streets 15 m, the spine 24 m, the hub's car park sized at a share of the code minimums (D14). Positions schematic; no street sections drawn |
@@ -54,7 +54,7 @@ Status key:
 | Item | Status | Where, or what it needs |
 |---|---|---|
 | c. **Existing site features, resources and constraints:** context map; photos and an aerial; deeds or surveys | Partial | A context map of the ~15 x 15 km round the plant (D17, [land.md](land.md)); no photos, deeds or surveys |
-| c. Existing conditions within 1,000 ft, at 1 in. = 50 ft: 2 ft contours, water features and flood zones, soils and geology, vegetation, sensitive areas (PNDI), viewsheds, roads, bridges, easements, utilities, hazards, historic sites | Partial | D17 maps 10 m ground levels and slopes, flood zones, wetlands, streams, mined-out ground, coal refuse, abandoned mine land, wells, roads, rail and power lines ([land.md](land.md)). Still missing: 2 ft contours (from the 1 m lidar), soils, vegetation, PNDI, viewsheds, easements, historic sites |
+| c. Existing conditions within 1,000 ft, at 1 in. = 50 ft: 2 ft contours, water features and flood zones, soils and geology, vegetation, sensitive areas (PNDI), viewsheds, roads, bridges, easements, utilities, hazards, historic sites | Partial | D17 maps 10 m ground levels and slopes, flood zones, wetlands, streams, mined-out ground, coal refuse, abandoned mine land, wells, roads, rail and power lines ([land.md](land.md)). D18 adds the buildings as they stand (Microsoft's footprints) and the vegetation's cover (NLCD 2021, 30 m). Still missing: 2 ft contours (from the 1 m lidar), soils, PNDI, viewsheds, easements, historic sites |
 | c. **Spoiled land** | Partial | The capped ash site is kept to open uses (D12 rule); its real outline and DEP's closure terms are still to get |
 | d. Preliminary site plan: parcels and zoning; streets, rights of way and easements; buildings and setbacks; vehicle and walking circulation; water features; parking and loading; phases; street sections | Partial | The modular site plan ([site.md](site.md)) has every module, road, walk, crossing and loading point, priced; schematic, not surveyed |
 | d. **Outdoor lighting**, with a computer model of what's lit | Missing | The glasshouses' grow lights need full blackout curtains (Leamington's by-law, D10); the site's own lighting isn't modelled |
@@ -100,6 +100,6 @@ Status key:
   1. Ask Center Township whether it has zoning here, which settles the route.
   2. Get the full application package from the county, with its sheets at full resolution and
      its parcel list.
-  3. Put the conference's communities ([conference.md](conference.md)) on parcels: who owns them,
-     and whether they would sell.
+  3. Put each town's new homes ([conference.md](conference.md), laid out in D18) on parcels: who
+     owns them, and whether they would sell; and ask the towns.
   4. Soils (USDA's Web Soil Survey) and the 1 m lidar for the communities' land only.

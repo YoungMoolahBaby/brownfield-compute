@@ -448,3 +448,20 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   Mines CDP 764; Coral CDP 206; Graceton CDP 100.
 - **Recreation provision:** NRPA 2026 Agency Performance Review: one recreation centre per 33,231
   residents (median).
+
+## The conference drawn (D18, 2026-11-17)
+
+- **Microsoft's building footprints** (Global ML Building Footprints, release 2026-02-03; ODbL):
+  - tiles 032001111 and 032001113 (21 MB) from
+    https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv;
+  - 7,776 buildings in the box, 5,316 with a height (median 3.7 m, read here as the eaves);
+  - OpenStreetMap was checked first: 61 buildings in Homer City's ~800.
+- **NLCD 2021 land cover** (MRLC, 30 m), fetched as the styled WMS image
+  (https://www.mrlc.gov/geoserver/mrlc_display/NLCD_2021_Land_Cover_L48/wms) and decoded by its
+  legend colours. Woods (41, 42, 43, 90) are 61% of the box's pixels, hay, pasture and cropland 23%.
+- **The court:** NFHS Basketball Rules Book, Rule 1: a high-school court is 84 x 50 ft. FIBA Official
+  Basketball Rules 2024, art. 2: at least 7 m clear above it.
+- **The five-minute walk:** Clarence Perry's neighbourhood unit (1929) and the Congress for the New
+  Urbanism's charter: a quarter mile, ~400 m.
+- **CortenForge's `HeightFieldData`** (cf-geometry 0.9.0, heightfield.rs:54): bilinear `sample`
+  over a grid with its origin at a corner, y increasing by row.

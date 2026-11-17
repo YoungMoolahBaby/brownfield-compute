@@ -123,8 +123,11 @@ scorecard measures (hearing record) for Jon; the renewal permit for Outfall 027 
   glasshouse, the community center (ice, roller hockey, courts) and the fields, plus a three-look
   facade study.
 - The real land (D17, [land](pass3/land.md)): AWS's six sites mapped from the county's master plan on
-  public data. The conference ([conference](pass3/conference.md)) is the towns already there, with each
-  site's new homes joining the nearest one.
+  public data. The conference ([conference](pass3/conference.md)) is the towns already there.
+  - D18: the newcomers are shared by the towns' people (each grows ~15%) and laid out at each town's
+    edge on the real ground.
+  - Two clubhouses (Homer City, Black Lick) and the arena are the members' home grounds.
+  - forge `conference` draws it all on the real terrain.
 - Phase 1 (D16): 242 homes in rings from pass 4's newcomers. 121 flats in 11 walk-ups nearest
   the centre, 98 townhouses, then 23 houses; the nearest are 258 m from the hall.
 - The neighbourhood takes 16.8 GWh a year with the heated walks (D14) and the hall's warm basins (D15),
@@ -792,7 +795,47 @@ at the campus edge, funded in the community benefits agreement.
     - the full application package and its parcels;
     - who owns the communities' land;
     - soils and the 1 m lidar there;
-    - the 3D drawings of each member's new homes and clubhouse.
+    - the 3D drawings of each member's new homes and clubhouse (done in D18).
+
+- **D18** (2026-11-17) The conference drawn: each town's new homes and clubhouse on the real ground.
+  - Jon: "draw the 3D homes and clubhouses".
+  - The steer: D17's placement left Bruner's 74 homes in the woods 3.1 km from Homer City. A drawing
+    of that would show an enclave, the opposite of the conclusion.
+    - Homes at a town's edge use its mains, its school bus and its shops.
+    - The warm loop doesn't hold the homes near the sites: D16 found heat pumps cheaper for the
+      houses.
+    - So the newcomers join the towns by the towns' people (each grows ~15%), laid out at their edges.
+  - **The model** (`brownfield conference`, [docs/pass3/conference.md](pass3/conference.md)):
+    - Homes by town: Homer City 109, Black Lick 65, Lucerne Mines 49, Coral 13, Graceton 6 (242;
+      664 in the high case). D17 more than doubled Graceton and Coral.
+    - The layout (`neighbourhood.py`):
+      - a spine off an existing local street, with D16's living streets, lots and greens;
+      - the lots in rings from the spine's mouth;
+      - each lot at least 95% clear, within a 400 m walk, its building's ground falling under 3 m;
+      - up to three clusters a town.
+      Every home placed.
+    - A clubhouse where it costs a household under $1,200 a year:
+      - Homer City (with Lucerne Mines), $442;
+      - Black Lick, $1,085;
+      - Graceton and Coral ($3,593) play at the arena.
+      Two cost $1.02M a year, $577 a household.
+    - The clubhouse: a 670 m2 court hall (an NFHS court, 7 m clear) behind a cafe, lobby, fitness
+      room and workshop; 12,000 ft2.
+    - Black Lick has no level ground near its middle (floodplain, steep hills): its clubhouse lands
+      833 m up the road. An existing building in the village made over is probably better.
+  - **The drawings** (forge `conference`, 11 views):
+    - USGS ground and NLCD woods in autumn;
+    - Microsoft's footprints for the towns as they stand, PennDOT's roads;
+    - pass 3's walk-ups and D16's townhouses and houses, turned to their streets on graded lots;
+    - the clubhouse inside and out;
+    - AWS's Rura buildings on Graceton's skyline.
+  - Open:
+    - what the towns say;
+    - who owns the edge land;
+    - the sewer and water mains;
+    - how Graceton's and Coral's homes cross US 119;
+    - Black Lick's clubhouse in an existing building;
+    - the real setback.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

@@ -19,7 +19,7 @@ use crate::garden::{M, Rng, b, stone_mass_s, STONE};
 use crate::scene::{self, Camera, Light, SLayer};
 
 type V = Vector3<f64>;
-const Z: f64 = -2.2; // the lower ground
+pub const Z: f64 = -2.2; // the lower ground
 
 pub struct Home {
     pub x: f64,
@@ -420,7 +420,7 @@ impl Turn {
 /// the green side, a cornice and a sedum roof. Its long side faces the street; `facing` +1: the
 /// street to the south.
 #[allow(clippy::too_many_arguments)]
-fn walkup(v: &mut Village, x: f64, y: f64, facing: f64, w: f64, d: f64, storeys: usize, sh: f64, lot_d: f64, tone: usize) {
+pub(crate) fn walkup(v: &mut Village, x: f64, y: f64, facing: f64, w: f64, d: f64, storeys: usize, sh: f64, lot_d: f64, tone: usize) {
     let (x0, x1) = (x - w / 2.0, x + w / 2.0);
     let front = y + facing * (lot_d / 2.0 - 6.0); // 6 m of front garden
     let back = front - facing * d;
@@ -463,7 +463,7 @@ fn walkup(v: &mut Village, x: f64, y: f64, facing: f64, w: f64, d: f64, storeys:
 /// A walk-up's lot: the front garden of native planting with a path to the entrance, a back court of
 /// pavers (bins, bikes, drying) with a bed of planting, the side strips planted.
 #[allow(clippy::too_many_arguments)]
-fn walkup_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, w: f64, d: f64, lot_w: f64, lot_d: f64) {
+pub(crate) fn walkup_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, w: f64, d: f64, lot_w: f64, lot_d: f64) {
     let street = y + facing * lot_d / 2.0;
     let front = y + facing * (lot_d / 2.0 - 6.0);
     let back = front - facing * d;
@@ -487,7 +487,7 @@ fn walkup_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, w: f6
 /// garage-workshop beside it with its door to the street and a sedum roof, a front door and windows
 /// all round. The house stands 8 m back from the street.
 #[allow(clippy::too_many_arguments)]
-fn house_big(v: &mut Village, x: f64, y: f64, facing: f64, r: &Ring, tone: usize, roofs: &mut IndexedMesh) {
+pub(crate) fn house_big(v: &mut Village, x: f64, y: f64, facing: f64, r: &Ring, tone: usize, roofs: &mut IndexedMesh) {
     let (gw, gd, gh) = r.garage;
     let x0 = x - (r.w + gw) / 2.0;
     let (x1, gx1) = (x0 + r.w, x0 + r.w + gw);
@@ -531,7 +531,7 @@ fn house_big(v: &mut Village, x: f64, y: f64, facing: f64, r: &Ring, tone: usize
 
 /// A house's lot: the drive to the garage, a path to the door, native planting in front with a rain
 /// garden, a back garden of grass with a small native tree and raised beds.
-fn house_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, r: &Ring) {
+pub(crate) fn house_lot(v: &mut Village, rng: &mut Rng, x: f64, y: f64, facing: f64, r: &Ring) {
     let (gw, _, _) = r.garage;
     let x0 = x - (r.w + gw) / 2.0;
     let x1 = x0 + r.w;

@@ -105,6 +105,18 @@ the end collects the features this project wanted, with what we built instead.
   pattern, would read more naturally with the flag on `Data`, and two `Data`s sharing one
   `Model` can't differ here. Worth a line in the docs either way.
 
+## cf-geometry
+
+- **works** (2026-11-17, D18, the conference drawn): `HeightFieldData` (heightfield.rs:54) samples
+  the real ground (USGS 10 m, resampled to 2 m) bilinearly for every road, tree and lot in
+  `forge/src/conference.rs`. Its origin is the grid's corner with y increasing by row, so our
+  north-to-south rows are flipped on loading.
+- **gap** (2026-11-17, D18): no mesh from a `HeightFieldData` (nor from a raster), and nothing to
+  drape a polyline or a polygon on one. We wrote our own:
+  - the terrain as an indexed grid mesh split by land cover, with a canopy over the far woods;
+  - roads as ribbons draped on the ground;
+  - existing buildings extruded from footprints, ear-clipping their flat roofs.
+
 ## Expected gaps (scoping, not yet hit in code)
 
 Listed so they can be confirmed or struck once code meets them:
@@ -185,3 +197,8 @@ Nice-to-haves for CortenForge, with what this project built instead.
   quarter-turn helper because the center's meshes are shared with the rest of the neighbourhood
   and can't be moved after the fact. One isometry on a set of meshes, applied while building or
   after, would have covered both.
+- **Terrain and site tools** (2026-11-17, D18): a mesh from a `HeightFieldData` (by cell, with
+  per-cell tags for land cover), draping polylines and polygons on it (roads, lots), grading a
+  footprint into it (a level pad blending out), and extruding a footprint with a roof. With
+  instancing, thousands of trees on it. Instead: `forge/src/conference.rs` builds each by hand
+  (~350 lines), the grading done in Python (`neighbourhood._grade`).

@@ -2004,13 +2004,6 @@ conference:
     unit: m from AWS's buildings to the nearest homes (night noise under 40 dB(A))
     conf: medium
     source: "pass 2 (docs/pass2/firm-up.md): a conventional module's cooling reaches 40 dB(A) at night ~700 m out in open ground; AWS's filing is a conventional, water-cooled design whose equipment isn't specified. Low: the good-neighbour design's roof coolers with quieter fans (150 m, D11) or walled cells (34-80 m, pass 2d)"
-  reach_m:
-    value: 900.0
-    low: 500.0
-    high: 1500.0
-    unit: m beyond the setback a community may stand from its site
-    conf: placeholder
-    source: "judgement: close enough to walk or cycle to work (a 15-minute walk is ~1.2 km)"
   clubhouse_ft2:
     value: 12000
     low: 8000
@@ -2050,3 +2043,68 @@ conference:
     unit: people, Graceton CDP
     conf: high
     source: "ACS 2019-2023 5-year B01003 (1600000US4230224)"
+  # D18: each town's new homes at its edge, and the clubhouse's rooms.
+  clubhouse_max_usd_household:
+    value: 1200
+    low: 800
+    high: 2000
+    unit: USD a household a year, the most a member's clubhouse may cost to run; above it the arena is its home ground
+    conf: placeholder
+    source: "judgement: about three times D16's membership ($31.78 a month, $381 a year)"
+  court_hall_m2:
+    value: 670
+    unit: m2, the court hall
+    conf: medium
+    source: "NFHS high-school basketball court 84 x 50 ft (25.6 x 15.2 m) with 3 m runoff each side: 31.6 x 21.2 m; NFHS Basketball Rules Book, Rule 1"
+  court_clear_m:
+    value: 7.0
+    unit: m clear height over the court
+    conf: medium
+    source: "FIBA Official Basketball Rules 2024, art. 2: at least 7 m"
+  cafe_m2:
+    value: 150
+    unit: m2, the cafe and its counter
+    conf: placeholder
+    source: "judgement: about 60 seats at ~2 m2 a seat plus a counter and a small kitchen"
+  fitness_m2:
+    value: 120
+    unit: m2, the fitness room
+    conf: placeholder
+    source: "judgement: ~15 machines and a free-weights corner"
+  workshop_m2:
+    value: 90
+    unit: m2, the workshop corner (benches, tools, a roll-up door)
+    conf: placeholder
+    source: "judgement, a quarter of D16's makerspace"
+  support_m2:
+    value: 85
+    unit: m2, lobby, toilets, a store
+    conf: placeholder
+    source: "judgement; makes the rooms sum to clubhouse_ft2"
+  clubhouse_lot_w_m:
+    value: 60
+    unit: m along the street, the clubhouse's lot (the building, a plaza, 6 parking spaces, a lawn)
+    conf: placeholder
+    source: "the building (~34 x 35 m), a 12 m plaza in front, parking beside, a lawn behind"
+  clubhouse_lot_d_m:
+    value: 60
+    unit: m deep
+    conf: placeholder
+    source: "as clubhouse_lot_w_m"
+  walk_m:
+    value: 400
+    unit: m, the farthest a new lot stands from its clubhouse or the spine's mouth
+    conf: medium
+    source: "the pedestrian shed: a 5-minute walk, a quarter mile (Clarence Perry's neighbourhood unit, 1929; the Congress for the New Urbanism's charter)"
+  building_clear_m:
+    value: 10
+    unit: m, new lots keep this far from existing buildings
+    conf: placeholder
+    source: "judgement: a side yard and a hedge"
+  pad_fall_max_m:
+    value: 3.0
+    low: 1.5
+    high: 4.5
+    unit: m, the most the ground may fall across a lot for it to stand on one level pad
+    conf: placeholder
+    source: "judgement: about a storey, which a walk-out lower floor takes up; more needs retaining walls"

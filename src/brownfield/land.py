@@ -137,6 +137,94 @@ def fetch_all(p: dict) -> dict[str, list[dict]]:
 
 
 
+# --- The towns as built, and the land's cover (D18) -----------------------------------------------
+
+# Microsoft's building footprints (machine-traced from imagery; ODbL), in zoom-9 quadkey tiles. The
+# tiles over the box are listed in its dataset index. OpenStreetMap maps only ~61 of Homer City's
+# ~800 buildings, so it isn't used.
+MS_INDEX = "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
+
+
+def _quadkey(lat: float, lon: float, z: int = 9) -> str:
+    n = 2 ** z
+    x = int((lon + 180.0) / 360.0 * n)
+    s = math.sin(math.radians(lat))
+    y = int((0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * n)
+    return "".join(str(((x >> i) & 1) + 2 * ((y >> i) & 1)) for i in range(z - 1, -1, -1))
+
+
+def _download(url: str, path) -> None:
+    if path.exists():
+        return
+    resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=600)
+    resp.raise_for_status()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(resp.content)
+
+
+def buildings(p: dict) -> list[dict]:
+    """Every building footprint in the box: {"lonlat": [(lon, lat), ...], "height": m or None}. The
+    tiles (~21 MB) and the box's buildings are cached in data/raw/land/msbuildings/."""
+    import gzip
+    import json
+
+    d = RAW / "msbuildings"
+    cache = d / "box.json"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    w, s, e, n = box(p)
+    keys = sorted({_quadkey(la, lo) for la in (s, n) for lo in (w, e)})
+    _download(MS_INDEX, d / "dataset-links.csv")
+    urls = {}
+    for line in (d / "dataset-links.csv").read_text(encoding="utf-8").splitlines():
+        f = line.split(",")
+        if len(f) >= 3 and f[0] == "UnitedStates" and f[1] in keys:
+            urls[f[1]] = f[2]
+    out = []
+    for k in keys:
+        path = d / f"{k}.csv.gz"
+        _download(urls[k], path)
+        for line in gzip.decompress(path.read_bytes()).decode("utf-8").splitlines():
+            f = json.loads(line)
+            ring = f["geometry"]["coordinates"][0]
+            lo, la = ring[0]
+            if w <= lo <= e and s <= la <= n:
+                h = f["properties"].get("height", -1.0)
+                out.append({"lonlat": [(round(a, 7), round(b, 7)) for a, b in ring], "height": h if h and h > 0 else None})
+    cache.write_text(json.dumps(out), encoding="utf-8")
+    return out
+
+
+# NLCD 2021 land cover (MRLC, 30 m), fetched as its styled WMS image; each class has its own colour.
+NLCD_WMS = "https://www.mrlc.gov/geoserver/mrlc_display/NLCD_2021_Land_Cover_L48/wms"
+NLCD = {11: (70, 107, 159), 21: (222, 197, 197), 22: (217, 146, 130), 23: (235, 0, 0), 24: (171, 0, 0), 31: (179, 172, 159),
+        41: (104, 171, 95), 42: (28, 95, 44), 43: (181, 197, 143), 52: (204, 184, 121), 71: (223, 223, 194), 81: (220, 217, 57),
+        82: (171, 108, 40), 90: (184, 217, 235), 95: (108, 159, 184)}
+
+
+def landcover(p: dict, px: int = 1200) -> tuple[np.ndarray, tuple]:
+    """NLCD classes over the box on a lon/lat grid (row 0 north), each pixel the class whose legend
+    colour is nearest (the WMS image's colours sit within a few units of the legend's)."""
+    from PIL import Image
+
+    w, s, e, n = box(p)
+    h = int(round(px * (n - s) / (e - w)))
+    path = RAW / "nlcd" / f"lc_{px}.png"
+    if not path.exists():
+        resp = requests.get(NLCD_WMS, params={"service": "WMS", "version": "1.1.1", "request": "GetMap",
+                                              "layers": "NLCD_2021_Land_Cover_L48", "styles": "", "srs": "EPSG:4326",
+                                              "bbox": f"{w},{s},{e},{n}", "width": px, "height": h, "format": "image/png"},
+                            headers={"User-Agent": USER_AGENT}, timeout=300)
+        resp.raise_for_status()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(resp.content)
+    rgb = np.asarray(Image.open(path).convert("RGB"), dtype=float)
+    keys = np.array(list(NLCD))
+    cols = np.array([NLCD[k] for k in keys], dtype=float)
+    d = ((rgb[:, :, None, :] - cols[None, None, :, :]) ** 2).sum(-1)
+    return keys[np.argmin(d, axis=2)].astype(np.uint8), (w, s, e, n)
+
+
 # --- The master plan, georeferenced (D17) ---------------------------------------------------------
 #
 # The county's posted master plan (Kimley-Horn sheet C050.00, ~1,000 px across) has no coordinates.

@@ -5,11 +5,14 @@
 //!   the heat model reads) and `../docs/pass3/house.png`.
 //! - `apartment`: the 12-flat walk-up (pass 3b), built, measured and drawn:
 //!   `../out/pass3/apartment.json` (every flat's envelope) and `../docs/pass3/apartment.png`.
+//! - `conference`: each town's new homes and clubhouse on the real ground (D18), from
+//!   `../out/pass3/conference/` (`brownfield conference`), to `../docs/pass3/conference_*.png`.
 //! - `meshers`: CortenForge's uniform-grid mesher against its parallel adaptive one (time, triangles,
 //!   enclosed volume).
 
 mod apartment;
 mod build;
+mod conference;
 mod food;
 mod framing;
 mod garden;
@@ -482,6 +485,13 @@ fn main() {
             }
         }
         "build-probe" => build::probe(),
+        "conference" => {
+            // D18: each town's new homes and clubhouse on the real ground.
+            if let Err(e) = conference::run(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         "garden" => {
             if let Err(e) = garden::run(root) {
                 eprintln!("{e}");

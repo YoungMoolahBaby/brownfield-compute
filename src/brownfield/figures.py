@@ -407,9 +407,9 @@ def land_map(a: dict, sites: dict, layers: dict, power_block, path, extent=(-550
     plt.close(fig)
 
 
-def conference_map(a: dict, sites: dict, layers: dict, power_block, comm: dict, gates: dict, arena: tuple, homes: dict, path) -> None:
-    """D17: the land map with the conference on it: each site's food gate (its share of the glass), its
-    community and the town it joins, and the arena."""
+def conference_map(a: dict, sites: dict, layers: dict, power_block, lays: dict, gates: dict, arena: tuple, path) -> None:
+    """D17-D18: the land map with the conference on it: each site's food gate (its share of the glass),
+    each town's new homes at its edge, the clubhouses, and the arena."""
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
@@ -418,21 +418,26 @@ def conference_map(a: dict, sites: dict, layers: dict, power_block, comm: dict, 
             for part in getattr(g, "geoms", [g]):
                 xs, ys = part.exterior.xy
                 ax.fill(xs, ys, facecolor="#8ecae6", edgecolor="#1d6f94", lw=0.6, zorder=6)
-        for name, c in comm.items():
-            for part in getattr(c["poly"], "geoms", [c["poly"]]):
-                xs, ys = part.exterior.xy
-                ax.fill(xs, ys, facecolor="#d1495b", edgecolor="#7a1f2b", lw=0.8, zorder=6)
-            cx, cy = c["centre"]
-            ax.annotate(f"{homes[name]['homes']} homes", (cx, cy), xytext=(6, -10), textcoords="offset points", fontsize=7,
-                        color="#7a1f2b", zorder=9, fontweight="bold")
-            sx, sy = sites[name]["centre"]
-            ax.plot([sx, cx], [sy, cy], color="#7a1f2b", lw=0.6, ls=(0, (2, 2)), zorder=5)
+        for name, lay in lays.items():
+            homes = [l for l in lay.lots if l.kind != "club"]
+            for l in homes:
+                xs, ys = l.polygon().exterior.xy
+                ax.fill(xs, ys, facecolor="#d1495b", edgecolor="#7a1f2b", lw=0.3, zorder=6)
+            if homes:
+                cx, cy = lay.centre()
+                n = sum(lay.homes().values())
+                off = {"Graceton": (10, 6), "Coral": (10, -14)}.get(name, (8, -12))
+                ax.annotate(f"{n} homes", (cx, cy), xytext=off, textcoords="offset points", fontsize=7, color="#7a1f2b",
+                            zorder=9, fontweight="bold")
+            for c in (l for l in lay.lots if l.kind == "club"):
+                ax.plot([c.x], [c.y], marker="s", ms=7, color="#f4a259", markeredgecolor=INK, zorder=10)
         ax.plot([arena[0]], [arena[1]], marker="*", ms=16, color="#ffd166", markeredgecolor=INK, zorder=10)
         ax.annotate("the arena", arena, xytext=(10, 4), textcoords="offset points", fontsize=8.5, color=INK, zorder=10, fontweight="bold")
         return [Line2D([], [], marker="*", ms=12, color="#ffd166", markeredgecolor=INK, ls="none",
                        label="the conference's arena (D16's centre: rink, courts, field)"),
-                Patch(facecolor="#d1495b", label="each site's community, by its share of the jobs (base case)"),
+                Line2D([], [], marker="s", ms=7, color="#f4a259", markeredgecolor=INK, ls="none", label="a member's clubhouse"),
+                Patch(facecolor="#d1495b", label="each town's new homes, at its edge (base case)"),
                 Patch(facecolor="#8ecae6", edgecolor="#1d6f94", label="each site's food gate: its share of the 38.5 ha of glass")]
 
     land_map(a, sites, layers, power_block, path, extent=(-5500.0, 4500.0, -4900.0, 5100.0), extra=extra,
-             title="The conference of communities on the real land (D17)")
+             title="The conference of communities on the real land (D17-D18)")
