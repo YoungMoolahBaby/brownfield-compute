@@ -104,56 +104,22 @@ homes:
     conf: high
     source: "the design (the current layout)"
 
-park_center:
+hub:
   x:
-    value: 260.0
-    unit: m east, parking for the center and rink
+    value: 240.0
+    unit: m east, the mobility hub (shared car park, shuttle stop, bikes, charging)
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (D14)"
   y:
-    value: 100.0
-    unit: m south, parking for the center and rink
+    value: 120.0
+    unit: m south, the mobility hub
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (D14)"
   rot:
     value: 0
-    unit: degrees (0 or 90), parking for the center and rink
+    unit: degrees (0 or 90), the mobility hub
     conf: high
-    source: "the design (the current layout)"
-
-park_field:
-  x:
-    value: -150.0
-    unit: m east, parking for the field
-    conf: high
-    source: "the design (the current layout)"
-  y:
-    value: 225.0
-    unit: m south, parking for the field
-    conf: high
-    source: "the design (the current layout)"
-  rot:
-    value: 0
-    unit: degrees (0 or 90), parking for the field
-    conf: high
-    source: "the design (the current layout)"
-
-park_food:
-  x:
-    value: 380.0
-    unit: m east, parking for the food court
-    conf: high
-    source: "the design (the current layout)"
-  y:
-    value: 70.0
-    unit: m south, parking for the food court
-    conf: high
-    source: "the design (the current layout)"
-  rot:
-    value: 0
-    unit: degrees (0 or 90), parking for the food court
-    conf: high
-    source: "the design (the current layout)"
+    source: "the design (D14)"
 
 delivery:
   x:
@@ -324,3 +290,24 @@ food_t_yr:
   unit: t of produce a year leaving by truck (pass 3d's design point)
   conf: medium
   source: "brownfield food: tomatoes in glass, 29,509 t a year (scaled area 43.5 ha; to rerun at 41 ha)"
+car_share:
+  value: 0.4
+  low: 0.2
+  high: 1.0
+  unit: share of the code-minimum parking built, shared in one hub (cars optional, D14; high = the code minimums)
+  conf: placeholder
+  source: "a design choice (D14: parking maximums in place of minimums; to source the reform cases)"
+hub_extra_m2:
+  value: 1500
+  low: 800
+  high: 2500
+  unit: m2 of the hub beyond parking (shuttle bays, bike storage, a waiting room, charging)
+  conf: placeholder
+  source: "judgement"
+walk_stop_m:
+  value: 400
+  low: 300
+  high: 800
+  unit: m, most a door may be from a shuttle stop along the streets
+  conf: placeholder
+  source: "to source: the usual 400 m (5 minute) bus-stop planning standard"

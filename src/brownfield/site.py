@@ -70,6 +70,10 @@ def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
     hw, hd = homes_rect[1] - homes_rect[0], homes_rect[3] - homes_rect[2]
     f = "village.fields."
     pos = lambda k: (p[s + k + ".x"], p[s + k + ".y"], int(p[s + k + ".rot"]))
+    # One mobility hub (D14): a shared car park at a share of the code minimums for the center and
+    # rink, the field and the food court, plus the shuttle stop, bikes and charging.
+    hub_m2 = p[s + "car_share"] * (p[s + "park_center_m2"] + p[s + "park_field_m2"] + p[s + "park_food_m2"]) + p[s + "hub_extra_m2"]
+    hub_side = hub_m2 ** 0.5
     # The community center and its rink under one roof, 90 m wide (forge `garden` draws the same).
     center_m2 = (p["village.amenities.center_ft2"] + p["village.rink.building_area_single_sheet"]) / 10.7639
     out = [Module("data hall", HALL[1] - HALL[0], HALL[3] - HALL[2], *centre(HALL), movable=False)]
@@ -80,9 +84,7 @@ def modules(p: dict, greenhouse_ha: float, homes_rect: tuple) -> list[Module]:
         ("square", "square", 60.0, 60.0, {}),
         ("field and loop", "field", p[f + "pitch_width_soccer"] + 46.0, p[f + "pitch_length_soccer"] + 46.0, {"on_cap_ok": True}),
         ("neighbourhood", "homes", hw, hd, {"sleeps": True}),
-        ("parking: center and rink", "park_center", p[s + "park_center_m2"] ** 0.5, p[s + "park_center_m2"] ** 0.5, {"vehicles": True}),
-        ("parking: field", "park_field", p[s + "park_field_m2"] ** 0.5, p[s + "park_field_m2"] ** 0.5, {"vehicles": True, "on_cap_ok": True}),
-        ("parking: food court", "park_food", p[s + "park_food_m2"] ** 0.5, p[s + "park_food_m2"] ** 0.5, {"vehicles": True}),
+        ("mobility hub", "hub", hub_side, hub_side, {"vehicles": True}),
         ("remote delivery building", "delivery", 40.0, 30.0, {"vehicles": True}),
     ]:
         x, y, rot = pos(key)
@@ -112,6 +114,8 @@ def rules(p: dict, mods: list[Module]) -> list[str]:
     for m in mods:
         if m.sleeps and gap(m.rect, hall) < p["village.site.home_setback_m"]:
             bad.append(f"{m.name} inside the noise setback ({gap(m.rect, hall):.0f} m < {p['village.site.home_setback_m']:g} m)")
+        if m.name == "neighbourhood":
+            pass
         if m.vehicles and gap(m.rect, hall) < p[s + "standoff_m"]:
             bad.append(f"{m.name} (public vehicles) inside the stand-off band ({gap(m.rect, hall):.0f} m < {p[s + 'standoff_m']:g} m)")
         if not m.on_cap_ok and m.name != "data hall" and overlaps(m.rect, cap_rect(p)):
@@ -119,6 +123,9 @@ def rules(p: dict, mods: list[Module]) -> list[str]:
         x0, x1, y0, y1 = m.rect
         if x0 < p[s + "bounds.x0"] or x1 > p[s + "bounds.x1"] or y0 < p[s + "bounds.y0"] or y1 > p[s + "bounds.y1"]:
             bad.append(f"{m.name} off the site")
+    mm = metrics(p, mods, 0.0)
+    if mm["stop_m"] > p[s + "walk_stop_m"]:
+        bad.append(f"a door {mm['stop_m']:.0f} m from the nearest shuttle stop (> {p[s + 'walk_stop_m']:g} m)")
     return bad
 
 
@@ -146,14 +153,23 @@ def metrics(p: dict, mods: list[Module], food_t: float) -> dict:
     src = (centre(HALL)[0], HALL[3])
     heated = ["winter garden", "greenhouse", "community center", "field and loop", "neighbourhood"]
     main_m = sum(manhattan(src, centre(by(mods, n).rect)) for n in heated)
-    parking_walk = {k: manhattan(centre(by(mods, f"parking: {k}").rect), v) / w
-                    for k, v in [("center and rink", places["the community center"]), ("field", places["the field"]),
-                                 ("food court", food_door)]}
+    hub = centre(by(mods, "mobility hub").rect)
+    parking_walk = {k: manhattan(hub, v) / w for k, v in [("center and rink", places["the community center"]),
+                                                         ("field", places["the field"]), ("food court", food_door)]}
+    # Shuttle stops: the hub, the square, and the spine's far end where the town begins.
+    stops = [hub, places["the square"], (centre(homes)[0], homes[3])]
+    corners = [(homes[0], homes[2]), (homes[1], homes[2]), (homes[0], homes[3]), (homes[1], homes[3])]
+    stop_m = max(min(manhattan(c, st) for st in stops) for c in corners)
+    # Heated walks (D14): the spine, a walk on each side of every green, the square, and the walk to the hub.
+    s2 = "village.site."
+    rows = max(1, round((homes[3] - homes[2]) / (2 * p[s2 + "lot_depth_m"] + p[s2 + "street_w_m"] + p[s2 + "green_w_m"])))
+    walk_m2 = ((homes[3] - homes[2]) * 6.0 + rows * 2 * (homes[1] - homes[0]) * 2.4 + 60.0 * 60.0
+               + manhattan(hub, places["the square"]) * 3.0)
     xs = [v for m in mods for v in m.rect[:2]]
     ys = [v for m in mods for v in m.rect[2:]]
     return {"walks": walks, "truck_km_yr": truck_m * trips / 1000.0, "truck_crossings": crossings, "main_m": main_m,
             "main_usd": main_m * p["pass3.block.main_usd_m"], "parking_walk": parking_walk,
-            "land_ha": (max(xs) - min(xs)) * (max(ys) - min(ys)) / 1e4,
+            "land_ha": (max(xs) - min(xs)) * (max(ys) - min(ys)) / 1e4, "stop_m": stop_m, "heated_walk_m2": walk_m2,
             "homes_from_hall_m": gap(homes, HALL)}
 
 
@@ -244,7 +260,9 @@ def report(p: dict, mods: list[Module], m: dict, proposals: list[tuple]) -> str:
     L += ["", f"- Trucks: {m['truck_km_yr']:,.0f} truck-km a year from the site entrance through the remote delivery building; "
           f"{m['truck_crossings']} route(s) crossing the walks between the homes and the places they walk to.",
           f"- Warm main from the hall to the heated modules: {m['main_m']:,.0f} m (about ${m['main_usd'] / 1e6:,.1f}M at pass 3's cost).",
-          "- Walk from parking: " + ", ".join(f"{k} {v:.1f} min" for k, v in m["parking_walk"].items()) + ".",
+          "- Walk from the mobility hub: " + ", ".join(f"{k} {v:.1f} min" for k, v in m["parking_walk"].items()) + "; "
+          f"the furthest door is {m['stop_m']:.0f} m from a shuttle stop.",
+          f"- Heated walks (snow-free all winter on the warm water): about {m['heated_walk_m2']:,.0f} m2.",
           f"- Homes {m['homes_from_hall_m']:.0f} m from the hall (noise setback {p['village.site.home_setback_m']:g} m); "
           f"public vehicles kept {p['site.standoff_m']:g} m off it.",
           f"- The layout spans {m['land_ha']:.0f} ha. Score {score(p, m):.2f} (lower is better; weights are placeholders for Jon's priorities)."]

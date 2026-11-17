@@ -29,7 +29,7 @@ def test_the_current_layout_passes():
 
 
 def test_public_vehicles_kept_out_of_the_standoff_band():
-    i = next(k for k, m in enumerate(MODS) if m.name == "parking: food court")
+    i = next(k for k, m in enumerate(MODS) if m.name == "mobility hub")
     hall = site.HALL
     moved = list(MODS)
     moved[i] = replace(MODS[i], x=(hall[0] + hall[1]) / 2, y=hall[2] - 10.0 - MODS[i].d / 2)  # just north of the hall
