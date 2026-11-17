@@ -375,6 +375,98 @@ at the campus edge, funded in the community benefits agreement.
         the neighbour (twin walls leave almost none).
     - Still to check before citing: the Men's Sheds funding history, library makerspace staffing, the
       Central Park Conservancy critiques, and the zero-lot-line code example.
+  - Who owns the heat loop (Jon OK'd 2026-11-16; real cases, to cite in the pass's report):
+    - Customer- or town-owned networks with cost-based, published prices keep trust and prices in
+      check. Private sales raised prices, mostly through the fixed charge. Homes stay warm when the
+      heat source stops only if the network owns its own backup.
+    - Cases:
+      - Denmark's Heat Supply Act (1979): non-profit pricing, prices equal to costs; consumer co-ops and
+        municipal companies supply most of its district heat; the regulator (Forsyningstilsynet)
+        publishes every network's prices.
+      - Sweden after 1996: many towns sold networks and prices rose. Private networks charge ~7% more
+        than municipal ones, mostly in the fixed part (Lundin, IFN WP 1532, 2025).
+      - The UK: Ofgem has regulated heat networks since January 2026, with last-resort directions to
+        keep heat on.
+      - Pennsylvania: the PUC already regulates Philadelphia's steam network (Vicinity), with a
+        cost-based rate.
+      - Odense: Meta's heat goes into Fjernvarme Fyn's network, and Fyn owns the heat pumps.
+      - Mantsala, Finland (2022): the data center lost grid power in a dispute and put in little or
+        no heat; the town's utility heated the town on oil and gas.
+      - 107 Swedish industrial excess-heat deals: ~6% of recovered heat lost to closures (Werner &
+        Lygnerud, Energy 151, 2018).
+    - Design changes:
+      - The operator pays to build the network; a customer co-op or a municipal or joint authority
+        owns the pipes, heat pumps and backup. The data center sells heat into it and never owns the
+        network serving homes.
+      - Cost-based prices in the bylaws or the benefits agreement, published yearly, with a
+        replacement reserve; the fixed charge capped and its make-up published.
+      - A price ceiling: no home pays more a year than with its own efficient heat pump. The model
+        tests it with pass 3's comparison.
+      - Backup, owned by the network, sized to heat every home with the data center fully off. The
+        model adds its cost.
+      - A long heat contract with a notice period and a bond that pays for backup heat if the data
+        center leaves early; a named step-in party in the benefits agreement.
+      - Expect PA PUC regulation; to confirm with a PA utility lawyer, including for a co-op or an
+        authority.
+    - Still to check before citing: the Danish share of heat (a trade-association figure), the
+      Odense household count, and the Mantsala reporting (DCD, The Register).
+  - The construction-workforce surge (Jon OK'd 2026-11-16; real cases, to cite in the pass's report):
+    - A surge hits renters first, the town's costs arrive before its tax money, and the bust leaves
+      peak-sized housing empty. Towns recover in about a decade. Local hiring shrinks the surge.
+    - Cases:
+      - Abilene TX (Stargate, 2024-27): rents up ~50% in a year, RV parks spreading, waits to rehouse
+        people from shelters from ~1 month to up to 6 (news reporting).
+      - The Bakken: Williston's population roughly doubled; Watford City got $10M of the $190M it asked
+        the state for (Raimi & Newell, RFF 2016).
+      - Oil-patch rents fell 15-20% in two months in 2015.
+      - Delta UT recovered on most measures about a decade after its boom (Brown, Dorius & Krannich,
+        Rural Sociology 70(1), 2005).
+      - Homer City's gas plant already had 1,800+ workers on site in September 2026 (company figures:
+        ~95% local, "local" undefined).
+      - Norris TN: built by the TVA for dam workers, later a town.
+      - PA's Act 13 (2012) shale impact fee: a precedent for local funding.
+    - Design and timing changes:
+      - A local-hiring target and training in the benefits agreement, "local" defined, the share
+        published quarterly.
+      - Peak worker lodging on campus land: modular, paid for by the operator and contractors, with site
+        transport, and removed or converted afterwards. The land reserved for later phases can carry it
+        during the build.
+      - Permanent homes sized to the long-run jobs.
+      - Phase 1 opens before the AWS peak, with first option to current local renters.
+      - An impact fund for police, EMS, schools and roads, paid before the surge.
+      - Short-term-rental rules and lease protections as far as PA law allows.
+      - A public dashboard from day one, with thresholds that release more of the fund.
+      - Trades compete with the campus, so build early or budget a premium.
+      - The model treats the out-of-town peak as a range.
+  - Whether the benefits agreement holds (Jon OK'd 2026-11-16; real cases, to cite in the pass's report):
+    - Agreements with powerful developers hold when government can enforce them, the money is tied to
+      the land and paid early, the developer's own benefits depend on delivery, the community side is
+      independent and paid, a monitor publishes the numbers, and the agreement binds the next owner.
+    - Cases:
+      - Atlantic Yards (2005): a private agreement with soft targets that faded (mostly critics'
+        accounts).
+      - Enforcement of these agreements is untested in court (Been, U. Chicago Law Review 77(1), 2010).
+      - Pittsburgh's Hill District (2015): a LERTA tied ten years of property tax on the site to the
+        land, so the money outlasted a developer's exit (Next City 2026).
+      - Foxconn WI: credits only after jobs were shown, renegotiated from 13,000 jobs to 1,454.
+      - Data center owners appeal assessments (Cook County cuts of 24-90% sought; Amazon's appeal in
+        Canton MS denied, 2026).
+      - The Dalles OR fought for 13 months to keep Google's water use secret; it had roughly tripled
+        since 2017.
+    - Design changes:
+      - The agreement is part of the township's land-use approval, with the community coalition a party
+        too.
+      - Payments tied to the parcels (a LERTA-style district) and the first years prepaid.
+      - The operator's tax treatment and later permits conditional on delivery, with clawbacks.
+      - A floor on yearly payments, so the trust doesn't hang on an appeal (PA legality to check).
+      - An independent monitor publishes water, power, noise, heat delivered and local hiring: the
+        scorecard as the yearly public report.
+      - No operator staff in township government or as a majority on the trust.
+      - A review every five years, with the community side's consent for changes.
+    - For the model: a tax-appeal scenario (a 24-90% cut) against what the trust, the impact fund and
+      the housing share still receive.
+    - Still to check before citing: the Abilene, Bakken, Detroit and Waukee details (news and
+      secondary sources), and Starbase.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
