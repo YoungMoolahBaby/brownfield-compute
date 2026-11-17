@@ -357,7 +357,7 @@ pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh,
     let (hx0, hx1) = (xs.iter().cloned().fold(f64::MAX, f64::min) - 4.0, xs.iter().cloned().fold(f64::MIN, f64::max) + 4.0);
     let (hy0, hy1) = (ys.iter().cloned().fold(f64::MAX, f64::min) - 12.0, ys.iter().cloned().fold(f64::MIN, f64::max) + 12.0);
     let _ = (hx0, hx1, hy0, hy1);
-    // Streets, the spine from the town to the square, the square, a walk from the square to the garden.
+    // Streets, the spine from the town toward the square, the square (the site plan's walks join them up).
     // Living streets: a 5.5 m paved lane down the middle, planted swales for the rain either side, and
     // walks; the spine the same, wider.
     for &y in &s.streets_y {
@@ -388,16 +388,15 @@ pub fn build(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh,
         }
     }
     let (sx, sw) = (s.spine_x, s.spine_w / 2.0);
-    b(&mut v.pavers, [sx - 3.5, s.square[3], Z], [sx + 3.5, s.spine_y.1, Z + 0.03]);
+    b(&mut v.pavers, [sx - 3.5, s.spine_y.0, Z], [sx + 3.5, s.spine_y.1, Z + 0.03]);
     for side in [-1.0, 1.0] {
         let (a, c) = (sx + side * 3.5, sx + side * (sw - 3.0));
-        meadow(&mut v, rng, a.min(c), a.max(c), s.square[3], s.spine_y.1);
+        meadow(&mut v, rng, a.min(c), a.max(c), s.spine_y.0, s.spine_y.1);
         let (wa, wc) = (sx + side * (sw - 3.0), sx + side * sw);
-        b(&mut v.plaza, [wa.min(wc), s.square[3], Z], [wa.max(wc), s.spine_y.1, Z + 0.03]);
+        b(&mut v.plaza, [wa.min(wc), s.spine_y.0, Z], [wa.max(wc), s.spine_y.1, Z + 0.03]);
     }
     let [sx0, sx1, sy0, sy1] = s.square;
     b(&mut v.plaza, [sx0, sy0, Z], [sx1, sy1, Z + 0.04]);
-    b(&mut v.plaza, [s.spine_x - 4.0, 35.0, Z], [s.spine_x + 4.0, sy0, Z + 0.04]);
     // The food hall on the square's north side: stone ends, glass to the square, a deep ochre roof.
     let [fx0, fx1, fy0, fy1] = s.food_hall;
     if fx1 > fx0 {

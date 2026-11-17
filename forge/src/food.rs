@@ -205,7 +205,9 @@ pub fn houses(s: &Spec, stone: &mut [IndexedMesh; 5], concrete: &mut IndexedMesh
     b(concrete, [head.0 - 0.6, head.3 - 1.0, hz1 - 0.35], [head.1 + 0.6, head.3 + 1.6, hz1]);
     b(concrete, [head.0 - 3.0, head.2 - 1.0, hz2], [head.1 + 3.0, head.3 + 4.0, hz2 + 0.55]);
     // The warm main: a paved walk over the pipes, from the hall's east face to the houses.
-    b(&mut paving, [hall_east, hall_y - 2.5, z], [x0, hall_y + 2.5, z + 0.03]);
+    if x0 > hall_east + 1.0 {
+        b(&mut paving, [hall_east, hall_y - 2.5, z], [x0, hall_y + 2.5, z + 0.03]);
+    }
     b(&mut paving, [xc - 2.5, y1, z], [xc + 2.5, head.2, z + 0.03]);
     (Houses { glass, frame, crops, lamps, paving, block: (x0, x1, y0, y1), head, floor_m2: w * d }, n)
 }

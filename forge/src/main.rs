@@ -19,6 +19,7 @@ mod masonry_build;
 mod render;
 mod scene;
 mod sequence;
+mod site;
 mod village;
 mod wall;
 mod wall_robot;

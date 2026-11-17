@@ -72,15 +72,15 @@ square:
 
 field:
   x:
-    value: -150.0
+    value: 240.0
     unit: m east, the field and its walking loop
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (2026-11-17): moved from x -150, y 110 to just south of the mobility hub, where its visitors park (the optimizer's best proposals all put it beside the hub); 55 m from the nearest homes"
   y:
-    value: 110.0
+    value: 256.0
     unit: m south, the field and its walking loop
     conf: high
-    source: "the design (the current layout)"
+    source: "the design (2026-11-17), as x"
   rot:
     value: 0
     unit: degrees (0 or 90), the field and its walking loop
@@ -106,10 +106,10 @@ homes:
 
 hub:
   x:
-    value: 240.0
+    value: 219.0
     unit: m east, the mobility hub (shared car park, shuttle stop, bikes, charging)
     conf: high
-    source: "the design (D14)"
+    source: "the design (D14); moved 21 m west on 2026-11-17 to stand against the community center's door (6 m apart), where most of its visitors go"
   y:
     value: 120.0
     unit: m south, the mobility hub
@@ -149,6 +149,40 @@ gate:
     unit: m south, the site entrance
     conf: placeholder
     source: "schematic"
+
+town:
+  x:
+    value: 30.0
+    unit: m east, where the way to Homer City borough leaves the site (on the spine's line)
+    conf: placeholder
+    source: "schematic: the borough lies on the town side (+y) of this frame (an owner parcel runs south to it, params/pass2.yaml strip_m); the real point waits for the site to be mapped"
+  y:
+    value: 700.0
+    unit: m south, where the way to Homer City borough leaves the site (the site's town edge)
+    conf: placeholder
+    source: "schematic (the bounds' town edge)"
+
+road_clear_m:
+  value: 5.0
+  low: 4.0
+  high: 8.0
+  unit: m a truck road keeps off every module's footprint (half a two-lane road with its verge)
+  conf: placeholder
+  source: "schematic: two 3.6 m lanes (AASHTO's usual lane width) is 7.2 m; half of that plus a verge"
+truck_clear_m:
+  value: 100.0
+  low: 50.0
+  high: 150.0
+  unit: m a truck road keeps from the homes, the square, the community center and the field
+  conf: placeholder
+  source: "a design rule (D12's rings): trucks stay on the service side, off the residential and public side, as town truck routes keep off residential streets; the distance is judgement"
+delivery_gate_m:
+  value: 150.0
+  low: 50.0
+  high: 300.0
+  unit: m at most from the site entrance to the remote delivery building (trucks screened where they come in)
+  conf: placeholder
+  source: "the design (D12): screening at the entrance, as at the Pentagon's remote delivery facility, so unscreened trucks never reach the site's interior; the distance is schematic"
 
 cap:
   x0:
@@ -244,37 +278,137 @@ hall_trucks_yr:
   conf: low
   source: "research notes: AWS's Virginia campuses average ~18 truck trips a day each (a campus, not one building: high)"
 
-weights:
-  walk_min:
-    value: 1.0
-    unit: score per minute of average walk from the homes to a place
+# What a layout costs a year (D12's score; lower is better): the walking time of residents and
+# visitors at US DOT's value of walking time, the trucks' running cost, and the warm main, underpasses
+# and raised crossings paid off over their life. Dollars of the year each source states.
+value:
+  walk_usd_h:
+    value: 40.20
+    low: 20.10
+    high: 48.24
+    unit: USD (2024) per person-hour of walking
+    conf: high
+    source: "US DOT, Benefit-Cost Analysis Guidance for Discretionary Grant Programs, 2026 Update (Dec 2025), Table A-2: 'Walking, Cycling, Waiting, Standing, and Transfer Time $40.20' (2024 dollars), against $20.10 for personal time in a vehicle; read from DOT's BCA spreadsheet template (model date 2025-12-23, a copy of the Appendix A tables; transportation.gov refused automated fetches). Low: the in-vehicle value (a walk on a heated, planted path no worse than a ride); high: 60% of the wage, the top of the 35-60% range in DOT's 2003 value-of-time guidance (not confirmed for the current guidance)"
+  truck_usd_km:
+    value: 1.4515
+    low: 1.4043
+    high: 1.5659
+    unit: USD (2025) per truck-km, all costs of running a truck including the driver's pay
+    conf: medium
+    source: "ATRI, An Analysis of the Operational Costs of Trucking: 2026 Update (2025 data, released 2026-07-15), its release: 'The industry-average cost to operate a truck in 2025 was $2.336 per mile' (/1.609 = 1.4515 per km). Low: the 2024 figure, $2.260; high: the Northeast region's, $2.52. The report itself was not opened. The driver's time is in this figure, so it is not added again"
+  underpass_usd:
+    value: 2200000
+    low: 1000000
+    high: 14700000
+    unit: USD (2024) for one underpass where a truck road crosses a main walk
+    conf: low
+    source: "Bushell, Poole, Zegeer & Rodriguez (2013), Costs for Pedestrian and Bicyclist Infrastructure Improvements, UNC Highway Safety Research Center, p.20: pedestrian underpasses 'range from slightly less than $1,609,000 to $10,733,000 in total or around $120 per square foot' (2012 dollars; no median given); the low end x 1.366 (BLS CPI-U annual averages 2024/2012, 313.689/229.594) = $2.2M. Low: a 2025 estimate for a precast pedestrian tunnel under Hwy 62 at Northwest Arkansas Community College, '16' X 10' Precast Concrete Bicycle & Pedestrian Tunnel 200 LF ... $1,000,000.00' (the tunnel line alone); high: Bushell's top x 1.366. Most of those were under highways, wider than a campus truck road"
+  raised_crossing_usd:
+    value: 9700
+    low: 1760
+    high: 42200
+    unit: USD (2024) for one raised crossing where the public road meets a main walk
+    conf: medium
+    source: "Bushell et al. (2013), Appendix D pp.42-43: raised crosswalk median $7,110, average $8,170, min $1,290, max $30,880, 14 observations (2012 dollars), x 1.366 (BLS CPI-U 2024/2012)"
+  discount:
+    value: 0.07
+    low: 0.031
+    high: 0.07
+    unit: real discount rate a year
+    conf: high
+    source: "US DOT BCA guidance: 7% real since its May 2025 revision, kept in the 2026 Update (Dec 2025) (NCDOT INFRA 2026 BCA narrative: 'Discounting dollar amounts by 7.0%'; Maine DOT CRISI BCA memo: '7 percent real... constant 2024 dollars'). Low: the 3.1% of DOT's 2024 and 2025 Updates (from DOT slides and MnDOT's page, seen in search)"
+  life_yr:
+    value: 30
+    low: 20
+    high: 50
+    unit: years the warm main, underpasses and crossings are paid off over
     conf: placeholder
-    source: "Jon's priorities (to set)"
-  parking_min:
-    value: 0.5
-    unit: score per minute of average walk from a lot to its draw
+    source: "judgement: pipes 30+ years (params/cost.yaml); concrete structures last longer"
+
+# How often people walk to each place. Residents: NHTS 2022's trips by purpose, shared among the
+# campus's places by judgement. Visitors: ITE trip rates for the center, the rink and the field.
+visits:
+  persons_per_home:
+    value: 2.50
+    low: 2.40
+    high: 2.50
+    unit: people per home
+    conf: high
+    source: "US Census, ACS 2024 1-year: average household size 2.50 (+/-0.01), read from a Maryland Department of Planning copy of the US table; low: NHTS 2022, 2.40 (Table 2-6)"
+  food_court_wk:
+    value: 1.4
+    low: 0.7
+    high: 2.8
+    unit: visits a resident makes a week to the food court (there and back)
+    conf: low
+    source: "NHTS 2022 Summary of Travel Trends (FHWA-HPL-24-009) Table 4-5: 0.80 shopping-and-errands trips a person a day, i.e. 2.8 visits a week; half of them to the food court (its produce and meals; the rest in town) is our judgement. High: all of them"
+  center_wk:
+    value: 1.2
+    low: 0.6
+    high: 2.3
+    unit: visits a resident makes a week to the community center (gym, rink, courts, makerspace)
+    conf: low
+    source: "NHTS 2022 Table 4-5: 0.67 social-and-recreational trips a person a day, i.e. 2.3 visits a week; half to the 24-hour center is our judgement. High: all of them"
+  square_wk:
+    value: 1.3
+    low: 0.6
+    high: 3.8
+    unit: visits a resident makes a week to the square (its shuttle stop, D14, and the square itself)
+    conf: low
+    source: "NHTS 2022 Table 4-5: work 0.42, school or church 0.26 and shopping 0.80 trips a person a day; the work and school trips and the half of shopping not at the food court leave by shuttle (1.08 trips a day, 3.8 visits a week); a third of them from the square's stop (of three) is our judgement. High: all of them"
+  field_wk:
+    value: 0.25
+    low: 0.1
+    high: 1.0
+    unit: visits a resident makes a week to the field and its walking loop
     conf: placeholder
-    source: "Jon's priorities (to set)"
-  truck_km:
-    value: 1.0
-    unit: score per 1,000 truck-km a year
+    source: "judgement: about a tenth of NHTS 2022's 2.3 social-and-recreational visits a week"
+  garden_wk:
+    value: 0.6
+    low: 0.2
+    high: 1.2
+    unit: visits a resident makes a week to the winter garden
     conf: placeholder
-    source: "Jon's priorities (to set)"
-  crossing:
-    value: 5.0
-    unit: score per truck route crossing the walks between homes and places
+    source: "judgement: about a quarter of NHTS 2022's 2.3 social-and-recreational visits a week"
+  ite_center_kft2:
+    value: 28.82
+    low: 20.0
+    high: 35.0
+    unit: vehicle trip ends a weekday per 1,000 ft2, recreational community center (ITE land use 495)
+    conf: medium
+    source: "ITE Trip Generation Manual, 11th ed., via TRPA 'Attachment A Tahoe Trip Generation' (opened): 28.82 per 1,000 ft2 a weekday. Low and high are judgement (suburban sites people drive to; a car-optional campus would see fewer)"
+  ite_center_pm:
+    value: 2.50
+    unit: vehicle trip ends in the weekday evening peak hour per 1,000 ft2, ITE 495
+    conf: medium
+    source: "ITE 11th ed. via the City of Bellingham 2024 fee schedule and the City of Phoenix (Oregon) table (both opened)"
+  ite_rink_pm:
+    value: 1.33
+    unit: vehicle trip ends in the weekday evening peak hour per 1,000 ft2, ice skating rink (ITE 465)
+    conf: medium
+    source: "ITE 11th ed. via the same two tables. ITE's daily rate for a rink was not found; the model scales the community center's daily rate by the two peak-hour rates (1.33 / 2.50)"
+  ite_soccer_field:
+    value: 71.33
+    low: 60.0
+    high: 80.0
+    unit: vehicle trip ends a weekday per field, soccer complex (ITE 488)
+    conf: medium
+    source: "ITE 11th ed. via a City of Whittier study (seen in search, not opened): 71.33 per field; a Lee's Summit MO study agrees (4 fields, 285 trips; search). Evening peak 16.43 per field (Bellingham, Phoenix tables, opened)"
+  town_walkers_day:
+    value: 100
+    low: 20
+    high: 400
+    unit: people a day walking in from Homer City borough (each there and back)
     conf: placeholder
-    source: "Jon's priorities (to set)"
-  main_km:
-    value: 2.0
-    unit: score per km of warm main
-    conf: placeholder
-    source: "Jon's priorities (to set)"
-  land_ha:
-    value: 1.0
-    unit: score per 100 ha the layout spans
-    conf: placeholder
-    source: "Jon's priorities (to set)"
+    source: "judgement: the borough has about 1,700 people; nothing counts walkers yet"
+
+car_detour_m:
+  value: 50.0
+  low: 0.0
+  high: 200.0
+  unit: m of extra route the public road takes to keep off a walk and its verges where a short way round exists
+  conf: placeholder
+  source: "a drawing choice: it keeps the public road from running along a walk; where it must cross, a raised crossing (priced above), as the Safe System approach slows vehicles where people cross"
 
 greenhouse_ha:
   value: 40.0

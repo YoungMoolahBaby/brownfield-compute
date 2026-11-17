@@ -171,3 +171,10 @@ Nice-to-haves for CortenForge, with what this project built instead.
   (~80 lines); cf-geometry not checked for these.
 - **Run-time constraint switches on `Data`** (2026-11-16, pass 2d): see the sim-core entry above.
   Instead: mutating `Model::eq_active` between steps, one model per brick.
+- **Sweeps along a polyline, and placing a part with a transform** (2026-11-17, pass 3, the site
+  plan): the roads and walks routed by `brownfield site` are polylines on the ground, and every
+  module is placed (moved, sometimes turned) from `out/pass3/site.json`. A strip of given width
+  swept along a 2D polyline over a height function, and an `IndexedMesh` moved and turned by an
+  isometry, would cover both. Instead: `forge/src/site.rs` lays 2 m quads along each segment with
+  an octagon at each corner, and turned boxes by hand (~60 lines); modules are rebuilt at their
+  plan positions rather than moved. cf-geometry not checked for a sweep.

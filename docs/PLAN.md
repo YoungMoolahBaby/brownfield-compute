@@ -343,56 +343,6 @@ at the campus edge, funded in the community benefits agreement.
       shop at night only for members signed off on each machine, with a second person present;
       short overnight closures to resurface the ice; hours for under-18s.
     - Running costs (staff, including the night shift) are still to model.
-- **D14** (2026-11-16) Cars optional, even in winter.
-  - Jon: "it being car centric is gonna be a problem. cars should be optional, even in the winter.
-    probably would start with a waymo style fleet before rolling out a rail sytem if things expanded
-    a lot".
-  - The steer:
-    - Heated walks and bike paths off the data center's warm water: the spine, the greens' walks,
-      the square, and a route to Homer City borough, as in Holland, Michigan's snowmelt system on
-      its power plant's waste heat (to source: area, loads, ASHRAE snowmelt design).
-    - Self-driving fleets are the goal, but snow is their weak point today. Start with on-demand
-      electric shuttles (driven, then driverless once proven in snow) to the borough, Indiana (the
-      university, the hospital) and the Pittsburgh bus, with the county's transit authority.
-    - Rail on the plant's freight line kept open as a later option, if the town grows.
-  - In the site plan:
-    - The three car parks become one mobility hub at the site edge: the shuttle stop, bikes, EV
-      charging and a small shared car park.
-    - Parking maximums in place of minimums (as in Buffalo 2017 and Minneapolis 2021; to source).
-    - A new rule: every door within a few minutes of a stop.
-    - The heated walks' heat counted against the module's spare heat.
-- **D13** (2026-11-16) An AI medicine facility.
-  - Jon: "there also needs to be an ai medicine facility. once people understand what ai can do for
-    medicine like what google deepmind is working on, they gonna be begging for more data centers.
-    let's make it clear we are aware of the benefits in our planning phase".
-  - The steer: state the benefits precisely and sourced, because opponents will check them.
-    - Working today: protein structure prediction (AlphaFold; the 2024 Nobel Prize in Chemistry); the
-      FDA's list of AI-enabled devices (mostly radiology); autonomous diabetic retinopathy screening
-      in primary care (IDx-DR, cleared 2018).
-    - Promising, not yet routine: AI-designed drugs (Isomorphic Labs) and diagnostic dialogue
-      (AMIE), both still research.
-    - Medical AI doesn't need to sit next to the data center; building the clinic here is a choice
-      to share the benefit locally.
-    - All figures to be sourced in the research step before they go into public docs.
-  - Plan: an AI-assisted clinic and health research center on the square, run in partnership with
-    Indiana Regional Medical Center and Pittsburgh's academic centers, not competing with them.
-    - Screening, primary care and telehealth to specialists.
-    - Research jobs and training with the university.
-    - Health data under HIPAA, used with the community's consent.
-    - Its own module in the site plan.
-    - A short, sourced README and PLAN section: what AI can and can't yet do for medicine.
-- **D12** (2026-11-16) A modular site plan, secured by design.
-  - Jon: "get everything modular so we can move things around for optimal transportation, security,
-    etc."; the optimizer suggests and Jon edits; security "like pentagon style. no fence, the
-    community will be the fence/wall".
-  - The steer: security in layers, designed in.
-    - The community is the outer ring of natural surveillance (CPTED, ISO 22341).
-    - A landscape stand-off band at a published distance (UFC 4-010-01): the basin, the pools,
-      steps, planters and a ha-ha as hidden vehicle barriers, as at the US Embassy in London.
-    - The hall's hardened skin is the inner ring.
-    - Trucks are screened at a remote delivery building, as at the Pentagon.
-  - Residents watch, they don't guard; professional security stays the operator's.
-  - The repo is public, so security stays at the level of published principles and distances.
   - Housing type (Jon, the same day): narrow townhouses "san fran style" with an air gap between them, not flats,
     so one household's noise never reaches another's sleep; modest size; a two-car garage at ground level that
     doubles as a private workshop, two or three storeys above; workouts shared at the community center ("people
@@ -560,6 +510,98 @@ at the campus edge, funded in the community benefits agreement.
       the housing share still receive.
     - Still to check before citing: the Abilene, Bakken, Detroit and Waukee details (news and
       secondary sources), and Starbase.
+- **D12** (2026-11-16) A modular site plan, secured by design.
+  - Jon: "get everything modular so we can move things around for optimal transportation, security,
+    etc."; the optimizer suggests and Jon edits; security "like pentagon style. no fence, the
+    community will be the fence/wall".
+  - The steer: security in layers, designed in.
+    - The community is the outer ring of natural surveillance (CPTED, ISO 22341).
+    - A landscape stand-off band at a published distance (UFC 4-010-01): the basin, the pools,
+      steps, planters and a ha-ha as hidden vehicle barriers, as at the US Embassy in London.
+    - The hall's hardened skin is the inner ring.
+    - Trucks are screened at a remote delivery building, as at the Pentagon.
+  - Residents watch, they don't guard; professional security stays the operator's.
+  - The repo is public, so security stays at the level of published principles and distances.
+  - Built (2026-11-16): `brownfield site`, [docs/pass3/site.md](pass3/site.md).
+    - Every module a rectangle sized by its own model, placed and turned in `params/site.yaml`; rules
+      every layout must pass; a score; simulated annealing that proposes layouts and never edits the params.
+    - Routes found on a 10 m grid round the buildings: walks, truck roads and the public road to the hub.
+    - Rules added from Jon's words and the rings: homes on the town side of the hall; no public place
+      behind it; the homes' view of the winter garden kept open; trucks screened at the entrance.
+  - Weights and layout (2026-11-17). Jon: "i will let you decide what matters most given the research
+    backing it. same with layout."
+    - The score became what a layout costs a year, every term on a published value:
+      - walking time at US DOT's $40.20 an hour;
+      - trucks at ATRI's $2.336 a mile;
+      - an underpass and a raised crossing at Bushell et al.'s costs;
+      - US DOT's 7% discount rate;
+      - residents' visits from NHTS 2022 and visitors from ITE's trip rates.
+    - What that says matters most:
+      1. no truck road crosses a main walk (Safe System: separate in space). Trucks go round until an
+         underpass would pay; none is needed.
+      2. the visitors' walk from the car park to the center's door;
+      3. the residents' walks;
+      4. the warm main;
+      5. truck distance, least.
+    - New rules:
+      - the homes' rows run east-west, so every house has a south wall (DOE);
+      - trucks keep 100 m off the homes and the public places, and come in at the hall's back;
+      - the public road never runs behind the hall.
+    - New condition: blackout curtains on the greenhouse at night (Leamington's bylaw).
+    - Chosen: the current layout with two edits from the optimizer. It costs $1,462k a year, against
+      $1,714k before the edits.
+      - The field moves beside the mobility hub.
+      - The hub moves against the community center's door.
+    - The best proposal ties it ($1,456k; cheaper in 15 of 27 cases across the inputs' ranges, the
+      chosen layout in 12). It was turned down:
+      - its edge rests on the placeholder count of walkers from the town;
+      - residents walk less in the chosen layout;
+      - the chosen layout keeps the square between the homes and the garden.
+    - The drawings (forge `garden`) now place every module from `out/pass3/site.json`, with the
+      routes, the hub, the delivery building, the crossings and the stand-off planters.
+    - Found and fixed: every render until now was the site's mirror image. The frame is
+      left-handed (x east, y south, z up) and the renderer's camera treated it as right-handed.
+      All the campus and garden views are redrawn.
+    - Still open: the site's real entrance and way to the borough (placeholders until the site is
+      mapped); the share of trips to each place; the count of walkers from the town.
+- **D13** (2026-11-16) An AI medicine facility.
+  - Jon: "there also needs to be an ai medicine facility. once people understand what ai can do for
+    medicine like what google deepmind is working on, they gonna be begging for more data centers.
+    let's make it clear we are aware of the benefits in our planning phase".
+  - The steer: state the benefits precisely and sourced, because opponents will check them.
+    - Working today: protein structure prediction (AlphaFold; the 2024 Nobel Prize in Chemistry); the
+      FDA's list of AI-enabled devices (mostly radiology); autonomous diabetic retinopathy screening
+      in primary care (IDx-DR, cleared 2018).
+    - Promising, not yet routine: AI-designed drugs (Isomorphic Labs) and diagnostic dialogue
+      (AMIE), both still research.
+    - Medical AI doesn't need to sit next to the data center; building the clinic here is a choice
+      to share the benefit locally.
+    - All figures to be sourced in the research step before they go into public docs.
+  - Plan: an AI-assisted clinic and health research center on the square, run in partnership with
+    Indiana Regional Medical Center and Pittsburgh's academic centers, not competing with them.
+    - Screening, primary care and telehealth to specialists.
+    - Research jobs and training with the university.
+    - Health data under HIPAA, used with the community's consent.
+    - Its own module in the site plan.
+    - A short, sourced README and PLAN section: what AI can and can't yet do for medicine.
+- **D14** (2026-11-16) Cars optional, even in winter.
+  - Jon: "it being car centric is gonna be a problem. cars should be optional, even in the winter.
+    probably would start with a waymo style fleet before rolling out a rail sytem if things expanded
+    a lot".
+  - The steer:
+    - Heated walks and bike paths off the data center's warm water: the spine, the greens' walks,
+      the square, and a route to Homer City borough, as in Holland, Michigan's snowmelt system on
+      its power plant's waste heat (to source: area, loads, ASHRAE snowmelt design).
+    - Self-driving fleets are the goal, but snow is their weak point today. Start with on-demand
+      electric shuttles (driven, then driverless once proven in snow) to the borough, Indiana (the
+      university, the hospital) and the Pittsburgh bus, with the county's transit authority.
+    - Rail on the plant's freight line kept open as a later option, if the town grows.
+  - In the site plan:
+    - The three car parks become one mobility hub at the site edge: the shuttle stop, bikes, EV
+      charging and a small shared car park.
+    - Parking maximums in place of minimums (as in Buffalo 2017 and Minneapolis 2021; to source).
+    - A new rule: every door within a few minutes of a stop.
+    - The heated walks' heat counted against the module's spare heat.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

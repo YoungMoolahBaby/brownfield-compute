@@ -45,13 +45,14 @@ def test_lots_fill_phase1_clear_of_the_spine_and_behind_the_setback():
     s = "village.site."
     homes = village.lots(P, "gap")
     assert len(homes) == int(P[s + "phase1_homes"])
-    assert all(abs(x - P[s + "square_x"]) > P[s + "spine_w_m"] / 2 for x, _ in homes)
+    assert all(abs(x - P["site.homes.x"]) > P[s + "spine_w_m"] / 2 for x, _ in homes)
     assert min(y for _, y in homes) >= village.HALL_FACE_Y + P[s + "home_setback_m"]
 
 
 def test_walk_minutes_by_hand():
     s = "village.site."
-    home = (P[s + "square_x"] + 30.0, P[s + "square_y"] + 120.0)
+    sq = village.places(P)["the square"]
+    home = (sq[0] + 30.0, sq[1] + 120.0)
     w = village.walks(P, [home])
     assert w["the square"][0] == pytest.approx(150.0 / (P["village.walking.speed_hcm_sidewalk"] * 60))
 

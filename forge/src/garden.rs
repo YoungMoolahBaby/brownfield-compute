@@ -25,6 +25,7 @@ use nalgebra::{Point3, Vector3};
 use serde_json::json;
 
 use crate::food;
+use crate::site;
 use crate::village;
 use crate::scene::{self, Camera, Light, SLayer, add_box};
 
@@ -177,12 +178,13 @@ pub struct Garden {
     pub plants: IndexedMesh,
     pub food: food::Houses,
     pub village: Option<village::Village>,
+    pub site: Option<site::Drawn>,
     pub view: (f64, f64, f64, f64),
     pub stones: usize,
     pub areas: serde_json::Value,
 }
 
-pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
+pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>, pl: Option<&site::Plan>) -> Garden {
     let mut rng = Rng(0x9E3779B97F4A7C15);
     let mut stone: [IndexedMesh; 5] = Default::default();
     let mut concrete = IndexedMesh::new();
@@ -404,8 +406,14 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
     // arboretum: native trees in groves, each species kept back from every foundation by its own
     // distance (params/food.yaml via food.json), none between buildings, clear of the views.
     let reach = spec.trees.iter().map(|t| t.setback).fold(10.0, f64::max);
-    let x_food = hx1 + 2.0 * reach + 12.0;
-    let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, 0.0, 0.2, hx1 + 1.5, -40.0);
+    let (x_food, y_food, z_food) = match pl.and_then(|p| p.rect("greenhouse")) {
+        Some(r) => {
+            let w = ((spec.ha * 1e4).sqrt() / spec.bay).ceil().max(4.0) * spec.bay;
+            ((r[0] + r[1]) / 2.0 - w / 2.0, r[3] - 20.0, site::ground_at(0.0, r[3] - 20.0))
+        }
+        None => (hx1 + 2.0 * reach + 12.0, 0.0, 0.2),
+    };
+    let (fh, nf) = food::houses(spec, &mut stone, &mut concrete, &mut rng, x_food, y_food, z_food, hx1 + 1.5, -40.0);
     n += nf;
     let (fx0, fx1, fy0, fy1) = fh.block;
     let mut built: Vec<(f64, f64, f64, f64)> = vec![(hx0 - 1.5, hx1 + 1.5, hy0 - 1.5, hy1), (-4.0, 62.6, -3.0, 34.6), (-30.0, 92.0, -3.0, 3.0),
@@ -417,7 +425,7 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
         vg
     });
     let mut vg = vg;
-    if let Some(vg) = &mut vg {
+    if let (Some(vg), None) = (&mut vg, pl) {
         let hx = (fh.head.0 + fh.head.1) / 2.0;
         b(&mut vg.plaza, [60.0, 86.0, -2.2], [hx + 2.0, 92.0, -2.15]);
         b(&mut vg.plaza, [hx - 3.0, fh.head.3, -2.2], [hx + 3.0, 92.0, -2.15]);
@@ -425,8 +433,16 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
     if let Some(vg) = &vg {
         built.extend(vg.rects.iter().cloned());
     }
-    let eyes = [(36.0, 46.0), (62.0, 58.0), (-30.0, 95.0), (150.0, -40.0), ((fh.head.0 + fh.head.1) / 2.0 - 40.0, fh.head.3 + 55.0),
-                (-130.0, 210.0), (30.0, 135.0), (-120.0, 205.0), (60.0, 271.5), (-50.0, 211.2)];
+    // The site plan's roads, walks, hub, delivery building, crossings and planters (D12).
+    let sd = pl.map(|p| {
+        let (d, ns) = site::draw(p, &mut stone, &mut rng);
+        n += ns;
+        d
+    });
+    if let Some(d) = &sd {
+        built.extend(d.rects.iter().cloned());
+    }
+    let eyes: Vec<(f64, f64)> = views(pl, vspec, &fh).iter().map(|v| (v.1.x / M, v.1.y / M)).collect();
     let groves = [(-110.0, 10.0), ((hx1 + fx0) / 2.0, -70.0), (210.0, 200.0), (-75.0, -20.0), (220.0, 90.0), (-75.0, -110.0),
                   ((fx0 + fx1) / 2.0, fh.head.3 + 60.0), (30.0, hy0 - 60.0), (-330.0, 230.0), (30.0, 460.0)];
     let mut placed = food::arboretum(spec, &mut trunks, &mut crowns, &mut crowns_dark, &mut rng, &built, &eyes, &groves,
@@ -456,8 +472,13 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
             }
         }
     }
-    let view = (hx0.min(-90.0).min(if vg.is_some() { -320.0 } else { -90.0 }), fx1 + 60.0, fy0.min(hy0) - 80.0,
-                if vg.is_some() { 470.0 } else { 140.0 });
+    let mut view: (f64, f64, f64, f64) = (hx0.min(-90.0).min(if vg.is_some() { -320.0 } else { -90.0 }), fx1 + 60.0, fy0.min(hy0) - 80.0,
+                    if vg.is_some() { 470.0 } else { 140.0 });
+    if let Some(p) = pl {
+        for (_, r, _) in &p.modules {
+            view = (view.0.min(r[0] - 60.0), view.1.max(r[1] + 60.0), view.2.min(r[2] - 80.0), view.3.max(r[3] + 20.0));
+        }
+    }
     let trees_json: Vec<serde_json::Value> = spec.trees.iter().zip(&placed)
         .map(|(t, k)| json!({"name": t.name, "placed": k, "height_m": t.height, "setback_m": t.setback})).collect();
 
@@ -475,11 +496,73 @@ pub fn build(spec: &food::Spec, vspec: Option<&village::Spec>) -> Garden {
     });
     let crown_colours = spec.trees.iter().map(|t| t.colour).collect();
     Garden { stone, concrete, glass, sash, floor, ground, yard, coolers, fans, halls, roofs, water, water_low, falls, trunks, crowns, crowns_dark,
-             crown_colours, plants, food: fh, village: vg, view, stones: n, areas }
+             crown_colours, plants, food: fh, village: vg, site: sd, view, stones: n, areas }
 }
 
-fn hx_mid(_g: &Garden) -> f64 {
-    31.0 // the hall's centre line (x -30..92)
+/// A view: file name, eye and target (mm), field of view, exposure.
+pub struct View(pub &'static str, pub Point3<f64>, pub Point3<f64>, pub f64, pub f64);
+
+/// The views, each placed from where the plan puts its module (the garden and the hall are fixed).
+fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Houses) -> Vec<View> {
+    let p = |x: f64, y: f64, z: f64| Point3::new(x * M, y * M, z * M);
+    let (fx0, fx1, fy0, fy1) = fh.block;
+    let (fxm, fym) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
+    let hm = (fh.head.0 + fh.head.1) / 2.0;
+    let fz = if fy1 < 20.0 { 0.2 } else { -2.2 };
+    let mut v = vec![
+        View("garden_falls.png", p(36.0, 46.0, -0.6), p(23.0, 10.0, 3.6), 52.0, 1.0),
+        View("garden_hero.png", p(62.0, 58.0, 4.0), p(24.0, 8.0, 3.0), 46.0, 1.0),
+        View("garden_inside.png", p(11.0, 8.6, 4.7), p(40.0, 5.5, 3.9), 70.0, 1.7),
+        View("garden_aerial.png", p(105.0, 90.0, 62.0), p(24.0, -12.0, 0.0), 46.0, 1.0),
+        View("campus_aerial.png", p(190.0, 90.0, 120.0), p(30.0, -70.0, 0.0), 50.0, 1.0),
+        View("campus_hall.png", p(150.0, -40.0, 1.7), p(92.0, -80.0, 10.0), 56.0, 1.0),
+        View("campus_front.png", p(-30.0, 95.0, 14.0), p(28.0, -25.0, 8.0), 52.0, 1.0),
+        View("campus_food.png", p(fx1 + 260.0, fy1 + 330.0, 330.0), p((31.0 + fxm) / 2.0, fym, 0.0), 50.0, 1.0),
+        View("food_inside.png", p(fxm + 1.2, fy1 - 4.0, fz + 1.8), p(fxm + 1.0, fy1 - 60.0, fz + 2.4), 68.0, 1.3),
+        View("food_head.png", p(hm - 40.0, fh.head.3 + 55.0, fz - 0.6), p(hm, fy1 + 6.0, fz + 3.8), 56.0, 1.0),
+        View("arboretum.png", p(-130.0, 210.0, -0.5), p(30.0, 40.0, 6.0), 60.0, 1.0),
+    ];
+    let r = |n: &str, d: [f64; 4]| pl.and_then(|q| q.rect(n)).unwrap_or(d);
+    if let Some(vs) = vspec {
+        let homes = r("neighbourhood", [-68.0, 128.0, 147.0, 450.0]);
+        let sq = r("square", [0.0, 60.0, 60.0, 120.0]);
+        let c = r("community center", [72.0, 162.0, 12.0, 140.0]);
+        let fl = r("field and loop", [-207.0, -93.0, 34.0, 186.0]);
+        let gd = r("winter garden", [-4.0, 63.0, -3.0, 35.0]);
+        let (hcx, sqx, sqy) = ((homes[0] + homes[1]) / 2.0, (sq[0] + sq[1]) / 2.0, (sq[2] + sq[3]) / 2.0);
+        let (fcx, fcy) = ((fl[0] + fl[1]) / 2.0, (fl[2] + fl[3]) / 2.0);
+        let street = vs.streets_y.iter().cloned().min_by(|a, b| (a - homes[2] - 124.5).abs().total_cmp(&(b - homes[2] - 124.5).abs()))
+            .unwrap_or(homes[2] + 124.5);
+        let green = vs.greens.first().map(|g| (g[2] + g[3]) / 2.0).unwrap_or(homes[2] + 64.0);
+        // The neighbourhood from the air: over its town side, toward its middle.
+        let ms = [homes, sq, c, fl];
+        let (mx, my) = (ms.iter().map(|q| q[0] + q[1]).sum::<f64>() / 8.0, ms.iter().map(|q| q[2] + q[3]).sum::<f64>() / 8.0);
+        v.extend([
+            View("campus_village.png", p(mx + 350.0, my + 440.0, 330.0), p(mx, my, 0.0), 50.0, 1.0),
+            View("village_balcony.png", p(hcx + 10.0, homes[2] + 0.5, 5.3), p((gd[0] + gd[1]) / 2.0, gd[3] - 5.0, 2.0), 62.0, 1.0),
+            View("village_square.png", p(sqx + 18.0, sqy + 24.0, -0.5), p(sqx - 8.0, sqy - 45.0, 2.0), 60.0, 1.0),
+            View("village_street.png", p(hcx + 30.0, street, -0.5), p(hcx - 70.0, street, 2.5), 60.0, 1.0),
+            View("village_center.png", p(c[0] + 68.0, c[2] + 120.0, 3.5), p(c[0] + 24.0, c[2] + 73.0, -2.2), 72.0, 1.5),
+            View("village_green.png", p(homes[0] + 18.0, green, -0.6), p(homes[0] + 108.0, green + 1.8, 0.8), 62.0, 1.0),
+            View("village_climbing.png", p(c[0] + 38.0, c[2] + 32.0, -0.6), p(c[0] + 28.0, c[2] + 9.0, 0.6), 66.0, 1.6),
+            View("village_fields.png", p(fcx + 30.0, fcy + 95.0, 1.5), p(fcx, fcy - 15.0, 0.0), 62.0, 1.0),
+        ]);
+    }
+    if let Some(q) = pl {
+        // The whole plan from the air, from the south-east, toward its middle.
+        let (mut x0, mut x1, mut y0, mut y1) = (f64::MAX, f64::MIN, f64::MAX, f64::MIN);
+        for (_, r, _) in &q.modules {
+            (x0, x1, y0, y1) = (x0.min(r[0]), x1.max(r[1]), y0.min(r[2]), y1.max(r[3]));
+        }
+        let (cx, cy, d) = ((x0 + x1) / 2.0, (y0 + y1) / 2.0, (x1 - x0).max(y1 - y0));
+        v.push(View("site_aerial.png", p(cx - 0.10 * d, cy + 0.85 * d, 0.45 * d), p(cx + 0.02 * d, cy - 0.05 * d, 0.0), 46.0, 1.0));
+        if let Some(h) = q.rect("mobility hub") {
+            let (hx, hy) = ((h[0] + h[1]) / 2.0, (h[2] + h[3]) / 2.0);
+            let z = site::ground_at(hx, hy);
+            v.push(View("site_hub.png", p(hx + 70.0, h[3] + 60.0, z + 18.0), p(hx, hy, z), 56.0, 1.0));
+        }
+    }
+    v
 }
 
 pub fn run(root: &Path) -> std::io::Result<()> {
@@ -489,7 +572,11 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     if vspec.is_none() {
         println!("  (no out/pass3/village.json yet: run `brownfield village` for the neighbourhood)");
     }
-    let g = build(&spec, vspec.as_ref());
+    let pl = site::plan(root);
+    if pl.is_none() {
+        println!("  (no out/pass3/site.json yet: run `brownfield site` for the site plan)");
+    }
+    let g = build(&spec, vspec.as_ref(), pl.as_ref());
     let tris = |m: &IndexedMesh| m.faces.len();
     let total: usize = g.stone.iter().map(tris).sum::<usize>() + tris(&g.concrete) + tris(&g.glass) + tris(&g.sash) + tris(&g.ground)
         + tris(&g.yard) + tris(&g.coolers) + tris(&g.fans) + g.crowns.iter().chain(g.crowns_dark.iter()).map(tris).sum::<usize>() + tris(&g.plants)
@@ -542,6 +629,19 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     if let Some(v) = &g.village {
         village::layers(v, &mut layers);
     }
+    if let Some(d) = &g.site {
+        layers.push(SLayer::solid(&d.asphalt, [0.36, 0.36, 0.37]).no_shadow());
+        layers.push(SLayer::solid(&d.walks, [0.80, 0.75, 0.66]).no_shadow());
+        layers.push(SLayer::solid(&d.lines, [0.95, 0.95, 0.93]).no_shadow());
+        layers.push(SLayer::solid(&d.pavers, [0.74, 0.66, 0.54]).no_shadow());
+        layers.push(SLayer::solid(&d.concrete, CONCRETE));
+        layers.push(SLayer::solid(&d.dark, [0.24, 0.23, 0.22]));
+        for (m, c) in d.cars.iter().zip([[0.62, 0.63, 0.64], [0.22, 0.24, 0.28], [0.80, 0.80, 0.78], [0.40, 0.30, 0.26]]) {
+            layers.push(SLayer::solid(m, c));
+        }
+        layers.push(SLayer::solid(&d.planting, [0.32, 0.50, 0.26]).smooth());
+        layers.push(SLayer::solid(&d.ramps, [0.44, 0.50, 0.30]));
+    }
     layers.push(SLayer::solid(&g.plants, [0.36, 0.55, 0.30]).smooth());
     // Water reflects only part of the light: the reflections are dimmed.
     let dim = |c: [f64; 3]| c.map(|v| v * 0.62);
@@ -578,35 +678,9 @@ pub fn run(root: &Path) -> std::io::Result<()> {
     light.shadow_px = 8192;
     let (vx0, vx1, vy0, vy1) = g.view;
     light.shadow_focus = Some((V::new(vx0, vy0, -5.0) * M, V::new(vx1, vy1, 40.0) * M));
-    let (fx0, fx1, fy0, fy1) = g.food.block;
-    let (fxm, fym) = ((fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0);
-    let p = |x: f64, y: f64, z: f64| Point3::new(x * M, y * M, z * M);
-    let views = [
-        ("garden_falls.png", Camera::Persp { eye: p(36.0, 46.0, -0.6), target: p(23.0, 10.0, 3.6), up: V::z(), fov_deg: 52.0, w: 1600, h: 1000 }, 1.0, false),
-        ("garden_hero.png", Camera::Persp { eye: p(62.0, 58.0, 4.0), target: p(24.0, 8.0, 3.0), up: V::z(), fov_deg: 46.0, w: 1600, h: 1000 }, 1.0, false),
-        ("garden_inside.png", Camera::Persp { eye: p(11.0, 8.6, 4.7), target: p(40.0, 5.5, 3.9), up: V::z(), fov_deg: 70.0, w: 1600, h: 1000 }, 1.7, false),
-        ("garden_aerial.png", Camera::Persp { eye: p(105.0, 90.0, 62.0), target: p(24.0, -12.0, 0.0), up: V::z(), fov_deg: 46.0, w: 1600, h: 1000 }, 1.0, false),
-        ("campus_aerial.png", Camera::Persp { eye: p(190.0, 90.0, 120.0), target: p(30.0, -70.0, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
-        ("campus_hall.png", Camera::Persp { eye: p(150.0, -40.0, 1.7), target: p(92.0, -80.0, 10.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
-        ("campus_front.png", Camera::Persp { eye: p(-30.0, 95.0, 14.0), target: p(28.0, -25.0, 8.0), up: V::z(), fov_deg: 52.0, w: 1600, h: 1000 }, 1.0, false),
-        ("campus_food.png", Camera::Persp { eye: p(fx1 + 260.0, 330.0, 330.0), target: p((hx_mid(&g) + fxm) / 2.0, fym, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
-        ("food_inside.png", Camera::Persp { eye: p(fxm + 1.2, fy1 - 4.0, 2.0), target: p(fxm + 1.0, fy1 - 60.0, 2.6), up: V::z(), fov_deg: 68.0, w: 1600, h: 1000 }, 1.3, false),
-        ("food_head.png", Camera::Persp { eye: p((g.food.head.0 + g.food.head.1) / 2.0 - 40.0, g.food.head.3 + 55.0, -0.4), target: p((g.food.head.0 + g.food.head.1) / 2.0, fy1 + 6.0, 4.0), up: V::z(), fov_deg: 56.0, w: 1600, h: 1000 }, 1.0, false),
-        ("arboretum.png", Camera::Persp { eye: p(-130.0, 210.0, -0.5), target: p(30.0, 40.0, 6.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
-    ];
-    let mut views: Vec<_> = Vec::from(views);
-    if g.village.is_some() {
-        views.extend([
-            ("campus_village.png", Camera::Persp { eye: p(330.0, 560.0, 330.0), target: p(-20.0, 120.0, 0.0), up: V::z(), fov_deg: 50.0, w: 1600, h: 1000 }, 1.0, false),
-            ("village_balcony.png", Camera::Persp { eye: p(40.0, 147.5, 5.3), target: p(30.0, 30.0, 2.0), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
-            ("village_square.png", Camera::Persp { eye: p(48.0, 114.0, -0.5), target: p(22.0, 45.0, 2.0), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
-            ("village_street.png", Camera::Persp { eye: p(60.0, 271.5, -0.5), target: p(-40.0, 271.5, 2.5), up: V::z(), fov_deg: 60.0, w: 1600, h: 1000 }, 1.0, false),
-            ("village_center.png", Camera::Persp { eye: p(140.0, 132.0, 3.5), target: p(96.0, 85.0, -2.2), up: V::z(), fov_deg: 72.0, w: 1600, h: 1000 }, 1.5, false),
-            ("village_green.png", Camera::Persp { eye: p(-50.0, 211.2, -0.6), target: p(40.0, 213.0, 0.8), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
-            ("village_climbing.png", Camera::Persp { eye: p(110.0, 44.0, -0.6), target: p(100.0, 21.0, 0.6), up: V::z(), fov_deg: 66.0, w: 1600, h: 1000 }, 1.6, false),
-            ("village_fields.png", Camera::Persp { eye: p(-120.0, 205.0, 1.5), target: p(-150.0, 95.0, 0.0), up: V::z(), fov_deg: 62.0, w: 1600, h: 1000 }, 1.0, false),
-        ]);
-    }
+    let views: Vec<_> = views(pl.as_ref(), vspec.as_ref(), &g.food).into_iter()
+        .map(|v| (v.0, Camera::Persp { eye: v.1, target: v.2, up: V::z(), fov_deg: v.3, w: 1600, h: 1000 }, v.4, false))
+        .collect();
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let run_dir = out.join("renders").join(stamp.to_string());
     println!("  renders to {}", run_dir.display());

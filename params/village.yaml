@@ -143,36 +143,6 @@ site:
     unit: m, length of each street of phase 1
     conf: high
     source: "the design"
-  square_x:
-    value: 30
-    unit: m, the square's centre (on the garden's axis)
-    conf: high
-    source: "the design"
-  square_y:
-    value: 90
-    unit: m, the square's centre (between the garden and the homes)
-    conf: high
-    source: "the design"
-  garden_x:
-    value: 30
-    unit: m, the winter garden's lower pool, south edge
-    conf: high
-    source: "forge garden"
-  garden_y:
-    value: 35
-    unit: m
-    conf: high
-    source: "forge garden"
-  fields_x:
-    value: -220
-    unit: m, the fields' centre (on the parcel marked as the capped ash site; schematic)
-    conf: low
-    source: "the design; the ash site's real outline is not in this model"
-  fields_y:
-    value: 160
-    unit: m
-    conf: low
-    source: "the design (schematic)"
 
 # --- Research inputs (2026-11-16; 'not opened' marks a search-summary figure) ---
 

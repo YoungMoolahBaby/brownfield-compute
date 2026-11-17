@@ -101,10 +101,13 @@ impl Light {
 
 /// Right, up and back (toward the viewer) for a view along `dir`.
 fn basis(dir: &V, up: &V) -> (V, V, V) {
+    // `forge`'s frame is x east, y south, z up: a left-handed frame. Screen right is back x up (in a
+    // right-handed frame it would be up x back), so that looking north, east is on the right, as
+    // on the real site. (Before 2026-11-17 every view was the site's mirror image.)
     let back = -dir.normalize();
     let hint = if back.cross(up).norm() < 1e-6 { V::x() } else { *up };
-    let right = hint.cross(&back).normalize();
-    (right, back.cross(&right), back)
+    let right = back.cross(&hint).normalize();
+    (right, right.cross(&back), back)
 }
 
 fn vertex_normals(mesh: &IndexedMesh) -> Vec<V> {
@@ -483,17 +486,18 @@ pub fn check(root: &Path) -> std::io::Result<bool> {
     let mut reader = dec.read_info().map_err(std::io::Error::other)?;
     let mut buf = vec![0u8; reader.output_buffer_size().unwrap_or(0)];
     reader.next_frame(&mut buf).map_err(std::io::Error::other)?;
-    // Image x runs with world x (looking down, y up); the ground spans x -12,000..6,000 mm.
+    // Looking down with y (south) up the image, east is on the left, as on a map turned south up:
+    // image x runs against world x. The ground spans x -12,000..6,000 mm.
     let (w, h) = (w as usize, h as usize);
     let row = h / 2;
     let px = |x: usize| buf[(row * w + x) * 3] as f64;
-    let x_of = |mm: f64| ((mm + 12_000.0) * ppm + 12.0) as usize; // 12 px pad
+    let x_of = |mm: f64| w - 1 - ((mm + 12_000.0) * ppm + 12.0) as usize; // 12 px pad
     let lit = px(x_of(-11_000.0));
     let mut x = x_of(-20.0);
-    while x > 0 && px(x) < lit * 0.8 {
-        x -= 1;
+    while x + 1 < w && px(x) < lit * 0.8 {
+        x += 1;
     }
-    let len = (x_of(0.0) - x) as f64 / ppm;
+    let len = (x - x_of(0.0)) as f64 / ppm;
     let want = 2_000.0 / 30f64.to_radians().tan();
     println!("scene check: shadow {len:.0} mm against {want:.0} mm (h / tan 30 deg), {:.1}%", 100.0 * (len / want - 1.0));
     Ok((len - want).abs() < 2.0 / ppm + 30.0)

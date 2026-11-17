@@ -461,15 +461,21 @@ def cmd_site(_args) -> int:
     p = values(load_params())
     food_t = p["site.food_t_yr"]
     mods = site.modules(p, p["site.greenhouse_ha"], site.homes_rect(p))
-    m = site.metrics(p, mods, food_t)
+    m = site.metrics(p, mods, food_t, routed=True)
     proposals = site.optimise(p, mods, food_t)
     md = site.report(p, mods, m, proposals)
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)
     (out / "site.md").write_text(md + NL, encoding="utf-8")
-    (out / "site.json").write_text(json.dumps(site.spec(mods, proposals), indent=2) + NL, encoding="utf-8")
-    print(NL + "wrote out/pass3/site.md, out/pass3/site.json")
+    sp = site.spec(p, mods, m, proposals)
+    (out / "site.json").write_text(json.dumps(sp, indent=2) + NL, encoding="utf-8")
+    from . import ROOT, figures
+
+    docs = ROOT / "docs" / "pass3"
+    docs.mkdir(parents=True, exist_ok=True)
+    figures.site_plans(sp, docs / "site_plans.png")
+    print(NL + "wrote out/pass3/site.md, out/pass3/site.json, docs/pass3/site_plans.png")
     return 0
 
 

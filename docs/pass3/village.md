@@ -32,7 +32,7 @@ steers. Phase 1 has:
   pass 2's, an ordinary catalogue choice. With pass 2's fans they're 1.4-3.0 dB over. From about
   245 m out, any home is under the guideline whatever the fans.
 - **Everything is a short walk.** Every door is within about 5 minutes of the square, 6 of the
-  winter garden and 7 of the fields.
+  winter garden and 6 of the field (beside the mobility hub in the site plan, D12).
 - **The loop beats a heat pump in each home, if the operator pays for the pipes.** Over 20 years a
   home's heat costs:
   - $23,000 on the loop when the network is paid for under the benefits agreement;
@@ -152,10 +152,12 @@ looks to choose from:
 - **The streets.** A public spine street runs from the town straight to the square, lined by the
   new homes, so townspeople reach the square through the neighbourhood rather than around it. There
   are no gates or private roads.
-- **The fields** sit on a parcel marked as the capped coal ash site. Grass fields are a common
-  reuse of closed landfills: Chisman Creek, Virginia, has played soccer and softball on capped ash
-  since 1991-92. On a cap there are no deep roots and nothing built, subject to DEP's closure terms
-  for 30 years of post-closure care. The real ash site's outline isn't in this model.
+- **The field** stands beside the mobility hub in the site plan ([D12](site.md)), where its
+  visitors park. The capped coal ash site, to the northwest, stays open for a second field or the
+  golf short course. Grass fields are a common reuse of closed landfills: Chisman Creek, Virginia,
+  has played soccer and softball on capped ash since 1991-92. On a cap there are no deep roots and
+  nothing built, subject to DEP's closure terms for 30 years of post-closure care. The real ash
+  site's outline isn't in this model.
 
 <p>
 <img src="village_center.png" width="49%" alt="Inside the community center: the roller hockey floor and the ice rink">
@@ -264,7 +266,8 @@ for later phases. What binds first:
   - staff and upkeep aren't modelled;
   - the shared buildings' heat use (100 kWh/m2) is a placeholder.
 - **Heated grass:** a field at 195 kWh/m2 comes from one stadium case.
-- **The ash site:** its real outline, and whether DEP's closure terms allow fields there.
+- **The ash site:** its real outline, and whether DEP's closure terms allow a second field or the
+  golf course there.
 - **Growth limits:**
   - the water plant's capacity and the school district's capacity weren't found;
   - the sewage plant's wet-weather problem needs its own study.

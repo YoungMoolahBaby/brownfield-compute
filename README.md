@@ -125,6 +125,18 @@ yet.
     - On the loop, a home's heat costs less than its own heat pump if the operator pays for the
       pipes.
     - Sewage, not heat, limits growth past ~1,350 homes.
+  - [The site plan](docs/pass3/site.md): every piece of the campus a module that can be moved.
+    - Rules every layout must pass: homes past the noise setback and on the town side, no public
+      vehicles near the hall, trucks screened at the entrance.
+    - Roads and walks routed round the buildings; an optimizer proposes layouts, which are then
+      edited by hand.
+    - Each layout is priced by what it costs a year: walking time at US DOT's value, trucks at
+      ATRI's cost, pipes and crossings paid off.
+    - What matters most, by that research: no truck road crosses a main walk, then visitors' and
+      residents' walks. Truck distance matters least.
+    - The chosen layout puts the car park against the community center's door and the field
+      beside the car park. Trucks keep to the service side and cross no walk. The optimizer's best
+      proposal ties it; the chosen one keeps the square between the homes and the garden.
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their

@@ -1,4 +1,5 @@
-"""Pass 1 figures: the site map and the host-vs-help chart (static PNGs for the report).
+"""Figures for the reports (static PNGs): pass 1's site map and host-vs-help chart, pass 2's homes
+map, pass 3's site plans.
 
 Colours follow the dataviz reference palette: status is categorical, slots 1-3 (blue, orange,
 aqua; the three that pass its all-pairs colour-vision check for scatter plots); ink and grid
@@ -55,13 +56,13 @@ _SPOTS = [(6, 4, "left", "bottom"), (6, -4, "left", "top"), (-6, 4, "right", "bo
           (14, 14, "left", "bottom"), (-14, -14, "right", "top")]
 
 
-def _place_labels(fig, ax, items):
-    """Put each (x, y, text) label at the first spot whose box overlaps no earlier label and stays
-    inside the axes; if none is free, the spot that overlaps least."""
+def _place_labels(fig, ax, items, avoid=()):
+    """Put each (x, y, text) label at the first spot whose box overlaps no earlier label (nor any
+    box in `avoid`) and stays inside the axes; if none is free, the spot that overlaps least."""
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     frame = ax.get_window_extent(renderer)
-    placed = []
+    placed = list(avoid)
     for x, y, text in items:
         best = None
         for dx, dy, ha, va in _SPOTS:
@@ -205,5 +206,103 @@ def homes_map(campus, homes, path, plant_xy=(0.0, 0.0)) -> None:
     fig.text(0.01, 0.01, "Indiana County parcels (PASDA, Nov 2023): parcels with a dwelling. Distances from each home "
              "parcel's centre to the campus edge; equipment sits further in.", fontsize=7, color=MUTED)
     fig.tight_layout(rect=(0, 0.02, 1, 1))
+    fig.savefig(path, facecolor=SURFACE)
+    plt.close(fig)
+
+
+# Pass 3, the site plan (D12): route types in the reference palette's slots 1-3, each with its own
+# line style too; modules in quiet fills, named by direct labels.
+_ROUTES = [("cars", "#2a78d6", "-", 1.6, "public road to the mobility hub"), ("trucks", "#eb6834", "-", 1.6, "truck roads"),
+           ("walks", "#1baf7a", (0, (2.0, 1.4)), 1.3, "main walks")]
+_NAMES = {"data hall": "data\nhall", "winter garden": "winter garden", "greenhouse": "greenhouse\n(food court on its town side)",
+          "community center": "center\n+ rink", "square": "square", "field and loop": "field", "neighbourhood": "homes",
+          "mobility hub": "hub", "remote delivery building": "delivery"}
+_FILLS = {"data hall": "#3d3c39", "neighbourhood": "#efe4d2", "greenhouse": "#e2ebe0", "field and loop": "#dbe8d2",
+          "winter garden": "#dbe8d2", "square": "#ebe8e1"}
+
+
+def site_plans(spec: dict, path) -> None:
+    """The current layout and the optimizer's proposals, side by side on one scale; north up, the town below."""
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import FancyBboxPatch, Rectangle
+
+    lays = [("The current layout", spec["current"])] + [
+        (f"Proposal {k + 1}" + (" (the current layout)" if q.get("is_current") else ""), q) for k, q in enumerate(spec["proposals"])]
+    xs = [v for _, q in lays for m in q["modules"] for v in m["rect"][:2]] + [spec["gate"][0], spec["town"][0]]
+    ys = [v for _, q in lays for m in q["modules"] for v in m["rect"][2:]] + [spec["gate"][1], spec["town"][1]]
+    pad = 70.0
+    x0, x1, y0, y1 = min(xs) - pad, max(xs) + pad, min(ys) - pad, max(ys) + pad
+    n = len(lays)
+    cols = 2 if n > 1 else 1
+    rows = (n + cols - 1) // cols
+    w = 6.4
+    h = w * (y1 - y0) / (x1 - x0) + 0.55
+    fig, axes = plt.subplots(rows, cols, figsize=(w * cols, h * rows + 0.9), dpi=150, facecolor=SURFACE, squeeze=False)
+    hall = spec["hall"]
+    for ax, (title, q) in zip(axes.flat, lays):
+        _style(ax)
+        ax.set_xlim(x0, x1)
+        ax.set_ylim(y1, y0)  # y runs south: the town at the bottom
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        c = spec["cap"]
+        ax.add_patch(Rectangle((c[0], c[2]), c[1] - c[0], c[3] - c[2], facecolor="none", edgecolor=MUTED, hatch="////",
+                               linewidth=0.5, zorder=1))
+        sb, sd = spec["standoff_m"], spec["setback_m"]
+        ax.add_patch(FancyBboxPatch((hall[0], hall[2]), hall[1] - hall[0], hall[3] - hall[2], boxstyle=f"round,pad={sd}",
+                                    facecolor="none", edgecolor=MUTED, linewidth=0.8, linestyle=(0, (1, 2)), zorder=2))
+        ax.add_patch(Rectangle((hall[0] - sb, hall[2] - sb), hall[1] - hall[0] + 2 * sb, hall[3] - hall[2] + 2 * sb, facecolor="none",
+                               edgecolor=INK2, linewidth=0.8, linestyle=(0, (4, 2)), zorder=2))
+        small, inside = [], []
+        for m in q["modules"]:
+            r = m["rect"]
+            ax.add_patch(Rectangle((r[0], r[2]), r[1] - r[0], r[3] - r[2], facecolor=_FILLS.get(m["name"], "#e6e4de"),
+                                   edgecolor=INK2, linewidth=0.6, zorder=3))
+            cx, cy = (r[0] + r[1]) / 2, (r[2] + r[3]) / 2
+            name = _NAMES.get(m["name"], m["name"])
+            if min(r[1] - r[0], r[3] - r[2]) >= 85.0 and m["name"] != "data hall":
+                inside.append(ax.text(cx, cy, name, ha="center", va="center", fontsize=7.5, color=INK, zorder=6, linespacing=1.1))
+            elif m["name"] == "data hall":
+                inside.append(ax.text(cx, cy, name, ha="center", va="center", fontsize=7, color=SURFACE, zorder=6, linespacing=1.0))
+            else:
+                small.append((cx, cy, name.replace("\n", " ")))
+        for key, colour, style, lw, _ in _ROUTES:
+            for line in q.get(key, []):
+                a = np.array(line)
+                ax.plot(a[:, 0], a[:, 1], color=colour, linestyle=style, linewidth=lw, solid_capstyle="round", zorder=4)
+        # Where a road still meets a walk: an underpass under a truck road, a raised crossing on the public road.
+        for key, mark in [("underpasses", "s"), ("raised_crossings", "o")]:
+            for cx, cy in q.get(key, []):
+                ax.plot([cx], [cy], marker=mark, markersize=6.5, markerfacecolor=SURFACE, markeredgecolor=INK, markeredgewidth=1.1, zorder=6)
+        gx, gy = spec["gate"]
+        ax.plot([gx], [gy], marker="v", markersize=7, color=INK, zorder=5)
+        small.append((gx, gy, "site entrance"))
+        tx, ty = spec["town"]
+        ax.annotate("", (tx, y1 - 4), xytext=(tx, ty), arrowprops=dict(arrowstyle="->", color=INK2, linewidth=0.8), zorder=5)
+        inside.append(ax.text(tx + 14, y1 - 6, "to Homer City borough", ha="left", va="bottom", fontsize=7.5, color=INK2, zorder=5))
+        fig.canvas.draw()
+        rend = fig.canvas.get_renderer()
+        _place_labels(fig, ax, small, avoid=[a.get_window_extent(rend).expanded(1.04, 1.15) for a in inside])
+        sub = (f"${q['score']:,.0f}k a year  ·  underpasses {q['crossings']}, raised crossings {q.get('car_crossings', 0)}  ·  "
+               f"{q['truck_km_yr']:,.0f} truck-km a year")
+        ax.set_title(f"{title}\n{sub}", fontsize=9.5, color=INK, loc="left", linespacing=1.4)
+        # A 200 m scale bar in the bottom-left corner.
+        bx, by_ = x0 + 30, y1 - 30
+        ax.plot([bx, bx + 200], [by_, by_], color=INK, linewidth=1.2, solid_capstyle="butt", zorder=5)
+        ax.text(bx + 100, by_ - 10, "200 m", ha="center", va="bottom", fontsize=7, color=INK2)
+    for ax in axes.flat[n:]:
+        ax.set_visible(False)
+    handles = [Line2D([], [], color=c, linestyle=s, linewidth=lw, label=lab) for _, c, s, lw, lab in _ROUTES]
+    handles += [Line2D([], [], color=INK, marker="s", linestyle="none", markerfacecolor=SURFACE, markersize=6, label="underpass (truck road over a walk)"),
+                Line2D([], [], color=INK, marker="o", linestyle="none", markerfacecolor=SURFACE, markersize=6, label="raised crossing (public road)"),
+                Line2D([], [], color=INK2, linestyle=(0, (4, 2)), linewidth=0.8, label=f"stand-off band ({spec['standoff_m']:g} m, no public vehicles)"),
+                Line2D([], [], color=MUTED, linestyle=(0, (1, 2)), linewidth=0.8, label=f"noise setback ({spec['setback_m']:g} m, no homes)")]
+    fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=8, labelcolor=INK2,
+               bbox_to_anchor=(0.5, 0.025))
+    fig.text(0.01, 0.006, "North up; the town lies south. Positions are schematic (the real site is not yet mapped); the data hall "
+             "is fixed." + chr(10) + "Cost a year (lower is better): walking time at US DOT's value, the trucks' running cost, and the warm main, "
+             "underpasses and raised crossings paid off. Routes found on a 10 m grid round the buildings (brownfield site).", fontsize=6.8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.07, 1, 1))
     fig.savefig(path, facecolor=SURFACE)
     plt.close(fig)
