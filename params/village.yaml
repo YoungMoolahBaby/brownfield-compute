@@ -167,11 +167,1443 @@ site:
     conf: low
     source: "the design (schematic)"
 
-walk:
-  speed_m_s:
-    value: 1.3
-    low: 1.2
-    high: 1.4
-    unit: m/s, walking speed
+# --- Research inputs (2026-11-16; 'not opened' marks a search-summary figure) ---
+
+# Neighbourhood at the campus edge. Research inputs (agents, 2026-11-16).
+
+housing_cost:
+  cost_per_ft2_nahb:
+    value: 162
+    low: 149
+    high: 193
+    unit: $/ft2 of finished floor area, construction cost only (no lot, overhead, marketing, commission or profit), typical new single-family home, 2024 dollars (low = without the site-work line; high = Middle Atlantic spec median 2025, which includes builder margin)
+    conf: medium
+    source: "NAHB, Eric Lynch, 'Cost of Constructing a Home-2024', 2025-01-20 (https://nahb.org/-/media/AB4EFC742624475A97A0A62189986FF8.ashx), Table 1: 'Average Finished Area: 2,647'; 'B. Total Construction Cost $428,215' (64.4% of the $665,298 sales price); 'I. Site Work (sum of A to E) $32,719'. 428,215 / 2,647 = 161.8; (428,215 - 32,719) / 2,647 = 149.4 (my arithmetic). Caveat in the report: 'usable responses were received from 41 builders' and 'not designed to capture representative characteristics of the average home'. High: Siniavskaia, NAHB Eye on Housing 2026-09-14, from Census SOC (https://eyeonhousing.org/2026/09/custom-home-premium-highest-since-2011/): 'The Middle Atlantic, the next most expensive spec home market, registered square foot prices of $193'"
+  contract_price_per_ft2_census:
+    value: 171
+    low: 152
+    high: 193
+    unit: $/ft2 floor area, median price excluding the improved lot, new single-family DETACHED homes started in 2025 (value = custom, contractor-built; low = spec national; high = spec Middle Atlantic). Includes builder margin
+    conf: high
+    source: "Siniavskaia, NAHB Eye on Housing, 2026-09-14, from Census Survey of Construction (https://eyeonhousing.org/2026/09/custom-home-premium-highest-since-2011/): 'For custom single-family detached (SFD) homes started in 2025, the median price climbed to $171 per square foot'; 'For spec starts, after excluding improved lot values, the median was $152 per square foot'. 2024 values $166 custom, $153 spec (https://eyeonhousing.org/2025/10/square-foot-prices-moderate-in-2024/)"
+  cost_per_ft2_icc_bvd_r3:
+    value: 170.80
+    low: 170.80
+    high: 182.23
+    unit: $/ft2 gross area, ICC Building Valuation Data Aug 2025, Group R-3 one- and two-family dwellings (townhouses under the IRC are R-3), national average, construction type VB (value, low) to VA (high)
+    conf: medium
+    source: "ICC, 'Building Valuation Data - AUGUST 2025', copy hosted by City of Kirkland WA (https://www.kirklandwa.gov/files/sharedassets/public/v/2/development-services/pdfs/building-pdfs/icc-august-2025.pdf): row 'R-3 Residential, one- and two-family' VA 182.23, VB 170.80; 'The average costs include foundation work, structural and nonstructural building components, electrical, plumbing, mechanical and interior finish material'; 'This data table is not intended to be used as an estimating guide'"
+  garage_cost_per_ft2:
+    value: 69.64
+    low: 49
+    high: 90
+    unit: $/ft2 gross area of a private garage, 2025 dollars, national (value = ICC BVD Group U, type VB; low/high = consumer cost guides)
+    conf: low
+    source: "ICC Building Valuation Data Aug 2025 (above): 'U Utility, miscellaneous' VA 72.88, VB 69.64; footnote 'a. Private Garages use Utility, miscellaneous'; 'b. For shell only buildings deduct 20 percent' (69.64 x 0.8 = 55.71, my arithmetic). Low: Dreamlands Design, July 2025, about $49/ft2 for a two-car garage (search summary, not opened). High: The Pricer, Jan 2026, $90/ft2 (search summary, not opened; its own table does not reconcile). HomeAdvisor detached garage $19,200-$33,600 (search summary, not opened; page returned 403). No RSMeans figure found (paywalled)"
+  garage_to_house_cost_ratio:
+    value: 0.41
+    low: 0.40
+    high: 0.41
+    unit: ratio of garage $/ft2 to dwelling $/ft2 (ICC BVD U / R-3, type VB value and high, VA low)
+    conf: medium
+    source: "ICC BVD Aug 2025 (above): 69.64 / 170.80 = 0.408 (VB); 72.88 / 182.23 = 0.400 (VA) (my arithmetic)"
+  floor_u_over_garage:
+    value: 0.033
+    low: 0.028
+    high: 0.047
+    unit: Btu/h-ft2-F, maximum assembly U-factor of a floor over unconditioned space (an unheated garage), IECC 2021 Table R402.1.2, Climate Zone 5 (low = CZ 7-8 limit, high = CZ 4 limit). 0.033 Btu/h-ft2-F = 0.187 W/m2-K (my arithmetic)
+    conf: high
+    source: "Insulation Institute, 'Pennsylvania Uniform Construction Code: Summary of key residential energy code requirements' N109, Dec 2025 (https://insulationinstitute.org/wp-content/uploads/2025/12/N109-PA-Energy-Code-1225.pdf): 'The 2021 IECC with Pennsylvania specific amendments went into effect on January 1, 2026'; Floors CZ 4 'R-19 / U-0.047', CZ 5 'R-30 / U-0.033'. Same 0.033 in the base 2021 IECC Table R402.1.2 as reproduced in NAHB '2021 IECC Suggested Amendments', 2021-06-18 (https://www.nahb.org/-/media/NAHB/advocacy/docs/top-priorities/codes/code-adoption/nahb-suggested-amendments-2021-iecc.pdf), and Utah Clean Energy table 'Floor U-Factor 0.047 0.033 0.033' for CZ 3, 5, 6 (search summary, not opened). ICC's own code site returned 403"
+  floor_r_over_garage:
+    value: 30
+    low: 19
+    high: 38
+    unit: h-ft2-F/Btu, minimum floor insulation R-value, IECC 2021 Table R402.1.3, CZ 5 (low = footnote g alternative 'fill the framing cavity' minimum; high = CZ 7-8). R-30 = 5.28 m2-K/W (my arithmetic)
+    conf: high
+    source: "Insulation Institute N109 (above): CZ 5 Floors 'R-30 / U-0.033'. PA amendments to the 2021 IECC (Ross Township PA copy, https://www.ross.pa.us/DocumentCenter/View/2245/2021-IECC-PA-Amendments), Table R402.1.3 footnote g: 'Alternatively, insulation sufficient to fill the framing cavity providing not less than an R-value of R-19.' CZ 7-8 floor 38 from the NAHB reproduction of Table R402.1.3 (above)"
+  median_new_sf_floor_area:
+    value: 2142
+    low: 2090
+    high: 2459
+    unit: ft2, median floor area of new single-family houses completed in 2025 (detached and attached together; low = West median, high = Northeast median)
+    conf: high
+    source: "Census, 'Highlights of 2025 Characteristics of New Housing' (https://www.census.gov/construction/chars/highlights.html): 'The median size of a completed single-family home was 2,142 square feet'; 'The median size of a new single-family home sold in 2025 was 2,194 square feet'. Regional medians from Census table squarefeet_cust.xls sheet SFTotalMedAvgSqFt, 2025 row: Northeast 2,459, Midwest 1,969, South 2,162, West 2,090; US average 2,378 (https://www.census.gov/construction/chars/xls/squarefeet_cust.xls, downloaded and read)"
+  townhouse_floor_area:
+    value: 1615
+    low: 1412
+    high: 2142
+    unit: ft2, average floor area of an existing single-family attached home (US housing stock 2020; low = heated area only; high = median of all new single-family homes 2025, an upper bound)
+    conf: low
+    source: "EIA, RECS 2020, Table HC10.1 'Total square footage of U.S. homes, 2020' (https://www.eia.gov/consumption/residential/data/2020/hc/xls/HC%2010.1.xlsx, downloaded and read): 'Single-family attached' 7.45 million units, 12.03 billion ft2 total, 10.52 billion ft2 heated; 12.03e9 / 7.45e6 = 1,615 and 10.52e9 / 7.45e6 = 1,412 (my arithmetic). Detached for comparison 2,264 total, 2,003 heated (my arithmetic). This is the whole stock, not new construction; no Census figure for new townhouses found"
+  share_new_sf_two_car_garage:
+    value: 0.64
+    low: 0.55
+    high: 0.72
+    unit: fraction of new single-family houses completed in 2025 with a 2-car garage (low = Northeast; high = built for sale, US)
+    conf: high
+    source: "Census table parking_cust.xls (https://www.census.gov/construction/chars/xls/parking_cust.xls, downloaded and read), sheet SFTotalParking, 2025: US 64% 2-car, 15% 3+ car, 10% 1-car, 9% none; Northeast 55% 2-car; sheet SFForSaleParking, US 72% 2-car"
+  townhouse_share_sf_starts:
+    value: 0.173
+    low: 0.173
+    high: 0.19
+    unit: fraction of US single-family starts that are townhouses, 2024 (value = four-quarter moving average; high = Q4 2024 alone)
+    conf: high
+    source: "Dietz, NAHB Eye on Housing, 2025-02-21, from Census data (https://eyeonhousing.org/2025/02/townhouse-construction-expanded-in-2024/): '174,000 homes, which is 10% higher than the prior four-quarter period'; 'Townhouses made up 19% of single-family housing starts for the fourth quarter of the year, a data series high'; one-year moving average 17.3%"
+  construction_share:
+    value: 0.644
+    low: 0.60
+    high: 0.70
+    unit: share of a new home's sale price that is construction (the rest land, financing, overhead, sales, profit)
+    conf: low
+    source: "NAHB, Cost of Constructing a Home 2024: construction 64.4% of the average sales price (as recalled; to confirm against the survey)"
+
+acoustics:
+  ibc_stc_min:
+    value: 50
+    low: 45
+    high: 50
+    unit: STC, minimum airborne rating of walls and floors between dwelling units, IBC 2021 s.1206.2 (value = lab, ASTM E90; low = NNIC if field tested, ASTM E336). Applies to IBC buildings (R-2 etc.), not to IRC townhouses
+    conf: high
+    source: "IBC 2021 as adopted without amendment by Colorado DFPC, on UpCodes (https://up.codes/viewer/colorado/ibc-2021/chapter/12/interior-environment): 1206.2 'shall have a sound transmission class of not less than 50 where tested in accordance with ASTM E90'; alternatively 'a Normalized Noise Isolation Class (NNIC) rating of not less than 45 if field tested'"
+  ibc_iic_min:
+    value: 50
+    low: 45
+    high: 50
+    unit: IIC, minimum impact rating of floor/ceiling assemblies between dwelling units, IBC 2021 s.1206.3 (low = NISR field, ASTM E1007). Only for stacked units; side-by-side townhouses have no shared floor
+    conf: high
+    source: "Same UpCodes IBC 2021 page: 1206.3 'shall have an impact insulation class rating of not less than 50 where tested in accordance with ASTM E492'; alternatively NISR 'not less than 45 if field tested'"
+  irc_appendix_ak_stc:
+    value: 45
+    low: 45
+    high: 45
+    unit: STC, IRC Appendix AK minimum between dwelling units (townhouses, duplexes); appendix applies only where the jurisdiction adopts it
+    conf: medium
+    source: "Thorburn, 'Acoustical Considerations for Mixed-Use Wood-Frame Buildings', WoodWorks WW-WSP-02, June 2014 (https://www.woodworks.org/wp-content/uploads/Acoustics_Solutions_Paper.pdf): 'The International Residential Code (IRC) requires a minimum design separation of STC 45 for townhouses.' AWC FAQ 2024-01-18 (https://awc.org/faq/do-u-s-model-building-codes-contain-provisions-placing-minimum-sound-transmission-performance-requirements-for-exterior-walls/): 'The sections of the IBC and IRC that deal with sound transmission are IBC Section 1206 and IRC Appendix AK.' Appendix AK text itself not opened; whether PA's UCC adopts it not checked"
+  stc_single_stud:
+    value: 36
+    low: 32
+    high: 39
+    unit: STC, single row 2x4 wood studs, one layer 5/8 in Type X gypsum each side, batt in cavity, 1 h fire (low = same with no insulation; high = lab test W2069, 1/2 in Type X with batt)
+    conf: high
+    source: "Owens Corning Canada, 'Wall & Floor Assembly Guide: Insulation for Sound & Fire Rated Assemblies', 2024 (https://dcpd6wotaa0mb.cloudfront.net/mdms/dms/Residential%20Insulation/300746/300746B-QZ-Wall-Floor-Assembly-Guide-EN.pdf), reproducing National Building Code of Canada wall types: 'NBC-W1a ... 36' (SLWS147, 5/8 in Type X each side, batt, 1 h); 'NBC-W1d ... 32' (no insulation); 'W2069 (16\" o.c.) 39'. NRC CBD-239 (below): common single-stud partition 'has an STC rating of about 33'"
+  stc_single_stud_resilient:
+    value: 45
+    low: 40
+    high: 50
+    unit: STC, single row 2x4 wood studs with resilient channels one side, one layer 5/8 in Type X each side, batt (low = no insulation; high = NRC lab test, studs 24 in o.c.)
+    conf: high
+    source: "Owens Corning guide (above), 'Single Layer Wood Stud Wall with Resilient Channels': 'NBC-W3a (16\" o.c.) 45'; 'NRC-TL-93-098 (24\") 50'; no insulation 'NRC-TL-93-122 (16\") 40'"
+  stc_double_stud_1layer:
+    value: 57
+    low: 54
+    high: 60
+    unit: STC, double row of 2x4 wood studs on separate plates 1 in (25 mm) apart, one layer 5/8 in Type X each side, batts in both rows, 1 h fire (low = batt in one row only; high = lab test W02985, studs 24 in o.c.)
+    conf: high
+    source: "Owens Corning guide (above), 'Single Layer Double Wood Stud Wall': 'NBC-W13a (16\" o.c.) 57' and 'NRC-TL-93-266 (16\" o.c.) 56', 'W02985 (24\" o.c.) 60', described as 'Double 38 mm x 89 mm ... wood studs ... on separate 38 mm x 89 mm ... wood plates set 25 mm (1\") apart; single layer 15.9 mm (5/8\") type \"x\" gypsum board each side; two thicknesses'; one batt (SLDWS257) 54. Matches NRC, Warnock, CBD-239 'Factors Affecting Sound Transmission Loss', 1985 (https://web.mit.edu/parmstr/Public/NRCan/CanBldgDigests/cbd239_e.html), Table 2: 'Double row of 38 x 89 mm wood studs with small gap between them', 1+1 layers, 57 with absorbent"
+  stc_double_stud_2layer:
+    value: 60
+    low: 55
+    high: 64
+    unit: STC, double row of 2x4 wood studs on separate plates 1 in apart, two layers 1/2 in Type X each side, batt in one row, 1 h load-bearing / 1.5 h non-load-bearing (low = no insulation; high = lab test W01480)
+    conf: high
+    source: "Owens Corning guide (above), 'Double Layer Double Wood Stud Wall': 'NBC-W15e (16\" o.c.) 60', 'W01480 (16\" o.c.) 64'; no insulation 'NBC-W15h ... 55'. CBD-239 Table 2 (above): double row, 2+2 layers, 63 with absorbent, 57 without. WoodWorks 2014 (above): 'with a wider double stud system the assembly achieves a rating of STC 63 (assuming batt insulation in each stud cavity and two layers of 5/8-inch gypsum board on both sides of the wall)'"
+  stc_double_stud_no_absorber:
+    value: 45
+    low: 45
+    high: 46
+    unit: STC, double row of wood studs, one layer gypsum each side, empty cavities (shows what the batts are worth)
+    conf: high
+    source: "Owens Corning guide (above): 'NBC-W13e ... 45' and 'NRC-TL-93-261 16\" 45' (5/8 in Type X, no insulation). CBD-239 Table 2: 1+1 layers without absorbent '[46]'"
+  stc_double_stud_misdetailed:
+    value: 48
+    low: 48
+    high: 58
+    unit: STC, the same double-stud materials with the board or sheathing placed in the middle of the cavity (four-leaf wall, as when two separately sheathed walls stand back to back)
+    conf: medium
+    source: "WoodWorks 2014 (above): 'a wall that commonly separates luxury units could go from STC 63 to STC 48 and not even meet building code requirements'; Figure 6 'Effect of Sheathing Placement on Acoustical Performance' shows STC 58, 53, 48 and 63 for the same materials in different positions; 'In the case of lot-line walls for townhouses or row housing, the air space is typically sealed air tight. In the case of trapped air, one to two inches of air becomes very stiff'"
+  irc_rated_wall_below_fsd:
+    value: 5
+    low: 3
+    high: 5
+    unit: ft, exterior walls closer than this fire separation distance must be 1-hour rated with exposure from both sides (value = IRC 2021 Table R302.1(1), unsprinklered; low = Table R302.1(2), sprinklered dwellings)
+    conf: high
+    source: "IRC 2021 as adopted without amendment by Colorado DFPC, on UpCodes (https://up.codes/viewer/colorado/irc-2021/chapter/3/building-planning): Table R302.1(1) Walls 'Fire-resistance rated' '1 hour—tested in accordance with ASTM E119, UL 263 or Section 703.3 ... with exposure from both sides' at '0 feet'; 'Not fire-resistance rated' '0 hours' at '≥ 5 feet'. Table R302.1(2) (sprinklered): not rated '0 hours' at '3 feet'"
+  irc_openings_none_below_fsd:
+    value: 3
+    low: 3
+    high: 3
+    unit: ft, no openings in an exterior wall closer than this fire separation distance (both tables)
+    conf: high
+    source: "UpCodes IRC 2021 (above), Table R302.1(1) and R302.1(2): 'Openings in walls' 'Not allowed' 'NA' '< 3 feet'"
+  irc_openings_max_pct_3_to_5ft:
+    value: 25
+    low: 25
+    high: 100
+    unit: percent of wall area allowed as openings at fire separation distance 3 ft to < 5 ft (value = unsprinklered; high = sprinklered, 'Unlimited' from 3 ft); unlimited at 5 ft and over in both tables
+    conf: high
+    source: "UpCodes IRC 2021 (above), Table R302.1(1): 'Openings in walls' '25% maximum of wall area' '0 hours' '3 feet'; 'Unlimited' '0 hours' '5 feet'. Table R302.1(2): 'Unlimited' '0 hours' '3 feet'. Confirms the brief: 1-hour below 5 ft, no openings below 3 ft, 25% from 3 to 5 ft"
+  irc_projections_none_below_fsd:
+    value: 2
+    low: 2
+    high: 2
+    unit: ft, no projections (eaves, overhangs) closer than this fire separation distance; from 2 ft to < 5 ft they need 1-hour underside protection, heavy timber or fire-retardant-treated wood (3 ft with sprinklers); unrated at 5 ft and over (3 ft with sprinklers)
+    conf: high
+    source: "UpCodes IRC 2021 (above), Table R302.1(1): 'Projections' 'Not allowed' 'NA' '< 2 feet'; 'Fire-resistance rated' '1 hour on the underside, or heavy timber, or fire-retardant-treated wood' '≥ 2 feet to < 5 feet'; footnotes allow 0 hours on the eave underside 'if fireblocking is provided from the wall top plate to the underside of the roof sheathing'"
+  irc_penetrations_protect_below_fsd:
+    value: 3
+    low: 3
+    high: 3
+    unit: ft, penetrations closer than this fire separation distance must comply with R302.4 (none required at 3 ft and over)
+    conf: high
+    source: "UpCodes IRC 2021 (above), Table R302.1(1): 'Penetrations' 'All' 'Comply with Section R302.4' '< 3 feet'; 'None required' '3 feet'"
+  irc_townhouse_common_wall_hours:
+    value: 2
+    low: 1
+    high: 2
+    unit: hours, fire-resistance of a single common wall between townhouse units, rated from both sides (value = without sprinklers; low = with a P2904 sprinkler system). Alternative under R302.2.1 is two separate 1-hour walls
+    conf: high
+    source: "UpCodes IRC 2021 (above), R302.2.2 item 1: 'Where an automatic sprinkler system in accordance with Section P2904 is provided, the common wall shall be not less than a 1-hour fire-resistance-rated wall assembly'; item 2: 'Where an automatic sprinkler system ... is not provided, the common wall shall be not less than a 2-hour fire-resistance-rated wall assembly'. R302.2.1: 'Each townhouse unit shall be separated from other townhouse units by two 1-hour fire-resistance-rated wall assemblies'. The sprinklered 1-hour common wall is in the 2021 text"
+  irc_two_family_separation_hours:
+    value: 1
+    low: 0.5
+    high: 1
+    unit: hours, wall and floor separation between the two units of a two-family dwelling (a pair of attached units is a duplex, not a townhouse; low = fully sprinklered)
+    conf: high
+    source: "UpCodes IRC 2021 (above), R302.3: 'Dwelling units in two-family dwellings shall be separated from each other by wall and floor assemblies' of 1-hour rating; Exception 1: 'A fire-resistance rating of 1/2 hour shall be permitted in buildings equipped throughout with an automatic sprinkler system'. Definitions (https://up.codes/viewer/colorado/irc-2021/chapter/2/definitions): Townhouse 'A building that contains three or more attached townhouse units'; Dwelling 'Any building that contains one or two dwelling units'"
+  irc_parapet_height:
+    value: 30
+    low: 30
+    high: 30
+    unit: in, parapet above the roof at a townhouse separation wall, unless an exception applies (class C roof covering plus noncombustible or FRT sheathing, or 5/8 in Type X under the sheathing, 4 ft each side, no openings or penetrations within 4 ft)
+    conf: high
+    source: "ICC / Shums Coda Associates, '2021 IRC Residential Plan Review' slides, 2024 (https://www.iccsafe.org/wp-content/uploads/Session-41-and-67-2021-IRC-Plan-Review.pdf): R302.2.4 'the parapet shall extend not less than 30 inches above the roof surfaces'; exceptions 'one layer of 5/8-inch Type X gypsum board is installed directly beneath the roof sheathing for a distance of 4 feet on each side'; 'No openings or penetrations within 4 feet of common walls'"
+  irc_garage_ceiling_gypsum:
+    value: 0.625
+    low: 0.625
+    high: 0.625
+    unit: in, Type X gypsum board required between a garage and habitable rooms above it (IRC 2021 Table R302.6)
+    conf: high
+    source: "UpCodes IRC 2021 (above), Table R302.6, garage separated from habitable rooms above: 'Not less than 5/8-inch Type X gypsum board or equivalent'"
+
+rink:
+  ice_length_nhl:
+    value: 60.96
+    low: 60.0
+    high: 60.96
+    unit: m (200 ft NHL; low = IIHF 60 m)
+    conf: high
+    source: "NHL.com (Seattle Kraken), 'Dimensions and markings of regulation ice sheets' (https://www.nhl.com/kraken/news/dimensions-and-markings-of-regulation-ice-sheets-322765100): 'the length of the ice surface is 200 feet'. IIHF Rule Book 2026-27 Rule 1.2 (https://test.rulebook.iihf.com/documents/rule-book-2026-27/1): 'The official size of the rink shall be 60m long and 26m to 30m wide'. 200 ft = 60.96 m (my arithmetic)"
+  ice_width_nhl:
+    value: 25.91
+    low: 25.91
+    high: 30.0
+    unit: m (85 ft NHL; high = IIHF/'Olympic' 30 m)
+    conf: high
+    source: "NHL.com Kraken page (above): 'The standard width of North American rinks is 85 feet'. IIHF Rule 1.2 (above): '26m to 30m wide'. 85 ft = 25.91 m (my arithmetic)"
+  corner_radius_nhl:
+    value: 8.53
+    low: 7.0
+    high: 8.53
+    unit: m (28 ft NHL; low = IIHF minimum)
+    conf: medium
+    source: "NHL 28 ft radius: search summary of NHL rulebook Rule 1.2 copies (Scribd, thestadiumsguide.com; not opened, official NHL rulebook PDF not reached). IIHF Rule 1.2 (opened, above): 'The corners shall be rounded in the arc of a circle with a radius of 7.0m to 8.50m'. 28 ft = 8.53 m (my arithmetic)"
+  ice_area:
+    value: 1517
+    low: 1498
+    high: 1738
+    unit: m2 of ice (value = NHL 200 x 85 ft r 28 ft; low = IIHF 60 x 26 r 8.5; high = IIHF 60 x 30 r 8.5)
+    conf: high
+    source: "(my arithmetic) area = L x W - (4 - pi) r^2: NHL 17,000 - 673 = 16,327 ft2 = 1,516.8 m2; IIHF 60 x 30 r 8.5 = 1,738.0 m2; 60 x 26 r 8.5 = 1,498.0 m2. Cross-check: Taebnia et al. 2020 (below) Finnish arena 'Ice layer surface area [m2] 1,798'"
+  build_cost_single_sheet:
+    value: 24700000
+    low: 20900000
+    high: 29900000
+    unit: USD (2025 estimate) total project, one-sheet municipal arena with locker rooms (low = construction only)
+    conf: medium
+    source: "Northfield (MN) Ice Arena estimate summary, RJM for JLG Architects, 2025-04-29 (https://kymnradio.net/wp-content/uploads/2025/05/Ice-Arena-RJM-Cost-Breakdown.pdf): 'Total Construction Estimate $20,897,152 $428.22'; 'Total Project Estimate $24,707,195 $506.29' on 48,800 sf. Single sheet per KYMN 2025-02-25 (https://kymnradio.net/2025/02/25/ice-arena-costs-higher-than-expected-engineers-offer-alternatives-to-lower-the-cost/): architect Tom Betty, 'for a single ice sheet, it's what we're seeing $500 per square foot', some markets '$1000 a square foot'; 'If you were to do 2 ice sheets, the cost per square foot technically drops, by about $50'. Cross-check Belmont MA: NEREJ 2024-02-16 (https://nerej.com/skanska-awarded-22-6-million-contract-to-construct-new-40-300-s-f-belmont-skating-rink) 'a $22.6 million contract' for a '40,300 s/f skating rink and athletic facility' with 'a 200-ft. by 85-ft. ice sheet'. High: Belmontonian, '$29.9 million rink and community center' (search summary, not opened)"
+  build_cost_per_ft2:
+    value: 506
+    low: 428
+    high: 561
+    unit: USD/ft2 gross building area, one-sheet arena, 2024-2025 (low = Northfield construction only; high = Belmont contract)
+    conf: medium
+    source: "Northfield estimate (above) $506.29/sf total project, $428.22/sf construction. Belmont $22.6M / 40,300 sf = $561/sf (my arithmetic; contract value, not total project). A 2025 Howard County MD feasibility study gives ~$385/sf for multi-sheet comparables (search summary, not opened)"
+  building_area_single_sheet:
+    value: 48800
+    low: 40300
+    high: 48800
+    unit: ft2 gross, one-sheet community arena with 200 x 85 ft ice
+    conf: medium
+    source: "Northfield estimate 48,800 sf (above); Belmont 40,300 s/f (NEREJ, above). Canada mean for stand-alone single-rink arenas 3,219 m2 = 34,650 ft2 (my arithmetic from NRCan SECA 2014: 3.65 million m2 / 1,134 arenas)"
+  ice_plant_cost:
+    value: 2750000
+    low: 2750000
+    high: 2750000
+    unit: USD (2025) 'Ice Rink Systems' trade package (refrigeration plant, rink floor) for one sheet
+    conf: low
+    source: "Northfield estimate (above): '13A - Ice Rink Systems Rink-Tec $2,746,648 $56.28' per sf. HVAC separately '23A - HVAC Systems Superior Mech $2,425,000 $49.69'. Single estimate, so low = high"
+  energy_total_single_sheet:
+    value: 1039
+    low: 326
+    high: 3500
+    unit: MWh/yr all purchased energy, one-sheet indoor arena (value = Canada 2014 mean; low = best Swedish CO2 retrofit; high = inefficient arenas)
+    conf: high
+    source: "NRCan Survey of Energy Consumption of Arenas 2014, Table 1a (https://oee.nrcan.gc.ca/corporate/statistics/neud/dpa/showTable.cfm?type=SE&sector=aaa&juris=ca&rn=11&page=2 and page=1): stand-alone single rink arenas 'Energy use (PJ) 4.24', 'Energy intensity (GJ/m2) 1.16', 1,134 arenas, 3.65 million m2. 4.24 PJ / 1,134 = 1,039 MWh per arena (my arithmetic). Sweden agrees: Rogstam, Karampour et al. 2011, IIR (https://iifiir.org/en/fridoc/experimental-cooling-load-analysis-of-ice-rinks-27954): 'Ice rinks for ice hockey use approximately 1000 MWh per year', 'based on statistics from over 100 Swedish ice rinks'. Low: Bolteau, Gronqvist, Rogstam, 'Field measurements of CO2 refrigeration systems with heat recovery in retrofitted ice rinks', 25th IIR International Congress of Refrigeration, Montreal 2019, manuscript 1111 (https://www.ekanalys.se/_files/ugd/bbc3c3_d2e0300d63054de7bf63460dd9e7bb3d.pdf): Facility A 'a total use of 326 MWh electricity for a 7 month long period', 'self-sufficient on its own heat'. High: Taebnia, Toomla, Leppa, Kurnitski, Energy and Buildings 2020, doi:10.1016/j.enbuild.2020.110389 (https://acris.aalto.fi/ws/portalfiles/portal/44795244/ENG_Taebnia_et_al_Developing_energy_calculation_methodology_Energy_and_Buildings.pdf): 'less efficient arenas consume up to 3,500 MWh/year'"
+  energy_intensity_single_sheet:
+    value: 322
+    low: 306
+    high: 450
+    unit: kWh/m2 gross floor area per year, site energy (value = Canada single-rink 2014; low = ENERGY STAR Canada median; high = Canada multi-rink)
+    conf: high
+    source: "NRCan SECA 2014 Table 1a (above): single rink 1.16 GJ/m2, multi rink 1.62 GJ/m2. ENERGY STAR Portfolio Manager 'Canadian National Median Reference Values', Aug 2023 (https://portfoliomanager.energystar.gov/pdf/reference/Canadian%20National%20Median%20Table.pdf): 'Ice/Curling Rink* 1.10 1.10 SCIEU 2019 - B - Ice/Curling Rink' (source and site GJ/m2). 1 GJ = 277.8 kWh (my arithmetic)"
+  electricity_share:
+    value: 0.82
+    low: 0.39
+    high: 1.0
+    unit: fraction of purchased energy that is electricity (value = Swedish mean; low = Finnish model before heat recovery; high = CO2 rink self-sufficient on heat)
+    conf: medium
+    source: "IIR news on Karampour & Rogstam, GL2012 (https://iifiir.org/en/news/gl2012-highlights-performance-analysis-of-ice-rinks-to-cut-down-energy-use): 'The average annual energy used in a Swedish ice rink is 1091 Mwh/year', '82% electricity and 18% heat' (citing Rogstam 2011). Low: Taebnia et al. 2020 Table 5 (above) electricity 156.23 vs heating 247.33 kWh/m2a = 0.39 (my arithmetic). High: Bolteau et al. 2019 Facility A (above), district heating 0.00 MWh/day after retrofit. Canadian split by fuel not found"
+  refrigeration_share:
+    value: 0.43
+    low: 0.35
+    high: 0.75
+    unit: fraction of total arena energy used by the refrigeration system
+    conf: high
+    source: "Rogstam, Karampour et al. 2011 (above): 'The refrigeration system accounts for in the range of 35 to 75% of the total energy usage in the ice rinks', 'with an average value of 43%'. Same 43% in Bolteau et al. 2019 (above): 'refrigeration system, cooling capacity usually 250-350 kW, accounting for about 43% and space heating with hot water production for about 26%'. Illinois Smart Energy Design Assistance Center (https://smartenergy.illinois.edu/ice-arenas/): refrigeration 'consumes the greatest amount of energy (45% of total energy use)'"
+  refrigeration_capacity:
+    value: 300
+    low: 250
+    high: 563
+    unit: kW cooling capacity, one sheet (high = Bentley Arena 160-ton plant)
+    conf: medium
+    source: "Bolteau et al. 2019 (above): 'cooling capacity usually 250-350 kW'; Facility A 'a new 250 kW CO2 system'. High: PHCP Pros, 'Capturing heat from ice' (https://www.phcppros.com/articles/8533-capturing-heat-from-ice): Bentley Arena, Waltham MA, '160-ton, indirect flooded industrial-grade' plant; 160 tons x 3.517 = 563 kW (my arithmetic)"
+  cooling_load_mean:
+    value: 98.5
+    low: 92.5
+    high: 98.5
+    unit: kW average refrigeration load over a measured period, one Swedish sheet (low = modelled ice-surface heat load)
+    conf: medium
+    source: "Rogstam, Karampour et al. 2011, IIR abstract (above): 'the average cooling capacity corrected for the ground heat gain and the brine pump power was 98.5 kW and the corresponding heat load based on the surface ice sheet conditions was estimated to 92.5 kW'. One rink, one period"
+  cooling_energy_season:
+    value: 548
+    low: 502
+    high: 571
+    unit: MWh/yr heat removed from the ice (value = Finnish model; range = 98.5 kW over 7 to 8 months)
+    conf: medium
+    source: "Taebnia et al. 2020 Table 5 (above): 'Cooling energy demand to maintain the ice pad 548,020 kWh/a, ~ 240.9 kWh/m2 a'. Range: 98.5 kW x 5,100 h = 502 MWh and x 5,800 h = 571 MWh (my arithmetic; hours from a 7-8 month season, Bolteau 2019)"
+  refrigeration_electricity:
+    value: 267
+    low: 267
+    high: 469
+    unit: MWh/yr electricity for the refrigeration plant (high = 43% of the Swedish 1,091 MWh mean)
+    conf: medium
+    source: "Taebnia et al. 2020 Table 5 (above): 'For the refrigeration plant 267,300 kWh/a'; 'The refrigeration plant of the ice pad consumes 82% of the entire electricity consumption'. High: 0.43 x 1,091 = 469 MWh (my arithmetic), includes pumps and fans; IIR GL2012 page: compressors are '80%' of the refrigeration share"
+  refrigeration_cop:
+    value: 2.05
+    low: 2.05
+    high: 2.05
+    unit: cooling delivered / refrigeration electricity, seasonal (one modelled Finnish arena)
+    conf: low
+    source: "Taebnia et al. 2020 (above): 548,020 / 267,300 = 2.05 (my arithmetic). A CO2 rink paper reports a heat-recovery COP of 3.5-4 at 60 C supply (search summary of IIR fridoc 32451, 'Evaluation of heat recovery performance in a CO2 ice rink', not opened). No measured seasonal cooling COP range found"
+  condenser_heat_season:
+    value: 815
+    low: 815
+    high: 1700
+    unit: MWh/yr heat rejected by the refrigeration plant (cooling + compressor work)
+    conf: low
+    source: "Taebnia et al. 2020 (above): 'condensation heat is also calculate summing up electricity consumption of refrigeration machinery with generated cooling energy'; 548 + 267 = 815 MWh (my arithmetic). High: Andersson, Hellstrom, Kalantar, Gehlin, Adl-Zarrabi, 'Ground Source Heating of Soccer Fields', IGSHPA Research Conference 2024, pp. 227-235, doi:10.22488/okstate.24.000025 (https://research.chalmers.se/publication/544313/file/544313_Fulltext.pdf), Backavallen (Katrineholm, SE): 'Over a full season the machines emit about 1700 MWh of condenser heat, which is recycled'; facility size (sheets) not stated"
+  condenser_heat_recoverable:
+    value: 0.30
+    low: 0.30
+    high: 0.50
+    unit: fraction of condenser heat put to use in the rink building (conventional plant)
+    conf: medium
+    source: "Taebnia et al. 2020 (above): tool input 'Percentage of condensation heat recovered [%] 30'; 'This is not normally more than 50% of the entire condensation heat'. PHCP Pros Bentley Arena (above): '50 tons of heat recovery or about 30 percent'"
+  heat_demand_total:
+    value: 563
+    low: 196
+    high: 563
+    unit: MWh/yr heat needed by a one-sheet arena (value = Finnish model, gross need; low = Swedish purchased heat after existing recovery)
+    conf: medium
+    source: "Taebnia et al. 2020 Table 5 (above): 'Total heating energy consumption 247.33 kWh/m2 a' x 2,275 m2 = 563 MWh (my arithmetic); parts: 'External partitions heat loss 66,287 kWh/a', 'Ventilation heating 393,700 kWh/a', 'Domestic hot water 34,900 kWh/a', 'Resurfacing hot water 67,800 kWh/a'. Low: 18% heat x 1,091 MWh = 196 MWh (my arithmetic, IIR GL2012 page above)"
+  heat_recovery_share_of_demand:
+    value: 1.0
+    low: 0.88
+    high: 1.0
+    unit: fraction of the arena's own heat demand met by its refrigeration heat recovery (transcritical CO2 plants)
+    conf: medium
+    source: "Bolteau et al. 2019 (above): Facility A 'the heat recovery system covers all the heating demands in the facility, making the ice rink selfsufficient on its own heat'; Facility D 'the two stage heat recovery function covers 88% of the heating demand'. Conventional NH3/HFC plants recover far less (see condenser_heat_recoverable)"
+  heat_export_surplus:
+    value: 90
+    low: 80
+    high: 100
+    unit: kW surplus heat exported from a CO2 rink to a neighbouring building
+    conf: medium
+    source: "Bolteau et al. 2019 (above), Facility A: 'the municipality has recently started to export 80-100 kW heat to the adjacent swimming hall'; '90 MWh heat exported' in half a season"
+  heat_recovery_supply_temp:
+    value: 60
+    low: 28
+    high: 60
+    unit: C forward temperature of recovered heat (value = CO2 plant; low = old NH3 plant)
+    conf: medium
+    source: "Bolteau et al. 2019 (above): Facility A 'one stage heat recovery supplies a constant 60C forward temperature'; Facility E's old ammonia plant 'provided up to 28C for the preheating in the air handling unit'; 'when the refrigerant temperature reaches 35C, only 19% of the available heat is extracted in the NH3-case whereas more than 60% of the heat is available above 35C for the CO2'"
+  season_months:
+    value: 8
+    low: 7
+    high: 9
+    unit: months/yr with ice (Swedish municipal rinks)
+    conf: medium
+    source: "Bolteau et al. 2019 (above): 'a shorter ice season (7 months) in comparison with the other studied facilities (8-9 months)'"
+  dehumidification_energy:
+    value: 100
+    low: 50
+    high: 150
+    unit: MWh/yr, one-sheet rink dehumidification (value my midpoint)
+    conf: medium
+    source: "Rogstam, Bolteau, Pomerancevs, 'Reactivation of ice rink sorption dehumidifiers with recovered heat', 13th IIR Gustav Lorentzen Conf., Valencia 2018 (https://iifiir.org/en/fridoc/reactivation-of-ice-rink-sorption-dehumidifiers-with-recovered-heat-33607): 'an annual energy usage in the range of 50 to 150 MWh'; 'More recent dehumidifier designs allow lower reactivation air temperatures which enables the use of recovered heat'. Reactivation temperature not given"
+  resurfacing_water_temp:
+    value: 60
+    low: 60
+    high: 71
+    unit: C (140-160 F) ice resurfacing water
+    conf: medium
+    source: "NHL Greener Rinks: 'Typically, resurfacing water is between 140F and 160F' (search summary; https://greenerrinks.nhl.com/desktop/index.html did not render). Illinois SEDAC (above): demineralized water can cut the need to heat it"
+  resurfacing_hot_water_energy:
+    value: 67.8
+    low: 67.8
+    high: 67.8
+    unit: MWh/yr heat for resurfacing water, one modelled Finnish arena
+    conf: low
+    source: "Taebnia et al. 2020 Table 5 (above): 'Resurfacing hot water 67,800 kWh/a, ~ 29.8 kWh/m2a'"
+  subfloor_heave_temp:
+    value: 4.4
+    low: 4.4
+    high: 4.4
+    unit: C (about 40 F) held under the rink slab to stop frost heave
+    conf: low
+    source: "PHCP Pros Bentley Arena (above): recovered heat for 'permafrost prevention under the rink subfloor' in the '40 F range'; DHW prewarmed 'to between 110 F and 130 F' (43-54 C); snow-melt pit heat 'at around 85 F' (29 C)"
+
+fields:
+  pitch_length_soccer:
+    value: 105
+    low: 100
+    high: 110
+    unit: m (low/high = IFAB international range)
+    conf: high
+    source: "Premier League Pitch Standards Framework 2025 (https://resources.premierleague.pulselive.com/premierleague/document/2025/06/06/6b9e7b0e-e3ac-4510-a055-7217321a819f/Premier-League-Pitch-Standards-Framework-2025-Edition.pdf), Rule K.18: 'the length of the pitch shall be 105 metres and its breadth 68 metres'. IFAB Laws of the Game, Law 1.4 (https://www.theifab.com/laws/latest/the-field-of-play/): international touchline 'minimum 100 m' 'maximum 110 m'; any match 90-120 m"
+  pitch_width_soccer:
+    value: 68
+    low: 64
+    high: 75
+    unit: m (low/high = IFAB international range)
+    conf: high
+    source: "PL Rule K.18 (above) 68 m. IFAB Law 1.4 (above): goal line 'minimum 64 m' 'maximum 75 m'; any match 45-90 m"
+  pitch_area_soccer:
+    value: 7140
+    low: 6400
+    high: 8250
+    unit: m2 playing area (no run-off)
+    conf: high
+    source: "(my arithmetic) 105 x 68; 100 x 64; 110 x 75"
+  field_length_football:
+    value: 109.73
+    low: 109.73
+    high: 118.87
+    unit: m, US football incl. end zones (360 ft; high = with 15 ft border)
+    conf: high
+    source: "STMA, 'A Guide to Synthetic and Natural Turfgrass for Sports Fields', 4th ed. 7/18 (https://www.stma.org/wp-content/uploads/2018/09/STMA-Syn-and-Nat-Guide-4th-Edition-FINAL.pdf): 'the actual playing surface of U.S. football fields are typically 360' x 160' or 57,600 sq. ft. Normally, a field will extend at least another 15' around the playing field boundary'. NFL Rule 1 Art. 1 'rectangular field, 360 feet in length and 160 feet in width' (search summary of NFL rulebook PDFs; operations.nfl.com PDFs returned 404). ft to m (my arithmetic)"
+  field_width_football:
+    value: 48.77
+    low: 48.77
+    high: 57.91
+    unit: m (160 ft = 53.3 yd; high = with 15 ft border)
+    conf: high
+    source: "STMA 2018 (above). (my arithmetic)"
+  field_area_football:
+    value: 5351
+    low: 5351
+    high: 8083
+    unit: m2 (value = 360 x 160 ft; high = Lambeau Field turf area incl. surrounds)
+    conf: high
+    source: "STMA 2018 (above) 57,600 sq ft = 5,351 m2; with 15 ft border 74,100 sq ft = 6,884 m2 (my arithmetic). High: Packers.com 'Lambeau Field fun facts' (https://www.packers.com/news/lambeau-field-fun-facts-2476152): 'The square footage of Lambeau's turf is 87,000 square feet' = 8,083 m2 (my arithmetic)"
+  court_basketball_fiba:
+    value: 420
+    low: 420
+    high: 608
+    unit: m2 (28 x 15 m; high = with 2 m clear boundary, 32 x 19 m)
+    conf: high
+    source: "WA Dept of Local Government, Sport and Cultural Industries, Sports Dimensions Guide, basketball (https://cits.wa.gov.au/sport-and-recreation/sports-dimensions-guide/basketball): '28m long and 15m wide, measured from the inner edge of the boundary line'; further boundary line 'is 2m wide minimum'; cites FIBA Official Basketball Rules. Areas (my arithmetic)"
+  court_basketball_nba:
+    value: 436.6
+    low: 436.6
+    high: 436.6
+    unit: m2 (94 x 50 ft = 28.65 x 15.24 m)
+    conf: medium
+    source: "NBA Rule No. 1, court '94 feet long and 50 feet wide' (search summary of secondary pages; NBA rulebook not opened). NFHS high school 84 x 50 ft (same search summary). (my arithmetic)"
+  court_volleyball:
+    value: 360
+    low: 162
+    high: 646
+    unit: m2 (value = 18 x 9 m court + 3 m free zone = 24 x 15; low = court only; high = FIVB competition 5 m sides, 8 m ends)
+    conf: high
+    source: "WA Sports Dimensions Guide, volleyball (https://cits.wa.gov.au/sport-and-recreation/sports-dimensions-guide/volleyball): 'The playing court is 18m long and 9m wide', free zone '3m wide on all sides'; FIVB competitions 'a minimum of 5m from the side lines and 8m from the ends lines'; cites Official Volleyball Rules 2013-2016. FIVB 2025-2028 rules reportedly 6.5 m from end lines (search summary, not opened). Areas (my arithmetic)"
+  clear_height_volleyball:
+    value: 7
+    low: 7
+    high: 12.5
+    unit: m free playing space above the floor (high = FIVB world/official competitions)
+    conf: medium
+    source: "WA guide (above): 'a minimum of 7m high from the playing surface'. 12.5 m for FIVB competitions: search summary of 2025-2028 rule summaries (not opened)"
+  court_pickleball:
+    value: 202.2
+    low: 81.8
+    high: 202.2
+    unit: m2 per court (value = recommended surface 34 x 64 ft; low = lined court 20 x 44 ft; minimum surface 30 x 60 ft = 167.2 m2)
+    conf: high
+    source: "USA Pickleball Official Rulebook 2025, Section 2, as reproduced at https://playpickleball.com/2025-usa-pickleball-rules-section-2-court-and-equipment: 2.A.1 'The court shall be a rectangle measuring 20 feet (6.10 m) wide and 44 feet (13.41 m) long'; 2.A.3 'The minimum playing surface area measures 30 feet (9.14 m) wide and 60 feet (18.29 m) long'; recommended new construction 34 x 64 ft. Areas (my arithmetic)"
+  rink_roller_hockey:
+    value: 1517
+    low: 450
+    high: 1800
+    unit: m2 (value = an NHL-size 200 x 85 ft floor; low = IISHF minimum 15 x 30 m; high = IISHF maximum 30 x 60 m)
+    conf: medium
+    source: "IISHF Official Rule Book 2024/25 (https://public.ishd.de/news/2023/iishf_rules_of_the_game_2024.pdf) 1.2: 'The pitch shall be a minimum size of 15 m by 30 m and a maximum size of 30 m by 60 m'; 'For international events, the pitch must be a minimum size of 20 m by 40 m'; corner radius 'between 2 m and 4 m'. Roller Hockey Canada rulebook '200 feet long by 85 feet wide' (search summary, not opened). WA guide: recommended inline rink 50 x 24 m (search summary, page 404)"
+  heat_design_load:
+    value: 90
+    low: 42
+    high: 120
+    unit: W/m2 installed undersoil heating output, natural grass (low = measured peak, heated artificial turf in Uppsala)
+    conf: medium
+    source: "DEVI (Danfoss) sports-field manual: 'recommended installed output for heating natural grass fields is 80-100 W/m2 with maximum limit of 120 W/m2 depending on the geographic location' (search summary; https://assets.danfoss.com/documents/207169/AB209986468849en-010102.pdf returned 404). Cluj Arena (RO), DEVI case story (https://devi.com/en/about-devi/case-stories/cleaner-air-better-game-devi-electric-heating-for-football-fields): 'Field size: 105m x 68m', 'total heating output of 654kW' = 92 W/m2 (my arithmetic). Andersson et al. 2024 (above, artificial turf): '40-50 W/m2 for turfs with the heating coils placed in the shock pad, while the coils placed in the sand below the pad may need up to 100 W/m2'; Uppsala peak 'just above 300 kW (42 W/m2) at minus 20C'. Frankfurt Commerzbank Arena grass heating has 'A 1.4 MW heat exchanger' (Schmidt et al., below), about 196 W/m2 of capacity on 7,140 m2 (my arithmetic, area assumed)"
+  heat_energy_grass_growth:
+    value: 195
+    low: 71
+    high: 232
+    unit: kWh/m2 per winter, natural grass kept growing (root zone 12-14 C), Frankfurt (value = status quo control scaled to an average winter; low = with the paper's best control; high = upper bound)
+    conf: low
+    source: "Schmidt, Schulke, Venturi, Kurpatov, Blanco Henriquez, 'Cyber-Physical System for Energy-Efficient Stadium Operation', ACM Trans. Cyber-Physical Systems / arXiv:1807.05059 (https://arxiv.org/pdf/1807.05059): 'In winter 2013/2014 the status quo grass heating operation consumed 795 MWh', 'representing 20% of the stadium's overall gas consumption'; 'Reference winter 2013/2014 accumulated HDD7 = 327 DD, while the 5-year average HDD7 = 574 DD'; control experiments 'reduced ... by 1.13-1.35 MWh/DD (39.2-63.7%)'. 795/327 x 574 = 1,396 MWh, / 7,140 m2 = 195 kWh/m2; bounds 1,216-1,655 MWh; best control 1,396 x (1 - 0.637) / 7,140 = 71 kWh/m2 (all my arithmetic; heated area not stated in the paper, 105 x 68 assumed; scaling linear in HDD7 is my assumption). Frankfurt is milder than Indiana County"
+  heat_energy_frost_only:
+    value: 120
+    low: 90
+    high: 150
+    unit: kWh/m2 per year, heated pitch kept frost-free (Scandinavian artificial turf data)
+    conf: medium
+    source: "Andersson et al. 2024 (above): Uppsala 'heat consumption for 2014 and 2015 was found to be 760 and 820 MWh/year', 'heated area was 6 830 m2', 'approximately 120 kWh/m2'; 15-field Swedish survey 'approximately 1000 MWh/year, or about 150 kWh/m2, year'; Helsinki 700 MWh (90 kWh/m2) per the GeoOutlook version of the same paper (https://digital.bnpengage.com/ebook-geooutlook-0125/feature-6-research). All artificial turf; natural grass kept frost-free (not growing) should be similar, not measured"
+  root_zone_target_growth:
+    value: 13
+    low: 10
+    high: 18
+    unit: C root-zone temperature for winter growth (value = Frankfurt 12-14 C band; range = optimal growth for ryegrass/bluegrass)
+    conf: medium
+    source: "Schmidt et al. (above): 'the target band for the winter 2014/2015 control experiments is defined as 12 to 14'; Beard 2001 'recommends 10 ... 18 for optimal growth' of Lolium perenne and Poa pratensis (DIN 18035 seed mixtures); sensor 'in a depth of 15 cm'. Green Bay Ray Nitschke Field 'maintains a soil temperature anywhere between 40F-60F' (4-16 C), PHCP Pros (https://www.phcppros.com/articles/938-more-than-just-lambeau-field)"
+  soil_temp_frost_protection:
+    value: 8
+    low: 1
+    high: 8
+    unit: C soil temperature at which Premier League systems switch on (range = temperature band they must hold)
+    conf: high
+    source: "Premier League Pitch Standards Framework 2025 (above), 3.9: system 'capable of maintaining the entire natural grass area within a temperature range of at least 1C to 8C'; 'typically set to operate when soil temperatures fall below 8C'; '100% of Premier League pitches have an undersoil heating system', '95% ... hydronic'; Rule K.25 requires one"
+  supply_temp:
+    value: 22
+    low: 5
+    high: 50
+    unit: C heating fluid supply (value = Frankfurt grass growth ceiling; low = Norwegian frost-only design; high = hottest Swedish example)
+    conf: medium
+    source: "Schmidt et al. (above): strategy B2 varies the supply set-point in '[12, 22]'; 'based on the ranges of glycol supply temperatures observed in the reference winter, the strategies are allowed to choose ... 22'. NFF/Kulturdepartementet 'Kunstgressboka' (May 2015) (https://files.nettsteder.regjeringen.no/wpuploads01/sites/492/2023/03/kunstgress-fotball.pdf): 'Dimensjonerende turtemperatur ... bor ligge i omradet 5 - 20 C'; 'normalt ikke nodvendig med en hoyere turtemperatur enn 20 C'; pipes 'maks kapasitet pa ca 40 C'. Andersson et al. 2024 (above): 'Most references indicate a supply temperature of +35C as commonly used the coldest days', 'up to +50C or more'"
+  pipe_spacing:
+    value: 0.20
+    low: 0.15
+    high: 0.30
+    unit: m centre-to-centre
+    conf: high
+    source: "Kunstgressboka 2015 (above): 'Senteravstanden pa varmerorene i banen ligger i omradet c/c 150 mm - 200 mm'. Andersson et al. 2024: 'The distance between the coils is typically 200 mm', PEX 25 mm. Pipelife brochure charts cover 200, 250 and 300 mm (https://www.pipelife.com/content/dam/pipelife/international/marketing/general/brochures/Undersoil-Heating-Sports-Fields_folder.pdf). Lambeau: 'more than 30 miles of radiant heating pipe' (Packers fun facts, above) under 87,000 ft2 = 6.0 m of pipe per m2, about 0.17 m spacing (my arithmetic)"
+  pipe_depth_grass:
+    value: 0.25
+    low: 0.15
+    high: 0.30
+    unit: m below the surface, natural grass
+    conf: medium
+    source: "Sportsfields.info, 'Keeping roots warm affordably' (https://sportsfields.info/keeping-roots-warm-affordably/): heating network '25 centimetres underneath the surface'. Low: PHCP Pros Ray Nitschke Field (above): tubing 'six inches below the playing field'. High: Danfoss field heating guide 'installation depth should be max. 25-30 cm' (search summary, not opened)"
+  heat_install_cost_in_field:
+    value: 181
+    low: 181
+    high: 288
+    unit: NOK (2015, excl. VAT) per m2 of heated area, pipes + gravel + trenches + glycol, artificial turf pitch (high = heat-pad system); heat plant extra
+    conf: low
+    source: "Kunstgressboka 2015 (above) 10.2: traditional system for '100 m x 64 m (brutto oppvarmet areal 110 m x 72 m)': pipes 650,000, gravel 450,000, trenches 150,000, glycol 18,000 l 180,000 = NOK 1,430,000 ex VAT; heat-pad system 'Sum eks mva 2 280 000'. / 7,920 m2 = 181 and 288 NOK/m2 (my arithmetic). Heat plant: 'Fjernvarme Kr. 300 000' (district heat) to 'Grunnvarme varmepumpe Kr. 3 500 000'. No US or natural-grass cost per m2 found"
+  field_cost_sand_based:
+    value: 6.75
+    low: 5.50
+    high: 8.00
+    unit: USD (2018) per ft2, natural grass on 8-12 in sand root zone with drainage (irrigation optional, heating excluded)
+    conf: medium
+    source: "STMA guide 4th ed. 2018 (above): 'Natural with Sand and Drainage - $5.50-$8.00 per sq. ft.', 'with the addition of an 8in- 12in sand rootzone, 4in- 6in perforated piping trenched below a 3in- 4in gravel layer [inch marks written as 'in']'; 'Natural with Sand Cap - $2.75-$4.00'; 'Natural with Native Soils - $1.50-$3.00'. Value my midpoint. = $59-86 per m2 (my arithmetic). Cornell CALS SAFE fields (https://safesportsfields.cals.cornell.edu/synthetic-turf): sand-based '$250,000 - $350,000' per ~2-acre field (2008 STMA costs + 3%/yr)"
+  field_cost_synthetic:
+    value: 8.13
+    low: 6.00
+    high: 10.25
+    unit: USD (2018) per ft2, synthetic infill field (for comparison; replacement every 8-10 yr)
+    conf: medium
+    source: "STMA guide 2018 (above): 'Synthetic Infill- $6.00-$10.25 per sq. ft.'; replacement 'approximate range of $6.50 to $7.80 per sq. ft. for the disposal and resurfacing'. Cornell SAFE (above): '8-10 years of use before replacement'. Value my midpoint"
+
+community_center:
+  rec_center_build_usd_ft2:
+    value: 400
+    low: 145
+    high: 721
+    unit: USD per ft2 gross, new municipal recreation/community center without a pool, construction cost (year of dollars varies; see source)
+    conf: low
+    source: "No national survey found; spread of project figures. Value: Terrell Recreation Center, Allen TX, 149,000 ft2, opened Jan 2024: 'overall construction costs of approximately $300 per square foot' in 2021 dollars, 'nearly $400 per square foot today' (Athletic Business, https://www.athleticbusiness.com/facilities/rec-center/article/15753108/why-one-municipality-opted-for-an-upscale-recreation-center; search summary, page returned 403, not opened). Low: RSMeans model 'Community Center', 10,000 SF, 1 storey, decorative concrete block, US national average, 2019 RSMeans data, $145.11/SF union ($132.48 open shop), incl. 25% contractor fees and 8% architect fees (https://www.rsmeans.com/model-pages/community-center). High: HMS Inc., 'Ketchikan Gateway Borough Recreation Center Expansion, 35% Design Submittal Construction Cost Estimate', 2024-03-20 (https://www.kgbak.us/DocumentCenter/View/12840): 'Total Gross Floor Area: 12,980 SF', '$721.20 /SF' incl. 30% contingencies (Alaska prices, 60-h weeks). Cross-check: Doylestown Township PA, 'new 18,000-square-foot community recreation center' in a '$12.9M' project that also includes outdoor courts and restrooms (Patch, https://patch.com/pennsylvania/doylestown/doylestown-twp-tops-12-9m-community-recreation-center-project) = $717/ft2 all-in upper bound (my arithmetic)"
+  gym_build_usd_ft2:
+    value: 693
+    low: 173
+    high: 721
+    unit: USD per ft2, new gymnasium / physical-education building (state projects, Richmond VA, Jan 2026, incl. utilities and site work where applicable)
+    conf: medium
+    source: "Virginia DGS Division of Engineering and Buildings, 'Virginia Building Construction Cost Database', issued 2026-05-06, rates per 2026-01-01 (https://dgs.virginia.gov/site-assets/deb/Miscellaneous/R_2%20PUBLISHED%20Virginia%20Building%20Construction%20Cost%20Database%20-%202026.pdf): 'New Gymnasium ... 16,912 - 110,000 [range of comps, ft2] 55,912 [median ft2] $693'; 'Prices reflect the average cost per square foot for construction set to Richmond Virginia, January 2026. Prices also include utilities and site work where applicable.' (column alignment checked with pdftotext -raw). Low: RSMeans 'Gymnasium' model, 20,000 ft2, 2019 data, ~$173/ft2 (search summary, not opened). High: Ketchikan estimate above"
+  restaurant_build_usd_ft2:
+    value: 498
+    low: 498
+    high: 693
+    unit: USD per ft2, new restaurant building (food hall shell and kitchen), Richmond VA, Jan 2026 (high = new dining hall)
+    conf: medium
+    source: "Virginia DGS cost database 2026 (above): 'New Restaurant ... 5,770 - 24,000 11,830 $498'; 'New Dining Hall ... 7,550 - 115,985 49,898 $693'. Kitchen robots not included"
+  student_center_build_usd_ft2:
+    value: 257
+    low: 257
+    high: 257
+    unit: USD per ft2, new student center (closest analogue for multipurpose rooms, lobby, makerspace shell), Richmond VA, Jan 2026
+    conf: low
+    source: "Virginia DGS cost database 2026 (above): 'New Student Centers ... 6,800 - 177,362 77,500 $257'. Single figure; the database gives no spread"
+  gym_clear_height_ft:
+    value: 28
+    low: 28
+    high: 28
+    unit: ft clear below structure and lights over a basketball/volleyball court
+    conf: high
+    source: "DoD UFC 4-740-02 'Fitness Centers', 3 Feb 2019, Change 1 30 May 2019, Table 4-20 Gymnasium/Basketball/Volleyball Courts (https://www.wbdg.org/FFC/DOD/UFC/ufc_4_740_02_c1_2019.pdf): '28 ft (8.53 m) clear height below structure and lights'; 'Court size must meet NCAA standards'"
+  gym_safety_zone_ft:
+    value: 10
+    low: 10
+    high: 18
+    unit: ft of clear floor round a court (10 = to a wall or obstruction; 12 = side to side and 18 = end to end between adjacent courts)
+    conf: high
+    source: "UFC 4-740-02 Table 4-20 (above): 'Provide minimum 10 ft (3.05 m) of unobstructed floor space as a safety zone between the outer edge of the playing area and any feature or obstruction. Provide minimum 12 ft (3.7 m) side to side and 18 ft (5.5 m) end to end ... between the outer edge of the playing area and any adjacent court playing area.'"
+  one_court_gym_ft2:
+    value: 7980
+    low: 7700
+    high: 7980
+    unit: ft2 of playing floor, one NCAA 94 x 50 ft court with 10 ft safety zones (114 x 70 ft)
+    conf: medium
+    source: "(my arithmetic) (94 + 2x10) x (50 + 2x10) = 7,980 ft2 = 741 m2, from UFC 4-740-02 zones and the NCAA 94 x 50 ft court. Low: Doylestown Township's new center 'includes a 7,700-square-foot gymnasium' (search summary of a Patch preview article, not opened)"
+  two_court_gym_ft2:
+    value: 15048
+    low: 15048
+    high: 15048
+    unit: ft2 of playing floor, two NCAA courts side by side (114 x 132 ft), before seating, storage and walls
+    conf: medium
+    source: "(my arithmetic) (94 + 20) x (50 + 50 + 12 + 2x10) = 114 x 132 = 15,048 ft2 = 1,398 m2, from UFC 4-740-02 zones. Each court also holds a volleyball court or (marked) three to four pickleball courts; see the fields group for court sizes"
+
+makerspace:
+  fablab_equipment_capital:
+    value: 65000
+    low: 25000
+    high: 120000
+    unit: USD, digital-fabrication equipment for one Fab Lab (laser cutter, 3D printer, CNC mill, large wood router, electronics bench); no building, transport, install or training; no wood/metal shop, welders or vehicle lift
+    conf: medium
+    source: "Fab Foundation, 'Getting started' (https://fabfoundation.org/getting-started): a lab 'currently comprises from $25-$65k in capital equipment and about $15-40k in consumables'; same page: average equipment cost for a standard lab is 'around 120 thousand USD', excluding transport, installation and training (high). Undated page; the two figures conflict and the higher is probably the newer"
+  fablab_consumables_initial:
+    value: 27500
+    low: 15000
+    high: 40000
+    unit: USD, first stock of materials for one Fab Lab (one-off, not annual)
+    conf: medium
+    source: "Fab Foundation 'Getting started' (above): 'about $15-40k in consumables'. Value my midpoint (my arithmetic)"
+  fablab_floor_area:
+    value: 1500
+    low: 1500
+    high: 1900
+    unit: ft2, Fab Lab with one of each machine (high = reference Chicago lab with two of each)
+    conf: medium
+    source: "Fab Foundation 'Getting started' (above): '1500 square feet, or 140 square meters should be sufficient'; Chicago lab 'about 1900 square feet (approximately 177 square meters)'"
+  fablab_staff:
+    value: 5
+    low: 2
+    high: 6
+    unit: staff (headcount) for a public Fab Lab running two shifts (low = two technicians on the floor for a school group)
+    conf: low
+    source: "Fab Foundation 'Getting started' (above): two technical support staff for school groups of 15-20; a fuller team of one logistics/outreach manager, 'Three to four technical gurus/ support staff' in two shifts, and one technical manager (1 + 3..4 + 1 = 5..6, my arithmetic)"
+  uk_makerspace_area:
+    value: 209
+    low: 12
+    high: 1022
+    unit: m2 floor area per UK makerspace, mean (range of 52 spaces), survey Nov 2014 - Jan 2015
+    conf: medium
+    source: "Nesta, 'Open dataset of UK makerspaces: a user's guide' (2015) (https://www.nesta.org.uk/report/open-dataset-of-uk-makerspaces-a-users-guide/; PDF https://www.nesta.org.uk/documents/414/open_dataset_of_uk_makerspaces_users_guide.pdf): 'Nationally, the average makerspace is 209m2, but makerspaces range from 12 to 1,022m2'"
+  uk_makerspace_members:
+    value: 83
+    low: 50
+    high: 108
+    unit: members per UK makerspace (value = mean for spaces with varied fees; high = flat-fee mean; low = 60% of spaces have 50 or fewer)
+    conf: medium
+    source: "Nesta user's guide (above): 'Most UK makerspaces have small member communities, with 60 per cent having 50 members or less'; mean members 83 (varied fees), 108 (flat fee), 81 (no fee). Nesta 'Top findings' blog (https://www.nesta.org.uk/blog/top-findings-open-dataset-uk-makerspaces): 97 makerspaces in the UK, 'only nine of these existed in 2010'; 'over one third of makerspaces don't have memberhip fees'"
+  dallas_makerspace_expenses:
+    value: 1238687
+    low: 769080
+    high: 1238687
+    unit: USD/yr total expenses, Dallas Makerspace (volunteer-run nonprofit, 36,000 ft2, wood, machine, blacksmith, electronics, 3D print, laser, auto, ceramics, sewing); value FY2024, low FY2022
+    conf: high
+    source: "ProPublica Nonprofit Explorer, Dallas Makerspace EIN 27-5107244, Form 990 extracts (https://projects.propublica.org/nonprofits/organizations/275107244): FY2024 revenue $963,294, expenses $1,238,687; FY2023 $840,938 / $949,278; FY2022 $765,276 / $769,080; program service revenue (dues, classes) 97-98% of revenue"
+  dallas_makerspace_members:
+    value: 2200
+    low: 1500
+    high: 2200
+    unit: members (value 2019; low 2017)
+    conf: medium
+    source: "Dallas Innovates, 2019-07-09, 'The World's Largest Volunteer-Run Makerspace is in Dallas, and it's Doubling In Size' (https://dallasinnovates.com/look-inside-dallas-makerspace-nearly-doubles-in-size-to-offer-new-services-and-room-to-create/): about 2,200 members; expansion 'adding 20,000 square feet ... for a total of 36,000 square feet'. Low: ~1,500 members, 2017 Dallas Morning News (search summary, not opened)"
+  dallas_makerspace_fee:
+    value: 50
+    low: 40
+    high: 60
+    unit: USD membership fee (the article does not say per month)
+    conf: low
+    source: "Dallas Innovates 2019 (above): membership fees of '$40 to $60' (period not stated). Value my midpoint"
+  makerspace_running_cost_per_member:
+    value: 430
+    low: 350
+    high: 563
+    unit: USD per member per year, Dallas Makerspace (expenses FY2022-2024 / 2,200 members of 2019)
+    conf: low
+    source: "(my arithmetic) from the two Dallas entries above: 769,080 / 2,200 = 350 (FY2022); 949,278 / 2,200 = 431 (FY2023); 1,238,687 / 2,200 = 563 (FY2024). Member count is from 2019, so the ratio is rough"
+  vehicle_lift_two_post:
+    value: 6095
+    low: 5595
+    high: 8445
+    unit: USD retail, 10,000 lb two-post vehicle lift (BendPak 10AP; high = 10APX-181), before shipping and installation
+    conf: low
+    source: "Retail listings (search summary, not opened): Mechanic Superstore BendPak 10AP $6,095; JMC Automotive 10AP $5,595 (MSRP $5,895); Home Depot 10APX-181 $8,195; Mechanic Superstore 10APX-181 $8,445. BendPak's own pricing guide (https://www.bendpak.com/best-car-lift-guide/car-lift-pricing, opened) gives no figure: price 'varies greatly depending on quality and features'; installation 'should be quoted'"
+  mig_welder:
+    value: 1935
+    low: 1550
+    high: 2185
+    unit: USD retail, Miller Millermatic 211 MIG welder (high = with cart)
+    conf: low
+    source: "Retail listings (search summary, not opened): Baker's Gas 907614 $1,935; Atlas Welding 211 PRO $1,550; Baker's Gas with cart 951603 $2,185. No manufacturer list price found"
+  laser_cutter_startup:
+    value: 11812
+    low: 11812
+    high: 12142
+    unit: USD, laser cutting station start-up cost in a school makerspace module chart (undated, old)
+    conf: low
+    source: "Undated makerspace module cost chart (search summary of a docs.google.com export, not opened): 'Laser Cutting Tools $11,812 $12,142 $400 Materials $330 CNC Cutting Tools $5740 $5816 $250 Materials $76'. Treat as order of magnitude only"
+  cnc_router_startup:
+    value: 5740
+    low: 5740
+    high: 5816
+    unit: USD, CNC cutting station start-up cost, same chart (undated, old)
+    conf: low
+    source: "Same chart as laser_cutter_startup (search summary, not opened)"
+  mens_sheds_australia:
+    value: 1300
+    low: 1100
+    high: 1300
+    unit: Men's Sheds in Australia (2025)
+    conf: high
+    source: "Australian Men's Shed Association, Chairman's Report 2025, 2025-12-19 (https://mensshed.org/chairmans-report-2025/): 'With more than 1,300 Men's Sheds across Australia'. Low: 'at least 1,100' in older sources (search summary)"
+  mens_sheds_ireland:
+    value: 450
+    low: 435
+    high: 500
+    unit: Men's Sheds in the Republic of Ireland (high = whole island incl. Northern Ireland)
+    conf: medium
+    source: "Irish Men's Sheds Association, 'About Men's Sheds' (https://menssheds.ie/about-mens-sheds/): 'Currently, there are over 450 sheds in Ireland, with at least 10,000 men visiting a shed every week'. Low/high: AMSA 2025 calendar, 435 registered sheds in the 26 counties, 'just over 500 Sheds on the island of Ireland' (search summary, PDF too large to open)"
+  mens_sheds_ireland_weekly_attendance:
+    value: 10000
+    low: 10000
+    high: 10000
+    unit: men attending a shed each week, Ireland (about 22 per shed, my arithmetic 10,000 / 450)
+    conf: medium
+    source: "IMSA 'About Men's Sheds' (above): 'at least 10,000 men visiting a shed every week'"
+  mens_sheds_uk:
+    value: 1100
+    low: 1100
+    high: 1180
+    unit: Men's Sheds in the UK (Mar 2024; high = 2025)
+    conf: medium
+    source: "UK Men's Sheds Association FAQ (https://menssheds.org.uk/faq/): 'There are about 1100 today (Mar-2024)'; 'We estimate nearly 33,000 Shedders benefitting every week' (about 30 per shed, my arithmetic); 'The average annual membership was assessed as £25', range £0-£100. High: AMSA 2025 calendar lists 1,180 UK sheds (search summary)"
+  mens_sheds_us:
+    value: 30
+    low: 30
+    high: 40
+    unit: Men's Sheds in the United States (first 2016, association 2017)
+    conf: low
+    source: "AMSA 2025 calendar (https://mensshed.org/wp-content/uploads/2025/01/Shed-Calendar-2025_FINAL_DIGITAL_compressed.pdf; search summary, PDF too large to open): US first shed 2016, 30 sheds, association 2017 (usmenssheds.org). High: Men's Sheds Canada 'Sheds around the world', ~40 (undated, search summary)"
+  mens_shed_density:
+    value: 4.5
+    low: 1.8
+    high: 8.8
+    unit: sheds per 100,000 population, 2024 (value Australia; low UK; high Ireland; US 0.001)
+    conf: medium
+    source: "Golding, 'International Men's Shed update', plenary 3, 10th National Men's Shed Gathering, AMSA, Sept 2024 (https://mensshed.org/wp-content/uploads/2024/10/Plenary-3.-International-Mens-Shed-update-10th-National-Mens-Shed-Gathering.pdf), table 'Shed Density (Sheds/100,000 total population)': Ireland 8.8, Australia 4.5, New Zealand 2.6, Scotland 2.5, UK 1.8, Denmark 0.6, Canada 0.34, US 0.001 (2024). Author name from the search summary; the slide text does not name him"
+  sheds_for_life_wellbeing_gain:
+    value: 4.03
+    low: 2.11
+    high: 4.03
+    unit: SWEMWBS points (short Warwick-Edinburgh mental wellbeing scale, 7-35) gained after a 10-week shed health programme; value at 3 months, low at 12 months
+    conf: medium
+    source: "McGrath, Murphy, Egan, Richardson, 'Sheds for Life: health and wellbeing outcomes of a tailored community-based health promotion initiative for men's sheds in Ireland', BMC Public Health 22:1590 (2022), doi:10.1186/s12889-022-13964-6 (https://pmc.ncbi.nlm.nih.gov/articles/PMC9392583/): intervention SWEMWBS 26.78 at baseline, 30.81 at 3 months, 28.89 at 12 months; wait-list control 26.62 at 3 months (p < 0.001); 'Mental wellbeing scores (SWEMWBS) post SFL remained significantly higher than baseline despite COVID-19 impact'. Differences (my arithmetic). Non-randomised, n = 421 intervention vs 86 controls, controls not followed past 3 months"
+  sheds_for_life_active_days_gain:
+    value: 1.25
+    low: 0.70
+    high: 1.25
+    unit: extra days per week physically active after the programme (value 3 months, low 12 months)
+    conf: medium
+    source: "McGrath et al. 2022 (above): days physically active 3.07 at baseline, 4.32 at 3 months (control 3.09, p = 0.001), 3.77 at 12 months; share meeting activity guidelines 32% to 47% at 3 months, 42.7% at 12 months. Differences (my arithmetic)"
+
+kitchen:
+  sweetgreen_infinite_kitchen_units:
+    value: 30
+    low: 30
+    high: 32
+    unit: Sweetgreen restaurants with an Infinite Kitchen, of 281 total, at fiscal year end 2025 (high = Q1 2026)
+    conf: high
+    source: "Sweetgreen Form 10-K, FY ended 2025-12-28, filed 2026-02-27 (text via https://www.boardroomalpha.com/sec/sg-10-k-2026-02-27-0001628280-26-012520): 'As of the end of fiscal year 2025, 30 of our restaurants contained Infinite Kitchen units'; 'we owned and operated 281 restaurants in 24 states and Washington, D.C.' (30 / 281 = 10.7%, my arithmetic). High: Q4 2025 call, two more opened in Q1 2026 (search summary of MarketBeat call highlights, not opened)"
+  infinite_kitchen_rated_throughput:
+    value: 500
+    low: 500
+    high: 500
+    unit: bowls per hour, rated capacity of one Infinite Kitchen line (company claim; not reached in the first suburban stores)
+    conf: low
+    source: "Nation's Restaurant News, 2024-03-01 (https://www.nrn.com/fast-casual/sweetgreen-s-bet-technology-pays-10-higher-checks-infinite-kitchens): the Infinite Kitchen 'can handle 500 bowls per hour'; first two units in suburbs where that volume isn't needed. Same figure for Wonder's version: PYMNTS 2026-06-16 (https://www.pymnts.com/?p=3856253): 'One machine can make 500 burrito bowls, salads and poke bowls an hour'"
+  human_bowl_rate:
+    value: 38
+    low: 30
+    high: 45
+    unit: bowls per hour made by one person on a line (for comparison with the robot line)
+    conf: low
+    source: "PYMNTS 2026-06-16 (above): 'A human makes roughly 30 to 45'. Value my midpoint. Journalistic figure, no method given"
+  infinite_kitchen_incremental_capex:
+    value: 500000
+    low: 450000
+    high: 550000
+    unit: USD incremental cost per restaurant for an Infinite Kitchen (new build; retrofits higher)
+    conf: medium
+    source: "NRN 2024-03-01 (above): CFO Mitch Reback's estimate 'between $450,000 and $550,000'. Restaurant Dive 2024-03-01 (https://www.restaurantdive.com/news/sweetgreen-says-automated-makelines-boosts-tickets-10-percent-in-test/709027/): '$450,000 to 500,000 in incremental development costs'; CEO: retrofits can be 'higher than the $450,000 figure'"
+  infinite_kitchen_margin_gain:
+    value: 7
+    low: 7
+    high: 8
+    unit: percentage points of restaurant-level margin vs comparable manual stores (company projection/claim)
+    conf: low
+    source: "Restaurant Dive 2024-03-01 (above): each unit 'could yield a 7-point margin improvement' (CFO; projection). NRN 2024-03-01: 'a 7% margin improvement'. High: later company statements of 'at least 7 percentage points in labor savings and one point in improved COGS' (search summary, not opened). No independent audit"
+  infinite_kitchen_ticket_uplift:
+    value: 0.10
+    low: 0.0
+    high: 0.10
+    unit: fraction higher average ticket at the first Infinite Kitchen stores vs nearby stores (low = it may have existed before the robot)
+    conf: low
+    source: "Restaurant Dive 2024-03-01 (above): 'Average ticket at those units was over 10% higher than in surrounding markets'; the article notes it is unclear whether that gap pre-dated the robotic lines"
+  spyce_sale_price:
+    value: 186.4
+    low: 186.4
+    high: 186.4
+    unit: million USD, Sweetgreen's sale of Spyce (Infinite Kitchen maker) to Wonder, closed Dec 2025 ($100M cash + $86.4M Wonder Series C preferred)
+    conf: medium
+    source: "Restaurant Dive headline 'Sweetgreen sells Spyce to Wonder for $186M' (https://www.restaurantdive.com/news/sweetgreen-sells-spyce-to-wonder-186-million/804959/, only headline readable). Split $100M cash + $86.4M stock: search summary of Business Wire release 2025-11-06 (403, not opened). 10-K (above): Wonder 'agreed to sell Infinite Kitchen units to us on a long-term basis'; Sweetgreen keeps a 'non-exclusive, perpetual, irrevocable, royalty-free license'"
+  wonder_planned_installs_2027:
+    value: 75
+    low: 50
+    high: 100
+    unit: Infinite Kitchen installations planned in Wonder's own kitchens in 2027
+    conf: low
+    source: "PYMNTS 2026-06-16 (above), citing Restaurant Business: 50 to 100 installations planned across Wonder kitchens in 2027. Value my midpoint. A plan, not a count"
+  chipotle_autocado_time:
+    value: 26
+    low: 26
+    high: 26
+    unit: seconds per avocado to cut, core and peel (mashing still by hand); one test restaurant
+    conf: medium
+    source: "Chipotle newsroom 2024-09-16, 'Chipotle debuts Autocado and the Augmented Makeline by Hyphen in restaurants' (https://newsroom.chipotle.com/2024-09-16-CHIPOTLE-DEBUTS-AUTOCADO-AND-THE-AUGMENTED-MAKELINE-BY-HYPHEN-IN-RESTAURANTS): 'it takes Autocado approximately 26 seconds to fully flesh out the fruit inside an avocado'; it 'cuts, cores, and peels avocados before they are hand mashed'; Augmented Makeline 'uses automated technology to build bowls and salads' while employees 'operate the top makeline to make burritos, tacos, quesadillas, and kid's meals'; 'Approximately 65% of all Chipotle digital orders are bowls or salads'"
+  chipotle_equipment_package_restaurants:
+    value: 1000
+    low: 600
+    high: 2000
+    unit: Chipotle restaurants with the 'high-efficiency equipment package' (rice cooker, high-capacity fryer etc.; ordinary equipment, not robots); value Q2 2026, low Q1 2026, high end-2026 target
+    conf: medium
+    source: "Chipotle Q1 2026 earnings call, 2026-04-29 (transcript https://www.fool.com/earnings/call-transcripts/2026/04/29/chipotle-cmg-q1-2026-earnings-transcript/): 'The equipment is now in over 600 restaurants'; the words Hyphen, augmented makeline, Autocado and robots do not appear. Q2 2026 call: 'installed in more than 1,000 restaurants ... approximately 2,000 restaurants by year-end' (search summary, not opened)"
+  chef_robotics_servings:
+    value: 100000000
+    low: 60000000
+    high: 100000000
+    unit: food portions placed into meal trays by Chef Robotics arms in factories, cumulative (value 2026-04-17; low Sept 2025)
+    conf: medium
+    source: "Chef Robotics blog, 2026-04-17, '100 million servings and counting' (https://chefrobotics.ai/post/100-million-servings-and-counting): robots 'have completed 100 million servings in production at customer facilities'; 'more than a dozen production facilities'; the company chose to 'focus on assembly rather than cooking or food prep'. Low: NewEquipment 2025-09-04, 'over 60 million servings' (search summary)"
+  restaurant_first_year_failure:
+    value: 0.17
+    low: 0.17
+    high: 0.26
+    unit: fraction of new restaurants closing in their first year (value independent full-service startups, western US; high Columbus OH 1996-99)
+    conf: medium
+    source: "Luo & Stark, 'Only the Bad Die Young: Restaurant Mortality in the Western US', arXiv:1410.8603 (2014) (https://arxiv.org/abs/1410.8603): 'only 17 percent of independently owned full-service restaurant startups failed in their first year' (19% for other service startups), from BLS microdata on 81,000 restaurants. High: Parsa, Ohio State news release (https://news.osu.edu/restaurant-failure-rate-much-lower-than-commonly-assumed-study-finds/): 'about 26 percent of the restaurants failed' in year one (published as Parsa et al. 2005, 'Why restaurants fail', Cornell HRA Quarterly 46(3); journal details from search summary)"
+  restaurant_three_year_failure:
+    value: 0.59
+    low: 0.57
+    high: 0.61
+    unit: fraction of restaurants closed within three years, Columbus OH 1996-99 (low chains, high independents)
+    conf: medium
+    source: "Ohio State news release on Parsa (above): 'Cumulative failure rate for the three-year period (1996-99) was 59 percent'; franchised chains 57%, independents 61%"
+  restaurant_median_lifespan:
+    value: 4.5
+    low: 4.25
+    high: 4.5
+    unit: years, median restaurant lifespan, western US (low = other service businesses)
+    conf: medium
+    source: "Luo & Stark 2014 (above): 'The median lifespan of restaurants is about 4.5 years' (4.25 for other service businesses)"
+  vegan_restaurant_count_decline_big_cities:
+    value: 0.24
+    low: 0.24
+    high: 0.25
+    unit: fraction fall in all-vegan restaurant listings 2022 to 2026 (New York 173 to 132; Portland OR 61 to 46)
+    conf: low
+    source: "Kanner, 'The Hard Truth About Why the Vegan Restaurants We Love Keep Closing', VegNews, 2026-09-24 (https://vegnews.com/the-hard-truth-about-why-vegan-restaurants-keep-closing), citing HappyCow: New York 'going from 173 vegan restaurants in 2022 to 132 today'; 'Portland, OR went from 61 to 46'. Fractions (my arithmetic): 41/173 = 0.237, 15/61 = 0.246. Two big cities only; listings, not audited closures"
+  us_all_vegan_restaurants:
+    value: 1509
+    low: 1509
+    high: 1717
+    unit: all-vegan restaurants in the US listed on HappyCow (high = Oct 2025; value = a later, undated count)
+    conf: low
+    source: "Search summary, not opened (article URL not recorded by the search tool): 'HappyCow listed 1,717 all-vegan restaurants in the US in October 2025, and as of this writing, HappyCow lists 1,509'. Would be a 12% fall (my arithmetic) if the dates are close"
+  plant_based_meat_us_retail_2025:
+    value: 1.0
+    low: 1.0
+    high: 1.0
+    unit: billion USD, US retail sales of plant-based meat and seafood, 2025 (down 10% in dollars, 11% in units from 2024; down 17% and 21% from 2023)
+    conf: high
+    source: "Good Food Institute, 'U.S. retail market data for the plant-based industry' (https://gfi.org/marketresearch/), SPINS data: 'Dollar sales declined 10%, and unit sales declined 11% in 2025'; category '$1 billion'; 'declined by 17 percent and 21 percent, respectively, between 2023 and 2025'; total plant-based foods '$7.9 billion' in 2025, dollars down 2%. GFI warns against comparing with earlier releases (method change)"
+
+demand:
+  tulsa_remote_participants:
+    value: 3972
+    low: 3475
+    high: 3972
+    unit: remote workers moved to Tulsa through Tulsa Remote since Nov 2018 (value to Dec 2025; low to 2024); 504 new in 2025
+    conf: high
+    source: "Tulsa Remote, '2025 Economic Impact Report' (https://landing.tulsaremote.com/hubfs/Tulsa%20Remote%202025%20Economic%20Impact%20Report.pdf): 'Tulsa Remote grew from 70 participants to 3,972 in 2025'; 'We welcomed 504 new members'. Low: SSTI (https://ssti.org/node/88174) citing the 2024 report: 'Tulsa Remote has attracted 3,475 remote workers'. Program's own count"
+  tulsa_remote_incentive:
+    value: 10000
+    low: 10000
+    high: 10000
+    unit: USD cash grant for moving to Tulsa and staying one year (plus coworking and community programme)
+    conf: high
+    source: "Bartik, 'The Effects of Tulsa Remote on Inducing Moves to Tulsa: Estimates and Implications', Upjohn Institute Technical Report 25-050, May 2025, doi:10.17848/tr25-050 (abstract page https://research.upjohn.org/up_technicalreports/50/): '$10,000 for moving to Tulsa and staying one year'"
+  tulsa_remote_completion:
+    value: 0.98
+    low: 0.96
+    high: 0.98
+    unit: fraction of members completing the one-year stay (value 2025; low 2024)
+    conf: medium
+    source: "Tulsa Remote 2025 report (above): '98% of Remoters successfully completed their program year in Tulsa'. Low: SSTI citing the 2024 report, '96% completing their one-year requirement'"
+  tulsa_remote_retention_after_program:
+    value: 0.80
+    low: 0.70
+    high: 0.875
+    unit: fraction of alumni still living in Tulsa after the programme (value = 2-year rate from 2025 survey; low = 2024 report; high = alumni in metro in June 2021)
+    conf: medium
+    source: "Tulsa Remote 2025 report (above): '80% Retention Rate 2-Year Actual Retention Rate (for 2025 Survey Responses)', footnote 'Retention rates were calculated from responses to post-program surveys'. Low: SSTI citing 2024 report, '70% continuing to live in Tulsa'. High: Newman, O'Dell, Fikri, 'How Tulsa Remote is harnessing the remote work revolution to spur local economic growth', Economic Innovation Group, Nov 2021 (https://eig.org/wp-content/uploads/2021/11/Tulsa-Remote-Report.pdf): 'approximately 87.5 percent remained living in the Tulsa metro area', with the caveat that stayers 'could have been more likely to complete the survey'. All self-reported"
+  tulsa_remote_five_year_intent:
+    value: 0.56
+    low: 0.43
+    high: 0.56
+    unit: fraction of members in Tulsa (June 2021) at least slightly likely to remain 5 years (low = moderately or extremely likely)
+    conf: low
+    source: "EIG 2021 (above): '43 percent of program members living in Tulsa as of June 2021 were moderately or extremely likely to remain in the city for five years, while an additional 12 percent indicated they were slightly likely'; under 30s 43.5%, 30s 55.2%, 40s 64.0%. Survey 508 of 1,031 members, response rate 49.3%"
+  tulsa_remote_but_for_rate:
+    value: 0.64
+    low: 0.58
+    high: 0.70
+    unit: fraction of member households who would not have moved to Tulsa without the incentive
+    conf: medium
+    source: "Bartik 2025, Upjohn TR 25-050 (above), abstract: 'a but for rate of 58-70 percent'; estimated by comparing approved and non-approved applicants. Upjohn research highlight (https://www.upjohn.org/research-highlights/each-dollar-spent-drawing-remote-workers-tulsa-delivers-4-benefit-current-residents): a business tax incentive of the same cost per job would sway only 6 percent of businesses. Value my midpoint. Full PDF returned 403"
+  tulsa_remote_benefit_cost:
+    value: 4.31
+    low: 4.0
+    high: 4.31
+    unit: USD of income gain to original Tulsa residents per USD of programme cost (baseline)
+    conf: medium
+    source: "Bartik 2025 abstract (above): benefits to original residents 'over four times the program's financial costs'; Upjohn highlight graphic: '$4.31 ROI for each dollar invested in Tulsa Remote'. Modelled, not measured; sensitivity range not read (PDF 403). Search summary of the highlight: benefits exceed costs 'at least 3 to 1 for all income groups' (not verified)"
+  tulsa_remote_cost_per_job:
+    value: 36000
+    low: 36000
+    high: 36000
+    unit: USD programme cost per job brought to Tulsa (vs 218,000 for typical business incentives)
+    conf: medium
+    source: "Upjohn research highlight (above): '$36,000 per job it brings to Tulsa', versus '$218,000 cost per job created' for typical business incentives"
+  tulsa_remote_local_jobs_per_100_movers:
+    value: 60
+    low: 60
+    high: 60
+    unit: local jobs created per 100 new residents
+    conf: medium
+    source: "Tulsa Remote 2025 report (above), crediting Bartik 2025: 'For every 100 new residents, about 60 local jobs are created'; 'Each member contributes an estimated $86K in net local economic impact over 10 years'"
+  tulsa_remote_member_income:
+    value: 85000
+    low: 85000
+    high: 104600
+    unit: USD/yr, median (value) and mean (high) income of a member, mid-2021
+    conf: medium
+    source: "EIG 2021 (above): 'The median income of a Remoter stood at $85,000 as of mid-2021 and the average was just over $104,600. Fully 88 percent of program members have at least a bachelor's degree'"
+  tulsa_remote_household_members_per_worker:
+    value: 0.5
+    low: 0.5
+    high: 0.5
+    unit: extra household members moved per remote worker
+    conf: medium
+    source: "EIG press release 2021-11-16 (https://eig.org/tulsa-remote-release): 'one additional household member moved for every two remote workers'"
+  tulsa_remote_selection_rate:
+    value: 0.076
+    low: 0.05
+    high: 0.10
+    unit: fraction of applicants who moved (rough)
+    conf: low
+    source: "(my arithmetic) from Tulsa Remote 2025 report (above), media page: LA Times found 'more than 7,800 California remote workers' applied; SFGATE: California is 'about 15% of applicants' -> about 52,000 applicants; 3,972 / 52,000 = 0.076. Bartik 2025: members 'selected out of tens of thousands of applicants'. The two media figures may cover different periods; low/high are my judgement"
+  ascend_wv_participants:
+    value: 700
+    low: 668
+    high: 700
+    unit: remote workers ('Ascenders') moved to West Virginia since 2021 (value July 2026; low May 2026)
+    conf: medium
+    source: "NPR, 2026-07-24, 'West Virginia paid digital nomads to move there during COVID. Many are staying' (copy opened at https://www.michiganpublic.org/2026-07-24/west-virginia-paid-digital-nomads-to-move-there-during-covid-many-are-staying): 'brought more than 700 participants to the state'; 'Including family members, more than 1,500 new residents have arrived'. Low: Governor's Ascend Heroes release, May 2026, 668 Ascenders, 1,412 residents with family (search summary, not opened)"
+  ascend_wv_residents_with_family:
+    value: 1500
+    low: 1412
+    high: 1500
+    unit: new residents including family members
+    conf: medium
+    source: "NPR 2026-07-24 (above): 'more than 1,500 new residents'. Low: May 2026 release, 1,412 (search summary). Implies about 2.1 people per Ascender (my arithmetic, 1,500 / 700)"
+  ascend_wv_cash_incentive:
+    value: 12000
+    low: 12000
+    high: 20000
+    unit: USD cash paid over two years (high = total incentive value claimed incl. outdoor recreation, gear rentals, coworking)
+    conf: high
+    source: "Ascend WV media release 2025-09-05 (https://ascendwv.com/media-inquiries/premier-remote-worker-program-in-the-u-s-opens-applications-for-the-states-capital-city): '$12,000 cash relocation incentive, paid in installments over a 2-year period'; 'more than $20,000 in incentives'; 'more than $1,200 in free outdoor gear rentals'"
+  ascend_wv_retention:
+    value: 0.96
+    low: 0.96
+    high: 0.97
+    unit: fraction of participants staying in West Virginia after the two-year commitment (program officials; not independently verified)
+    conf: low
+    source: "NPR 2026-07-24 (above): '96% of West Virginia's participants remain in the state after the program's two-year commitment ends' (figure from program officials). Ascend release 2025-09-05 (above): 'greater than 96 percent retention rate'; a partner quote in the same release says 97%"
+  ascend_wv_applicants:
+    value: 88000
+    low: 65000
+    high: 88000
+    unit: applications since 2021 (value July 2026; low Sept 2025); selection about 0.8% (my arithmetic, 700 / 88,000)
+    conf: medium
+    source: "NPR 2026-07-24 (above): 'roughly 88,000 applications'. Low: WVU Today 2025-09-05, 'nearly 65,000 applicants' (search summary; page 403)"
+  ascend_wv_budget:
+    value: 25000000
+    low: 25000000
+    high: 25000000
+    unit: USD private gift funding the programme (upper bound about 35,700 USD per Ascender if all spent on 700 movers, my arithmetic)
+    conf: high
+    source: "Ascend release 2025-09-05 (above): 'a $25 million gift to West Virginia University's Brad and Alys Smith Outdoor Economic Development Collaborative'. NPR 2026-07-24: 'initial $25 million budget came from the private Wing 2 Wing Foundation'"
+  ascend_wv_economic_impact_claim:
+    value: 580
+    low: 500
+    high: 750
+    unit: million USD contribution to the WV economy claimed (value = 2023 WVU study; high = program officials' update; low = Governor May 2026 'exceeds $500 million')
+    conf: low
+    source: "NPR 2026-07-24 (above): 'a 2023 West Virginia University study estimated that participants had contributed about $580 million'; officials say 'closer to $750 million'. Low: May 2026 Governor's release (search summary). Not independent"
+  makemymove_movers:
+    value: 5000
+    low: 5000
+    high: 5000
+    unit: remote workers moved through MakeMyMove-listed incentive programs since 2019 (>$50M in cash and perks)
+    conf: low
+    source: "MakeMyMove-sourced article, Nov 2025 (search summary, not opened): 'more than 5,000 remote workers have made the jump to new states since 2019' and 'over $50 million in cash and perks'. Programs: 'over 178 programs' (Benton Institute headline page, undated, search summary). Platform's own figures"
+  vermont_remote_grant_average:
+    value: 3571
+    low: 3571
+    high: 3823
+    unit: USD average grant, Vermont Remote Worker Grant Program, 2018-2019 (112 grantees)
+    conf: medium
+    source: "VTDigger 2019-11-12, 'Auditor's office: Remote worker program of questionable value' (https://vtdigger.org/2019/11/12/auditors-office-remote-worker-program-of-questionable-value/): 'spent $400,000 to reimburse 112 grantees' (400,000 / 112 = 3,571, my arithmetic); 'At worst, the grants were gifts to those who would have moved here regardless of financial incentives'. High: report's average grant $3,823 (search summary)"
+  mercer_county_pa_incentive:
+    value: 5000
+    low: 5000
+    high: 5000
+    unit: USD cash per household moving to Sharon or Hermitage, Mercer County PA (MakeMyMove pilot, 5 households; 157 applications)
+    conf: medium
+    source: "Spotlight PA, May 2025, 'Western Pennsylvania towns pay new residents cash incentives' (https://www.spotlightpa.org/news/2025/05/western-pennsylvania-towns-pay-new-residents-cash-incentives/): Sharon and Hermitage give $5,000 per household plus YMCA or coworking; 157 applications for a pilot of five households; Mercer loses about 1% of its population a year; seven PA regions in talks with MakeMyMove (fetch-tool paraphrase)"
+
+spending:
+  ce_total_expenditure:
+    value: 81905
+    low: 78527
+    high: 81905
+    unit: $/consumer unit/year, average annual expenditures, all US consumer units, 2025 (low = 2024)
+    conf: high
+    source: "BLS, 'Consumer Expenditures—2025', USDL-26-1619, 2026-10-29 (https://www.bls.gov/news.release/cesan.nr0.htm): 'Average annual expenditures for all consumer units in 2025 were $81,905, a 4.3-percent increase from 2024'. Table 1: 2024 $78,527 (the 2024 release said $78,535); income before taxes 2025 $110,847; 137,994 thousand consumer units"
+  food_share:
+    value: 0.130
+    low: 0.1295
+    high: 0.130
+    unit: fraction of average annual expenditures spent on food, 2025 (low = 2024)
+    conf: high
+    source: "BLS USDL-26-1619 (above): 'The next largest shares of total expenditures were transportation (16.5 percent), food (13.0 percent)'; Table 1 food 2025 $10,633, 2024 $10,169; 10,169 / 78,527 = 0.1295 (my arithmetic). Food is 10,633 / 110,847 = 9.6% of income before taxes (my arithmetic)"
+  food_at_home_share:
+    value: 0.0793
+    low: 0.0793
+    high: 0.0793
+    unit: fraction of average annual expenditures, food at home, 2025 (2024 the same to 3 figures)
+    conf: high
+    source: "BLS USDL-26-1619 Table 1 (above): food at home 2025 $6,491, 2024 $6,224; 6,491 / 81,905 = 0.0793 and 6,224 / 78,527 = 0.0793 (my arithmetic)"
+  food_away_share:
+    value: 0.0506
+    low: 0.0502
+    high: 0.0506
+    unit: fraction of average annual expenditures, food away from home, 2025 (low = 2024)
+    conf: high
+    source: "BLS USDL-26-1619 Table 1 (above): food away from home 2025 $4,142, 2024 $3,945; 4,142 / 81,905 = 0.0506 and 3,945 / 78,527 = 0.0502 (my arithmetic)"
+  food_away_of_food:
+    value: 0.390
+    low: 0.388
+    high: 0.390
+    unit: fraction of food spending that is away from home, 2025 (low = 2024)
+    conf: high
+    source: "BLS USDL-26-1619 Table 1 (above): 4,142 / 10,633 = 0.390; 3,945 / 10,169 = 0.388 (my arithmetic)"
+  housing_share:
+    value: 0.339
+    low: 0.3345
+    high: 0.339
+    unit: fraction of average annual expenditures spent on housing (shelter, utilities, operations, furnishings), 2025 (low = 2024)
+    conf: high
+    source: "BLS USDL-26-1619 (above): 'On average, consumer units spent $27,790 on housing in 2025, which was 33.9 percent of total average annual expenditures.' 2024 housing $26,266 / $78,527 = 0.3345 (my arithmetic)"
+  shelter_share:
+    value: 0.215
+    low: 0.208
+    high: 0.215
+    unit: fraction of average annual expenditures spent on shelter (rent, owned dwellings, other lodging), 2025 (low = 2024)
+    conf: high
+    source: "BLS USDL-26-1619 Table 1 (above): shelter 2025 $17,626, 2024 $16,317; 17,626 / 81,905 = 0.215; 16,317 / 78,527 = 0.208 (my arithmetic)"
+
+walking:
+  speed_comfortable_bohannon:
+    value: 1.37
+    low: 1.272
+    high: 1.462
+    unit: m/s, mean comfortable gait speed of healthy adults 20-79 (low = women in their seventies; high = men in their forties; value = midpoint, my arithmetic)
+    conf: high
+    source: "Bohannon RW, 'Comfortable and maximum walking speed of adults aged 20-79 years: reference values and determinants', Age and Ageing 26(1):15-19, 1997, doi:10.1093/ageing/26.1.15 (abstract via Europe PMC, https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:9143432%20AND%20SRC:MED&resultType=core&format=json): mean comfortable gait speed ranged from 127.2 cm/s (women in their seventies) to 146.2 cm/s (men in their forties); 230 healthy volunteers timed over a 7.62 m walkway. Full table by decade not opened (paywall); men in their twenties 139.3 cm/s (search summary, not opened)"
+  speed_maximum_bohannon:
+    value: 2.14
+    low: 1.749
+    high: 2.533
+    unit: m/s, mean maximum gait speed, adults 20-79 (low = women in their seventies; high = men in their twenties; value = midpoint, my arithmetic)
+    conf: high
+    source: "Bohannon 1997 abstract (above): mean maximum gait speed ranged from 174.9 cm/s (women in their seventies) to 253.3 cm/s (men in their twenties)"
+  speed_design_fhwa:
+    value: 1.2
+    low: 1.0
+    high: 1.2
+    unit: m/s, recommended design walking speed for crosswalks (low = where older pedestrians exceed 20% of users)
+    conf: high
+    source: "FHWA, 'Capacity Analysis of Pedestrian and Bicycle Facilities: Recommended Procedures for the Pedestrians Chapter of the Highway Capacity Manual', FHWA-RD-98-107, Feb 1998 (https://www.fhwa.dot.gov/publications/research/safety/pedbike/98107/section2.cfm): 'a pedestrian crosswalk walking speed value of 1.2 m/s (3.9 ft/s) for most conditions'; for many older pedestrians 'a crosswalk walking speed value of 1.0 m/s'"
+  speed_hcm_sidewalk:
+    value: 1.34
+    low: 1.01
+    high: 1.34
+    unit: m/s, HCM default average free-flow walking speed on urban sidewalks, 4.4 ft/s (low = 3.3 ft/s where more than 20% of pedestrians are elderly)
+    conf: medium
+    source: "McTrans Center (Univ. of Florida), 'Understanding Pedestrian Analysis on Segments' (https://mctrans.ce.ufl.edu/understanding-pedestrian-analysis-on-segments/), citing HCM Chapter 18: 'The recommended default value for the average free-flow pedestrian walking speed in the HCM is 4.4 ft/s' 'if less than 20% of pedestrians are elderly, or 3.3 ft/s if more than 20% of pedestrians are elderly.' HCM itself not opened (sold by TRB). 4.4 ft/s x 0.3048 = 1.341 m/s; 3.3 ft/s = 1.006 m/s (my arithmetic)"
+  speed_mutcd_clearance:
+    value: 1.067
+    low: 0.914
+    high: 1.219
+    unit: m/s, walking speed for timing the pedestrian clearance interval at signals, 3.5 ft/s (low = 3 ft/s for walk plus clearance from the pushbutton; high = 4 ft/s where an extended pushbutton press is installed)
+    conf: high
+    source: "FHWA, MUTCD 2009 s.4E.06 (https://mutcd.fhwa.dot.gov/htm/2009/part4/part4e.htm): para 07 'to travel at a walking speed of 3.5 feet per second to at least the far side of the traveled way'; para 14 'to travel at a walking speed of 3 feet per second to the far side of the traveled way being crossed'; para 08 'A walking speed of up to 4 feet per second may be used to evaluate the sufficiency of the pedestrian clearance time'. The 11th edition (2023) renumbered the chapter; not opened"
+  walk_5min_m:
+    value: 360
+    low: 300
+    high: 439
+    unit: m walked in 5 minutes (value = 1.2 m/s; low = 1.0 m/s, older pedestrians; high = 1.462 m/s, fastest Bohannon comfortable group)
+    conf: high
+    source: "(my arithmetic) speed x 300 s, from speed_design_fhwa and speed_comfortable_bohannon above. At the HCM 1.34 m/s: 402 m; at the MUTCD 1.067 m/s: 320 m"
+  walk_10min_m:
+    value: 720
+    low: 600
+    high: 877
+    unit: m walked in 10 minutes (same speeds as walk_5min_m)
+    conf: high
+    source: "(my arithmetic) speed x 600 s. At 1.34 m/s: 805 m; at 1.067 m/s: 640 m"
+
+ash_cap_reuse:
+  ccr_post_closure_care_yr:
+    value: 30
+    low: 30
+    high: 30
+    unit: years of post-closure care for a federal coal ash (CCR) unit closed in place (extended while groundwater is in assessment monitoring)
+    conf: high
+    source: "40 CFR 257.104(c) (https://www.law.cornell.edu/cfr/text/40/257.104): 'the owner or operator of the CCR unit must conduct post-closure care for 30 years'; continues 'until the owner or operator returns to detection monitoring'. Whether Homer City's ash disposal site is a federal CCR unit was not verified (likely, as it took ash after 2015)"
+  ccr_cover_infiltration_layer_in:
+    value: 18
+    low: 18
+    high: 18
+    unit: inches of earthen infiltration layer, federal minimum (permeability no more than the liner/subsoil and <= 1e-5 cm/s)
+    conf: high
+    source: "40 CFR 257.102(d)(3)(i) (https://www.law.cornell.edu/cfr/text/40/257.102): 'an infiltration layer that contains a minimum of 18 inches of earthen material'; 'a permeability no greater than 1 x 10-5 cm/sec'"
+  ccr_cover_erosion_layer_in:
+    value: 6
+    low: 6
+    high: 6
+    unit: inches of earthen erosion layer above the infiltration layer, federal minimum
+    conf: high
+    source: "40 CFR 257.102(d)(3)(i)(C): 'an erosion layer that contains a minimum of six inches of earthen material' 'capable of sustaining native plant growth'. The federal text says nothing about deep-rooted plants"
+  pa_cap_permeability_cm_s:
+    value: 1.0e-7
+    low: 1.0e-7
+    high: 1.0e-7
+    unit: cm/s, maximum permeability of the cap on a PA residual waste landfill
+    conf: high
+    source: "25 Pa. Code 288.234(a)(1) (https://www.law.cornell.edu/regulations/pennsylvania/25-Pa-Code-SS-288-234): 'The cap may be no more permeable than 1.0 x 10-7 cm/sec.' Homer City's cap uses geosynthetics: DEP letter 2026-01-27, permit 300491, accepts 'alternate cap geosynthetics materials including HDPE and LLDPE Microdrain liner manufactured by Agru' under 'permit 300491, condition 22.C' (https://files.dep.state.pa.us/RegionalResources/NWRO/NWROPortalFiles/Homer-City/Waste/homer-city-geosynthetics-approval-letter.pdf)"
+  pa_cover_soil_ft:
+    value: 2
+    low: 2
+    high: 2
+    unit: ft, minimum cover soil above the cap on a PA residual waste landfill (the depth available for rootzone, drainage and heating pipes without touching the cap)
+    conf: high
+    source: "25 Pa. Code 288.234(f)(4): 'The layer of cover soil shall be at least 2 feet in thickness.'; (a)(3): 'The layer of material shall support vegetation and protect the cap.'"
+  pa_final_slope_min_pct:
+    value: 3
+    low: 3
+    high: 33
+    unit: percent grade of the final surface (value/low = minimum; high = maximum allowed slope)
+    conf: high
+    source: "25 Pa. Code 288.234(h)(1): 'The grade of the final surface of the facility may not be less than 3%.'; (h)(3): 'An operator may not leave final slopes that have a grade exceeding 33%'. A pitch needs ~0.5-1% (fields group): a level field means added fill or a terrace, which DEP would have to approve"
+  pa_final_cover_deadline_yr:
+    value: 1
+    low: 1
+    high: 1
+    unit: years after the last lift to place final cover (DEP may allow longer for settlement)
+    conf: high
+    source: "25 Pa. Code 288.234(d): 'The operator shall place final cover within 1 year after disposal in the final lift ceases' 'or as soon thereafter as weather permits.'"
+  pa_bond_liability_after_certification_yr:
+    value: 10
+    low: 10
+    high: 10
+    unit: years of bond liability after DEP's final closure certification of a residual waste facility
+    conf: high
+    source: "25 Pa. Code 287.342(f) (https://www.law.cornell.edu/regulations/pennsylvania/25-Pa-Code-SS-287-342): certification starts the '10-year bond liability period following final closure'; (c): no certification unless 'No further remedial action, maintenance or other activity by the operator is necessary'; (i): DEP can require more remediation on 'a change in land use from a nonresidential to a residential use'"
+  homer_city_ash_site_acres:
+    value: 243.7
+    low: 243.7
+    high: 272.1
+    unit: acres in solid waste permit 300491 (Homer City Ash Disposal Site), after the Aug 2026 modification
+    conf: high
+    source: "DEP NWRO letter to Homer City Generation, L.P., 2026-08-04, Minor Permit Modification, Stage IV Revision, ID 300491 (https://files.dep.state.pa.us/RegionalResources/NWRO/NWROPortalFiles/Homer-City/Waste/Homer%20City%20Stage%20IV%20Permit%20Area%20Reduction.pdf): 'The permitted area reverts to the permitted area approved on October 12, 2012, which covers 243.7 acres. Leachate sampling will continue'; 'the original operating permit expiration date of January 8, 2030, remains unchanged.' High: 272.1 acres after the Dec 2025 Stage V reduction (docs/RESEARCH.md, pass 2 inputs)"
+  chisman_creek_years_in_use:
+    value: 34
+    low: 34
+    high: 35
+    unit: years soccer (1992) and softball (1991) fields have been in use on capped coal ash pits, Chisman Creek Superfund site, York County VA, to 2026
+    conf: high
+    source: "US EPA Superfund Redevelopment Initiative, 'Pioneering Recreational Reuse: The Chisman Creek Superfund Site', Sept 2017 (https://semspub.epa.gov/work/HQ/176439.pdf): 'About 500,000 tons of ash were deposited'; 'Dominion placed a low-permeability cap over Area C and soil caps at Areas A and B'; 'In the spring of 1992, the county opened Wolf Trap Park. The 28-acre park includes two full-size soccer fields and two smaller, instructional-size soccer fields'; Chisman Creek Park '13-acre park with its two full-size, lighted softball fields' opened 1991-05-04; 'An environmental covenant restricts groundwater use, excavation and construction at the site.' Years (my arithmetic)"
+  chisman_creek_ash_tons:
+    value: 500000
+    low: 500000
+    high: 500000
+    unit: short tons of coal and petroleum-coke ash under the Chisman Creek parks (Homer City's site is larger)
+    conf: high
+    source: "EPA 2017 (above): 'About 500,000 tons of ash were deposited at the site before the power plant was converted to burn fuel oil in 1974.'"
+  hod_landfill_capped_acres:
+    value: 51
+    low: 51
+    high: 51
+    unit: acres of clay-capped municipal landfill regraded for high-school athletic fields (H.O.D. Landfill, Antioch IL)
+    conf: high
+    source: "US EPA Region 5, 'H.O.D. Landfill Superfund Site Reuse Fact Sheet', Aug 2007 (https://archive.epa.gov/region5/superfund/redevelop/web/pdf/h.o.d._landfill.pdf): 'the 51-acre landfill area was covered with a clay cap'; 're-grading the site according to sports field specifications and seeding the fields with grass that can sustain heavy foot traffic. Leachate and gas extraction well heads were placed in below-ground vaults and covered with synthetic turf'"
+  superfund_sites_recreational_share:
+    value: 0.26
+    low: 0.26
+    high: 0.26
+    unit: share of Superfund sites in reuse (Feb 2001) used for recreation (~50 of >190)
+    conf: low
+    source: "EPA 'Reusing Cleaned Up Superfund Sites: Recreational Use of Land Above Hazardous Waste Containment Areas' (2001), via CLU-IN toolkit (https://clu-in.org/download/toolkit/thirdednew/reuseclean.pdf): 'approximately 50 of the more than 190 Superfund sites in use as of February 2001 were used for recreational purposes' (search summary, not opened). 50/190 (my arithmetic)"
+
+growth_limits:
+  sewer_design_mgd:
+    value: 0.65
+    low: 0.65
+    high: 0.65
+    unit: million US gallons/day, annual average hydraulic design capacity, Homer City STP (serves Homer City Borough and Center Township)
+    conf: high
+    source: "PA DEP NWRO, NPDES Permit Fact Sheet PA0204994 (renewal, draft 2025-11-13), Central Indiana County Joint Sewer Authority, Homer City STP (https://files.dep.state.pa.us/water/Wastewater%20Management/eDMRPortalFiles/Permits/PA0204994_FACT_SHEET_20251113_DRAFT_V2.pdf): 'Sewage is collected from Homer City Borough and Center Township. The facility is a sequential batch reactor (SBR) treatment system with an annual average design capacity of 0.65MGD and organic design capacity of the facility is 1,395 lbs/day- BOD5.'; 'Ch 94 Load Status Not Overloaded'; 'Connection Status No Limitations'"
+  sewer_avg_flow_mgd:
+    value: 0.405
+    low: 0.255
+    high: 0.663
+    unit: million gallons/day, mean of monthly average effluent flows Sep 2024-Aug 2025 (low/high = lowest and highest month)
+    conf: medium
+    source: "PA0204994 fact sheet (above), 3.1.1 'DMR Data for Outfall 001 (from September 1, 2024 to August 31, 2025)', Flow (MGD) average monthly row: 0.3, 0.505, 0.4492, 0.438, 0.479, 0.356, 0.6628, 0.366, 0.423, 0.368, 0.255, 0.263 (Aug-25 back to Sep-24); daily maximum flows to 1.229 MGD. Mean 0.405 (my arithmetic). The PDF table extracts with shifted columns, so the row assignment is my reading. Feb 2025 (0.663) was above the 0.65 annual design figure: wet-weather inflow"
+  sewer_spare_mgd:
+    value: 0.245
+    low: 0
+    high: 0.395
+    unit: million gallons/day of annual-average headroom at the Homer City STP (low = wettest month already at design; high = driest month)
+    conf: medium
+    source: "(my arithmetic) 0.65 - 0.405 = 0.245; 0.65 - 0.255 = 0.395. Not a DEP allocation: new connections need Act 537 sewage facilities planning approval. At the system's own ratio (0.405 MGD over 'approximately 2,225 residential customers', i.e. ~182 gal/day per customer incl. infiltration, my arithmetic) 0.245 MGD is ~1,300 customers"
+  sewer_residential_customers:
+    value: 2225
+    low: 2200
+    high: 2225
+    unit: residential sewer customers, Central Indiana County Joint Sanitary Authority (Homer City and Center Township)
+    conf: medium
+    source: "Sen. Joe Pittman press release 2024-01-24 on PENNVEST (https://senatorpittman.com/2024/01/24/pittman-struzzi-announce-pennvest-funding-approved-for-indiana-county/): 'The system currently serves approximately 2,225 residential customers'; '$2 million low-interest loan' 'for the Wastewater Treatment Plant Renovation project'; the authority 'entered into a Consent Order and Agreement with the PA Department of Environmental Protection' in April 2022 after exceeding discharge limits"
+  water_population_served:
+    value: 4920
+    low: 4920
+    high: 4920
+    unit: people served, Central Indiana County Water Authority (PWSID PA5320040; surface water from the Yellow Creek reservoir; Homer City and Center Township)
+    conf: high
+    source: "US EPA SDWIS water system record via Envirofacts (https://data.epa.gov/efservice/WATER_SYSTEM/PWSID/PA5320040/JSON): 'population_served_count: 4920', 'service_connections_count: 2146', 'gw_sw_code: SW'. Source water: Dredgewire 2020-09-28 (https://dredgewire.com/water-authority-receives-grant-to-clean-yellow-creek-reservoir): water piped from the Yellow Creek Dam reservoir; Yellow Creek's flow fell from about 130 to 7 million gallons a day in a summer drought (manager Rob Nymick). Treatment plant capacity not found"
+  water_service_connections:
+    value: 2146
+    low: 2146
+    high: 2146
+    unit: service connections, Central Indiana County Water Authority
+    conf: high
+    source: "EPA SDWIS (above): 'service_connections_count: 2146'"
+  school_enrolment:
+    value: 766
+    low: 733
+    high: 816
+    unit: students K-12, Homer-Center School District, 1 Oct 2025 (low = PDE projection for 2034-35; high = 2020-21 actual)
+    conf: high
+    source: "PA Department of Education, 'Public School Enrollments 2025-2026' (https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/data-and-reporting/enrollment/public-school/enrollment%20public%20schools%202025-2026.xlsx), October 1 Enrollment by LEA: Homer-Center SD Total 766 (El Sch K-6 397, JSHS 7-12 368). PDE 'School District Enrollment Projections' SY 2024-25 (https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/data-and-reporting/enrollment/enrollment-projections/school%20district%20enrollment%20projections.xlsx): actual 2020-21 = 816, 2024-25 = 792, projection 2029-30 = 753, 2034-35 = 733 (sums of the grade columns, my arithmetic; these resident-based counts run ~20 above the Oct 1 count). NCES CCD 2024-25: 770 students, 65.50 FTE teachers, 11.76 students per teacher (https://nces.ed.gov/ccd/districtsearch/district_detail.asp?ID2=4213290)"
+  school_cohort_per_grade:
+    value: 60
+    low: 56
+    high: 63
+    unit: students per grade, Homer-Center SD (mean of K-12; low = 2034-35 projection, high = 2020-21)
+    conf: high
+    source: "(my arithmetic) from the PDE projections workbook (above): 2024-25 actual 792/13 = 60.9; 2020-21 816/13 = 62.8; 2034-35 projection 733/13 = 56.4. Building capacity not found"
+  county_housing_units:
+    value: 37672
+    low: 37598
+    high: 37746
+    unit: housing units, Indiana County PA (ACS 2019-2023 5-year; low/high = +/- margin of error 74)
+    conf: high
+    source: "US Census Bureau ACS 2019-2023 5-year, table B25002 (table-based summary file, already downloaded by src/brownfield/acs.py to data/raw/acs/acsdt5y2023-b25002.dat): '0500000US42063|37672|74|32291|487|5381|472' (total, MOE, occupied, MOE, vacant, MOE)"
+  county_vacancy_rate:
+    value: 0.143
+    low: 0.130
+    high: 0.155
+    unit: share of all housing units vacant, Indiana County (low/high from the vacant-count MOE +/-472)
+    conf: high
+    source: "ACS 2019-2023 B25002 (above): 5,381 vacant of 37,672 = 14.3% (my arithmetic); B25004 vacancy status: for rent 1,455; rented, not occupied 187; for sale only 480; sold, not occupied 117; seasonal/recreational 725; other vacant 2,417. Pennsylvania: 544,324 of 5,779,663 = 9.4% (my arithmetic)"
+  county_homeowner_vacancy_rate:
+    value: 0.020
+    low: 0.020
+    high: 0.020
+    unit: homeowner vacancy rate, Indiana County (for sale / (owner-occupied + for sale + sold not occupied))
+    conf: medium
+    source: "(my arithmetic) ACS 2019-2023 B25003/B25004 (above): 480 / (22,964 + 480 + 117) = 2.0%. Rental vacancy 1,455 / (9,327 + 1,455 + 187) = 13.3% (matches pass 4's 13%)"
+  homer_city_vacancy_rate:
+    value: 0.071
+    low: 0.031
+    high: 0.111
+    unit: share of housing units vacant, Homer City borough (822 units; low/high from vacant MOE +/-33)
+    conf: medium
+    source: "ACS 2019-2023 B25002/B25004, GEO_ID 0600000US4206335408 (above): 822 units, 764 occupied, 58 vacant (+/-33): 0 for rent, 31 for sale, 7 seasonal, 20 other vacant. 58/822 = 7.1% (my arithmetic)"
+  center_twp_vacancy_rate:
+    value: 0.088
+    low: 0.027
+    high: 0.148
+    unit: share of housing units vacant, Center Township (1,903 units; low/high from vacant MOE +/-115)
+    conf: medium
+    source: "ACS 2019-2023 B25002/B25004, GEO_ID 0600000US4206312040 (above): 1,903 units, 1,736 occupied, 167 vacant (+/-115): 16 for rent, 36 for sale, 115 other vacant. 167/1,903 = 8.8% (my arithmetic)"
+
+# --- The design's own choices for the amenities and the money (placeholders where marked) ---
+
+amenities:
+  center_ft2:
+    value: 47000
+    low: 40000
+    high: 55000
+    unit: ft2, the community center (two-court gym 15,048 + roller hockey floor 16,329 + makerspace and shop bay 3,900 + fitness 4,000, + 20% for lobby, changing and circulation)
+    conf: medium
+    source: "the design, from the research dimensions (community_center.two_court_gym_ft2, fields.rink_roller_hockey, makerspace.fablab_floor_area)"
+  food_hall_ft2:
+    value: 10000
+    low: 6000
+    high: 15000
+    unit: ft2, the food hall with its kitchen (a robot assembly line, cooks, seating)
     conf: placeholder
-    source: "to source (Bohannon 1997; HCM 1.2 m/s for design)"
+    source: "the design (judgement)"
+  building_heat_kwh_m2:
+    value: 100
+    low: 50
+    high: 150
+    unit: kWh of heat per m2 of floor a year, the community center and the food hall
+    conf: placeholder
+    source: "judgement, to source (CBECS public assembly); the research's one-sheet arena needs ~124 kWh/m2 (563 MWh over 48,800 ft2)"
+  market_garden_ha:
+    value: 0.75
+    low: 0.5
+    high: 1.0
+    unit: ha, the order-steered glasshouse beside the food hall (greens, herbs, strawberries)
+    conf: placeholder
+    source: "the design (D11)"
+  makerspace_tools_usd:
+    value: 110000
+    low: 60000
+    high: 180000
+    unit: USD, the makerspace's tools (a Fab Lab's digital machines plus a car lift, welders and a wood shop)
+    conf: low
+    source: "research: Fab Lab equipment $65,000 ($25-120k); a two-post lift $6,095, a MIG welder $1,935 (retail); the wood shop judgement"
+
+money:
+  main_km:
+    value: 0.3
+    low: 0.2
+    high: 0.5
+    unit: km of warm main from the hall to the neighbourhood
+    conf: high
+    source: "the design (homes from 150 m beyond the hall's face)"
+  trust_share:
+    value: 0.05
+    low: 0.02
+    high: 0.10
+    unit: share of the campus's county and township property tax set aside for the shared places' trust
+    conf: placeholder
+    source: "a design choice (D11: a set share the operator can't switch off; pass 4 sets 10% for housing)"
+  appeal_cut:
+    value: 0.24
+    low: 0.24
+    high: 0.90
+    unit: share cut from the campus's assessed value if the operator wins an assessment appeal
+    conf: low
+    source: "data center owners sought 24-90% cuts in Cook County, IL (2026, news reporting; D11)"
+  front_end:
+    value: 0.28
+    low: 0.28
+    high: 0.31
+    unit: share of a household's income its mortgage payment may take (high = FHA)
+    conf: medium
+    source: "the conventional 28% housing-cost guideline (FHA 31%)"
+  down_payment:
+    value: 0.10
+    low: 0.035
+    high: 0.20
+    unit: share of the price paid down
+    conf: placeholder
+    source: "judgement (FHA minimum 3.5%)"
+  nok_usd_2015:
+    value: 0.124
+    low: 0.12
+    high: 0.13
+    unit: USD per NOK, 2015 average (to convert the field-heating install cost)
+    conf: medium
+    source: "Federal Reserve H.10: 2015 average ~8.06 NOK per USD"
