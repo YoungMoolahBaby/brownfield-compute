@@ -1013,6 +1013,44 @@ at the campus edge, funded in the community benefits agreement.
     - DEP's GRID template;
     - the county Planning Commission's minutes.
 
+- **D25** (2026-11-18) The air (pass 2g, [docs/pass2/air.md](pass2/air.md)).
+  - **The asks:**
+    - Jon: "yes add the link, then start on the air please". The README now links
+      new-melting-pot as the companion study of how people behave.
+    - 15 of 40 hearing speakers raised the gas plant's air and health.
+  - **The model** (`brownfield air`):
+    - the coal plant's emissions from EIA, 2013-2023;
+    - the gas plant's facility caps (Plan Approval 32-00457A);
+    - DEP's summaries of the modelling and the risk assessment;
+    - each design's energy at the plant's permitted rates;
+    - the diesel tests at Tier 2 and Tier 4.
+  - **Check:** EIA's 2021-22 SO2 reproduces the application's CEMS baseline, 4,460.5 against
+    4,460.6 tons a year.
+  - **Findings:**
+    - **Per MWh, the gas plant is far cleaner than the coal plant in 2014:** SO2 -99.95%, NOx
+      -98.5%, CO2 -59%.
+    - **In total, at its caps:** 45% more greenhouse gases than in 2014 (17.6 million tons). Against
+      the coal plant's last two years, four times the CO2 and nearly four times the PM2.5.
+    - **At the worst point off the site:** annual PM2.5 at 85% of the standard; cancer risk 0.54 in
+      a million.
+    - **NO2 and ozone were never modelled,** because NOx netted out against the coal plant's
+      retirement.
+    - **The design's lever is the diesel:** Tier 2 tests add up to 335 tons of NOx a year, +55% on
+      the gas plant's NOx for the halls. Tier 4, which DEP required of the gas plant's own engines,
+      adds 35 tons. PUE moves the plant's emissions 1-2% among modern designs.
+    - The scorecard's Tier 2 figure is now confirmed (40 CFR 60.4202, 1039 appendix I).
+  - **The brief:**
+    - the gas plant's air under "whichever design";
+    - Tier 4 and real-time logs if diesel is kept;
+    - air monitors near the homes;
+    - a question on AWS's generator permits;
+    - the appeal's environmental justice claim.
+  - Open:
+    - AWS's generators (no permit found);
+    - NO2 near the homes;
+    - actual running;
+    - the Environmental Hearing Board appeal (filed 2025-12-17).
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each

@@ -43,6 +43,13 @@ This is independent public analysis. It isn't affiliated with any developer, uti
 Lick Township and Homer City Borough can ask of AWS's campus: of its design, and in the benefits
 agreement. It covers what each ask costs, who pays, and the questions to put to AWS.
 
+**How people behave around it:** a companion study,
+[new-melting-pot](https://github.com/YoungMoolahBaby/new-melting-pot), takes the questions about
+people rather than buildings: whether newcomers mix with the towns, who runs the shared places,
+who owns the heat loop, the construction surge, and whether a benefits agreement holds
+([its answers](https://github.com/YoungMoolahBaby/new-melting-pot/tree/main/docs/answers)). Only
+its findings from real cases are used here, never its simulations.
+
 ## The design so far
 
 ![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof, ringed by glasshouses; on its town side great bronze doors between two stone pylons, warm basins, and an open mall between the glass](docs/pass3/campus_aerial.png)
@@ -169,6 +176,13 @@ yet.
       stays above half. At the intake's full capacity it would fall to 7% in the 1952 drought.
     - **Cooling towers at the data halls** would need more than the intake can draw. Fed from the
       reservoir, they would empty it in the droughts of 1952 and 1991.
+  - [The air](docs/pass2/air.md): the gas plant's permit against what the coal plant emitted, and
+    what each design adds.
+    - **Per unit of power** the gas plant is far cleaner: 99.95% less SO2 and 98.5% less NOx.
+    - **In total,** being 2.5 times the size, it can emit 45% more greenhouse gases than the coal
+      plant's busiest recent year.
+    - **The design's lever is the diesel:** routine tests of Tier 2 generators would add up to 55%
+      to the gas plant's NOx for the halls. Tier 4 adds 6%, and batteries nothing.
 - **Pass 3 done**, [the first neighbourhood module](docs/pass3/README.md): the first house in
   CortenForge, heated straight off the data center's warm water. It pays only for dense housing
   beside the campus. In progress: the campus and winter garden above, and

@@ -663,3 +663,59 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - the text of Consent Order 81-060-W;
   - the reservoir's usable storage, any release rule at its own dam, any drought plan;
   - DEP's transcript of the 2026-10-14 discharge hearing.
+
+## The air (D25, 2026-11-18)
+
+- **DEP's air file for the gas plant** (DEP's Homer City page, "Air Quality"):
+  - **Plan Approval 32-00457A** (final 2025-11-18):
+    - seven GE 7HA.02 combined-cycle turbines with 1,034.4 MMBtu/hr duct burners, and ten
+      Mitsubishi FT8 simple-cycle turbines, all with SCR and oxidation catalysts;
+    - three auxiliary boilers;
+    - twelve emergency generators (ten 2.5 MW, two 1.0 MW) at Tier 4 and at most 500 h/yr;
+    - seven 8-cell cooling towers (drift 0.0005%).
+    - **Facility caps (condition #007), short tons a year:** PM 843.19, PM10 842.23, PM2.5 840.02,
+      NOx 1,142.8, CO 1,104.8, VOC 332.16, SOx 211.76, H2SO4 165.73, CO2e 17,551,454, HAPs 57.1
+      (formaldehyde 32.2).
+  - **The technical review memo** (2025-11-18):
+    - 4,678 MWe of dispatchable power; stacks at least 190 ft (combined cycle) and 90 ft (simple
+      cycle).
+    - NOx and CO net out of PSD (net -889.0 and -2,991.7 tpy).
+    - 369.035 tons of VOC credits; Tier 4 generators as BAT.
+  - **DEP's PSD modelling summary** (2025-11-17):
+    - AERMOD, 5 years of Johnstown (KJST) weather;
+    - background from Strongstown (PM2.5, 24 km NE) and Johnstown (PM10, 32 km SE);
+    - **Table 10:** annual PM2.5 0.856 + 6.8 = 7.656 against 9.0; 24-h PM2.5 4.551 + 19 against
+      35; 24-h PM10 6.535 + 54 against 150.
+  - **DEP's inhalation risk summary** (2025-11-17):
+    - cancer 0.54 in a million at the most exposed point, 0.48 at homes and sensitive places
+      (benchmark 10);
+    - chronic HI 0.036 (0.25);
+    - acute: highest cadmium at 0.493 (1.0).
+  - **The comment response document** (2025-11-18):
+    - the netting;
+    - Indiana's 1-hour SO2 nonattainment area, whose attainment plan EPA approved in 2024
+      (Federal Register, 2024-09-13);
+    - the environmental justice outreach.
+- **The PSD application** (AECOM, revised August 2025), Tables 3-9 to 3-11:
+  - the coal plant's 2021-22 averages: NOx 2,031.8 tpy (CEMS, discounted for RACT under the FIP),
+    SO2 4,460.6, PM2.5 220.2;
+  - the project's totals and net changes.
+- **EIA, Emissions by plant** (https://www.eia.gov/electricity/data/emissions/), 2013-2023:
+  - plant 3122's "Selected" SO2 and NOx and its CO2 (`data/eia_emissions_3122.csv`);
+  - 2014: 123,856 tons SO2, 22,116 NOx, 12.09 million CO2 on 11.54 TWh.
+  - The plant-level columns repeat on each of a plant's rows.
+- **The appeal:** Clean Air Council, PennFuture and Sierra Club, Notice of Appeal of Plan Approval
+  32-00457A to the Environmental Hearing Board (2025-12-17;
+  https://pennfuture.org/files/galleries/Notice-of-Appeal_Plan-Approval-No_-32-00457A.pdf).
+  - **Objection A:** the site is in or within 0.5 mi of Center Township, "a recognized
+    Environmental Justice community".
+  - **Objection E:** DEP reviewed the plant without the data center campus.
+  - **The others:** the alternatives analysis, BACT for CO and ammonia slip, and the credits.
+- **EPA engine standards:**
+  - **Tier 2, kW>560** (40 CFR part 1039 appendix I, Table 2, from model year 2006): NOx+NMHC 6.4,
+    CO 3.5, PM 0.20 g/kWh.
+  - **Tier 4, generator sets kW>560** (40 CFR 1039.101 Table 1, 2007 CFR edition): NOx 0.67, PM
+    0.03, NMHC 0.19, CO 3.5.
+  - **Emergency engines over 2,237 kW from 2011** must meet Tier 2 (40 CFR 60.4202(b)(2)).
+  - The current eCFR pages refuse scripted reads; Cornell LII's copies were used.
+- **No air permit for AWS's own generators** was found (web search, 2026-11-18).

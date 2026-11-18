@@ -273,7 +273,7 @@ backup:
     high: 6.4
     unit: g of NOx (+NMHC) per kWh generated
     conf: medium
-    source: "EPA Tier 2 limit for engines over 560 kW, NMHC+NOx 6.4 g/kWh (40 CFR 89.112 Table 1, from memory, to confirm), which emergency engines may meet; Tier 4 final 0.67 g/kWh NOx (low end)"
+    source: "EPA Tier 2 for engines over 560 kW, NOx+NMHC 6.4 g/kWh (40 CFR part 1039 appendix I, Table 2), the standard emergency engines over 2,237 kW must meet from model year 2011 (40 CFR 60.4202(b)(2)); low: Tier 4 for generator sets over 560 kW, NOx 0.67 g/kWh (40 CFR 1039.101 Table 1), which DEP required of the gas plant's own emergency engines"
   battery_minutes:
     value: 15
     low: 5

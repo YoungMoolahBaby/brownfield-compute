@@ -7,7 +7,8 @@ designs the water and energy gaps shrink a lot at this cool site (cost.md, secti
 their sources are in `params/pass2.yaml`, and many are still placeholders (listed at the end).
 
 Later passes on this site: [the wall](wall.md) (2d), [the creek](creek.md) (2e), and
-[the water budget](water.md) (2f): the reservoir against the gas plant and each data center design.
+[the water budget](water.md) (2f): the reservoir against the gas plant and each data center design;
+[the air](air.md) (2g): the gas plant's permit against the coal plant's emissions, and the diesel.
 
 ## The site and the plan
 

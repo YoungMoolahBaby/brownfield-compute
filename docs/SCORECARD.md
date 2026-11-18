@@ -54,6 +54,14 @@ by what the market buys (pass 3d). This scores the design as it stands:
       Reservoir in the droughts of 1952 and 1991 ([pass 2f](pass2/water.md)).
   - **Diesel:** dropping it is the site's opportunity: any design here could bridge to the gas
     plant with batteries.
+    - **What it saves ([pass 2g](pass2/air.md)):** up to 335 tons of NOx a year at EPA Tier 2,
+      +55% on the gas plant's NOx for powering the cloud halls, released at the halls.
+    - **At Tier 4:** 35 tons. DEP required Tier 4 of the gas plant's own emergency engines.
+- **The gas plant's air comes whichever design is built ([pass 2g](pass2/air.md)).**
+  - **Against the coal plant, per MWh:** 99.95% less SO2, 98.5% less NOx and 59% less CO2.
+  - **In total:** up to 17.6 million tons of CO2e a year, 45% more than the coal plant in 2014.
+  - **What the design changes:** its energy (PUE) shifts the plant's emissions by 1-2% among the
+    modern designs, and 15% against the old one.
 - **The heat is no longer part of the case.** With the homes on heat pumps and the glass sized by
   the market, the good neighbour puts **~0.7% of its heat** to use: 156 GWh a year, the 38.5 ha of
   glass.
@@ -143,6 +151,11 @@ by what the market buys (pass 3d). This scores the design as it stands:
     equipment isn't stated.
 - **The campus's IT load.** It sets every campus figure above.
 - **The cloud hall's night sound,** and the towers' at the AI hall's warmer water.
+- **AWS's backup.** No air permit for its generators was found. The diesel figures are the
+  scorecard's: 1.3 MW per MW of IT, tested 24 hours a year, at Tier 2 (now confirmed against
+  40 CFR 60.4202) or Tier 4.
+- **NO2 near the homes.** DEP's review didn't model it, because the gas plant's NOx netted out
+  ([pass 2g](pass2/air.md)).
 - **Measures still to fill:**
   - hospital access (pass 4);
   - housing cost as a share of income for the towns' own renters;

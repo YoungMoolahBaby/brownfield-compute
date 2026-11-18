@@ -1,7 +1,8 @@
 # The Homer City data center campus: what the towns can ask for
 
 *A brief for Center Township, Black Lick Township and Homer City Borough, 17 November 2026, revised
-18 November from the executive order's text and the power station's filed water balance. From
+18 November from the executive order's text, the power station's filed water balance and its air
+permit. From
 brownfield-compute, independent public research, not affiliated with AWS, Homer City Redevelopment,
 the county or any municipality. Not legal advice. Every number comes from a cited source or this
 project's model, and the links show how.*
@@ -55,6 +56,13 @@ project's model, and the links show how.*
   (2,900-5,300) ([workforce](pass4/workforce.md)).
   - Indiana's vacant rentals can house most crews from away.
   - Homer City, Center and Black Lick have almost none to spare.
+- **The gas plant's air:** permitted by DEP in November 2025, and under appeal
+  ([pass 2g](pass2/air.md)).
+  - **Per unit of power:** 99.95% less SO2, 98.5% less NOx and 59% less CO2 than the coal plant in
+    2014.
+  - **In total, at its caps:** up to 17.6 million tons of greenhouse gases a year, 45% more than the
+    coal plant's busiest recent year, and 840 tons of PM2.5, nearly four times its last years'.
+  - **At the worst point off the site:** annual PM2.5 at 85% of the standard.
 
 ## Ask of the design (AWS pays)
 
@@ -63,7 +71,7 @@ project's model, and the links show how.*
 | **Hold the halls to the water as filed, and publish the design behind it:** at most 1,400 gallons a minute from the station, metered and published, with what cools the halls | The station's water balance, filed with DEP in May 2026, gives the data centers 1,400 gallons a minute and takes 400 back: at most 1.4 million gallons a day used up. That is enough to carry ~6% of a 3,000 MW campus's heat, so the rest must leave dry ([pass 2f](pass2/water.md)). The state's yearly report will require the water figures from 2027 | Nothing, if the design is as filed |
 | **No cooling towers at the halls** (dry coolers, or outside air) | For comparison: a liquid-cooled campus with its own towers, at ~3,000 MW, would draw ~27 million gallons a day. With the gas plant that is 48.6 million, more than the station's intake pumps can draw (37.6). Towers would also send ~6.8 million gallons a day of tower wastewater to the creeks, on top of the gas plant's own proposed 6.84 million. Fed from Two Lick Creek Reservoir, they would empty it in a drought like 1952's or 1991's. The reservoir also feeds Indiana's water plant ([pass 2f](pass2/water.md)) | **Air-cooled halls:** nothing, since they already use almost no water here. **Liquid-cooled AI halls:** about 3.4% of their power bill, $2.3M a year per 100 MW and ~$70M a year across the campus ([scorecard](SCORECARD.md)) |
 | **40 dB(A) at night at the nearest homes**, monitored and published, with low-frequency sound (dB(C)) | 40 dB is the World Health Organization's night guideline outdoors. Cooling towers need ~700 m to fall to 40 dB(A); dry coolers behind walls need 34-80 m ([pass 2d](pass2/wall.md)) | The walls, $5.4M per 100 MW, are counted in the row above |
-| **No routine diesel generator tests:** batteries carry the halls over to the gas plant next door | A conventionally backed campus this size has ~1,300 generators, and their tests put out ~300 t of NOx a year | In the model, batteries cost $58.5M less up front than generators per 100 MW ([pass 2b](pass2/cost.md)). Going without diesel is a reliability call for AWS. If it keeps diesel, ask for tests in daytime only and not on poor-air days |
+| **No routine diesel generator tests:** batteries carry the halls over to the gas plant next door | A conventionally backed campus this size has ~1,300 generators. Tested 24 hours a year at EPA Tier 2, they put out up to 335 tons of NOx a year, +55% on the gas plant's NOx for powering the halls, from the halls rather than its 190-ft stacks ([pass 2g](pass2/air.md)) | In the model, batteries cost $58.5M less up front than generators per 100 MW ([pass 2b](pass2/cost.md)). Going without diesel is a reliability call for AWS. **If it keeps diesel, ask for:** Tier 4 engines, as DEP required of the gas plant's own (35 tons); tests in daytime only and not on poor-air days; logged in real time, as the GRID requirements expect |
 
 **For the creek:** DEP is still deciding the gas plant's discharge and renewing its permit. Ask
 DEP to ([pass 2e](pass2/creek.md)):
@@ -75,7 +83,7 @@ DEP to ([pass 2e](pass2/creek.md)):
 
 | Ask | Why | What it costs |
 |---|---|---|
-| **Independent monitoring, published:** sound at the nearest homes, water drawn and returned, the creek's temperature | At the hearings, 20 of 40 speakers raised process and openness, and 14 raised monitoring ([hearing record](hearing-record.md)) | Not costed here; small against the rest |
+| **Independent monitoring, published:** sound at the nearest homes, water drawn and returned, the creek's temperature, and the air (PM2.5 and NO2) near the nearest homes | At the hearings, 20 of 40 speakers raised process and openness, 14 raised monitoring and 15 the gas plant's air ([hearing record](hearing-record.md)). NO2 near the homes was never modelled, because the plant's NOx netted out against the coal plant's retirement. The nearest PM2.5 monitor is 24 km away ([pass 2g](pass2/air.md)) | Not costed here; small against the rest |
 | **A housing fund, paid before the tax arrives** | ~120 newcomer households would rent nearby, and no new flat here pays for itself, even at market rent | $6-20M for 121 flats, depending on tax credits; ~$55M to house the ~209 households already paying too much as well. From the county and township shares, or AWS up front |
 | **A crew housing plan** | Crews on $110-a-night allowances can outbid local renters, whose median rent is $699 | Master leases in Indiana borough and White Township; a rental registry and relocation help next to the site; park-and-ride; a camp on campus land if the peak passes 4,500. Not costed |
 | **Homer City Borough as a party** | It takes the most new homes (109 of 242, [conference](pass3/conference.md)) and gets no tax | Nothing |
@@ -93,7 +101,8 @@ DEP to ([pass 2e](pass2/creek.md)):
      1952-type drought.
 2. What is the campus's computing load in megawatts? AWS hasn't said, and it sets every water and
    sound figure.
-3. How will the halls be backed up, and how often will generators be tested?
+3. How will the halls be backed up, and how often will generators be tested? If there are
+   generators, which emission tier, and when will AWS apply to DEP for their air permit?
 4. What will the nearest homes hear at night?
 5. How many construction workers will come from beyond a daily commute, and where will they stay?
 6. When will the benefits agreement be drafted, and who will sign it?
@@ -108,5 +117,9 @@ DEP to ([pass 2e](pass2/creek.md)):
 - **Center Township's zoning.** Whether it has zoning on these sites is unconfirmed.
 - **The GRID agreement's terms.** DEP's template consent order and agreement isn't posted. The
   requirements here are from the order and DCED's summary page.
-- **Whether the site is in one of DEP's environmental justice areas.** Under GRID, a project in one
-  must add pollution controls, closer air and water monitoring and health safeguards.
+- **Whether the site counts as one of DEP's environmental justice areas.** Under GRID, a project in
+  one must add pollution controls, closer air and water monitoring and health safeguards.
+  - **The appeal says it does:** the groups appealing the gas plant's air permit describe Center
+    Township as "a recognized Environmental Justice community".
+  - **DEP's side:** DEP says it ran the permit's public process under its environmental justice
+    policy. It doesn't say whether the data center campus counts.

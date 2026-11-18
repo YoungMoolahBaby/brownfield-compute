@@ -1,0 +1,172 @@
+# Pass 2g: the air (src/brownfield/air.py). The gas plant's permit (Plan Approval 32-00457A, final
+# 2025-11-18), its application (AECOM for Homer City Generation, revised August 2025) and DEP's review
+# memos, all on DEP's Homer City page (pa.gov/agencies/dep, "Air Quality"). The coal plant's yearly
+# emissions are EIA's (data/eia_emissions_3122.csv). The data centers' energy and diesel come from
+# pass 2 (params/pass2.yaml, scorecard).
+
+gas:
+  full_mw:
+    value: 4678
+    unit: MW the gas plant can generate (7 combined-cycle and 10 simple-cycle turbines)
+    conf: high
+    source: "DEP technical review memo for Plan Approval 32-00457A (2025-11-18) p.9: '4,678 MWe of dispatchable (on-demand) power'"
+  nox_tpy:
+    value: 1142.8
+    unit: short tons a year of NOx, facility-wide cap (12-month rolling, including startups)
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(d)"
+  sox_tpy:
+    value: 211.76
+    unit: short tons a year of sulfur oxides, facility-wide cap
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(g)"
+  pm25_tpy:
+    value: 840.02
+    unit: short tons a year of PM2.5 (filterable and condensable), facility-wide cap
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(c)"
+  co_tpy:
+    value: 1104.8
+    unit: short tons a year of CO, facility-wide cap
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(e)"
+  voc_tpy:
+    value: 332.16
+    unit: short tons a year of VOC, facility-wide cap
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(f)"
+  co2e_tpy:
+    value: 17551454
+    unit: short tons a year of greenhouse gases as CO2e, facility-wide cap
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(i)"
+  haps_tpy:
+    value: 57.1
+    unit: short tons a year of hazardous air pollutants, facility-wide cap (formaldehyde 32.2 of it)
+    conf: high
+    source: "Plan Approval 32-00457A, Section C condition #007(j), (m)"
+
+baseline:
+  # The coal plant's 2021-2022 average, as credited in the netting (application Table 3-9).
+  nox_tpy:
+    value: 2031.8
+    unit: short tons a year of NOx credited for the coal plant's retirement
+    conf: high
+    source: "PSD application (August 2025) Table 3-9: CEMS data, 'discounted for compliance with RACT as implemented by the FIP'"
+  so2_tpy:
+    value: 4460.6
+    unit: short tons a year of SO2, the coal plant's 2021-2022 average (CEMS)
+    conf: high
+    source: "PSD application (August 2025) Tables 3-9 and 3-11"
+  pm25_tpy:
+    value: 220.2
+    unit: short tons a year of PM2.5, the coal plant's 2021-2022 average (heat input and stack tests)
+    conf: high
+    source: "PSD application (August 2025) Tables 3-9 and 3-10"
+
+modelled:
+  # DEP's summary of the PSD air quality analyses (2025-11-17), Table 10: the highest design
+  # concentration anywhere off the site, between the base and worst-case scenarios, with nearby
+  # sources and secondary PM2.5.
+  pm25_annual_ugm3:
+    value: 0.85602
+    unit: ug/m3, the plant's annual PM2.5 at the worst point (design concentration)
+    conf: high
+    source: "DEP PSD summary Table 10"
+  pm25_annual_background_ugm3:
+    value: 6.8
+    unit: ug/m3, the monitored annual PM2.5 design value 2022-2024 (Strongstown, 24 km NE)
+    conf: high
+    source: "DEP PSD summary Tables 6 and 10"
+  pm25_annual_naaqs_ugm3:
+    value: 9.0
+    unit: ug/m3, the annual PM2.5 standard
+    conf: high
+    source: "DEP PSD summary Table 10 (EPA's 2024 standard)"
+  pm25_24h_ugm3:
+    value: 4.5514
+    unit: ug/m3, the plant's 24-hour PM2.5 at the worst point
+    conf: high
+    source: "DEP PSD summary Table 10 (worst-case scenario)"
+  pm25_24h_background_ugm3:
+    value: 19
+    unit: ug/m3, the monitored 24-hour PM2.5 design value 2022-2024
+    conf: high
+    source: "DEP PSD summary Table 10"
+  pm25_24h_naaqs_ugm3:
+    value: 35
+    unit: ug/m3, the 24-hour PM2.5 standard
+    conf: high
+    source: "DEP PSD summary Table 10"
+  pm10_24h_ugm3:
+    value: 6.5345
+    unit: ug/m3, the plant's 24-hour PM10 at the worst point
+    conf: high
+    source: "DEP PSD summary Table 10 (worst-case scenario)"
+  pm10_24h_background_ugm3:
+    value: 54
+    unit: ug/m3, the monitored 24-hour PM10 design value 2022-2024 (Johnstown, 32 km SE)
+    conf: high
+    source: "DEP PSD summary Tables 6 and 10"
+  pm10_24h_naaqs_ugm3:
+    value: 150
+    unit: ug/m3, the 24-hour PM10 standard
+    conf: high
+    source: "DEP PSD summary Table 10"
+
+risk:
+  # DEP's summary of the inhalation risk assessment (2025-11-17), Tables 3-5.
+  cancer_mei:
+    value: 0.54
+    unit: excess lifetime cancer risk in a million, at the most exposed point
+    conf: high
+    source: "DEP inhalation risk summary Table 3 (top contributors: formaldehyde, cadmium, chromium VI, arsenic, benzo(a)pyrene)"
+  cancer_homes:
+    value: 0.48
+    unit: excess lifetime cancer risk in a million, at the most exposed home or sensitive place
+    conf: high
+    source: "DEP inhalation risk summary Table 3"
+  cancer_benchmark:
+    value: 10
+    unit: excess lifetime cancer risk in a million, DEP's benchmark
+    conf: high
+    source: "DEP inhalation risk summary p.7"
+  chronic_hi_mei:
+    value: 0.036
+    unit: chronic noncancer hazard index at the most exposed point
+    conf: high
+    source: "DEP inhalation risk summary Table 4"
+  chronic_benchmark:
+    value: 0.25
+    unit: hazard index, DEP's benchmark for one facility without background
+    conf: high
+    source: "DEP inhalation risk summary p.7"
+  acute_hq_max:
+    value: 0.493
+    unit: highest acute hazard quotient at the most exposed point (cadmium; benchmark 1.0)
+    conf: high
+    source: "DEP inhalation risk summary Table 5"
+
+diesel:
+  tier4_nox_g_kwh:
+    value: 0.67
+    unit: g of NOx per kWh, EPA Tier 4 for generator sets over 560 kW
+    conf: high
+    source: "40 CFR 1039.101 Table 1, generator sets kW>560: NOx 0.67, PM 0.03, NMHC 0.19, CO 3.5 g/kW-hr (2007 CFR edition, GPO; the current eCFR page could not be read by script). DEP required Tier 4 for the gas plant's own emergency generators as BAT (technical review memo p.12)"
+  tier2_pm_g_kwh:
+    value: 0.20
+    unit: g of PM per kWh, EPA Tier 2 for engines over 560 kW
+    conf: high
+    source: "40 CFR part 1039 appendix I, Table 2 (kW>560, from 2006): NOx+NMHC 6.4, CO 3.5, PM 0.20"
+  tier4_pm_g_kwh:
+    value: 0.03
+    unit: g of PM per kWh, EPA Tier 4 for generator sets over 560 kW
+    conf: high
+    source: "40 CFR 1039.101 Table 1 (as tier4_nox_g_kwh)"
+
+units:
+  short_ton_t:
+    value: 0.907185
+    unit: tonnes in a short ton
+    conf: high
+    source: "definition (2,000 lb)"
