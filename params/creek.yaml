@@ -34,7 +34,7 @@ permit:
     value: 11
     unit: cfs, the minimum flow kept in Two Lick Creek below the plant's intake
     conf: medium
-    source: "GAI Consultants Q7-10 memo, 2026-01-23 (application Att. 8-2): 'required by a Consent Order and Agreement to maintain a minimum flow of 11 cubic feet per second (cfs) at the Two Lick Dam'; the order itself not found"
+    source: "GAI Consultants Q7-10 memo, 2026-01-23 (application Att. 8-2): 'required by a Consent Order and Agreement to maintain a minimum flow of 11 cubic feet per second (cfs) at the Two Lick Dam'; the NPDES renewal application (May 2026, narrative p.7) places it 'over the Two Lick dam located downstream of the HCGS intake' (Docket No. 81-060-W); the order itself not posted"
   outfall_upstream_ft:
     value: 75
     unit: ft the outfall sits upstream of the Two Lick Creek confluence, on Blacklick Creek

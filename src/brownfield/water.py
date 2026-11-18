@@ -7,10 +7,14 @@ can carry the gas plant and the data centers through the droughts on record.
 - **The coal plant as it ran:** EIA's thermoelectric cooling water data for plant 3122, monthly
   withdrawal and consumption, 2014-2023. `coal_history(refresh=True)` downloads EIA's yearly
   summary files to data/raw/water/ and writes the plant's rows to data/eia_cooling_3122.csv.
-- **The gas plant:** DEP's permit inputs (params/creek.yaml: 36 MGD drawn, 6.84 MGD of blowdown to
-  Blacklick Creek). As a check, what its own condensers evaporate at full output, by heat balance:
+- **The gas plant:** what its own condensers evaporate at full output, by heat balance, with the
+  towers' blowdown at their planned cycles of concentration n:
 
-      Q_cond = (P / eta) (1 - eta - stack - other),   evaporation = Q_cond f_evap / h_fg
+      Q_cond = (P / eta) (1 - eta - stack - other),   E = Q_cond f_evap / h_fg,   B = E / (n - 1)
+
+  Against it, the station's water balance as filed with DEP (params/water.yaml `filed`, drawing
+  D-352-1801): design maximums, with the intake's three pumps at 37.6 MGD and the data centers
+  (the station's "tenant") on 1,400 gpm of makeup, 400 gpm of it returned.
 
 - **The data centers:** pass 2's module models (scorecard.modules) at the scorecard's campus
   load, yearly averages.
@@ -20,15 +24,16 @@ can carry the gas plant and the data centers through the droughts on record.
   each month's flow-duration curve (QPPQ; Fennessey 1994, Archfield and Vogel 2010), fitted on
   the 1952-1968 overlap.
 - **The reservoir:** a daily mass balance on its 74 mi2. It spills when full and loses evaporation
-  from its surface. It releases at least the consent order's 11 cfs, and more when the plant's
-  draw D plus the flow P left below the intake exceeds the natural flow L of the 97 mi2 between
-  the dam and the gauge:
+  from its surface. It releases at least R_min (a placeholder: what Indiana's water plant draws
+  just below it), and more when the plant's draw D plus the consent order's 11 cfs P, kept over
+  the low dam below the intake, exceeds the natural flow L of the 97 mi2 between the dam and the
+  gauge:
 
       R = max(R_min, D + P - L),   S' = min(C, S + I - R - E)
 
-  The intake is taken to sit below the gauge: EIA names Two Lick Creek, and since 1969 the gauge's
-  mean flow is within ~1% of the reconstructed natural mean, consistent with that (a coal-plant-size
-  withdrawal above it would be ~5-8% of the mean). Indiana's water plant draws just below
+  The intake sits below the gauge: the 316(b) report places it ~1 km downstream, and since 1969
+  the gauge's mean flow is within ~1% of the reconstructed natural mean, consistent with that (a
+  coal-plant-size withdrawal above it would be ~5-8% of the mean). Indiana's water plant draws just below
   the dam and returns most of it above the gauge through the borough's sewage plant: not counted.
 """
 
@@ -171,13 +176,29 @@ def checks(g: pd.Series, b: pd.Series, p: dict) -> dict:
 
 def gas_condensers(p: dict) -> dict:
     """The gas plant's own condensers at its running output: heat to the towers, evaporation, and the
-    draw with DEP's blowdown (MGD)."""
+    draw with the towers' blowdown at their planned cycles of concentration (MGD)."""
     w = "water.gas."
     mw = p[w + "mw"] * p[w + "output_share"]
     q_mw = mw / p[w + "efficiency"] * (1.0 - p[w + "efficiency"] - p[w + "stack_loss_share"] - p[w + "other_loss_share"])
     evap = q_mw * 1e6 * p["pass2.conventional.evap_fraction"] / H_FG * 86400 / 1000 / GAL / 1e6
-    blow = p["creek.permit.discharge_mgd"]
-    return {"mw": mw, "cond_mw": q_mw, "evap_mgd": evap, "blow_mgd": blow, "draw_mgd": evap + blow, "cycles": 1.0 + evap / blow}
+    blow = evap / (p[w + "cycles"] - 1.0)
+    return {"mw": mw, "cond_mw": q_mw, "evap_mgd": evap, "blow_mgd": blow, "draw_mgd": evap + blow, "cycles": p[w + "cycles"]}
+
+
+def filed(p: dict) -> dict:
+    """The station's water balance as filed (drawing D-352-1801, design maximums, MGD), and what it
+    implies at the towers' planned cycles of concentration."""
+    f = "water.filed."
+    mgd = {k[len(f):-4]: v * 1440 / 1e6 for k, v in p.items() if k.startswith(f) and k.endswith("_gpm")}
+    split = mgd["screen_wash"] + mgd["tenant_makeup"] + mgd["towers_service"] + mgd["demin"]
+    makeup = mgd["towers_service"] + mgd["tenant_return"]  # the towers' own makeup (HRSG blowdown left out)
+    blow = makeup / p["water.gas.cycles"]
+    evap = makeup - blow
+    back = mgd["screen_wash"] + mgd["outfall_027"]
+    tenant = mgd["tenant_makeup"] - mgd["tenant_return"]
+    return {**mgd, "split": split, "makeup": makeup, "blow": blow, "evap": evap, "heat_mw": heat_for(evap, p),
+            "returned": back + mgd["outfall_001"], "used": mgd["intake"] - back - mgd["outfall_001"],
+            "used_july": mgd["intake"] - back - mgd["outfall_001_july"], "tenant_used": tenant, "tenant_heat_mw": heat_for(tenant, p)}
 
 
 def heat_for(evap_mgd: float, p: dict) -> float:
@@ -196,6 +217,7 @@ def cases(temp, rh, p: dict) -> list[dict]:
     days = pd.to_datetime(dict(year=hm.year, month=hm.month, day=1)).dt.days_in_month.values
     full_mw = y.loc[busy, "mw"]
     gc = gas_condensers(p)
+    fb = filed(p)
     at = "full output" if p["water.gas.output_share"] >= 1 else f"{p['water.gas.output_share']:.0%} of full output"
     n = p["scorecard.campus_it_mw"] / p["pass2.module.it_mw"]
     d = scorecard.modules(temp, rh, p)["d"]
@@ -216,15 +238,14 @@ def cases(temp, rh, p: dict) -> list[dict]:
          "draw": flat(p["water.gas.max_gpm_per_mw"] * p["water.gas.mw"] * 1440 / 1e6), "used": np.nan, "to": ""},
         {"key": "gas_own", "name": f"The gas plant's own condensers at {at} (heat balance)",
          "draw": flat(gc["draw_mgd"]), "used": gc["evap_mgd"], "to": "Blacklick Creek (Outfall 027)"},
-        {"key": "gas_dep", "name": "The gas plant as DEP's permit inputs have it",
-         "draw": flat(p["creek.permit.intake_mgd"]), "used": p["creek.permit.consumptive_mgd"], "to": "Blacklick Creek (Outfall 027)"},
+        {"key": "filed", "name": "The station at its intake pumps' capacity, as filed (with the data centers' makeup)",
+         "draw": flat(fb["intake"]), "used": fb["used"], "to": "both creeks (Outfalls 001, 002, 027)"},
+        {"key": "gas_own+tenant", "name": "The gas plant's condensers, plus the data centers as filed (1,400 gpm in, 400 back)",
+         "draw": flat(gc["draw_mgd"] + fb["tenant_used"]), "used": gc["evap_mgd"] + fb["tenant_used"], "to": "the creeks"},
     ]
     for k in ("gn", "cloud", "ai", "old"):
         out.append({"key": f"gas_own+{k}", "name": f"The gas plant's condensers, plus {names[k]}",
                     "draw": flat(gc["draw_mgd"] + dc[k][0]), "used": gc["evap_mgd"] + dc[k][1], "to": "the creeks"})
-    out.append({"key": "gas_dep+ai", "name": "DEP's intake, plus the AI halls' own towers",
-                "draw": flat(p["creek.permit.intake_mgd"] + dc["ai"][0]), "used": p["creek.permit.consumptive_mgd"] + dc["ai"][1],
-                "to": "the creeks"})
     for c in out:
         c["mean"] = float(np.average(c["draw"], weights=np.array([31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])))
     return out
@@ -252,7 +273,7 @@ def reservoir(p: dict, nat: pd.Series, draw: np.ndarray) -> dict:
     evap = evaporation(p, nat.index).copy()  # what evaporates; capped below at what the pool holds
     draw = np.asarray(draw, dtype=float)
     draw = draw[nat.index.month - 1] if len(draw) == 12 else draw
-    rmin = p["creek.permit.twolick_release_cfs"] * MGD_PER_CFS
+    rmin = p[r + "min_release_cfs"] * MGD_PER_CFS
     pass_by = p[r + "pass_by_cfs"] * MGD_PER_CFS
     n = len(q)
     s_out, rel, short, spill = np.empty(n), np.empty(n), np.zeros(n), np.zeros(n)
@@ -303,18 +324,30 @@ def analyse(temp, rh, params: dict) -> dict:
     cs = cases(temp, rh, p)
     for c in cs:
         c["res"] = reservoir(p, nat, c["draw"])
-    # Sensitivity on the cases that matter: a smaller usable pool, and nothing left below the intake.
+    # Sensitivity on the cases that matter: a smaller usable pool, and 11 cfs kept at the reservoir's dam too.
     sens = {}
-    for k in ("gas_own", "gas_dep", "gas_own+ai", "gas_dep+ai"):
+    for k in ("gas_own", "filed", "gas_own+tenant", "gas_own+ai"):
         c = next(c for c in cs if c["key"] == k)
         small = reservoir(dict(p, **{"water.reservoir.capacity_acft": params["water.reservoir.capacity_acft"].low}), nat, c["draw"])
-        dry = reservoir(dict(p, **{"water.reservoir.pass_by_cfs": params["water.reservoir.pass_by_cfs"].low}), nat, c["draw"])
-        sens[k] = {"small": small, "no_pass": dry}
+        both = reservoir(dict(p, **{"water.reservoir.min_release_cfs": params["water.reservoir.min_release_cfs"].high}), nat, c["draw"])
+        sens[k] = {"small": small, "both": both}
     return {"p": p, "nat": nat, "graceton": g, "checks": checks(g, b, p), "cases": cs, "sens": sens,
-            "coal": coal_years(coal_history()), "gas": gas_condensers(p), "known": known_case(p, nat)}
+            "coal": coal_years(coal_history()), "gas": gas_condensers(p), "filed": filed(p), "known": known_case(p, nat)}
 
 
 # --- Report and figure ---------------------------------------------------------------------------
+
+# Where the intake and the gauge are: the 316(b) report (ASA, Feb 2026) p.3-3, 40 30' 45.22", -79 10' 58.79";
+# USGS water data report 03042500, 40 31' 02", -79 10' 19".
+INTAKE = (40 + 30 / 60 + 45.22 / 3600, -(79 + 10 / 60 + 58.79 / 3600))
+GAUGE = (40 + 31 / 60 + 2 / 3600, -(79 + 10 / 60 + 19 / 3600))
+
+
+def _km(a, b):
+    la1, lo1, la2, lo2 = map(np.radians, (*a, *b))
+    h = np.sin((la2 - la1) / 2) ** 2 + np.cos(la1) * np.cos(la2) * np.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371.0 * np.arcsin(np.sqrt(h))
+
 
 def _pct(x):
     return f"{x:.0%}"
@@ -325,9 +358,10 @@ def report(a: dict) -> str:
     cy = a["coal"][a["coal"].net > 0]
     cy = cy[cy.index < 2023]
     cs = {c["key"]: c for c in a["cases"]}
+    fb = a["filed"]
     q710_mgd = k["q710_natural"] * MGD_PER_CFS
-    gap = p["creek.permit.intake_mgd"] - gc["draw_mgd"]
-    gap_used = p["creek.permit.consumptive_mgd"] - gc["evap_mgd"]
+    rmin_mgd = p["water.reservoir.min_release_cfs"] * MGD_PER_CFS
+    campus = p["scorecard.campus_it_mw"]
     L = ["**1. The coal plant as it ran** (EIA, plant 3122)", "",
          "| Year | Output, share of capacity | Drawn, MGD | Used up, MGD | Drawn, gal a MWh |", "|---|---|---|---|---|"]
     L += [f"| {yr} | {r.share:.0%} | {r.drawn_mgd:.1f} | {r.used_mgd:.1f} | {r.gal_mwh:,.0f} |" for yr, r in cy.iterrows()]
@@ -336,34 +370,51 @@ def report(a: dict) -> str:
     top = h.loc[h.mgd.idxmax()]
     L += ["", f"Its highest month: {top.mgd:.1f} MGD drawn ({int(top.month)}/{int(top.year)}). Its maximum intake rate, 14 gpm/MW "
           f"(HCR), is {cs['coal_max']['mean']:.1f} MGD.", ""]
-    L += [f"**2. The gas plant's own condensers** (heat balance, {gc['mw'] / p['water.gas.mw']:.0%} of full output)", "",
-          f"- {gc['mw']:,.0f} MW at {p['water.gas.efficiency']:.1%} efficiency sends {gc['cond_mw']:,.0f} MW of heat to its towers, which "
-          f"evaporate {gc['evap_mgd']:.1f} MGD. With DEP's {gc['blow_mgd']:.2f} MGD of blowdown it draws {gc['draw_mgd']:.1f} MGD "
-          f"({gc['cycles']:.1f} cycles of concentration).",
-          f"- DEP's permit inputs: {p['creek.permit.intake_mgd']:.0f} MGD drawn, {p['creek.permit.consumptive_mgd']:.2f} MGD not returned. "
-          f"That is {gap:.1f} MGD more drawn and {gap_used:.1f} MGD more used up than the condensers need: what towers rejecting "
-          f"~{heat_for(gap_used, p):,.0f} MW more heat would evaporate.", ""]
+    L += ["**2. The gas plant and the data centers**", "",
+          f"- **The gas plant's own condensers** (heat balance, {gc['mw'] / p['water.gas.mw']:.0%} of full output): {gc['mw']:,.0f} MW at "
+          f"{p['water.gas.efficiency']:.1%} efficiency sends {gc['cond_mw']:,.0f} MW of heat to its towers, which evaporate "
+          f"{gc['evap_mgd']:.1f} MGD. At the towers' planned {gc['cycles']:.0f} cycles of concentration that is {gc['blow_mgd']:.1f} MGD of "
+          f"blowdown and {gc['draw_mgd']:.1f} MGD drawn.",
+          f"- **The station as filed** (drawing D-352-1801, design maximums): the intake's three pumps draw {fb['intake']:.1f} MGD. "
+          f"{fb['towers_service']:.2f} MGD goes to the station's towers and service water, {fb['tenant_makeup']:.2f} MGD to the data "
+          f"centers' cooling equipment ({fb['tenant_return']:.2f} MGD of it comes back to the towers), {fb['demin']:.2f} MGD to the "
+          f"boilers and {fb['screen_wash']:.2f} MGD back to the creek as screen wash. The split adds to {fb['split']:.2f} MGD.",
+          f"- **What the filed figures imply:** at {gc['cycles']:.0f} cycles, the towers' {fb['makeup']:.1f} MGD of makeup gives "
+          f"{fb['blow']:.2f} MGD of blowdown (Outfall 027 is {fb['outfall_027']:.2f}) and {fb['evap']:.1f} MGD evaporated, enough to carry "
+          f"~{fb['heat_mw']:,.0f} MW of heat against the condensers' {gc['cond_mw']:,.0f} MW. The filing fills the pumps' capacity: it is "
+          f"the intake's ceiling, not the plant's expected use. DEP's permit inputs ({p['creek.permit.intake_mgd']:.0f} MGD drawn, "
+          f"{p['creek.permit.consumptive_mgd']:.2f} not returned) sit just under that ceiling.",
+          f"- **The data centers as filed** use up at most {fb['tenant_used']:.2f} MGD (1,400 gpm in, 400 back). Evaporated, that "
+          f"carries ~{fb['tenant_heat_mw']:,.0f} MW of heat, {fb['tenant_heat_mw'] / campus:.0%} of a {campus:,.0f} MW campus's; the rest "
+          f"would have to leave dry, through dry coolers or outside air.",
+          f"- **Returned at design maximum:** {fb['outfall_027']:.2f} MGD to Blacklick Creek (Outfall 027), {fb['outfall_001']:.2f} MGD "
+          f"to Two Lick Creek below the low dam (Outfall 001; {fb['outfall_001_july']:.2f} in July) and {fb['screen_wash']:.2f} MGD at "
+          f"the intake. Not returned: {fb['used']:.1f} MGD ({fb['used_july']:.1f} in July). Part of Outfall 001 is treated landfill "
+          f"leachate, not creek water, so slightly more creek water is used up.", ""]
     L += [f"**3. Each case against the reservoir** ({p['water.reservoir.capacity_acft']:,.0f} acre-ft, {a['cases'][0]['res']['cap_mg']:,.0f} "
           f"million gallons; daily, {a['nat'].index[0].year}-{a['nat'].index[-1].year}; Two Lick Creek's natural Q7-10 at Graceton "
           f"{k['q710_natural']:.1f} cfs, {q710_mgd:.1f} MGD)", "",
           "| Case | Drawn, MGD | Used up, MGD | Returned to | Reservoir at its lowest | Lowest since the dam (1969-) | Years it falls below half "
-          "| Days short | Of them, under 11 cfs at the dam |",
+          f"| Days short | Of them, under {rmin_mgd:.1f} MGD at the dam (Indiana's draw) |",
           "|---|---|---|---|---|---|---|---|---|"]
     for c in a["cases"]:
         r = c["res"]
         used = "" if np.isnan(c["used"]) else f"{c['used']:.1f}"
-        L.append(f"| {c['name']} | {c['mean']:.1f} | {used} | {c['to']} | {_pct(r['lowest'])} ({r['when']:%b %Y}) | "
+        over = " *" if "+" in c["key"] and c["mean"] > fb["intake"] else ""
+        L.append(f"| {c['name']}{over} | {c['mean']:.1f} | {used} | {c['to']} | {_pct(r['lowest'])} ({r['when']:%b %Y}) | "
                  f"{_pct(r['lowest_since_dam'])} ({r['when_since_dam']:%b %Y}) | {r['years_below_half']} | {r['short_days']:,} | "
                  f"{r['below_min_days']:,} |")
-    L += ["", "Days short: the reservoir is empty, and the plant's draw and the flow kept below the intake can't both be met. Under 11 cfs "
-          "at the dam: not even the consent order's release, just above Indiana's water plant."]
-    L += ["", "**4. The same, with a smaller usable pool and with nothing left below the intake**", "",
-          f"| Case | Central | Pool {a['p']['water.reservoir.capacity_acft']:,.0f} -> 13,000 acre-ft | No flow kept below the intake |",
+    L += ["", f"Days short: the reservoir is empty, and the plant's draw and the consent order's {p['water.reservoir.pass_by_cfs']:.0f} cfs over "
+          f"the low dam below the intake can't both be met. Under {rmin_mgd:.1f} MGD at the dam: the reservoir can't pass even what "
+          f"Indiana's water plant, just below it, draws. *: more than the intake's three pumps can draw ({fb['intake']:.1f} MGD); it "
+          "would need a new intake."]
+    L += ["", f"**4. The same, with a smaller usable pool and with {p['water.reservoir.pass_by_cfs']:.0f} cfs kept at the reservoir's dam too**", "",
+          f"| Case | Central | Pool {a['p']['water.reservoir.capacity_acft']:,.0f} -> 13,000 acre-ft | 11 cfs also at the reservoir's dam |",
           "|---|---|---|---|"]
     for key, s in a["sens"].items():
         c, r = cs[key], cs[key]["res"]
         cell = lambda x: f"lowest {_pct(x['lowest'])}, {x['short_days']:,} days short"  # noqa: E731
-        L.append(f"| {c['name']} | {cell(r)} | {cell(s['small'])} | {cell(s['no_pass'])} |")
+        L.append(f"| {c['name']} | {cell(r)} | {cell(s['small'])} | {cell(s['both'])} |")
     kn = a["known"]
     L += ["", "**Checks**", "",
           f"- **The transfer, before the dam:** Q7-10 {k['q710_fit']:.1f} cfs against {k['q710_obs']:.1f} measured (USGS publishes 11.3); "
@@ -373,7 +424,8 @@ def report(a: dict) -> str:
           f"- **Split sample:** fitted to 1952-1960, it gives {k['q710_test']:.1f} cfs for 1960-1968 against {k['q710_test_obs']:.1f} measured.",
           f"- **Since the dam:** the gauge's mean, {k['mean_post_obs']:.1f} cfs, against the reconstructed natural {k['mean_post_nat']:.1f} "
           f"({k['mean_post_obs'] / k['mean_post_nat'] - 1:+.1%}). The reservoir moves water in time, not away; this is consistent with the "
-          f"plant drawing below the gauge (the coal plant's ~5-8% of the mean would show above it).",
+          f"plant drawing below the gauge (the coal plant's ~5-8% of the mean would show above it). The 316(b) report places the intake "
+          f"{_km(INTAKE, GAUGE):.1f} km south-west of the gauge, downstream.",
           f"- **The coal plant's own months (EIA, 2014-2023):** the reservoir's lowest is {_pct(kn['lowest'])} ({kn['when']:%b %Y}); it "
           f"carried the plant then, and the model agrees."]
     return "\n".join(L)
@@ -399,15 +451,19 @@ def figure(a: dict, path) -> None:
     top = coal_history()
     top = (top.withdrawn_mg / pd.to_datetime(dict(year=top.year, month=top.month, day=1)).dt.days_in_month).max()
     q710 = a["checks"]["q710_natural"] * MGD_PER_CFS
-    for x, txt, ls in ((top, f"the coal plant's highest month, {top:.0f} MGD", (0, (4, 3))), (q710, f"Two Lick's natural Q7-10, {q710:.0f} MGD", (0, (1, 2)))):
+    pumps = a["filed"]["intake"]
+    for x, txt, ls, row in ((top, f"the coal plant's highest month, {top:.0f} MGD", (0, (4, 3)), 0.75),
+                            (q710, f"Two Lick's natural Q7-10, {q710:.0f} MGD", (0, (1, 2)), 0.75),
+                            (pumps, f"the intake's pumps, {pumps:.1f} MGD", "-", 0.75)):
         a1.axvline(x, color=INK2, lw=1.1, ls=ls)
-        a1.annotate(txt, (x, y[0] + 0.75), xytext=(3, 0), textcoords="offset points", fontsize=7, color=INK2, va="center")
+        a1.annotate(txt, (x, y[0] + row), xytext=(3, 0), textcoords="offset points", fontsize=7, color=INK2, va="center",
+                    annotation_clip=False)
     a1.set_xlabel("million gallons a day", color=INK2)
     a1.legend(loc="upper right", fontsize=8, frameon=False)
     a1.set_title("What each case draws from Two Lick Creek, and uses up", loc="left", fontsize=11, color=INK)
-    # The worst drought for DEP's case, with the cases that show the spread.
-    show = ["coal_ran", "gas_own", "gas_dep", "gas_own+ai", "gas_dep+ai"]
-    dep = next(c for c in cs if c["key"] == "gas_dep")["res"]
+    # The worst drought for the intake at its ceiling, with the cases that show the spread.
+    show = ["coal_ran", "gas_own", "gas_own+tenant", "filed", "gas_own+ai"]
+    dep = next(c for c in cs if c["key"] == "filed")["res"]
     yr = dep["when"].year - (dep["when"].month < 4)
     win = slice(f"{yr}-05-01", f"{yr + 1}-03-31")
     for i, key in enumerate(show):
@@ -419,7 +475,8 @@ def figure(a: dict, path) -> None:
     a2.grid(axis="y", color=GRID, lw=0.6)
     a2.legend(loc="upper left", bbox_to_anchor=(0.0, -0.1), ncol=2, fontsize=7, frameon=False)
     a2.set_title(f"Two Lick Creek Reservoir through {yr}'s drought (measured), the worst on the record", loc="left", fontsize=10, color=INK)
-    fig.text(0.01, -0.03, "EIA thermoelectric cooling water data (plant 3122); DEP permit PA0005037 A-2 inputs; USGS 03042500 and 03042000 daily "
-             "flows; reservoir 16,240 acre-ft (USGS). Data centers at 3,000 MW of IT (pass 2's models).", fontsize=6.5, color=MUTED)
+    fig.text(0.01, -0.03, "EIA thermoelectric cooling water data (plant 3122); HCG's filed water balance (NPDES renewal application, drawing "
+             "D-352-1801); USGS 03042500 and 03042000 daily flows;\nreservoir 16,240 acre-ft (USGS). Data centers at 3,000 MW of IT "
+             "(pass 2's models).", fontsize=6.5, color=MUTED)
     fig.savefig(path, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)

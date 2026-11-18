@@ -541,7 +541,8 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - The standards were released in late May 2026 (PSATS, 2026-06-01), with four pillars: energy
     affordability, transparency and community engagement, workforce and economic development, and
     the environment.
-  - The order's own text wasn't found online; these terms are as reported.
+  - The order's own text wasn't found online; these terms are as reported. *(Found 2026-11-18,
+    D24: the consultation and benefits-agreement terms are not in the order's text. See below.)*
 - **Municipalities Planning Code §508(4)(i):** once a plat or land development application is
   duly filed, no later change to the zoning, subdivision or other governing ordinance may affect
   the decision on it adversely to the applicant. The Pennsylvania Supreme Court (*In re Board of
@@ -575,3 +576,90 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - GE's catalog (via DirectIndustry): 61.7%.
 - **QPPQ** (daily flow transfer by flow-duration curves): Fennessey (1994); Archfield and Vogel
   (2010), Water Resources Research 46.
+
+## What was already posted (D24, 2026-11-18)
+
+- **The station's NPDES renewal application** (GAI Consultants for Homer City Generation, May 2026;
+  DEP's Homer City page, "NPDES Renewal Application", 55 MB, posted 2026-05-07):
+  - **The narrative:**
+    - the coal plant drew from "an embayment created by a low head dam on Two Lick Creek";
+    - Q7-10 at Outfall 001 is "11 cfs based on the requirement to maintain this flow over the
+      Two Lick dam located downstream of the HCGS intake" (p.7);
+    - the intake "will not be modified" (p.10);
+    - the permit list includes Consent Order and Agreement Docket No. 81-060-W, "Two Lick Dam
+      (flow requirements)", and Limited Power Permit 32-75 (Two Lick Dam).
+  - **Attachment 7, drawing D-352-1801 rev 29,** "NPDES Permit - Proposed Water Balance/Sampling
+    Diagram" ("All flows are design maximums unless otherwise noted"):
+    - intake 26,100 gpm (37.6 MGD);
+    - "tenant cooling equipment makeup" 1,400 gpm (labelled 2.88 MGD; 1,400 gpm is 2.02);
+    - tenant return 400 gpm (0.58 MGD), into the station's towers;
+    - cooling towers and service water 23,851 gpm (34.35 MGD);
+    - demineralised water 455 gpm;
+    - screen wash (Outfall 002) 396 gpm;
+    - Outfall 027 4,750 gpm (6.84 MGD) to Blacklick Creek;
+    - Outfall 001 3,000 gpm (4.32 MGD) August-June and 1,900 gpm (2.74 MGD) in July, to Two Lick
+      Creek, carrying treated ash-landfill leachate (IMP 101, 800 gpm) as well as blowdown.
+  - **Attachment 9, ASA's 316(b) report** (February 2026):
+    - four 8,700 gpm intake pumps, three at most running: 26,100 gpm, 37.6 MGD design intake flow;
+    - the intake at 40 30' 45.22", -79 10' 58.79", at the end of a 625 x 145 ft embayment, a low
+      dam just below it;
+    - the coal plant's towers ran at ~3 cycles of concentration; the new mechanical draft towers
+      "are expected to be operated at 5 cycles";
+    - Two Lick Creek Reservoir was "constructed to provide a consistent water supply to the station,
+      to ensure operations can continue even during periods of drought". No operating rules are
+      given.
+    - The coal plant's actual intake, 2017-2021 (HCR's figures, Table 5-1): 9.4, 7.1, 10.7, 5.6
+      and 8.8 MGD a year, 8.3 on average. EIA's figures (`data/eia_cooling_3122.csv`) are lower in
+      2017-2020 (6.7, 6.4, 9.6, 4.7) and match in 2021 (8.8).
+    - Its monthly table (3-1) peaks at 16.5 MGD (January 2018), though the text gives "a high
+      intake flow of 15.3 MGD in July of 2019".
+    - "The post-modernization water balance diagram would be similar to the pre-modernization
+      diagram ... The total makeup water rate would remain the same" (p.3-4).
+- **Executive Order 2026-05**, "Protecting Pennsylvania Consumers from Data Center Impacts"
+  (2026-08-18; https://www.pa.gov/content/dam/copapwp-pagov/en/governor/documents/eo2026_05_protecting%20pennsylvania%20consumers%20from%20data%20center%20impacts_final_executed.pdf),
+  for data center projects over 25 MW of peak demand:
+  - **A GRID consent order and agreement (para. 1a-b):**
+    - DEP writes a template. A developer that signs one gets rolling review, but no permit until
+      it documents consistency with the local comprehensive plan and all local approvals.
+    - DEP notifies the local jurisdictions and the Department of Revenue when one is signed.
+  - **Without one (1c):** DEP won't begin review until the local approvals and any water
+    withdrawal or discharge authorizations are in. No rolling issuance, and no permit-time
+    guarantees.
+  - **The sales and use tax exemption (1d):** applicants on or after the order's date must comply
+    with the GRID requirements.
+  - **Nondisclosure agreements (2a):** "for all agencies under the Governor's jurisdiction, the use
+    of non-disclosure agreements in connection with a data center project is impermissible".
+  - **Yearly reports (2c):** by 1 July 2027 and yearly, under Fiscal Code §1813-B. They cover
+    energy; "total water consumption ... along with the maximum day demand, specified by month,
+    water source and whether the consumption was intended for cooling"; any waste heat recovered;
+    and any public water system supplying it.
+  - **The grid (3a-b):** curtail data centers first in emergencies unless they secure their own
+    capacity, and charge them their grid and backstop costs.
+  - **Backup generators (4a):** DEP to examine cumulative and grid-use emissions.
+  - **Best practices (4c):** DCED to prepare best practices on zoning standards and community
+    benefit agreements for municipalities.
+  - **What it doesn't say:** nothing on early consultation, and no required benefits agreement.
+    Those terms in the press (Smart Cities Dive, 2026-08-19) aren't in the text.
+- **DCED's GRID requirements page**
+  (https://dced.pa.gov/business-assistance/data-center-resources/grid-requirements/, read
+  2026-11-18), a summary of the consent order's terms:
+  - new capacity covering peak demand, with a rising in-state clean firm share (10% to 32% by
+    2035);
+  - 100% of grid costs;
+  - "report total annual water consumption and track maximum single-day demand";
+  - "water-recycling and closed-loop cooling technologies where feasible";
+  - strict backup generator limits, with real-time logging of testing;
+  - added mitigation and monitoring in environmental justice areas;
+  - penalties up to permit revocation.
+  - DEP's template itself isn't posted.
+- **Indiana County Office of Planning and Development** (https://www.icopd.org/, read 2026-11-18):
+  - the "complete application package for Preliminary Land Development for AWS at Homer City
+    Energy Campus" (a Dropbox folder; its listing needs a browser);
+  - a public comment form (https://arcg.is/0ebqqP0);
+  - the Planning Commission's agendas (September-November 2026), but no minutes;
+  - the application received 2026-08-28, accepted 2026-10-14, review to 2027-01-12, on the
+    agenda 2026-11-18 at 5 pm.
+- **Still not posted:**
+  - the text of Consent Order 81-060-W;
+  - the reservoir's usable storage, any release rule at its own dam, any drought plan;
+  - DEP's transcript of the 2026-10-14 discharge hearing.

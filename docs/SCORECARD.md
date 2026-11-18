@@ -136,9 +136,11 @@ by what the market buys (pass 3d). This scores the design as it stands:
   existing withdrawal rights, returned to the station for reuse. That is neither tower blowdown nor
   dry coolers, and it isn't scored here. How much water it consumes, and what goes back to the
   creeks at what temperature, is the question to ask.
-  - **A clue ([pass 2f](pass2/water.md)):** DEP's permit inputs for the gas plant run 12 MGD above
-    what its own condensers need. That gap is what towers rejecting ~1.5 GW of the halls' heat
-    would use, so it is worth asking whether that is where the halls' heat goes.
+  - **The station's filing ([pass 2f](pass2/water.md)):** its water balance gives the halls
+    1,400 gpm, with 400 returned, at most 1.44 MGD used up. That is enough to evaporate away ~174
+    MW, 6% of a 3,000 MW campus's heat. The rest must leave dry, so the campus's water as filed is
+    near the good neighbour's and the cloud hall's, far below the AI hall's with towers. The
+    equipment isn't stated.
 - **The campus's IT load.** It sets every campus figure above.
 - **The cloud hall's night sound,** and the towers' at the AI hall's warmer water.
 - **Measures still to fill:**

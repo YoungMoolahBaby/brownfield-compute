@@ -39,11 +39,16 @@ reservoir:
     source: "judgement: lake evaporation in the northeastern US runs mostly from May to October"
   pass_by_cfs:
     value: 11
+    unit: cfs left flowing in Two Lick Creek below the plant's intake
+    conf: medium
+    source: "NPDES renewal application (GAI for HCG, May 2026), narrative p.7: Q7-10 at Outfall 001 'determined to be 11 cfs based on the requirement to maintain this flow over the Two Lick dam located downstream of the HCGS intake'; the requirement is Consent Order and Agreement Docket No. 81-060-W, 'Two Lick Dam (flow requirements)' (application's permit list). The order itself is not posted"
+  min_release_cfs:
+    value: 3.4
     low: 0
     high: 11
-    unit: cfs left flowing in Two Lick Creek below the plant's intake
-    conf: low
-    source: "DEP's design flow counts 11 cfs of Two Lick Creek reaching the confluence (creek.yaml q710_cfs); the consent order sets 11 cfs 'at the Two Lick Dam' (GAI memo), which may leave nothing required below the intake (low)"
+    unit: cfs the reservoir releases at its own dam whatever the plant needs
+    conf: placeholder
+    source: "No release rule at the reservoir's dam is public; the 11 cfs applies at the low dam below the intake (pass_by_cfs). Here: at least what Pennsylvania American Water draws just below it for Indiana, ~2.2 MGD (Indiana Gazette via Yahoo News, 2026); high: if the reservoir's dam must also pass 11 cfs"
 
 gauges:
   graceton_mi2:
@@ -98,6 +103,13 @@ gas:
     unit: share of the fuel's heat lost elsewhere (generators, transformers, auxiliaries, radiation)
     conf: low
     source: "judgement"
+  cycles:
+    value: 5
+    low: 3.5
+    high: 6
+    unit: cycles of concentration in the gas plant's mechanical draft towers (blowdown = evaporation / (cycles - 1))
+    conf: medium
+    source: "ASA, 'Information to support Clean Water Act 316(b) BTA determination' (Feb 2026; NPDES renewal application Att. 9) p.5-1: 'The MDCTs are expected to be operated at 5 cycles of concentration' (the coal plant's towers ran at ~3). Low: DEP's 6.84 MGD of blowdown against the condensers' evaporation"
   output_share:
     value: 1.0
     low: 0.8
@@ -105,3 +117,54 @@ gas:
     unit: share of full output the gas plant runs at through a drought
     conf: placeholder
     source: "full output, as DEP's design intake assumes; 0.8 is the campus alone at 3,000 MW of IT and a total PUE of ~1.2 (3.6 of 4.5 GW)"
+
+# The station's own water balance as filed with DEP: NPDES renewal application (GAI for HCG, May 2026;
+# DEP's Homer City page, "NPDES Renewal Application"), Attachment 7, drawing D-352-1801 rev 29, "Figure 1,
+# NPDES Permit - Proposed Water Balance/Sampling Diagram". Its note: "All flows are design maximums unless
+# otherwise noted." The gallons a minute balance at the intake (396 + 1,400 + 23,851 + 455 = 26,102).
+filed:
+  intake_gpm:
+    value: 26100
+    unit: gpm from Two Lick Creek at design maximum (37.6 MGD)
+    conf: high
+    source: "D-352-1801: 'Two Lick Creek intake 26,100 GPM 37.6 MGD'; ASA 316(b) report p.3-3: four 8,700 gpm pumps, 'at most, three pumps operate at any one time', 'the three pumps together draw a maximum of 26,100 gpm or 37.6 MGD'; the intake 'will not be modified' (renewal narrative p.10), pumps 'replaced in-kind'"
+  screen_wash_gpm:
+    value: 396
+    unit: gpm of intake screen backwash returned to Two Lick Creek (Outfall 002)
+    conf: high
+    source: "D-352-1801: Outfall 002, screen wash, Two Lick Creek, 396 GPM, 0.57 MGD"
+  tenant_makeup_gpm:
+    value: 1400
+    unit: gpm of treated water to the tenant's (the data centers') cooling equipment
+    conf: high
+    source: "D-352-1801: 'Tenant cooling equipment makeup 1,400 GPM 2.88 MGD'. 2.88 MGD would be 2,000 gpm; 1,400 gpm is the figure that balances the intake"
+  tenant_return_gpm:
+    value: 400
+    unit: gpm the tenant's cooling equipment returns to the station's towers
+    conf: high
+    source: "D-352-1801: 'Tenant cooling equipment return 400 GPM 0.58 MGD', into the cooling towers and the blowdown sump"
+  towers_service_gpm:
+    value: 23851
+    unit: gpm of treated water to the station's cooling towers and service water users
+    conf: high
+    source: "D-352-1801: 'Cooling tower and service water users 23,851 GPM 34.35 MGD'"
+  demin_gpm:
+    value: 455
+    unit: gpm of demineralised water (boiler makeup)
+    conf: high
+    source: "D-352-1801: 'Demin water users 455 GPM 0.65 MGD'"
+  outfall_027_gpm:
+    value: 4750
+    unit: gpm of tower blowdown to Blacklick Creek (Outfall 027)
+    conf: high
+    source: "D-352-1801: Outfall 027, 4,750 GPM, 6.84 MGD, Blacklick Creek"
+  outfall_001_gpm:
+    value: 3000
+    unit: gpm to Two Lick Creek at Outfall 001, August-June (blowdown with treated landfill leachate and site water)
+    conf: high
+    source: "D-352-1801: Outfall 001, '3,000 GPM (August-June) 4.32 MGD', Two Lick Creek, below the low dam (316(b) report p.5-1)"
+  outfall_001_july_gpm:
+    value: 1900
+    unit: gpm to Two Lick Creek at Outfall 001 in July
+    conf: high
+    source: "D-352-1801: Outfall 001, '1,900 GPM (July) 2.74 MGD'"

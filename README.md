@@ -33,8 +33,9 @@ This is independent public analysis. It isn't affiliated with any developer, uti
      for.
    - Pass 1 found 205 retired coal sites where it could apply.
 3. **A standard developers can be held to.**
-   - Developers are welcome to meet it. Pennsylvania's GRID standards give them reason to: early
-     consultation on design, a public water report and a benefits agreement.
+   - Developers are welcome to meet it. Pennsylvania's GRID requirements give them reason to:
+     local approval before state permits, a yearly public water report, and the state's sales tax
+     exemption tied to meeting them.
    - It isn't written for them, and its findings are published whether or not they favour a data
      center.
 
@@ -159,12 +160,15 @@ yet.
     checked against the state's temperature rules.
   - [The water budget](docs/pass2/water.md), from Two Lick Creek Reservoir through the plant to the
     creeks.
-    - **"In line with history":** HCR's claim compares maximum intake rates. The coal plant never
-      drew more than 21 million gallons a day in a month.
-    - **The gas plant:** on DEP's permit inputs (36 million gallons a day) it would draw the reservoir down to 12% in
-      the 1952 drought.
-    - **Cooling towers at the data halls on top** would empty the reservoir in the droughts of 1952
-      and 1991. Dry coolers or outside air add almost nothing.
+    - **"In line with history":** HCR's claim means the same intake, 37.6 million gallons a day
+      at its pumps' capacity. The coal plant never drew more than 21 million gallons a day in a
+      month.
+    - **The data centers as filed:** the station's water balance gives them 1,400 gallons a
+      minute, 400 of it returned. That is little enough that the halls must be cooled mostly dry.
+    - **The gas plant:** its own condensers draw ~21 million gallons a day, and the reservoir
+      stays above half. At the intake's full capacity it would fall to 7% in the 1952 drought.
+    - **Cooling towers at the data halls** would need more than the intake can draw. Fed from the
+      reservoir, they would empty it in the droughts of 1952 and 1991.
 - **Pass 3 done**, [the first neighbourhood module](docs/pass3/README.md): the first house in
   CortenForge, heated straight off the data center's warm water. It pays only for dense housing
   beside the campus. In progress: the campus and winter garden above, and

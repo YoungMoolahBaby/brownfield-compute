@@ -1,6 +1,7 @@
 # The Homer City data center campus: what the towns can ask for
 
-*A brief for Center Township, Black Lick Township and Homer City Borough, 17 November 2026. From
+*A brief for Center Township, Black Lick Township and Homer City Borough, 17 November 2026, revised
+18 November from the executive order's text and the power station's filed water balance. From
 brownfield-compute, independent public research, not affiliated with AWS, Homer City Redevelopment,
 the county or any municipality. Not legal advice. Every number comes from a cited source or this
 project's model, and the links show how.*
@@ -14,16 +15,33 @@ project's model, and the links show how.*
 - **New rules won't reshape it.** Once a plan is filed, later changes to zoning, subdivision or
   other governing ordinances can't be used against it (Municipalities Planning Code §508(4);
   Pennsylvania Supreme Court, *Cheltenham Township*, 2019). Rules already in force still apply.
-- **The levers left are the state's GRID standards and the benefits agreement.** The governor's
-  executive order of 18 August 2026, as reported, requires a data center developer to:
-  - win local approval ("If the local community doesn't approve a project, the state won't
-    approve it, either");
-  - consult municipal leaders early enough for "meaningful public input on key design decisions";
-  - report its yearly water consumption and its source;
-  - sign a community benefits agreement that covers traffic, noise, lighting and air quality, and
-    pays toward local priorities.
+- **The levers left are the state's GRID requirements and the benefits agreement.** Executive Order
+  2026-05 (18 August 2026) covers data centers over 25 MW and permits applied for after that date:
+  - **Local approval comes first.** DEP issues no such permit until the project has all its local
+    approvals and is consistent with the local comprehensive plan.
+  - **A GRID agreement with DEP.** A developer that signs a consent order and agreement carrying the
+    GRID requirements gets its permits on a rolling basis once local approval is in. One that
+    doesn't waits until every application, and any water withdrawal or discharge approval, is in.
+    DEP must tell the municipality when an agreement is signed.
+  - **The sales tax exemption** on data center equipment now depends on meeting the GRID
+    requirements.
+  - **Yearly reports from 1 July 2027:** water used, peak-day demand by month, its source and
+    whether for cooling, and energy.
+  - **No nondisclosure agreements** for state agencies on data center projects.
+  - **The GRID requirements** (DCED's summary) include:
+    - water recycling and closed-loop cooling where feasible;
+    - strict limits on backup generators, with testing logged in real time;
+    - paying all the grid costs a project causes;
+    - penalties up to revoking permits.
+  - **Benefits agreements:** the order asks DCED to write best practices on them for
+    municipalities. Press reports describe the standards as expecting:
+    - early consultation on "key design decisions";
+    - agreements covering traffic, noise, lighting and air quality, with money toward local
+      priorities.
 
-  AWS has committed to such an agreement. It isn't written yet.
+    Neither is in the order's text or DCED's list of requirements.
+
+  AWS has committed to a benefits agreement. It isn't written yet.
 
 ## What comes whichever design AWS builds
 
@@ -42,8 +60,8 @@ project's model, and the links show how.*
 
 | Ask | Why | What it costs AWS |
 |---|---|---|
-| **Publish the cooling design:** water drawn, used up, and returned to the creeks, and at what temperature | AWS's filing says "non-contact cooling water" from the station, returned to it, but not how much is used up. The GRID standards already require the water figures | Nothing |
-| **No water evaporated or discharged to cool the halls** (dry coolers, or outside air) | For comparison: a liquid-cooled campus with its own cooling towers, at ~3,000 MW, would draw ~27 million gallons a day and send ~6.8 million of tower wastewater to the creeks. That would come on top of the gas plant's own proposed 6.84 million. Those towers would also empty Two Lick Creek Reservoir in a drought like 1952's or 1991's. The reservoir also feeds Indiana's water plant ([pass 2f](pass2/water.md)) | **Air-cooled halls:** nothing, since they already use almost no water here. **Liquid-cooled AI halls:** about 3.4% of their power bill, $2.3M a year per 100 MW and ~$70M a year across the campus ([scorecard](SCORECARD.md)) |
+| **Hold the halls to the water as filed, and publish the design behind it:** at most 1,400 gallons a minute from the station, metered and published, with what cools the halls | The station's water balance, filed with DEP in May 2026, gives the data centers 1,400 gallons a minute and takes 400 back: at most 1.4 million gallons a day used up. That is enough to carry ~6% of a 3,000 MW campus's heat, so the rest must leave dry ([pass 2f](pass2/water.md)). The state's yearly report will require the water figures from 2027 | Nothing, if the design is as filed |
+| **No cooling towers at the halls** (dry coolers, or outside air) | For comparison: a liquid-cooled campus with its own towers, at ~3,000 MW, would draw ~27 million gallons a day. With the gas plant that is 48.6 million, more than the station's intake pumps can draw (37.6). Towers would also send ~6.8 million gallons a day of tower wastewater to the creeks, on top of the gas plant's own proposed 6.84 million. Fed from Two Lick Creek Reservoir, they would empty it in a drought like 1952's or 1991's. The reservoir also feeds Indiana's water plant ([pass 2f](pass2/water.md)) | **Air-cooled halls:** nothing, since they already use almost no water here. **Liquid-cooled AI halls:** about 3.4% of their power bill, $2.3M a year per 100 MW and ~$70M a year across the campus ([scorecard](SCORECARD.md)) |
 | **40 dB(A) at night at the nearest homes**, monitored and published, with low-frequency sound (dB(C)) | 40 dB is the World Health Organization's night guideline outdoors. Cooling towers need ~700 m to fall to 40 dB(A); dry coolers behind walls need 34-80 m ([pass 2d](pass2/wall.md)) | The walls, $5.4M per 100 MW, are counted in the row above |
 | **No routine diesel generator tests:** batteries carry the halls over to the gas plant next door | A conventionally backed campus this size has ~1,300 generators, and their tests put out ~300 t of NOx a year | In the model, batteries cost $58.5M less up front than generators per 100 MW ([pass 2b](pass2/cost.md)). Going without diesel is a reliability call for AWS. If it keeps diesel, ask for tests in daytime only and not on poor-air days |
 
@@ -68,15 +86,18 @@ DEP to ([pass 2e](pass2/creek.md)):
 
 1. What cools the halls, how much water will the campus use up, and what goes back to the creeks,
    at what temperature?
-   - **A specific question:** is any of the halls' heat in the gas plant's 36 million gallons a day?
-   - **Why it matters:** that figure is 12 million more than the plant's own condensers need.
-     On it alone, the reservoir would fall to 12% in a 1952-type drought.
+   - **A specific question:** will AWS commit to the 1,400 gallons a minute the station's filing
+     gives the halls, and what cools them within it?
+   - **Why it matters:** the station's intake can't supply cooling towers at the halls alongside
+     the gas plant. At its full 37.6 million gallons a day, the reservoir would fall to 7% in a
+     1952-type drought.
 2. What is the campus's computing load in megawatts? AWS hasn't said, and it sets every water and
    sound figure.
 3. How will the halls be backed up, and how often will generators be tested?
 4. What will the nearest homes hear at night?
 5. How many construction workers will come from beyond a daily commute, and where will they stay?
 6. When will the benefits agreement be drafted, and who will sign it?
+7. Will AWS sign a GRID consent order and agreement with DEP, and will its terms be public?
 
 ## What this brief doesn't know
 
@@ -85,5 +106,7 @@ DEP to ([pass 2e](pass2/creek.md)):
 - **The tax.** It turns on what the assessor puts on a data center: $48-224M a year across that
   one input.
 - **Center Township's zoning.** Whether it has zoning on these sites is unconfirmed.
-- **The executive order's own text.** Its terms here are from news reports (Smart Cities Dive,
-  2026-08-19).
+- **The GRID agreement's terms.** DEP's template consent order and agreement isn't posted. The
+  requirements here are from the order and DCED's summary page.
+- **Whether the site is in one of DEP's environmental justice areas.** Under GRID, a project in one
+  must add pollution controls, closer air and water monitoring and health safeguards.

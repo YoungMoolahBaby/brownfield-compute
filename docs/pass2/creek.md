@@ -108,8 +108,9 @@ Run: `uv run brownfield creek`. Inputs: [params/creek.yaml](../../params/creek.y
 
 - **The hearing and the decision.** The 2026-10-14 hearing transcript, DEP's responses to
   comments, the final decision on A-2, and the renewal's draft permit.
-- **The 11 cfs.** The consent order behind it hasn't been found: where it is measured, and whether
-  that point is the low dam just below the plant's other outfall.
+- **The 11 cfs.** The station's renewal application (May 2026) places it "over the Two Lick dam
+  located downstream of the HCGS intake", the low dam with Outfall 001 just below it, under
+  Consent Order and Agreement Docket 81-060-W. The order's own text isn't posted.
 - **The real blowdown.** How hot and how much, hour by hour, and where it is drawn from (the
   122 F drawing). The numbers here are the applicant's projections.
 - **Near the outfall.** Full mixing is the far-field answer. Near the diffuser, before it mixes,

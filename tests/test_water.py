@@ -35,9 +35,21 @@ def test_gas_condensers_by_hand():
     mgd = kg_s * 86400 / 1000 / GAL / 1e6
     assert g["cond_mw"] == pytest.approx(cond)
     assert g["evap_mgd"] == pytest.approx(mgd)
-    assert g["draw_mgd"] == pytest.approx(mgd + P["creek.permit.discharge_mgd"])
+    n = P[w + "cycles"]
+    assert g["draw_mgd"] == pytest.approx(mgd * n / (n - 1))
     # Inverting: the heat that evaporation carries is the condensers' heat.
     assert water.heat_for(g["evap_mgd"], P) == pytest.approx(cond)
+
+
+def test_the_filed_balance_closes_and_runs_at_five_cycles():
+    f = water.filed(P)
+    # The drawing's gallons a minute split the intake (396 + 1,400 + 23,851 + 455 = 26,102 of 26,100).
+    assert f["split"] == pytest.approx(f["intake"], rel=1e-3)
+    assert f["intake"] == pytest.approx(37.584)
+    # At 5 cycles the towers' makeup gives about Outfall 027's blowdown.
+    assert f["blow"] == pytest.approx(f["outfall_027"], rel=0.03)
+    assert f["tenant_used"] == pytest.approx(1000 * 1440 / 1e6)
+    assert f["used"] == pytest.approx((26100 - 396 - 4750 - 3000) * 1440 / 1e6)
 
 
 def _flat(days, cfs):
@@ -55,7 +67,7 @@ def test_reservoir_conserves_water():
 
 def test_release_is_the_minimum_when_the_creek_covers_the_draw():
     r = water.reservoir(P, _flat(60, 500.0), np.full(12, 10.0))
-    rmin = P["creek.permit.twolick_release_cfs"] * water.MGD_PER_CFS
+    rmin = P["water.reservoir.min_release_cfs"] * water.MGD_PER_CFS
     assert np.allclose(r["release"], rmin)
     assert r["lowest"] == pytest.approx(1.0)
 

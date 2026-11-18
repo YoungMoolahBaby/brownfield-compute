@@ -131,7 +131,9 @@ reported apart: it is spent to sell heat, replacing the town's furnaces.
   far from complete. The six AWS sites' boundaries aren't public in a usable form. Next:
   building footprints or the county's address points.
 - **AWS's actual design.** Their filing says non-contact cooling water is "returned to the Homer
-  City Station for reuse"; where that heat ends up isn't stated.
+  City Station for reuse". The station's filed water balance gives the halls 1,400 gpm, with 400
+  returned ([pass 2f](water.md)). That is enough to evaporate away ~6% of a 3,000 MW campus's
+  heat, so most must leave dry. The equipment isn't stated.
 - **The gas plant's own water and heat** are outside this comparison (same for both designs)
   and likely larger than the data centers'.
 - **The campus in IT megawatts** isn't public, so results are per 100 MW module.

@@ -912,6 +912,9 @@ at the campus edge, funded in the community benefits agreement.
       - early consultation on "key design decisions";
       - a water-consumption report;
       - a benefits agreement covering noise and air quality.
+
+      *(Corrected by D24 from the order's text: early consultation and the benefits agreement
+      are not in it.)*
   - **What it asks:**
     - **Of the design:** disclose the cooling water; no evaporated or discharged cooling water; 40
       dB(A) at night at the nearest homes; no routine diesel tests. Each comes with what it costs
@@ -944,7 +947,8 @@ at the campus edge, funded in the community benefits agreement.
       reservoir falls no lower than 49%, in the 1952 drought.
     - **DEP's permit inputs are 12 MGD higher** (36 drawn, 29.2 not returned). That is what towers
       rejecting ~1.5 GW more heat would evaporate: one fit is the data halls' heat in the station's
-      towers. On 36 MGD the reservoir falls to 12% in 1952.
+      towers. On 36 MGD the reservoir falls to 12% in 1952. *(Overturned by D24: 36-37.6 MGD is
+      the intake's ceiling, and the halls' water is a separate, small stream.)*
     - **Towers at the data halls on top would empty it** in 1952 and 1991: 334 days short in 73
       years, 187 of them without even the 11 cfs at the dam, just above Indiana's water plant. Dry
       coolers or outside air add almost nothing.
@@ -966,6 +970,48 @@ at the campus edge, funded in the community benefits agreement.
     1. independent public analysis for host communities first;
     2. a method any town can reuse;
     3. a standard developers can be held to.
+
+- **D24** (2026-11-18) What is already posted, read before asking for anything.
+  - **The question:** Jon, on records requests: "i think we have done our part as i dont live in
+    this county". The steer:
+    - requests, comments and meetings belong to residents and their officials;
+    - reading what is posted is checking our own numbers;
+    - one handoff of the brief to the county is his call.
+
+    Jon: "let's proceed with what you suggested".
+  - **Found:**
+    - **The station's NPDES renewal application** (May 2026, DEP's Homer City page), with:
+      - its water balance (drawing D-352-1801);
+      - the 316(b) report on the intake;
+      - the permit list naming the 11 cfs consent order (Docket 81-060-W);
+    - **Executive Order 2026-05's own text,** and DCED's summary of the GRID requirements;
+    - **the county's posting:** the full application package (a Dropbox folder that can't be
+      listed without a browser) and a public comment form.
+  - **What changed:**
+    - **The halls' water is in the filing:** 1,400 gpm of makeup, 400 back, at most 1.44 MGD used
+      up. That would carry ~174 MW of heat by evaporation, 6% of a 3,000 MW campus's.
+    - **DEP's 36 MGD is the intake's ceiling** (three 8,700 gpm pumps, 37.6 MGD), not the gas
+      plant's need. D22's reading, the halls' heat in the station's towers, is withdrawn.
+    - **The gas plant's towers run at 5 cycles,** so its own condensers draw ~21.4 MGD, not 23.9.
+      The reservoir's lowest is 57%; with the halls as filed, 53%.
+    - **The 11 cfs is kept over the low dam below the intake,** as the model assumed. No release
+      rule at the reservoir's own dam is public, so the model now holds only Indiana's ~2.2 MGD
+      there (a placeholder). 11 cfs at that dam too is a sensitivity.
+    - **Towers at the halls are beyond the intake:** 48.6 MGD with the gas plant, against the
+      pumps' 37.6.
+    - **The brief:**
+      - its GRID section now follows the order's text. Local approval comes first; there is a
+        GRID consent order with DEP; the sales tax exemption depends on GRID; the yearly water
+        report starts 2027-07-01; the NDA bar covers state agencies. The benefits-agreement
+        and early-consultation terms are only reported, not in the text.
+      - its water ask is now to hold the halls to the filed 1,400 gpm;
+      - a seventh question asks whether AWS will sign a GRID consent order.
+  - **Not posted:**
+    - the consent order's text;
+    - the reservoir's usable storage and any operating or drought rules;
+    - DEP's 2026-10-14 discharge hearing transcript;
+    - DEP's GRID template;
+    - the county Planning Commission's minutes.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
