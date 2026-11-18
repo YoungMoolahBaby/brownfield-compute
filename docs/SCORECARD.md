@@ -68,8 +68,8 @@ by what the market buys (pass 3d). This scores the design as it stands:
   - **What remains:** the heat is still worth giving the glass. But "waste heat for the town"
     should not be claimed for this site; its homes are 1-5 km off.
 - **Most of what the towns get comes whichever design is built.**
-  - **Either way:** the 1,500-2,000 jobs, ~$96M a year of property tax (about 70% of it school
-    tax), and a decade of construction peaking near 3,300 on site in mid-2029.
+  - **Either way:** the 1,500-2,000 jobs, ~$92M a year of property tax (about 70% of it school
+    tax, split between Homer-Center and River Valley), and a decade of construction peaking near 3,300 on site in mid-2029.
   - **What the good-neighbour deal adds is the benefits agreement, funded from that tax:** 242
     homes at the towns' edges, two clubhouses and the arena, the crews' housing plan, and 270
     jobs in the glass.
@@ -113,12 +113,12 @@ by what the market buys (pass 3d). This scores the design as it stands:
 | | Whichever design is built | What the good-neighbour deal adds |
 |---|---|---|
 | Permanent jobs | AWS: 1,500-2,000 at $80,000-100,000 (its filing) | 270 in the glass |
-| Property tax at build-out | $96M a year (school $68M, county $23M, townships $6M); AWS seeks no abatement | a set share into a housing fund and the trust |
+| Property tax at build-out | $92M a year (school $66M: Homer-Center $33M, River Valley $33M; county $23M; townships $4M); AWS seeks no abatement | a set share into a housing fund and the trust |
 | Construction, 2026-2036 | peak ~3,300 on site in June 2029 (2,893-5,341); beds for crews from away short in 32% of draws; US 119 at 0.55 of capacity in the shift hour | a crew housing plan, protection for the towns' renters, park-and-ride (pass 4) |
 | New homes | none planned | 242 (high case 664) at the towns' edges, each town growing ~15%: 121 flats, 98 townhouses, 23 houses; every one on its own heat pump |
 | The flats' funding gap | | $20.2M at market rents, $18.7M with 4% tax credits, $6.1M with 9%; from the housing fund |
 | Third places | | 2 clubhouses ($9.6M to build, $1.02M a year: $577 a household) and the arena ($3.18M a year to run, less leagues and memberships) |
-| Limits | | 242 homes against room for ~1,346 on Homer City's sewage plant; ~9 children a grade against Homer-Center's ~60 |
+| Limits | | 242 homes against room for ~1,346 on Homer City's sewage plant; ~9 children a grade in all, most for Homer-Center (~60 a grade now), Black Lick's for River Valley ([pass 4b](pass4/services.md)) |
 
 ### How it was done
 
@@ -156,8 +156,11 @@ by what the market buys (pass 3d). This scores the design as it stands:
   40 CFR 60.4202) or Tier 4.
 - **NO2 near the homes.** DEP's review didn't model it, because the gas plant's NOx netted out
   ([pass 2g](pass2/air.md)).
+- **Hospital access** ([pass 4b](pass4/services.md)): Indiana Regional's emergency department, a
+  Level IV trauma centre since 2026, is 9-17 minutes by car from the towns. The nearest Level I,
+  Conemaugh in Johnstown, is 44-48. It is the same whichever design is built; the campus adds
+  demand on fire and EMS.
 - **Measures still to fill:**
-  - hospital access (pass 4);
   - housing cost as a share of income for the towns' own renters;
   - land reclaimed and the ash cap;
   - monitoring and private wells, from the hearing record.

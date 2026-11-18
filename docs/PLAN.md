@@ -205,7 +205,7 @@ for rent and ~209 rent-burdened renters (ACS 2019-23). A 2-bedroom walk-up costs
 TDC, Johnstown): no flat pencils here, even at market rent (gap $183k), tax-credit flats leave $161k
 (4%) or $47k (9%). The campus's property tax at build-out ~$96M/yr (AWS: no abatements; 25.899
 mills, CLR 0.704, $600/sq ft taxable), $68M of it school tax (~3x Homer-Center's budget, can't buy
-housing); the gap for every newcomer and every burdened household ~$55M. Steer: 100-250 mixed flats
+housing; corrected by D26: $92M, the school tax split $33M Homer-Center and $33M River Valley); the gap for every newcomer and every burdened household ~$55M. Steer: 100-250 mixed flats
 at the campus edge, funded in the community benefits agreement.
 
 ## Decisions
@@ -745,7 +745,7 @@ at the campus edge, funded in the community benefits agreement.
     - At 7,200 members (Planet Fitness's average club) the rest is $31.78 a month each: between
       Planet Fitness's $15 and the Indiana County Y's $47.50.
     - Free memberships for the township and borough (1,526 people) cost the trust $0.58M of its
-      $1.41M a year.
+      $1.41M a year ($1.32M after D26's tax correction).
   - **The checklist:** [docs/pass3/checklist.md](pass3/checklist.md) lists what the county ordinance
     (SALDO §302.6, for a land development with buildings) and the MPC (§707, §709) ask for.
     - It is strongest where hearings press: noise, water, heat, homes, money and shared places.
@@ -893,7 +893,7 @@ at the campus edge, funded in the community benefits agreement.
     - **The heat is no longer part of the case:** with the homes on heat pumps (D18) and the
       glass sized by the market, ~0.7% of the heat is used (156 GWh a year, the 38.5 ha).
     - **Most of what the towns get comes whichever design is built:** the jobs, ~$96M a year of
-      tax, the construction decade. What the deal adds is the benefits agreement (homes,
+      tax ($92M after D26), the construction decade. What the deal adds is the benefits agreement (homes,
       clubhouses, the arena, the crews' plan, 270 jobs in the glass), paid from that tax.
   - Open:
     - AWS's actual cooling (its narrative: non-contact water from the station, returned to it) and
@@ -1050,6 +1050,47 @@ at the campus edge, funded in the community benefits agreement.
     - NO2 near the homes;
     - actual running;
     - the Environmental Hearing Board appeal (filed 2025-12-17).
+
+- **D26** (2026-11-18) Where the tax goes, the schools and the hospital (pass 4b,
+  [docs/pass4/services.md](pass4/services.md)).
+  - Jon: "proceed" (next after the air: the hospital and schools, pass 4's open question).
+  - **The correction, found while scoping:**
+    - **What was wrong:** pass 4 put all 39 buildings at Center Township's rates, so all ~$68M of
+      school tax went to Homer-Center.
+    - **What the lines show:** the Census Bureau's township and school district lines and the
+      master plan's building pixels (`districts.py`) put 51% of the buildings in Black Lick
+      Township, in the River Valley School District (formerly Blairsville-Saltsburg).
+    - **At 2026 millage** (the county's sheet): $92.0M a year in all:
+      - Homer-Center $33.0M and River Valley $32.6M;
+      - Center Township $2.8M and Black Lick Township $1.0M;
+      - the county $22.6M.
+    - **Updated with it:** `econ.campus_tax` now splits by side, and the brief, scorecard, README,
+      pass 4 and the village's trust figures follow.
+  - **The schools** (PDE):
+    - **Enrolment:** Homer-Center has 766 pupils (873 in 2017-18), and River Valley 1,429 (1,634 in
+      2014-15).
+    - **The newcomers' ~117 children:** ~6.6 a grade for Homer-Center and ~2.4 for River Valley.
+      Room enough.
+    - **The money:** each district's campus tax is about a whole budget.
+      - **Uniformity:** one millage per district, so it mostly becomes a lower millage for
+        everyone: -90% in Homer-Center and -81% in River Valley at today's spending.
+      - **If all state aid were lost:** -68% and -42%.
+    - **State aid:** the aid ratio, recomputed with PDE's own formula (checked against PDE's file),
+      falls from 0.71 to 0.34 and from 0.65 to 0.31.
+  - **The hospital:**
+    - **Indiana Regional's emergency department** (Level IV trauma since 2026-01-01) is 9-17
+      minutes from the towns. Conemaugh's Level I is 44-48 minutes away.
+    - **Same for every design.**
+  - **Emergency services:**
+    - the build's ~12,900 worker-years give ~300 recorded injuries at BLS's rates;
+    - the campus keeps ~975 MWh of batteries or ~1,320 generators.
+    - The brief now asks for fire and EMS readiness in the agreement, and puts both school
+      districts at the table.
+  - Open:
+    - where Bruner's buildings fall on the line;
+    - the aid formula's dollars;
+    - capacity;
+    - ambulance response times.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

@@ -1,5 +1,7 @@
 """Pass 4: the economic base against published figures and hand-worked values."""
 
+import pytest
+
 from brownfield import econ
 from brownfield.params import load_params, values
 
@@ -37,8 +39,13 @@ def test_flat_by_hand():
 
 
 def test_campus_tax_by_hand():
-    t = econ.campus_tax(P)
     assessed = 39 * 225000 * P["pass4.money.dc_value_ft2"] * P["pass4.money.clr"]
-    assert abs(t["total"] - assessed * 25.8989 / 1000) < 1.0
+    # All on Center Township's side, as pass 4 first had it: 25.899 mills (25.8989 to four places).
+    assert abs(econ.campus_tax(P, split=(1.0, 0.0))["total"] - assessed * 25.8989 / 1000) < 1.0
+    # As split by D26: each side at its own millage.
+    t = econ.campus_tax(P)
+    c, b = t["share_center"], t["share_blacklick"]
+    assert c + b == pytest.approx(1.0)
+    assert t["total"] == pytest.approx(assessed * (c * 25.8989 + b * 23.786) / 1000, rel=1e-6)
     f = econ.funding(P)
     assert abs(f["flats_a_year"] - t["total"] * P["pass4.money.housing_share"] / f["gap"]) < 1e-9

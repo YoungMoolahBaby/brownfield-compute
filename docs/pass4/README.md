@@ -17,8 +17,8 @@ whether anyone can pay for them:
 **The answer: the campus can easily pay for the housing it brings, but that's 100-250 flats, not
 1,000.** About 120 newcomer households would rent near the campus (85-220). No new flat pays for
 itself here, not even at market rent, which is why Homer City has built 13 homes since 2000.
-The campus's property tax at full build-out, about $96 million a year (AWS says it won't seek
-abatements), is several times what the gap costs: $21 million would cover every newcomer who'd
+The campus's property tax at full build-out, about $92 million a year (AWS says it won't seek
+abatements; corrected by D26 for the township line), is several times what the gap costs: $21 million would cover every newcomer who'd
 rent nearby, $55 million a flat for every rent-burdened household already here too. Most of
 that tax, though, is school tax, which can't buy housing. The money for flats has to come from
 the county and township shares or from the community benefits agreement that's still to be
@@ -96,24 +96,35 @@ ft (5.84 million sq ft, $8.18 billion), but that includes the cooling and power 
 Virginia taxes as real property; Pennsylvania doesn't tax equipment, so $600/sq ft (300-1,400)
 is used.
 
-| Taxing body | Mills | A year at full build-out |
-|---|---|---|
-| Indiana County | 6.105 | $22.6M |
-| Center Township | 1.530 | $5.7M |
-| Homer-Center School District | 18.2639 | $67.7M |
-| **Total** | 25.899 | **$96.0M** (P10 / P50 / P90 $77M / $117M / $175M; $48M at the low $300/sq ft) |
+*Corrected 2026-11-18 (D26).* This first put the whole campus at Center Township's rates. About
+half of AWS's buildings stand in Black Lick Township, which is in the River Valley School District
+(formerly Blairsville-Saltsburg), at its own millage ([pass 4b](services.md)).
 
-- **It dwarfs the gap.** Gap funding for every newcomer household who'd rent nearby (81
-  market-rate flats for AWS staff, 40 tax-credit flats) is $21.3 million, 22% of one year of
-  the campus's tax; with a tax-credit flat for each of the ~209 rent-burdened households already
-  here, $54.9 million, 57% of one year. A tenth of the tax, $9.6 million a year, closes the gap
-  on ~60 tax-credit flats a year (34-160).
-- **But most of it is school tax.** The campus's school tax alone (~$68 million a year) would be
-  about three times Homer-Center School District's whole budget (close to $20 million in revenue
-  for 2025-26, WCCS) and can't be spent on housing; it would let the district cut its
-  residents' school tax instead. The money for flats has to come from the county's and
-  township's shares (~$28 million a year together) or from the community benefits agreement AWS
-  has committed to under the state's GRID standards, which isn't written yet.
+| Taxing body | Mills | Share of the campus | A year at full build-out |
+|---|---|---|---|
+| Indiana County | 6.105 | all | $22.6M |
+| Center Township | 1.530 | 49% | $2.8M |
+| Black Lick Township | 0.521 | 51% | $1.0M |
+| Homer-Center School District | 18.2639 | 49% | $33.0M |
+| River Valley School District | 17.16 | 51% | $32.6M |
+| **Total** | 24.817 (blended) | | **$92.0M** (P10 / P50 / P90 $73M / $112M / $169M; $46M at the low $300/sq ft) |
+
+- **It dwarfs the gap.**
+  - Gap funding for every newcomer household who'd rent nearby (81 market-rate flats for AWS
+    staff, 40 tax-credit flats) is $21.3 million, 23% of one year of the campus's tax.
+  - With a tax-credit flat for each of the ~209 rent-burdened households already here too, it is
+    $54.9 million, 60% of one year.
+  - A tenth of the tax, $9.2 million a year, closes the gap on ~57 tax-credit flats a year
+    (32-159).
+- **But most of it is school tax,** split between two districts. Each district's share, ~$33
+  million a year, is more than Homer-Center's whole budget and close to River Valley's
+  ([pass 4b](services.md)).
+  - **It can't be spent on housing.** It would let each district cut its residents' school tax
+    instead.
+  - **Where the flats' money must come from:**
+    - the county's and townships' shares (~$26 million a year together);
+    - or the community benefits agreement AWS has committed to under the state's GRID
+      requirements, which isn't written yet.
 - **Homer City itself gets none of it directly**: the campus is in Center and Blacklick
   Townships. Its residents share through the county and the school district; the community
   benefits agreement is where the borough's housing belongs.
@@ -151,4 +162,6 @@ is used.
   32% of draws they run short for over a year. The towns next to the site have no spare rentals.
   How many crews come from beyond a daily commute is the open question; a survey of the gas
   plant's crews would set it.
-- The hospital, schools and services a growing town needs (the plan's other pass 4 questions).
+- The hospital, schools and services a growing town needs: now [pass 4b](services.md). It also
+  corrects this pass's tax split: about half the campus is in Black Lick Township and the River
+  Valley School District.

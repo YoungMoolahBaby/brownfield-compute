@@ -13,6 +13,8 @@ costs and what households here can pay, and whether the campus's own money could
 
 from __future__ import annotations
 
+import functools
+
 import numpy as np
 
 D, C, R, F, M = "pass4.demand.", "pass4.cost.", "pass4.rents.", "pass4.finance.", "pass4.money."
@@ -53,13 +55,32 @@ def flat(p: dict) -> dict[str, dict[str, float]]:
     return out
 
 
-def campus_tax(p: dict) -> dict[str, float]:
-    """The campus's real-property tax a year at full build-out, by taxing body (USD)."""
+@functools.lru_cache(maxsize=1)
+def _split() -> tuple[float, float]:
+    """The campus's share of buildings in Center Township and in Black Lick Township (D26,
+    data/aws_buildings_districts.csv)."""
+    from . import districts
+    from .params import load_params, values
+
+    sh = districts.shares(values(load_params()))["township"]
+    return sh.get("Center township", 0.0), sh.get("Black Lick township", 0.0)
+
+
+def campus_tax(p: dict, split: tuple[float, float] | None = None) -> dict[str, float]:
+    """The campus's real-property tax a year at full build-out, by taxing body (USD). The buildings
+    split between Center Township (Homer-Center School District) and Black Lick Township (River
+    Valley School District, formerly Blairsville-Saltsburg), each at its own millage (D26)."""
+    center, blacklick = split if split is not None else _split()
     value = p[M + "dc_buildings"] * p[M + "dc_ft2_each"] * p[M + "dc_value_ft2"]
     assessed = value * p[M + "clr"]
-    out = {"market_value": value, "assessed": assessed}
-    for body in ("county", "township", "school"):
-        out[body] = assessed * p[M + f"mills_{body}"] / 1000
+    out = {"market_value": value, "assessed": assessed, "share_center": center, "share_blacklick": blacklick,
+           "county": assessed * p[M + "mills_county"] / 1000,
+           "township_center": assessed * center * p[M + "mills_township"] / 1000,
+           "township_blacklick": assessed * blacklick * p[M + "mills_township_blacklick"] / 1000,
+           "school_homer_center": assessed * center * p[M + "mills_school"] / 1000,
+           "school_river_valley": assessed * blacklick * p[M + "mills_school_rivervalley"] / 1000}
+    out["township"] = out["township_center"] + out["township_blacklick"]
+    out["school"] = out["school_homer_center"] + out["school_river_valley"]
     out["total"] = out["county"] + out["township"] + out["school"]
     return out
 
@@ -119,11 +140,17 @@ def report(p: dict, params: dict, housing=None) -> str:
               "", "**3. The campus's property tax at full build-out**", "",
               f"{p[M + 'dc_buildings']:.0f} buildings x {p[M + 'dc_ft2_each']:,.0f} sq ft at ${p[M + 'dc_value_ft2']:,.0f}/sq ft = "
               f"${tx['market_value'] / 1e9:,.1f}B market value, x {p[M + 'clr']:.3f} = ${tx['assessed'] / 1e9:,.2f}B assessed:", "",
-              "| Taxing body | Mills | A year |", "|---|---|---|",
-              f"| Indiana County | {p[M + 'mills_county']:.3f} | ${tx['county'] / 1e6:,.1f}M |",
-              f"| Center Township | {p[M + 'mills_township']:.3f} | ${tx['township'] / 1e6:,.1f}M |",
-              f"| Homer-Center School District | {p[M + 'mills_school']:.4f} | ${tx['school'] / 1e6:,.1f}M |",
-              f"| **Total** | {p[M + 'mills_county'] + p[M + 'mills_township'] + p[M + 'mills_school']:.3f} | **${tx['total'] / 1e6:,.1f}M** "
+              f"The buildings stand {tx['share_center']:.0%} in Center Township and {tx['share_blacklick']:.0%} in Black Lick Township "
+              "(data/aws_buildings_districts.csv), each side at its own millage:", "",
+              "| Taxing body | Mills | Share of the campus | A year |", "|---|---|---|---|",
+              f"| Indiana County | {p[M + 'mills_county']:.3f} | all | ${tx['county'] / 1e6:,.1f}M |",
+              f"| Center Township | {p[M + 'mills_township']:.3f} | {tx['share_center']:.0%} | ${tx['township_center'] / 1e6:,.1f}M |",
+              f"| Black Lick Township | {p[M + 'mills_township_blacklick']:.3f} | {tx['share_blacklick']:.0%} | "
+              f"${tx['township_blacklick'] / 1e6:,.1f}M |",
+              f"| Homer-Center School District | {p[M + 'mills_school']:.4f} | {tx['share_center']:.0%} | ${tx['school_homer_center'] / 1e6:,.1f}M |",
+              f"| River Valley School District (formerly Blairsville-Saltsburg) | {p[M + 'mills_school_rivervalley']:.2f} | "
+              f"{tx['share_blacklick']:.0%} | ${tx['school_river_valley'] / 1e6:,.1f}M |",
+              f"| **Total** | {tx['total'] / tx['assessed'] * 1000:.3f} (blended) | | **${tx['total'] / 1e6:,.1f}M** "
               f"(P10 / P50 / P90 ${pct(mc['tax'] / 1e6).replace(' / ', 'M / $')}M) |",
               "", f"With {p[M + 'housing_share']:.0%} of it put into housing: ${fu['fund'] / 1e6:,.1f}M a year closes the gap on "
                   f"**{fu['flats_a_year']:,.0f} tax-credit flats a year** (4% credits), P10 / P50 / P90 {pct(mc['flats_a_year'])}."]

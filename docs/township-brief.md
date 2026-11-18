@@ -47,11 +47,27 @@ project's model, and the links show how.*
 ## What comes whichever design AWS builds
 
 - **Jobs:** 1,500-2,000 permanent jobs at $80,000-100,000 (AWS's filing).
-- **Tax:** about $96M a year of property tax at build-out, with no abatement sought.
-  - The school district gets $68M, the county $23M, and $5.7M is the township share at Center
-    Township's rate. Black Lick Township's own rate applies to the buildings on its side.
-  - School tax can't pay for housing. Homer City Borough gets none of it directly
-    ([pass 4](pass4/README.md)).
+- **Tax:** about $92M a year of property tax at build-out, with no abatement sought.
+  - **Two school districts share it.** About half of AWS's buildings stand in Black Lick
+    Township, which is in the River Valley School District (formerly Blairsville-Saltsburg), not
+    Homer-Center ([pass 4b](pass4/services.md)).
+    - **At today's millage:** Homer-Center $33M and River Valley $33M.
+    - **The others:** the county $23M; Center Township $2.8M and Black Lick Township $1.0M.
+    - **Against their budgets:** each district's share is more than Homer-Center's whole budget
+      ($19.5M) and close to River Valley's ($35.8M).
+  - **Where it ends up:** a district levies one millage on all its property, so the campus would
+    mostly let both districts cut everyone's school tax.
+    - **At today's spending:** by ~90% in Homer-Center and ~80% in River Valley.
+    - **Even if all their state aid were lost:** by 68% and 42%.
+  - **What it can't pay for:** school tax can't pay for housing, and Homer City Borough gets none
+    of it directly ([pass 4](pass4/README.md)).
+- **Schools:** room enough.
+  - **The newcomers:** ~85 children for Homer-Center and ~31 for River Valley, ~7 and ~2 a grade.
+  - **The space:** both districts had more pupils within the last decade.
+- **The hospital:** Indiana Regional Medical Center is 9-17 minutes by car from the towns. It
+  became a Level IV trauma centre this year.
+  - **Serious trauma:** the nearest Level I centre is Conemaugh in Johnstown, 44-48 minutes away
+    ([pass 4b](pass4/services.md)).
 - **Construction:** a decade of it, with ~3,300 workers on site at the peak in June 2029
   (2,900-5,300) ([workforce](pass4/workforce.md)).
   - Indiana's vacant rentals can house most crews from away.
@@ -86,7 +102,8 @@ DEP to ([pass 2e](pass2/creek.md)):
 | **Independent monitoring, published:** sound at the nearest homes, water drawn and returned, the creek's temperature, and the air (PM2.5 and NO2) near the nearest homes | At the hearings, 20 of 40 speakers raised process and openness, 14 raised monitoring and 15 the gas plant's air ([hearing record](hearing-record.md)). NO2 near the homes was never modelled, because the plant's NOx netted out against the coal plant's retirement. The nearest PM2.5 monitor is 24 km away ([pass 2g](pass2/air.md)) | Not costed here; small against the rest |
 | **A housing fund, paid before the tax arrives** | ~120 newcomer households would rent nearby, and no new flat here pays for itself, even at market rent | $6-20M for 121 flats, depending on tax credits; ~$55M to house the ~209 households already paying too much as well. From the county and township shares, or AWS up front |
 | **A crew housing plan** | Crews on $110-a-night allowances can outbid local renters, whose median rent is $699 | Master leases in Indiana borough and White Township; a rental registry and relocation help next to the site; park-and-ride; a camp on campus land if the peak passes 4,500. Not costed |
-| **Homer City Borough as a party** | It takes the most new homes (109 of 242, [conference](pass3/conference.md)) and gets no tax | Nothing |
+| **Homer City Borough as a party**, and both school districts at the table | The borough takes the most new homes (109 of 242, [conference](pass3/conference.md)) and gets no tax. Homer-Center and River Valley each get about half the school tax | Nothing |
+| **Fire and EMS ready for the campus:** training and equipment for battery and fuel fires, and a campus emergency plan with the county, paid before construction | The build puts ~13,000 worker-years on site, ~300 recorded injuries over the decade by BLS's rates. The campus will keep either ~975 MWh of batteries (no diesel) or ~1,300 generators and their fuel. The county's director of emergency management has written that "funding a full-time emergency medical service can't be done with raffle ticket sales, bingo and chicken dinners" (PublicSource, 2025-05-05; [pass 4b](pass4/services.md)) | Not costed here |
 | **A clean-up bond**, set before construction and sized to clear the buildings and restore the land if the campus closes | Raised by 6 of 40 hearing speakers | Not costed |
 | **Places to meet** | The new homes join the towns. Two clubhouses and the arena give them common ground | Two clubhouses: $9.6M to build and $1.02M a year, ~$577 for each of the towns' 1,760 households. The arena: $3.2M a year to run, less leagues and memberships |
 
@@ -105,6 +122,7 @@ DEP to ([pass 2e](pass2/creek.md)):
    generators, which emission tier, and when will AWS apply to DEP for their air permit?
 4. What will the nearest homes hear at night?
 5. How many construction workers will come from beyond a daily commute, and where will they stay?
+   Who answers an injury on site, and how fast?
 6. When will the benefits agreement be drafted, and who will sign it?
 7. Will AWS sign a GRID consent order and agreement with DEP, and will its terms be public?
 
@@ -112,8 +130,9 @@ DEP to ([pass 2e](pass2/creek.md)):
 
 - **AWS's cooling design and computing load.** The campus figures assume 3,000 MW (1,500-3,750),
   bounded by the 4.5 GW gas plant.
-- **The tax.** It turns on what the assessor puts on a data center: $48-224M a year across that
-  one input.
+- **The tax.** It turns on what the assessor puts on a data center: $46-215M a year across that
+  one input. Where Bruner's buildings fall on the township line moves the split between the
+  districts by a few points.
 - **Center Township's zoning.** Whether it has zoning on these sites is unconfirmed.
 - **The GRID agreement's terms.** DEP's template consent order and agreement isn't posted. The
   requirements here are from the order and DCED's summary page.

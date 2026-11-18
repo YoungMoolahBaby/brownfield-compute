@@ -178,7 +178,8 @@ def campus(temp, rh, params: dict) -> tuple[str, dict]:
           "| | Whichever design is built | What the good-neighbour deal adds |", "|---|---|---|",
           f"| Permanent jobs | AWS: 1,500-2,000 at $80,000-100,000 (its filing) | {p['site.greenhouse_ha'] * p['pass2.jobs.greenhouse_per_ha']:,.0f} "
           f"in the glass |",
-          f"| Property tax at build-out | ${tax['total'] / 1e6:,.0f}M a year (school ${tax['school'] / 1e6:,.0f}M, county ${tax['county'] / 1e6:,.0f}M, "
+          f"| Property tax at build-out | ${tax['total'] / 1e6:,.0f}M a year (school ${tax['school'] / 1e6:,.0f}M: Homer-Center "
+          f"${tax['school_homer_center'] / 1e6:,.0f}M, River Valley ${tax['school_river_valley'] / 1e6:,.0f}M; county ${tax['county'] / 1e6:,.0f}M; "
           f"townships ${tax['township'] / 1e6:,.0f}M); AWS seeks no abatement | a set share into a housing fund and the trust |",
           f"| Construction, 2026-2036 | peak ~{w.max():,.0f} on site in {when} ({mc['peak'][0]:,.0f}-{mc['peak'][2]:,.0f}); beds for crews "
           f"from away short in {mc['p_short']:.0%} of draws; US 119 at {tr['vc_after']:.2f} of capacity in the shift hour | "
@@ -191,5 +192,5 @@ def campus(temp, rh, params: dict) -> tuple[str, dict]:
           f"| Third places | | {n_club} clubhouses (${n_club * cl['build'] / 1e6:,.1f}M to build, ${n_club * cl['run'] / 1e6:,.2f}M a year: "
           f"${n_club * cl['run'] / hh:,.0f} a household) and the arena (${arena_cost / 1e6:,.2f}M a year to run, less leagues and memberships) |",
           f"| Limits | | {homes} homes against room for ~{sewer:,.0f} on Homer City's sewage plant; ~{kids / 13:.0f} children a grade "
-          f"against Homer-Center's ~{p[g + 'school_cohort_per_grade']:.0f} |"]
+          f"in all, most for Homer-Center (~{p[g + 'school_cohort_per_grade']:.0f} a grade now), Black Lick's for River Valley (pass 4b) |"]
     return "\n".join(L), {"n": n, "modules": m, "tax": tax, "homes": homes, "mc": mc}

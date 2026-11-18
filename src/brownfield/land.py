@@ -442,7 +442,7 @@ def aws_sites(p: dict, fit: Fit | None = None, reach_px: float = 70.0) -> dict[s
     img = master_plan()
     masks = colour_masks(img)
     px_m2 = fit.s ** 2
-    out = {k: {"building_px": 0, "pts": []} for k in SITE_SEEDS}
+    out = {k: {"building_px": 0, "pts": [], "bpts": []} for k in SITE_SEEDS}
     for kind, mask in masks.items():
         for comp in components(mask):
             cy, cx = comp.mean(axis=0)
@@ -451,14 +451,17 @@ def aws_sites(p: dict, fit: Fit | None = None, reach_px: float = 70.0) -> dict[s
                 continue  # drawn features away from any site (the power block's own works, the legend)
             if kind == "buildings":
                 out[name]["building_px"] += len(comp)
+                out[name]["bpts"] += [tuple(q) for q in comp[:, ::-1]]
             out[name]["pts"] += [tuple(q) for q in comp[:, ::-1]]
     foot_m2 = p["land.aws.footprint_ft2"] * 0.09290304
     for name, s in out.items():
         pts = np.array(s.pop("pts"), float)
         x, y = fit.xy(pts[:, 0], pts[:, 1])
         hull = MultiPoint(list(zip(x, y))).convex_hull.buffer(p["land.aws.margin_m"])
+        b = np.array(s.pop("bpts"), float)
         s.update(building_m2=s["building_px"] * px_m2, buildings=s["building_px"] * px_m2 / foot_m2, footprint=hull,
-                 acres=hull.area / 4046.86, centre=(hull.centroid.x, hull.centroid.y))
+                 acres=hull.area / 4046.86, centre=(hull.centroid.x, hull.centroid.y),
+                 building_xy=np.column_stack(fit.xy(b[:, 0], b[:, 1])))  # each drawn building pixel, m from the plant
     return out
 
 

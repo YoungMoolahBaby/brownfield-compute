@@ -255,6 +255,16 @@ money:
     unit: mills, Homer-Center School District (2026)
     conf: high
     source: "same sheet; AWS: 'does not anticipate seeking any economic incentives that would reduce real property tax assessments' (Project Narrative)"
+  mills_township_blacklick:
+    value: 0.521
+    unit: mills, Black Lick Township (2026)
+    conf: high
+    source: "Indiana County Assessment Office, 2026 school millage sheet (updated 7/16/2026; https://www.indianacountypa.gov/wp-content/uploads/School-2026-Millage.pdf): 'Blacklick Township - R/V' 6.105 / 0.521 / 17.16 = 23.786. About half of AWS's buildings stand in Black Lick Township (data/aws_buildings_districts.csv)"
+  mills_school_rivervalley:
+    value: 17.16
+    unit: mills, River Valley School District (formerly Blairsville-Saltsburg) on Black Lick Township's R/V part (2026)
+    conf: high
+    source: "same sheet ('Blacklick Township - R/V'); Census TIGERweb unified school districts put the campus's Black Lick side in the Blairsville-Saltsburg School District"
   housing_share:
     value: 0.10
     low: 0.0

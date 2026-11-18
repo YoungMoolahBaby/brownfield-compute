@@ -1,0 +1,11 @@
+# The emergency departments that serve the Homer City campus and towns, and the nearest adult trauma centres.
+# Location and address: OpenStreetMap (Nominatim, queried 2026-11-18). Trauma level: Pennsylvania Trauma Systems
+# Foundation, December 2025 board update (Indiana Regional, adult Level IV from 2026-01-01) and PTSF's list as of
+# 2025-04-23 as reported by WJET (the others). All have emergency departments.
+name,address,lat,lon,trauma_level
+Indiana Regional Medical Center,"835 Hospital Road, Indiana, PA 15701",40.6072636,-79.1563120,IV
+Conemaugh Memorial Medical Center,"1086 Franklin Street, Johnstown, PA 15905",40.3058405,-78.9182439,I
+AHN Forbes Hospital,"2570 Haymaker Road, Monroeville, PA 15146",40.4289169,-79.7482277,II
+UPMC Presbyterian,"200 Lothrop Street, Pittsburgh, PA 15213",40.4426596,-79.9602964,I
+AHN Allegheny General Hospital,"320 East North Avenue, Pittsburgh, PA 15212",40.4569719,-80.0033069,I
+UPMC Mercy,"1400 Locust Street, Pittsburgh, PA 15219",40.4363791,-79.9854929,I

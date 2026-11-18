@@ -719,3 +719,57 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - **Emergency engines over 2,237 kW from 2011** must meet Tier 2 (40 CFR 60.4202(b)(2)).
   - The current eCFR pages refuse scripted reads; Cornell LII's copies were used.
 - **No air permit for AWS's own generators** was found (web search, 2026-11-18).
+
+## Where the tax goes, the schools and the hospital (D26, 2026-11-18)
+
+- **Census Bureau, TIGERweb** (tigerWMS_Current): county subdivisions (layer 22) and unified school
+  districts (layer 14) over the land box (`data/raw/land/tiger_*.geojson`).
+  - Black Lick Township is in the Blairsville-Saltsburg School District, and Center Township in
+    Homer-Center; the township and district lines coincide at the campus.
+  - By hull area, AWS's sites split: Bruner 54% Black Lick, Helen 39%, Green 44%, West and
+    Harvey/Gaston 100%, Rura 34%. By building pixels (used): 51% overall.
+- **Indiana County Assessment Office, 2026 millage sheet** (updated 7/16/2026;
+  https://www.indianacountypa.gov/wp-content/uploads/School-2026-Millage.pdf):
+  - **Columns:** county, borough/township, school, total.
+  - **Black Lick Township:** two parts. "A/R" is 6.105 / 0.521 / 24.14. "R/V" (River Valley) is
+    6.105 / 0.521 / 17.16 = 23.786.
+  - **Center Township:** 6.105 / 1.530 / 18.2639 = 25.899.
+- **PDE:**
+  - **Public school enrolments,** October 1 (https://www.pa.gov/agencies/education/data-and-reporting/enrollment):
+    the 10-year LEA file (2015-16 to 2025-26) and the yearly files.
+    - **Homer-Center SD** (AUN 128323303): 839 (2014-15), 873 (2017-18), 766 (2025-26).
+    - **River Valley SD:** AUN 128321103, Blairsville-Saltsburg's, renamed by 2025-26. 1,634
+      (2014-15), 1,429 (2025-26).
+  - **Annual Financial Report summaries,** 2023-24 (revenues by source; taxes collected; 2023 STEB
+    market value):
+    - **Homer-Center:** revenue $19,497,407, of which state $11,312,246; real estate tax
+      $5,272,174; market value $287,942,429.
+    - **River Valley:** revenue $35,764,119, of which state $20,036,494; real estate tax
+      $9,672,159; market value $631,786,787.
+    - River Valley isn't in the 2024-25 file yet.
+  - **Aid ratios 2025-26:**
+    - **Homer-Center:** MV/PI AR 0.7125 (MV AR 0.7199, PI AR 0.7016, WADM 957.692).
+    - **River Valley:** 0.6470 (0.6613, 0.6259, 1,737.878).
+    - **The floors:** 0.10 (MV and PI parts) and 0.15 (combined), as seen in the file.
+    - **The state per WADM** (implied): MV $536,728, PI $247,583.
+    - **The methodology:** MV/PI AR = 0.6 MV AR + 0.4 PI AR; each AR = 1 - 0.5 x district/state
+      per WADM, truncated to four decimals. The market value lags two years.
+- **Pennsylvania Trauma Systems Foundation:**
+  - **December 2025 board update:** five new adult Level IV centres from 2026-01-01, including
+    Indiana Regional Medical Center. Statewide as of 2026-01-01: 21 Level I, 16 Level II, 2 Level
+    III, 21 Level IV.
+  - **Its list as of 2025-04-23,** reported by WJET (via Yahoo, 2025-04-24):
+    - **Level I:** Conemaugh Memorial (Johnstown), UPMC Presbyterian, AHN Allegheny General and
+      UPMC Mercy;
+    - **Level II:** AHN Forbes (Monroeville).
+- **OpenStreetMap / Nominatim** (2026-11-18): the six hospitals' locations and addresses
+  (`data/hospitals.csv`).
+- **The OSRM public router's table service:** free-flow car times. CMS's Provider Data API refuses
+  scripted reads (403).
+- **BLS:**
+  - **Non-fatal (SOII 2023):** construction 2.3 recorded injuries and illnesses per 100 FTE, per
+    Construction Dive (one outlet gives 2.4).
+  - **Fatal (CFOI 2023):** construction 9.6 per 100,000 FTE (1,075 deaths), per AGC.
+- **PublicSource** (2025-05-05; https://www.publicsource.org/coal-gas-transition-homer-city-pennsylvania/):
+  - Indiana County's director of emergency management: "funding a full-time emergency medical
+    service can't be done with raffle ticket sales, bingo and chicken dinners".

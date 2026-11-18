@@ -1,0 +1,28 @@
+# Homer-Center SD (AUN 128323303) and River Valley SD (AUN 128321103, formerly Blairsville-Saltsburg), October 1
+# enrolment from PDE: the 10-year LEA file (2015-16 to 2025-26) and the yearly LEA sheets for 2014-15 and 2025-26
+# (grades: K = full- and half-day kindergarten; pre-K left out). https://www.pa.gov/agencies/education/data-and-reporting/enrollment
+district,year,total,K,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12
+Homer-Center,2014-2015,839.0,59.0,66.0,61.0,53.0,70.0,67.0,71.0,68.0,61.0,72.0,63.0,55.0,73.0
+Homer-Center,2015-2016,859.0,,,,,,,,,,,,,
+Homer-Center,2016-2017,869.0,,,,,,,,,,,,,
+Homer-Center,2017-2018,873.0,,,,,,,,,,,,,
+Homer-Center,2018-2019,847.0,,,,,,,,,,,,,
+Homer-Center,2019-2020,836.0,,,,,,,,,,,,,
+Homer-Center,2020-2021,816.0,,,,,,,,,,,,,
+Homer-Center,2021-2022,807.0,,,,,,,,,,,,,
+Homer-Center,2022-2023,786.0,,,,,,,,,,,,,
+Homer-Center,2023-2024,776.0,,,,,,,,,,,,,
+Homer-Center,2024-2025,792.0,,,,,,,,,,,,,
+Homer-Center,2025-2026,766.0,60.0,52.0,48.0,58.0,60.0,59.0,60.0,49.0,52.0,65.0,70.0,50.0,83.0
+River Valley,2014-2015,1634.0,120.0,120.0,127.0,111.0,113.0,115.0,123.0,112.0,111.0,140.0,124.0,134.0,144.0
+River Valley,2015-2016,1588.0,,,,,,,,,,,,,
+River Valley,2016-2017,1521.0,,,,,,,,,,,,,
+River Valley,2017-2018,1558.0,,,,,,,,,,,,,
+River Valley,2018-2019,1530.0,,,,,,,,,,,,,
+River Valley,2019-2020,1511.0,,,,,,,,,,,,,
+River Valley,2020-2021,1360.0,,,,,,,,,,,,,
+River Valley,2021-2022,1401.0,,,,,,,,,,,,,
+River Valley,2022-2023,1430.0,,,,,,,,,,,,,
+River Valley,2023-2024,1457.0,,,,,,,,,,,,,
+River Valley,2024-2025,1436.0,,,,,,,,,,,,,
+River Valley,2025-2026,1429.0,107.0,97.0,115.0,95.0,108.0,105.0,98.0,121.0,111.0,98.0,113.0,106.0,116.0

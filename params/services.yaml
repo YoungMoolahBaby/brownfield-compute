@@ -1,0 +1,39 @@
+# Pass 4b: the schools, the hospital and emergency services (src/brownfield/services.py). The tax split
+# by township and school district is in params/pass4.yaml and data/aws_buildings_districts.csv; enrolment,
+# revenue and aid ratios are PDE's own files (data/raw/pde/); hospitals are in data/hospitals.csv.
+
+schools:
+  grades:
+    value: 13
+    unit: grades, kindergarten to 12th
+    conf: high
+    source: "definition"
+  mv_weight:
+    value: 0.6
+    unit: weight of the market value aid ratio in PDE's market value / personal income aid ratio
+    conf: high
+    source: "PDE, Aid Ratio Calculation Methodology: MV/PI AR = 0.6 x MV AR + 0.4 x PI AR; MV AR = 1 - 0.5 x (district MV per WADM / state MV per WADM)"
+  ar_floor:
+    value: 0.10
+    unit: lowest market value (or personal income) aid ratio in PDE's file
+    conf: medium
+    source: "PDE 2025-26 aid ratios (finances aidratio 2025-2026.xlsx): no district's MV AR or PI AR is below 0.1000 (e.g. Bryn Athyn, MV per WADM $39M)"
+  mvpi_floor:
+    value: 0.15
+    unit: lowest market value / personal income aid ratio in PDE's file
+    conf: medium
+    source: "PDE 2025-26 aid ratios: no district below 0.1500 (Hatboro-Horsham's 0.6 x 0.1 + 0.4 x 0.1671 = 0.127 is shown as 0.1500)"
+
+construction:
+  recordable_per_100_fte:
+    value: 2.3
+    low: 2.3
+    high: 2.4
+    unit: injuries and illnesses recorded a year per 100 full-time construction workers
+    conf: medium
+    source: "BLS Survey of Occupational Injuries and Illnesses, 2023, construction industry (2.3 per 100 FTE, as reported by Construction Dive, 2024-11; one outlet reports 2.4)"
+  fatal_per_100k_fte:
+    value: 9.6
+    unit: deaths a year per 100,000 full-time construction workers
+    conf: high
+    source: "BLS Census of Fatal Occupational Injuries, 2023: construction industry 9.6 per 100,000 FTE (1,075 deaths), as reported by AGC (2024-12)"

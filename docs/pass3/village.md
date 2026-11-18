@@ -317,14 +317,15 @@ In short:
 | market section inside the greenhouse | $2.0M |
 | **In all** | **$63.4M** |
 
-The campus's county and township tax is about $28.3M a year. Its school tax, $67.7M more, can't pay
-for these. With a 5% share the trust gets:
+The campus's county and township tax is about $26.4M a year (corrected by D26 for the township
+line). Its school tax, $65.6M more and split between two school districts, can't pay for these.
+With a 5% share the trust gets:
 
 | Case | Trust a year |
 |---|---|
-| As assessed | $1.41M |
-| After a won appeal cutting the assessment 24% | $1.08M |
-| After a 90% cut | $0.14M |
+| As assessed | $1.32M |
+| After a won appeal cutting the assessment 24% | $1.00M |
+| After a 90% cut | $0.13M |
 
 ## Running the centre (D16)
 
@@ -359,7 +360,7 @@ Jon: "a next generation costco x planet fitness x your adult rec sports type of 
   - At a Planet Fitness-sized membership the centre runs at about two thirds of the Y's price,
     with an ice rink, courts, climbing and a makerspace the Y doesn't have.
 - **The host township and borough's people get it free.** At 25% uptake that is 1,526 people,
-  costing the trust $0.58M a year at that fee, out of its $1.41M ($1.08M after a won appeal).
+  costing the trust $0.58M a year at that fee, out of its $1.32M ($1.00M after a won appeal).
 - **The food court** is a business of its own and isn't counted.
 
 ## How far it could grow

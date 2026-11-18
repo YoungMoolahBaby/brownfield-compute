@@ -1,0 +1,13 @@
+# AWS's 39 buildings by site, township and school district. The buildings: the county's posted master plan
+# (Kimley-Horn sheet C050.00), each site's drawn building pixels fitted to the ground (land.aws_sites), its share of
+# the filing's 39 by drawn area. The lines: Census TIGERweb county subdivisions and unified school districts.
+site,township,school_district,pixel_share,buildings
+Bruner,Black Lick township,Blairsville-Saltsburg School District,0.5092,6.1108
+Bruner,Center township,Homer-Center School District,0.4908,5.8892
+Helen,Center township,Homer-Center School District,0.7194,3.5969
+Helen,Black Lick township,Blairsville-Saltsburg School District,0.2806,1.4031
+Green,Center township,Homer-Center School District,0.9101,4.5503
+Green,Black Lick township,Blairsville-Saltsburg School District,0.0899,0.4497
+West,Black Lick township,Blairsville-Saltsburg School District,1.0,7.0
+Harvey/Gaston,Black Lick township,Blairsville-Saltsburg School District,1.0,5.0
+Rura,Center township,Homer-Center School District,1.0,5.0

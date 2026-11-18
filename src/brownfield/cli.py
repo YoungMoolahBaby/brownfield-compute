@@ -47,6 +47,7 @@ def cmd_check(_args) -> int:
         print("skip known-case ranking: run `brownfield sites` first")
     ok &= _water_checks(values(params))
     ok &= _air_checks(values(params))
+    ok &= _services_checks(values(params))
     print("check:", "passed" if ok else "FAILED")
     return 0 if ok else 1
 
@@ -77,6 +78,26 @@ def _air_checks(p) -> bool:
     print(f"{'ok  ' if good else 'FAIL'} air: the coal plant's SO2 2021-22 from EIA {k['so2_2122']:,.1f} tons a year vs the application's "
           f"{k['so2_app']:,.1f}")
     return good
+
+
+def _services_checks(p) -> bool:
+    """Pass 4b on the record: PDE's 2025-26 aid ratios for both districts recomputed with the published
+    formula, and the 2026 millage totals for the campus's two sides (the county's sheet)."""
+    from . import services
+
+    ok = True
+    for name, (ours, pde) in services.checks(p).items():
+        good = abs(ours - pde) < 0.002
+        ok &= good
+        print(f"{'ok  ' if good else 'FAIL'} services: {name}'s aid ratio {ours:.4f} vs PDE's {pde:.4f}")
+    m = "pass4.money."
+    for side, total, mills in (("Center Township", 25.899, p[m + "mills_county"] + p[m + "mills_township"] + p[m + "mills_school"]),
+                               ("Black Lick Township (River Valley)", 23.786,
+                                p[m + "mills_county"] + p[m + "mills_township_blacklick"] + p[m + "mills_school_rivervalley"])):
+        good = abs(mills - total) < 0.001
+        ok &= good
+        print(f"{'ok  ' if good else 'FAIL'} services: {side} millage {mills:.3f} vs the county's sheet {total:.3f}")
+    return ok
 
 
 def _known_cases_rank(r, p) -> bool:
@@ -547,6 +568,21 @@ def cmd_scorecard(_args) -> int:
     return 0
 
 
+def cmd_services(_args) -> int:
+    """Pass 4b: where the campus's tax goes, the schools, the hospital and emergency services."""
+    from . import ROOT, services
+
+    a = services.analyse(load_params())
+    md = services.report(a)
+    print(md)
+    out = OUT_DIR / "pass4"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "services.md").write_text(md + NL, encoding="utf-8")
+    services.figure(a, ROOT / "docs" / "pass4" / "services.png")
+    print(NL + "wrote out/pass4/services.md, docs/pass4/services.png")
+    return 0
+
+
 def cmd_air(_args) -> int:
     """Pass 2g: the gas plant's permitted air emissions against the coal plant's, and what each design adds."""
     from . import ROOT, air, climate
@@ -716,6 +752,7 @@ def main(argv=None) -> int:
     sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
     sub.add_parser("scorecard", help="the scorecard as the design now stands: four designs, the campus, the towns")
     sub.add_parser("water", help="pass 2f: the campus's water budget, from Two Lick Reservoir through the plant to the creeks")
+    sub.add_parser("services", help="pass 4b: where the campus's tax goes, the schools, the hospital and emergency services")
     sub.add_parser("air", help="pass 2g: the gas plant's permitted air emissions against the coal plant's, and what each design adds")
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
@@ -729,7 +766,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services}.get(args.cmd or "check")
     return cmd(args)
 
 

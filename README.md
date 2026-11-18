@@ -243,13 +243,22 @@ yet.
       ![Homer City from the south-east: the new walk-ups, townhouses and houses at the borough's edge, drawn on the real ground in autumn](docs/pass3/conference_homer_city.png)
 - **Pass 4 in progress**, [the economic base](docs/pass4/README.md):
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
-  - The campus's property tax, about $96 million a year at build-out, is several times what their
-    housing gap costs. Most of it is school tax, which can't pay for housing.
+  - The campus's property tax, about $92 million a year at build-out, is several times what their
+    housing gap costs. Most of it is school tax, which can't pay for housing, split between
+    Homer-Center and River Valley: about half the campus is in Black Lick Township.
   - [The construction workforce](docs/pass4/workforce.md), 2026-2036: a peak of ~3,300 on site in
     mid-2029, after the gas plant's crews leave.
     - Indiana's vacant rentals can house most crews from away, though not in the worst years.
     - Homer City and the townships beside the site have no spare rentals, so the benefits
       agreement should steer crews to Indiana and run park-and-ride buses.
+  - [Where the tax goes, the schools and the hospital](docs/pass4/services.md) (pass 4b).
+    - **Two districts:** about half of AWS's buildings are in Black Lick Township, so the school
+      tax splits between Homer-Center and River Valley, ~$33 million a year each. That is
+      enough to cut everyone else's school tax by 80-90% at today's spending.
+    - **Room enough:** the schools take the newcomers' ~117 children; both districts had more
+      pupils within the decade.
+    - **The hospital** is 9-17 minutes from the towns. The nearest Level I trauma centre is
+      44-48 minutes away. What the campus adds is demand on fire and EMS.
 
 Decisions and next steps: [docs/PLAN.md](docs/PLAN.md). Sources: [docs/RESEARCH.md](docs/RESEARCH.md).
 
