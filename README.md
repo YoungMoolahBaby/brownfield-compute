@@ -17,6 +17,27 @@ Every answer is compared with a conventional data center on the same site; the d
 result. Each step ships as a short finished report with its figures and an honest list of what we
 don't know.
 
+## Who it's for
+
+This is independent public analysis. It isn't affiliated with any developer, utility or government.
+
+1. **Host communities first.** These are the townships, boroughs and counties where a data center
+   is proposed.
+   - They're asked to approve it, and few can afford their own study of what it will do to their
+     water, their nights, their roads and their housing.
+   - Nor can they easily work out what to ask for in return.
+2. **A method any town can reuse.**
+   - Score the proposed data center against the conventional design on the same site, from public
+     data, with the uncertainty stated.
+   - Then split the asks into what the design should do and what the benefits agreement should pay
+     for.
+   - Pass 1 found 205 retired coal sites where it could apply.
+3. **A standard developers can be held to.**
+   - Developers are welcome to meet it. Pennsylvania's GRID standards give them reason to: early
+     consultation on design, a public water report and a benefits agreement.
+   - It isn't written for them, and its findings are published whether or not they favour a data
+     center.
+
 **For the towns round Homer City:** [a brief](docs/township-brief.md) on what Center Township, Black
 Lick Township and Homer City Borough can ask of AWS's campus: of its design, and in the benefits
 agreement. It covers what each ask costs, who pays, and the questions to put to AWS.

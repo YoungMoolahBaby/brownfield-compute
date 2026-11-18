@@ -954,6 +954,19 @@ at the campus edge, funded in the community benefits agreement.
     - where the 29.2 MGD goes;
     - the draw's seasons.
 
+- **D23** (2026-11-17) Who it's for, stated in the README.
+  - Jon asked whether the project is a template for Amazon or a data center to show its benefits.
+  - **The steer:** no. AWS has its own engineers, and some findings cut against the usual pitch:
+    - the heat case collapsed to ~0.7%;
+    - the good neighbour is a premium against modern AI halls;
+    - most benefits come whichever design is built.
+
+    Its value is the towns' side of the table, and that depends on independence.
+  - Jon: "i like this". The README now says who it's for:
+    1. independent public analysis for host communities first;
+    2. a method any town can reuse;
+    3. a standard developers can be held to.
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each
