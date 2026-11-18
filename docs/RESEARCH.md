@@ -548,3 +548,30 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   Commissioners of Cheltenham Township*, 2019) held the shield extends to zoning applications
   needed for the land development's approval; *In re Jaindl Land Co.* (Commonwealth Court, 2022)
   applies it.
+
+## The water budget (D22, 2026-11-17)
+
+- **EIA, thermoelectric cooling water data** (https://www.eia.gov/electricity/data/water/), "Water
+  cooling by generator and boiler", summary files 2014-2023.
+  - Homer City Generating Station (plant 3122) reports Two Lick Creek as its source and its
+    discharge, with recirculating towers.
+  - 2014, its busiest recent year: 16.1 MGD withdrawn and 14.9 MGD consumed at 69% of capacity;
+    its highest month was 21.0 MGD (June 2014).
+  - Monthly rows: `data/eia_cooling_3122.csv`.
+- **USGS water data reports** for 03042500, Two Lick Creek at Graceton (WDR PA-01-3, PA-02-3):
+  - 171 mi2, record from September 1951;
+  - "Flow regulated since December 1968 by Two Lick Creek Reservoir 10 mi upstream, capacity,
+    16,240 acre-ft and since July 1971 by Yellow Creek Lake";
+  - diurnal fluctuation from mine pumpage and a sewage plant above the station.
+- **National Inventory of Dams,** PA00285 (Two Lick Creek), via the geoconnex reference feature: at
+  40.5953, -79.0994, with 191.66 km2 (74.0 mi2) draining to it. A dam-safety mirror of the NID
+  gives 23,000 acre-ft (NID storage), 510 acres and 90 ft high, high hazard.
+- **Indiana's water:** Pennsylvania American Water's Two Lick Creek Plant "purifies water withdrawn
+  from the Two Lick Creek" for Indiana Borough and White Township (DEP draft fact sheet, NPDES
+  PA0000302, 2025-04-04). Its outfall is at 40 35'47", -79 7'8", about 1.6 km below the dam.
+- **The gas plant's turbines:** seven GE Vernova 7HA.02 (HCR and Kiewit, Business Wire,
+  2025-04-02).
+  - 1x1 combined cycle: ~573 MW and 63.4% net LHV (Keentel Engineering's table, third party).
+  - GE's catalog (via DirectIndustry): 61.7%.
+- **QPPQ** (daily flow transfer by flow-duration curves): Fennessey (1994); Archfield and Vogel
+  (2010), Water Resources Research 46.

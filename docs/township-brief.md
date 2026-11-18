@@ -43,7 +43,7 @@ project's model, and the links show how.*
 | Ask | Why | What it costs AWS |
 |---|---|---|
 | **Publish the cooling design:** water drawn, used up, and returned to the creeks, and at what temperature | AWS's filing says "non-contact cooling water" from the station, returned to it, but not how much is used up. The GRID standards already require the water figures | Nothing |
-| **No water evaporated or discharged to cool the halls** (dry coolers, or outside air) | For comparison: a liquid-cooled campus with its own cooling towers, at ~3,000 MW, would draw ~27 million gallons a day and send ~6.8 million of tower wastewater to the creeks. That would come on top of the gas plant's own proposed 6.84 million | **Air-cooled halls:** nothing, since they already use almost no water here. **Liquid-cooled AI halls:** about 3.4% of their power bill, $2.3M a year per 100 MW and ~$70M a year across the campus ([scorecard](SCORECARD.md)) |
+| **No water evaporated or discharged to cool the halls** (dry coolers, or outside air) | For comparison: a liquid-cooled campus with its own cooling towers, at ~3,000 MW, would draw ~27 million gallons a day and send ~6.8 million of tower wastewater to the creeks. That would come on top of the gas plant's own proposed 6.84 million. Those towers would also empty Two Lick Creek Reservoir in a drought like 1952's or 1991's. The reservoir also feeds Indiana's water plant ([pass 2f](pass2/water.md)) | **Air-cooled halls:** nothing, since they already use almost no water here. **Liquid-cooled AI halls:** about 3.4% of their power bill, $2.3M a year per 100 MW and ~$70M a year across the campus ([scorecard](SCORECARD.md)) |
 | **40 dB(A) at night at the nearest homes**, monitored and published, with low-frequency sound (dB(C)) | 40 dB is the World Health Organization's night guideline outdoors. Cooling towers need ~700 m to fall to 40 dB(A); dry coolers behind walls need 34-80 m ([pass 2d](pass2/wall.md)) | The walls, $5.4M per 100 MW, are counted in the row above |
 | **No routine diesel generator tests:** batteries carry the halls over to the gas plant next door | A conventionally backed campus this size has ~1,300 generators, and their tests put out ~300 t of NOx a year | In the model, batteries cost $58.5M less up front than generators per 100 MW ([pass 2b](pass2/cost.md)). Going without diesel is a reliability call for AWS. If it keeps diesel, ask for tests in daytime only and not on poor-air days |
 
@@ -68,6 +68,9 @@ DEP to ([pass 2e](pass2/creek.md)):
 
 1. What cools the halls, how much water will the campus use up, and what goes back to the creeks,
    at what temperature?
+   - **A specific question:** is any of the halls' heat in the gas plant's 36 million gallons a day?
+   - **Why it matters:** that figure is 12 million more than the plant's own condensers need.
+     On it alone, the reservoir would fall to 12% in a 1952-type drought.
 2. What is the campus's computing load in megawatts? AWS hasn't said, and it sets every water and
    sound figure.
 3. How will the halls be backed up, and how often will generators be tested?

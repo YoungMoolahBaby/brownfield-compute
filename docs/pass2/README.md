@@ -6,6 +6,9 @@ line: the conventional design here is the old water-cooled one. Against the stro
 designs the water and energy gaps shrink a lot at this cool site (cost.md, section 2). Every row comes from `uv run brownfield module`; inputs and
 their sources are in `params/pass2.yaml`, and many are still placeholders (listed at the end).
 
+Later passes on this site: [the wall](wall.md) (2d), [the creek](creek.md) (2e), and
+[the water budget](water.md) (2f): the reservoir against the gas plant and each data center design.
+
 ## The site and the plan
 
 The former Homer City Generating Station (Indiana County, PA) is being redeveloped: a 4.5 GW gas

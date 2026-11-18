@@ -45,8 +45,25 @@ def cmd_check(_args) -> int:
         ok &= _known_cases_rank(rank.rank(pd.read_csv(sites, index_col=0), values(params)), values(params))
     else:
         print("skip known-case ranking: run `brownfield sites` first")
+    ok &= _water_checks(values(params))
     print("check:", "passed" if ok else "FAILED")
     return 0 if ok else 1
+
+
+def _water_checks(p) -> bool:
+    """Pass 2f on the record it can be checked against: the flow transfer before the dam (USGS publishes
+    a Q7-10 of 11.3 cfs at Graceton for 1952-1968), and the reservoir under the coal plant's own draws."""
+    from . import water
+
+    g, b = water.gauges()
+    k = water.checks(g, b, p)
+    kn = water.known_case(p, water.natural(g, b))
+    tests = [(abs(k["q710_fit"] / 11.3 - 1) < 0.1, f"Two Lick's pre-dam Q7-10 from Blacklick {k['q710_fit']:.1f} cfs vs USGS 11.3"),
+             (abs(k["q710_test"] / k["q710_test_obs"] - 1) < 0.15, f"split sample 1960-1968: {k['q710_test']:.1f} vs {k['q710_test_obs']:.1f} cfs"),
+             (kn["short_days"] == 0, f"the reservoir carries the coal plant's own draws 2014-2023 (lowest {kn['lowest']:.0%})")]
+    for good, msg in tests:
+        print(f"{'ok  ' if good else 'FAIL'} water: {msg}")
+    return all(good for good, _ in tests)
 
 
 def _known_cases_rank(r, p) -> bool:
@@ -517,6 +534,24 @@ def cmd_scorecard(_args) -> int:
     return 0
 
 
+def cmd_water(_args) -> int:
+    """Pass 2f: the campus's water budget, from Two Lick Reservoir through the plant to the creeks."""
+    from . import ROOT, climate, water
+
+    params = load_params()
+    site = screen.plant_table(values(params)).loc[HOMER_CITY]
+    temp, rh = climate.hourly_temp_rh(site.lat, site.lon)
+    a = water.analyse(temp, rh, params)
+    md = water.report(a)
+    print(md)
+    out = OUT_DIR / "pass2"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "water.md").write_text(md + NL, encoding="utf-8")
+    water.figure(a, ROOT / "docs" / "pass2" / "water.png")
+    print(NL + "wrote out/pass2/water.md, docs/pass2/water.png")
+    return 0
+
+
 def cmd_workforce(_args) -> int:
     """Pass 4: the construction workforce 2026-2036: on site by month, beds for crews from away, the
     morning shift on US 119."""
@@ -649,6 +684,7 @@ def main(argv=None) -> int:
     sub.add_parser("site", help="D12: the modular site plan: rules, scores, and proposed layouts")
     sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
     sub.add_parser("scorecard", help="the scorecard as the design now stands: four designs, the campus, the towns")
+    sub.add_parser("water", help="pass 2f: the campus's water budget, from Two Lick Reservoir through the plant to the creeks")
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
@@ -661,7 +697,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water}.get(args.cmd or "check")
     return cmd(args)
 
 

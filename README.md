@@ -136,6 +136,14 @@ yet.
     [docs/hearing-record.md](docs/hearing-record.md).
   - The issue they raised most, [the gas plant's discharge to Blacklick Creek](docs/pass2/creek.md),
     checked against the state's temperature rules.
+  - [The water budget](docs/pass2/water.md), from Two Lick Creek Reservoir through the plant to the
+    creeks.
+    - **"In line with history":** HCR's claim compares maximum intake rates. The coal plant never
+      drew more than 21 million gallons a day in a month.
+    - **The gas plant:** on DEP's permit inputs (36 million gallons a day) it would draw the reservoir down to 12% in
+      the 1952 drought.
+    - **Cooling towers at the data halls on top** would empty the reservoir in the droughts of 1952
+      and 1991. Dry coolers or outside air add almost nothing.
 - **Pass 3 done**, [the first neighbourhood module](docs/pass3/README.md): the first house in
   CortenForge, heated straight off the data center's warm water. It pays only for dense housing
   beside the campus. In progress: the campus and winter garden above, and

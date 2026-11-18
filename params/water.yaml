@@ -1,0 +1,107 @@
+# Pass 2f: the campus's water budget, from Two Lick Reservoir through the plant to the creeks
+# (src/brownfield/water.py). The gas plant's permit inputs (intake, blowdown, the 11 cfs release) are in
+# params/creek.yaml; the data centers' water comes from pass 2's module models at the scorecard's
+# campus load (params/scorecard.yaml).
+
+reservoir:
+  capacity_acft:
+    value: 16240
+    low: 13000
+    high: 16240
+    unit: acre-ft of storage the plant can draw on
+    conf: medium
+    source: "USGS water data reports for 03042500 (WDR PA-01-3, PA-02-3), REMARKS: 'Two Lick Creek Reservoir 10 mi upstream, capacity, 16,240 acre-ft'. The National Inventory of Dams lists 23,000 acre-ft (PA00285, its maximum storage, to the dam's crest). Low: judgement, if ~20% sits below the outlet or is held for water quality; the operating rules are not public"
+  drainage_mi2:
+    value: 74.0
+    unit: mi2 draining to the dam
+    conf: high
+    source: "National Inventory of Dams PA00285 (Two Lick Creek dam), via the geoconnex reference feature: 191.66 km2 (NHDPlus 192.17)"
+  surface_acres:
+    value: 510
+    low: 450
+    high: 510
+    unit: acres of water surface when full
+    conf: medium
+    source: "National Inventory of Dams PA00285 (surface area 510 acres, as mirrored by a dam-safety listing); smaller as the reservoir draws down (low)"
+  evaporation_in_yr:
+    value: 30
+    low: 26
+    high: 34
+    unit: inches a year evaporated from the water surface
+    conf: placeholder
+    source: "judgement: free-water-surface evaporation in west-central Pennsylvania is roughly 28-32 in a year (NOAA Technical Report NWS 33 maps, Farnsworth, Thompson and Peck 1982; not read here); rain on the lake is left out, so this overstates the net loss"
+  evaporation_may_oct_share:
+    value: 0.75
+    low: 0.7
+    high: 0.8
+    unit: share of the year's evaporation that falls May-October (spread evenly within each half)
+    conf: placeholder
+    source: "judgement: lake evaporation in the northeastern US runs mostly from May to October"
+  pass_by_cfs:
+    value: 11
+    low: 0
+    high: 11
+    unit: cfs left flowing in Two Lick Creek below the plant's intake
+    conf: low
+    source: "DEP's design flow counts 11 cfs of Two Lick Creek reaching the confluence (creek.yaml q710_cfs); the consent order sets 11 cfs 'at the Two Lick Dam' (GAI memo), which may leave nothing required below the intake (low)"
+
+gauges:
+  graceton_mi2:
+    value: 171
+    unit: mi2 above USGS 03042500, Two Lick Creek at Graceton
+    conf: high
+    source: "USGS water data report 03042500 (WDR PA-02-3): DRAINAGE AREA 171 mi2; flow regulated since December 1968 by Two Lick Creek Reservoir and since July 1971 by Yellow Creek Lake"
+  blacklick_mi2:
+    value: 193
+    unit: mi2 above USGS 03042000, Blacklick Creek at Josephine
+    conf: high
+    source: "USGS site file 03042000: 193 mi2 (StreamStats 192)"
+
+coal:
+  max_gpm_per_mw:
+    value: 14
+    unit: gallons a minute per MW, the coal plant's maximum intake rate
+    conf: high
+    source: "Homer City Generation fact sheet on campus water usage (October 2026): '14 gpm/MW' for the coal plant against 5.9 for the new plant"
+
+gas:
+  mw:
+    value: 4500
+    low: 4000
+    high: 4500
+    unit: MW the gas plant generates at full output
+    conf: medium
+    source: "HCR: 'up to 4.5 GW' from seven GE Vernova 7HA.02 turbines (Business Wire, 2025-04-02); seven 1x1 blocks at ~573 MW each make ~4.0 GW (Keentel's 7HA.02 table, third party), so 4.5 GW may include duct firing"
+  max_gpm_per_mw:
+    value: 5.9
+    unit: gallons a minute per MW, the gas plant's maximum intake rate
+    conf: high
+    source: "Homer City Generation fact sheet on campus water usage (October 2026): '5.9 gpm/MW'"
+  efficiency:
+    value: 0.62
+    low: 0.60
+    high: 0.634
+    unit: net electric efficiency (LHV) at full output
+    conf: medium
+    source: "7HA.02 in 1x1 combined cycle: 63.4% net LHV (Keentel table, third party), 61.7% (GE catalog via DirectIndustry); hot days, ageing and duct firing lower it (low)"
+  stack_loss_share:
+    value: 0.07
+    low: 0.05
+    high: 0.10
+    unit: share of the fuel's heat (LHV) leaving up the stacks
+    conf: low
+    source: "judgement: heat-recovery stacks at ~80-90 C; textbook combined-cycle heat balances put stack losses at 5-10% of fuel"
+  other_loss_share:
+    value: 0.025
+    low: 0.015
+    high: 0.035
+    unit: share of the fuel's heat lost elsewhere (generators, transformers, auxiliaries, radiation)
+    conf: low
+    source: "judgement"
+  output_share:
+    value: 1.0
+    low: 0.8
+    high: 1.0
+    unit: share of full output the gas plant runs at through a drought
+    conf: placeholder
+    source: "full output, as DEP's design intake assumes; 0.8 is the campus alone at 3,000 MW of IT and a total PUE of ~1.2 (3.6 of 4.5 GW)"

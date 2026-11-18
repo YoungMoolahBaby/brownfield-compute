@@ -50,6 +50,8 @@ by what the market buys (pass 3d). This scores the design as it stands:
     3 GW it withdraws ~27 million gallons a day and sends ~6.8 million of blowdown to the creeks,
     and its towers need ~700 m to fall to 40 dB(A) at night. The good neighbour withdraws none and
     is quiet 34-80 m from its walled yard.
+    - **The reservoir:** on top of the gas plant, those towers would empty Two Lick Creek
+      Reservoir in the droughts of 1952 and 1991 ([pass 2f](pass2/water.md)).
   - **Diesel:** dropping it is the site's opportunity: any design here could bridge to the gas
     plant with batteries.
 - **The heat is no longer part of the case.** With the homes on heat pumps and the glass sized by
@@ -134,6 +136,9 @@ by what the market buys (pass 3d). This scores the design as it stands:
   existing withdrawal rights, returned to the station for reuse. That is neither tower blowdown nor
   dry coolers, and it isn't scored here. How much water it consumes, and what goes back to the
   creeks at what temperature, is the question to ask.
+  - **A clue ([pass 2f](pass2/water.md)):** DEP's permit inputs for the gas plant run 12 MGD above
+    what its own condensers need. That gap is what towers rejecting ~1.5 GW of the halls' heat
+    would use, so it is worth asking whether that is where the halls' heat goes.
 - **The campus's IT load.** It sets every campus figure above.
 - **The cloud hall's night sound,** and the towers' at the AI hall's warmer water.
 - **Measures still to fill:**

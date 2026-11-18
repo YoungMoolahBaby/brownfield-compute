@@ -926,6 +926,34 @@ at the campus edge, funded in the community benefits agreement.
     - Center Township's zoning;
     - who signs the benefits agreement.
 
+- **D22** (2026-11-17) The water budget (pass 2f, [docs/pass2/water.md](pass2/water.md)).
+  - Jon: "please start on the water budget".
+  - **The steer:** the brief's first question, how much water the campus will use up, had no
+    number behind it, and HCR's "in line with history" had never been checked.
+  - **The model** (`brownfield water`):
+    - the coal plant's monthly use from EIA (2014-2023);
+    - the gas plant by heat balance and by DEP's permit inputs;
+    - the data centers from pass 2's models;
+    - Two Lick Creek's natural flow, transferred from Blacklick Creek by flow duration (checked on
+      the pre-dam record);
+    - a daily mass balance of the reservoir, 1952-2025.
+  - **Findings:**
+    - **"In line with history" is the maximum intake rate:** ~38 MGD for both plants. The coal
+      plant drew at most 21 MGD in a month (16.1 in 2014).
+    - **The gas plant's own condensers draw ~24 MGD**, like the coal plant at full output; the
+      reservoir falls no lower than 49%, in the 1952 drought.
+    - **DEP's permit inputs are 12 MGD higher** (36 drawn, 29.2 not returned). That is what towers
+      rejecting ~1.5 GW more heat would evaporate: one fit is the data halls' heat in the station's
+      towers. On 36 MGD the reservoir falls to 12% in 1952.
+    - **Towers at the data halls on top would empty it** in 1952 and 1991: 334 days short in 73
+      years, 187 of them without even the 11 cfs at the dam, just above Indiana's water plant. Dry
+      coolers or outside air add almost nothing.
+  - Open:
+    - AWS's cooling (whether the halls' heat is in the 36 MGD);
+    - the reservoir's usable storage and rules;
+    - where the 29.2 MGD goes;
+    - the draw's seasons.
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each
