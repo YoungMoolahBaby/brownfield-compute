@@ -901,6 +901,31 @@ at the campus edge, funded in the community benefits agreement.
     - the cloud hall's night sound;
     - hospital access, the towns' own housing cost, land reclaimed, monitoring and private wells.
 
+- **D21** (2026-11-17) A brief for the townships ([docs/township-brief.md](township-brief.md)).
+  - Jon: "please start on the township brief" (after D20's split into design asks and deal asks).
+  - **The steer it rests on:**
+    - **New local rules can't reshape AWS's plan.** It was filed under the county's land development
+      ordinance on 2026-10-14, and MPC §508(4) shields a filed plan from later ordinance changes.
+    - **The towns' levers are the GRID standards and the benefits agreement.** The governor's
+      executive order (2026-08-18, as reported) requires:
+      - local approval;
+      - early consultation on "key design decisions";
+      - a water-consumption report;
+      - a benefits agreement covering noise and air quality.
+  - **What it asks:**
+    - **Of the design:** disclose the cooling water; no evaporated or discharged cooling water; 40
+      dB(A) at night at the nearest homes; no routine diesel tests. Each comes with what it costs
+      AWS: nothing against air-cooled halls, ~3.4% of the power bill against liquid-cooled halls
+      with towers (now printed by `brownfield scorecard`).
+    - **In the agreement:** independent monitoring, published; a housing fund ($6-20M for the 121
+      flats); the crews' plan; Homer City Borough as a party (most new homes, no tax); a clean-up
+      bond; the clubhouses and arena.
+    - **Six questions for the county Planning Commission,** 2026-11-18.
+  - Open:
+    - the executive order's own text;
+    - Center Township's zoning;
+    - who signs the benefits agreement.
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each

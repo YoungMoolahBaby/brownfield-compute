@@ -17,6 +17,10 @@ Every answer is compared with a conventional data center on the same site; the d
 result. Each step ships as a short finished report with its figures and an honest list of what we
 don't know.
 
+**For the towns round Homer City:** [a brief](docs/township-brief.md) on what Center Township, Black
+Lick Township and Homer City Borough can ask of AWS's campus: of its design, and in the benefits
+agreement. It covers what each ask costs, who pays, and the questions to put to AWS.
+
 ## The design so far
 
 ![The Homer City campus from the air: one stone data hall with its coolers in rows on the roof, ringed by glasshouses; on its town side great bronze doors between two stone pylons, warm basins, and an open mall between the glass](docs/pass3/campus_aerial.png)

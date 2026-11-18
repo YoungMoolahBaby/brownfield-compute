@@ -84,6 +84,7 @@ by what the market buys (pass 3d). This scores the design as it stands:
 | NOx from generator tests, t a year | 10.1 | 10.1 | 10.1 | 0 |
 | Heat put to use | none | none | none | 5.2 GWh a year to its share of the glass (1.28 ha): 0.7% of its heat |
 | The good neighbour over 20 years, million USD (+ means it's cheaper) | +118.1 keeping diesel (+190.4 dropping it) | -2.7: its plant must cost that much less to break even | -24.8 | |
+| The same against the AI hall, as a sum each year, million USD | | | -2.3 (-3.4% of the AI hall's power bill at $95/MWh; -70 across the campus) | |
 
 **2. The campus: AWS's 39 buildings at ~3,000 MW of IT (30 modules; AWS states no load, range 1,500-3,750 MW)**
 

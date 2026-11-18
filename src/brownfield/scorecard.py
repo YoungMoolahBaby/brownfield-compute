@@ -94,7 +94,7 @@ def modules(temp, rh, p: dict) -> dict:
 
 
 def campus(temp, rh, params: dict) -> tuple[str, dict]:
-    from . import acs, center, conference as cf, econ, land, rings, wall, workforce as wf
+    from . import acs, center, conference as cf, cost, econ, land, rings, wall, workforce as wf
     from .params import values
 
     p = values(params)
@@ -109,6 +109,8 @@ def campus(temp, rh, params: dict) -> tuple[str, dict]:
     bk = backup("conventional", p)
     gn = d["gn"]
     share = gn.delivered_mwh / gn.heat_out_mwh
+    ai_year = vs["npv_vs_ai"] / cost.annuity(p["cost.money.discount"], p["cost.money.life_yr"])
+    ai_bill = d["ai"].it_mwh * d["ai"].pue * p["cost.energy.elec_usd_mwh"]  # IT + cooling
     L = ["**1. The data center: one 100 MW module, four designs** (the typical year at the plant; cooling only, electrical losses left out)", "",
          "| Per module | Old conventional (chillers + towers) | Strong cloud (outside air + pads) | Strong AI (liquid + towers) | Good neighbour |",
          "|---|---|---|---|---|",
@@ -124,6 +126,8 @@ def campus(temp, rh, params: dict) -> tuple[str, dict]:
          f"| The good neighbour over 20 years, million USD (+ means it's cheaper) | {old['npv_keep_diesel'] / 1e6:+,.1f} keeping diesel "
          f"({old['npv_op'] / 1e6:+,.1f} dropping it) | {vs['breakeven_vs_cloud'] / 1e6:+,.1f}: its plant must cost that much less to "
          f"break even | {vs['npv_vs_ai'] / 1e6:+,.1f} | |",
+         f"| The same against the AI hall, as a sum each year, million USD | | | {ai_year / 1e6:+,.1f} ({ai_year / ai_bill:+.1%} of the AI "
+         f"hall's power bill at ${p['cost.energy.elec_usd_mwh']:g}/MWh; {ai_year * n / 1e6:+,.0f} across the campus) | |",
          ""]
     # The campus.
     keep = lambda x: f"{x:,.0f}"

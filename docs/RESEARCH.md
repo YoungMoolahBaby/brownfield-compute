@@ -522,3 +522,29 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   existing water-withdrawal rights as well as planned water treatment facilities being
   constructed by HCR ... returned to the Homer City Station for reuse", maintaining "the historic
   water withdrawal rate".
+
+## The township brief (D21, 2026-11-17)
+
+- **The GRID standards' executive order** (signed 2026-08-18; Smart Cities Dive, 2026-08-19,
+  https://www.smartcitiesdive.com/news/sweeping-new-data-center-rules-local-governments-leverage-pennsylvania/828237/;
+  the same day's syndicated ABC/Sinclair report).
+  - Developers must:
+    - win local approval ("If the local community doesn't approve a project, the state won't
+      approve it, either");
+    - consult municipal leaders "at a sufficiently early stage of the project to enable
+      meaningful public input on key design decisions";
+    - file a footprint report with annual water consumption and its source;
+    - enter community benefits agreements that "should address traffic, noise, lighting and air
+      quality", emergency management coordination and aesthetics, with financial contributions
+      toward local priorities.
+  - Nondisclosure agreements are barred.
+  - The standards were released in late May 2026 (PSATS, 2026-06-01), with four pillars: energy
+    affordability, transparency and community engagement, workforce and economic development, and
+    the environment.
+  - The order's own text wasn't found online; these terms are as reported.
+- **Municipalities Planning Code §508(4)(i):** once a plat or land development application is
+  duly filed, no later change to the zoning, subdivision or other governing ordinance may affect
+  the decision on it adversely to the applicant. The Pennsylvania Supreme Court (*In re Board of
+  Commissioners of Cheltenham Township*, 2019) held the shield extends to zoning applications
+  needed for the land development's approval; *In re Jaindl Land Co.* (Commonwealth Court, 2022)
+  applies it.
