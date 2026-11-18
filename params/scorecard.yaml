@@ -1,0 +1,9 @@
+# The scorecard at campus scale (src/brownfield/scorecard.py `campus`).
+
+campus_it_mw:
+  value: 3000
+  low: 1500
+  high: 3750
+  unit: MW of IT load across AWS's 39 buildings at full build-out
+  conf: placeholder
+  source: "AWS states no IT load (Project Narrative, 2026-08-27). Upper bound: the 4.5 GW gas plant's whole output at PUE ~1.2 (3.75 GW); 39 buildings of 225,000 ft2 at ~40-100 MW each (judgement)"

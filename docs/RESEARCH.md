@@ -513,3 +513,12 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
 - **Highway Capacity Manual** (2016): rural multilane K ~0.09-0.10; multilane base capacity
   1,900-2,200 an hour a lane.
 - **FHWA NHTS 2017:** ~1.1 people a vehicle on trips to work.
+
+## The scorecard as the design stands (D20, 2026-11-17)
+
+- **The campus's IT load:** not stated by AWS (Project Narrative, 2026-08-27). The 4.5 GW gas plant
+  (HCR) bounds it: at PUE ~1.2 its whole output would carry ~3.75 GW of IT.
+- **AWS's cooling water:** the narrative says "non-contact cooling water will be supplied through
+  existing water-withdrawal rights as well as planned water treatment facilities being
+  constructed by HCR ... returned to the Homer City Station for reuse", maintaining "the historic
+  water withdrawal rate".

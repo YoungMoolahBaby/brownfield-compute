@@ -873,6 +873,34 @@ at the campus edge, funded in the community benefits agreement.
     - a landlord survey in Indiana;
     - the site gates' traffic plan.
 
+- **D20** (2026-11-17) The scorecard as the design now stands.
+  - Jon: "please start on the scorecard" (after the steer that the scorecard, untouched since pass
+    2e, is where the project's result lives).
+  - `brownfield scorecard` ([docs/SCORECARD.md](SCORECARD.md)) scores three things:
+    - one module against the three conventional designs;
+    - the campus at 3,000 MW of IT (a placeholder: AWS states no load; 1,500-3,750 MW, bounded by
+      the 4.5 GW gas plant);
+    - the towns.
+  - **Findings:**
+    - **Against the old design, the good neighbour wins on everything:** +$118M a module over 20
+      years keeping diesel.
+    - **Against modern designs, its case is the creeks and quiet nights, not money:**
+      - the AI hall (liquid and towers) is $24.8M a module cheaper, but at 3 GW it withdraws ~27
+        million gal/day, sends ~6.8 million of blowdown to the creeks, and needs ~700 m to reach
+        40 dB(A);
+      - the cloud hall uses almost no water here; the good neighbour's plant must cost $2.7M less
+        to break even.
+    - **The heat is no longer part of the case:** with the homes on heat pumps (D18) and the
+      glass sized by the market, ~0.7% of the heat is used (156 GWh a year, the 38.5 ha).
+    - **Most of what the towns get comes whichever design is built:** the jobs, ~$96M a year of
+      tax, the construction decade. What the deal adds is the benefits agreement (homes,
+      clubhouses, the arena, the crews' plan, 270 jobs in the glass), paid from that tax.
+  - Open:
+    - AWS's actual cooling (its narrative: non-contact water from the station, returned to it) and
+      its campus load;
+    - the cloud hall's night sound;
+    - hospital access, the towns' own housing cost, land reclaimed, monitoring and private wells.
+
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
 Goal: a ranked, mapped list of US coal plant sites, retired or set to retire, with what each

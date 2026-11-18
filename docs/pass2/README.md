@@ -35,6 +35,10 @@ plant), so the difference is the data center.
 
 ## The scorecard
 
+Pass 2's design, with heat to a 5,000-home network. The design as it now stands (homes on heat pumps,
+the glass sized by the market) is scored in [SCORECARD.md](../SCORECARD.md), against all three conventional
+designs and at campus scale.
+
 | Per 100 MW module | Unit | Conventional | Good neighbour |
 |---|---|---|---|
 | Water withdrawn | million US gal/day | 1.05 | 0 |

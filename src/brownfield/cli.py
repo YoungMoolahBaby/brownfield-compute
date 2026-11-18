@@ -500,6 +500,23 @@ def cmd_conference(_args) -> int:
     return 0
 
 
+def cmd_scorecard(_args) -> int:
+    """The scorecard as the design now stands: a module against three conventional designs, the campus,
+    and the towns (docs/SCORECARD.md)."""
+    from . import climate, scorecard
+
+    params = load_params()
+    p = values(params)
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    temp, rh = climate.hourly_temp_rh(site.lat, site.lon)
+    md, _ = scorecard.campus(temp, rh, params)
+    print(md)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "scorecard.md").write_text(md + NL, encoding="utf-8")
+    print(NL + "wrote out/scorecard.md")
+    return 0
+
+
 def cmd_workforce(_args) -> int:
     """Pass 4: the construction workforce 2026-2036: on site by month, beds for crews from away, the
     morning shift on US 119."""
@@ -631,6 +648,7 @@ def main(argv=None) -> int:
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
     sub.add_parser("site", help="D12: the modular site plan: rules, scores, and proposed layouts")
     sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
+    sub.add_parser("scorecard", help="the scorecard as the design now stands: four designs, the campus, the towns")
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
@@ -643,7 +661,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard}.get(args.cmd or "check")
     return cmd(args)
 
 

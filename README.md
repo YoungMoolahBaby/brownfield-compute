@@ -26,7 +26,7 @@ The campus:
 - **A stone data hall**, about 120 by 130 m, which holds the computers. Its coolers stand in rows
   on the roof behind a 3 m stone parapet, with planted strips between the rows. From the ground
   you see stone walls and towers, not machinery.
-- **Its front, facing the town, is a monument to the machines that keep the town warm.**
+- **Its front, facing the town, is a monument to the machines inside, whose heat warms the glass round it.**
   - Two stone pylons stand on a stepped base. Between them is a pair of bronze doors 10 m wide
     and 14 m high.
   - Before them, two warm basins steam on cold days. They spill over a ledge into two lower pools,
@@ -108,7 +108,10 @@ yet.
    screen is wrong.
 2. **The good-neighbour data center** on one case-study site, against a conventional design:
    power, water, noise at the nearest homes, waste heat, backup power, jobs, taxes
-   ([scorecard](docs/SCORECARD.md)).
+   ([scorecard](docs/SCORECARD.md)). As the design now stands, against the modern designs its
+   case is the creeks and quiet nights, not heat: at campus scale the glass the market can take
+   uses under 1% of the heat. Most of what the towns get comes whichever design is built; what
+   the good-neighbour deal adds is the benefits agreement.
 3. **The first neighbourhood module**: a heat network to homes and a greenhouse, the first house,
    built and checked in [CortenForge](https://crates.io/crates/cortenforge); then the campus
    itself (above).
@@ -151,6 +154,7 @@ yet.
     - All of it, with snow-free heated walks and the hall's warm basins, takes 16.8 GWh of the
       module's heat a year.
     - The flats and townhouses heat off the loop; the houses, further out, on their own heat pumps.
+      On the real land (D18) the homes join the towns, 1-5 km off, and every one heats itself.
     - The flats leave a $20M gap at market rents. An AWS household can afford a townhouse; the
       county's median household is $82k short.
     - Running the centre costs $3.2M a year: about $32 a month from 7,200 members, between
