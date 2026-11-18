@@ -179,15 +179,18 @@ def house_heat(p: dict, temp: np.ndarray) -> dict:
                 total_mwh=hourly.sum() / 1e6, design_kw=h["design_kw"] + garage_ua * (p[t + "garage_c"] - p["pass3.loads.design_c"]) / 1e3)
 
 
-def loop_vs_heat_pump(p: dict, temp: np.ndarray, kind: str, bedrooms: int = 2) -> dict:
+def loop_vs_heat_pump(p: dict, temp: np.ndarray, kind: str, bedrooms: int = 2, homes: int | None = None,
+                      main_km: float | None = None) -> dict:
     """Pass 3's comparison (`block.per_home`) for one home of the type, over the equipment's life: the
     loop with its share of the network (street at the home's frontage, main, plant), the loop with
-    the operator paying the network (the benefits agreement, D11), and the home's own heat pump."""
+    the operator paying the network (the benefits agreement, D11), and the home's own heat pump. By
+    default the whole neighbourhood on D16's main; `homes` and `main_km` for another (D18's towns)."""
     from . import block, village
     from .cost import annuity
 
     c = counts(p)
-    q = dict(p, **{"pass3.block.homes": c["flats"] + c["townhouses"] + c["houses"], "pass3.block.main_km": p["village.money.main_km"]})
+    q = dict(p, **{"pass3.block.homes": homes or c["flats"] + c["townhouses"] + c["houses"],
+                   "pass3.block.main_km": p["village.money.main_km"] if main_km is None else main_km})
     if kind == "flats":
         _, fh = flats_hourly_w_m2(p, temp)
         m2 = p[R + f"ft2_{bedrooms}"] * FT2_M2

@@ -465,3 +465,51 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   Urbanism's charter: a quarter mile, ~400 m.
 - **CortenForge's `HeightFieldData`** (cf-geometry 0.9.0, heightfield.rs:54): bilinear `sample`
   over a grid with its origin at a corner, y increasing by row.
+
+## The construction workforce (D19, 2026-11-17)
+
+- **AWS's schedule by site:** Project Narrative, Homer City Energy Campus (2026-08-27), p. 2.
+
+  | Site | Permitting | Construction start | Completion |
+  |---|---|---|---|
+  | Rura | Aug 2026-Sep 2027 | Dec 2026 | Nov 2030 |
+  | West | Aug 2026-Sep 2027 | Dec 2026 | Jan 2032 |
+  | Harvey Gaston | Dec 2026-Apr 2027 | Dec 2027 | Apr 2030 |
+  | Bruner | Jan 2027-Jan 2028 | Feb 2028 | Jun 2032 |
+  | Green | Jan 2027-Jan 2028 | Feb 2028 | Sep 2030 |
+  | Helen | Jan 2031-Dec 2031 | Jan 2032 | Jun 2036 |
+
+  - Each building is 225,000 ft2 over two storeys.
+  - The narrative also gives 1,500-2,000 permanent operations staff at $80,000-100,000, and 50 a
+    building a peak shift.
+- **HCR's gas plant workforce** (Business Wire):
+  - more than 1,000 workers (2026-03-26);
+  - more than 1,800 and "approximately 2,000 total workers by year-end", with "approximately 95%
+    of the skilled direct-hire craft workforce ... from the local area" and more than 135
+    apprentices (2026-09-04);
+  - first power targeted for early 2028.
+- **AWS New Carlisle (Indiana) analog:**
+  - more than 2,000 construction workers on site a day (PCI/IUPAT, January 2026);
+  - ~14 buildings under construction (Measured AI);
+  - construction began September 2024, with the first buildings running in late 2025 (DCD,
+    Converge Digest).
+- **Meta, Richland Parish (Louisiana):** a peak of over 5,000 (Louisiana Economic Development,
+  Dec 2024), and ~7,500 for the expanded ~10 million ft2 campus (Turner).
+- **The Shell cracker, Beaver County:** ~6,000 craft workers at its 2019 peak (Shell, at a community
+  meeting, WITF 2019-11-22); later reports give 8,500-9,500.
+- **BLS QCEW** (open data, https://data.bls.gov/cew/data/api/2024/a/area/{fips}.csv): private
+  construction (NAICS 23), 2024 annual average, for the 11 counties whose centre is within 80 km
+  of the plant: 51,731 (Allegheny 30,291; Indiana 914).
+- **Census Gazetteer 2024** (counties): county centres.
+- **GSA per diem**, Indiana County, PA (Homer City): $110 lodging, $68 meals (FY2025, held for
+  FY2026).
+- **Indiana's hotels** (listed rooms): Ramada 158, Quality Inn & Suites 106, Hampton Inn 72, Holiday
+  Inn Express 72 (HotelPlanner, HotelGuides); no county total published.
+- **HUD Comprehensive Housing Market Analyses:** labels by each market's own history:
+  - Fort Worth balanced at 8.3% rental vacancy (2023);
+  - Durham balanced at 6.6% (2020);
+  - Tucson slightly soft at 9.4% (2024).
+- **IUP:** 9,081 students in fall 2024 (IUP news release, 2024-09).
+- **Highway Capacity Manual** (2016): rural multilane K ~0.09-0.10; multilane base capacity
+  1,900-2,200 an hour a lane.
+- **FHWA NHTS 2017:** ~1.1 people a vehicle on trips to work.

@@ -249,7 +249,7 @@ looks to choose from:
   site's outline isn't in this model.
 
 <p>
-<img src="village_center.png" width="49%" alt="Inside the community center: the roller hockey floor and the ice rink">
+<img src="village_center.png" width="49%" alt="Inside the community center from the sports lab: the roller hockey floor, the ice rink, the bouldering wall, and the town through the glass band">
 <img src="village_fields.png" width="49%" alt="The heated grass fields, the hall beyond">
 </p>
 

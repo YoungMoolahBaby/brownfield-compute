@@ -73,6 +73,24 @@ and the arena make the conference's three home grounds.**
     school's gym, made over. That needs asking.
 - **The food gates.** AWS's 38.5 ha of glass is shared by the sites' buildings (each site's jobs).
   Each share stands within 300 m of its site, facing the nearest town's new homes.
+- **Every new home heats itself with a heat pump.**
+  - **Why:** at the towns' edges the homes are 1-5 km from AWS's nearest building. The main from
+    there costs $38,000-197,000 a home, so the warm loop loses by far (pass 3's comparison, over 20
+    years a home).
+
+    | Town | New homes | Main, at the least | Two-bed flat: loop | its own heat pump |
+    |---|---|---|---|---|
+    | Homer City | 109 | 3.8 km | $65,953 | $23,143 |
+    | Black Lick | 65 | 2.7 km | $73,692 | $23,143 |
+    | Lucerne Mines | 49 | 5.2 km | $155,813 | $23,143 |
+    | Coral | 13 | 1.0 km | $116,433 | $23,143 |
+    | Graceton | 6 | 1.1 km | $249,903 | $23,143 |
+
+  - **Townhouses** come out the same way: $75,029-258,979 on the loop against $31,743 on a heat
+    pump.
+  - **Where the heat goes instead:** the data center's heat goes to the food gates' glass at the
+    sites, where it pays. Joining the towns costs the homes their free heat, and that's the right
+    trade: heat pumps cost only a few hundred dollars a year to run in a new flat.
 
 ## The drawings
 

@@ -190,6 +190,11 @@ yet.
   - About 120 newcomer households would rent near the campus (85–220), not 1,000.
   - The campus's property tax, about $96 million a year at build-out, is several times what their
     housing gap costs. Most of it is school tax, which can't pay for housing.
+  - [The construction workforce](docs/pass4/workforce.md), 2026-2036: a peak of ~3,300 on site in
+    mid-2029, after the gas plant's crews leave.
+    - Indiana's vacant rentals can house most crews from away, though not in the worst years.
+    - Homer City and the townships beside the site have no spare rentals, so the benefits
+      agreement should steer crews to Indiana and run park-and-ride buses.
 
 Decisions and next steps: [docs/PLAN.md](docs/PLAN.md). Sources: [docs/RESEARCH.md](docs/RESEARCH.md).
 

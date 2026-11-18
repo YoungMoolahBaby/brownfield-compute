@@ -823,6 +823,10 @@ at the campus edge, funded in the community benefits agreement.
       room and workshop; 12,000 ft2.
     - Black Lick has no level ground near its middle (floodplain, steep hills): its clubhouse lands
       833 m up the road. An existing building in the village made over is probably better.
+    - Heat (2026-11-17, after the drawings): at the towns' edges, 1-5 km from AWS's buildings, the
+      warm loop's main costs $38,000-197,000 a home. Every new home heats itself with a heat pump
+      ($23,143 a two-bed flat over 20 years against $65,953-249,903 on the loop). Pass 4's "flats at
+      the fence line" is superseded; the loop's heat goes to the food gates' glass.
   - **The drawings** (forge `conference`, 11 views):
     - USGS ground and NLCD woods in autumn;
     - Microsoft's footprints for the towns as they stand, PennDOT's roads;
@@ -836,6 +840,38 @@ at the campus edge, funded in the community benefits agreement.
     - how Graceton's and Coral's homes cross US 119;
     - Black Lick's clubhouse in an existing building;
     - the real setback.
+
+- **D19** (2026-11-17) The construction workforce, 2026-2036 (pass 4).
+  - Jon, on the steer to model it next: "go with your plan".
+  - The steer: the developers' "10,000+ construction jobs" is a total, not a head count, and the
+    towns carry the crews for a decade before the permanent jobs arrive.
+  - **The model** (`brownfield workforce`, [docs/pass4/workforce.md](pass4/workforce.md)):
+    - the gas plant from HCR's reported counts (1,000 / 1,800 / ~2,000 in 2026);
+    - AWS's 39 buildings on the filed schedule (Project Narrative, p. 2), ~150 workers a building
+      under construction (AWS New Carlisle);
+    - the region's trades (BLS QCEW), beds (ACS vacant rentals, hotel listings) and US 119 (PennDOT,
+      the Highway Capacity Manual).
+  - **Findings:**
+    - Peak ~3,300 on site in mid-2029 (2,900-5,300), 12,900 worker-years in all; 6.4% of the
+      construction jobs within a daily commute.
+    - At 30% from away, ~660 rooms or homes at the peak against 962 available without squeezing the
+      town: Indiana County's 1,455 vacant rentals (13.3% vacancy) and its hotels. Short in 32% of
+      draws, for ~16 months round 2029.
+    - Homer City, Black Lick and Center have no spare rentals: the risk is crews outbidding local
+      renters there.
+    - US 119 has room (0.55 of capacity in the shift hour); the site gates are the pinch.
+  - **Corrected:** leasing the new flats to crews won't pay down their gap. With Indiana's vacant
+    rentals at ~$806, crews won't pay lodging-allowance rents for new flats.
+  - **For the benefits agreement:**
+    - a crew housing plan (master leases in Indiana and White Township);
+    - protection and a rental registry for the towns next to the site;
+    - park-and-ride and staggered shifts;
+    - a camp on campus land if the peak runs past ~4,500.
+  - Open:
+    - AWS's own construction workforce plan;
+    - a survey of the gas plant's crews (where they live);
+    - a landlord survey in Indiana;
+    - the site gates' traffic plan.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

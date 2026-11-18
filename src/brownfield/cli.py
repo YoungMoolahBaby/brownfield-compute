@@ -483,8 +483,12 @@ def cmd_conference(_args) -> int:
     ar = cf.arena(p, a, where, base, town, sites)
     toward = {s: min(where.values(), key=lambda xy: math.dist(xy, sites[s]["centre"])) for s in sites}
     gates = cf.gates(p, a, sites, toward, gl)
+    from . import climate, food
+
+    site = screen.plant_table(p).loc[HOMER_CITY]
+    wx = food.local(climate.hourly_weather(site.lat, site.lon), -5)
     md = (cf.report(p, sites_h, base, high, town, lays, gl, ar, a) + NL + cf.clubs_report(p, lays, town) + NL
-          + cf.members_report(p, mem))
+          + cf.members_report(p, mem) + NL + cf.heat_report(p, cf.heat(p, wx, base, lays, sites)))
     print(md)
     out = OUT_DIR / "pass3"
     out.mkdir(parents=True, exist_ok=True)
@@ -493,6 +497,38 @@ def cmd_conference(_args) -> int:
     summary = nb.drawing(p, a, layers, blds, [b["height"] for b in raw], town, lays, out / "conference")
     print(NL + "drawing data: " + ", ".join(f"{k} ({v['lots']} lots, {v['trees']:,} trees, {v['buildings']:,} buildings)" for k, v in summary.items()))
     print("wrote out/pass3/conference.md, docs/pass3/conference.png, out/pass3/conference/ (draw with forge `conference`)")
+    return 0
+
+
+def cmd_workforce(_args) -> int:
+    """Pass 4: the construction workforce 2026-2036: on site by month, beds for crews from away, the
+    morning shift on US 119."""
+    from . import ROOT, acs, figures, land, workforce as wf
+
+    params = load_params()
+    p = values(params)
+    sites = land.aws_sites(p)
+    land.site_counts(p, sites)
+    counts = {k: s["n"] for k, s in sites.items()}
+    t = wf.months()
+    sites_w, gas_w = wf.aws(p, counts, t), wf.gas(p, t)
+    region = wf.counties_within(p, *land.PLANT)
+    jobs = {f: wf.construction_jobs(f) for f, _, _ in region}
+    housing = acs.housing()
+    b = wf.beds(p, housing)
+    near = housing[housing["name"].str.match(r"(Homer City borough|Center township|Black Lick township|Indiana borough|White township|"
+                                             r"Blairsville borough),")]
+    aadt = wf.us119_aadt({"state_roads": land.features("state_roads", land.box(p))}, *land.PLANT)
+    w = gas_w + sum(sites_w.values())
+    tr = dict(wf.traffic(p, w.max(), aadt), aadt=aadt)
+    mc = wf.monte_carlo(params, counts, housing, aadt)
+    md = wf.report(p, counts, t, sites_w, gas_w, b, region, jobs, near, tr, mc)
+    print(md)
+    out = OUT_DIR / "pass4"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "workforce.md").write_text(md + NL, encoding="utf-8")
+    figures.workforce_chart(t, gas_w, sites_w, wf.need(p, w), mc["need_band"], b["units"], ROOT / "docs" / "pass4" / "workforce.png")
+    print(NL + "wrote out/pass4/workforce.md, docs/pass4/workforce.png")
     return 0
 
 
@@ -595,6 +631,7 @@ def main(argv=None) -> int:
     sub.add_parser("economy", help="pass 4: demand, a flat's economics, the campus's property tax")
     sub.add_parser("site", help="D12: the modular site plan: rules, scores, and proposed layouts")
     sub.add_parser("land", help="D17: the real land round the plant (public map services) and AWS's six sites")
+    sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
     sub.add_parser("food", help="pass 3d: winter food houses on the data center's warm water, and the arboretum")
@@ -606,7 +643,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce}.get(args.cmd or "check")
     return cmd(args)
 
 

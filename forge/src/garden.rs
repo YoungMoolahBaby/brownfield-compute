@@ -879,7 +879,8 @@ fn views(pl: Option<&site::Plan>, vspec: Option<&village::Spec>, fh: &food::Hous
             View("village_balcony.png", p(fr[1] - 6.0, (gd[2] + gd[3]) / 2.0, 5.3), p((gd[0] + gd[1]) / 2.0, (gd[2] + gd[3]) / 2.0, 2.0), 62.0, 1.0),
             View("village_square.png", p(sqx + 18.0, sqy + 24.0, -0.5), p(sqx - 8.0, sqy - 45.0, 2.0), 60.0, 1.0),
             View("village_street.png", p(tcx + 30.0, street, -0.5), p(tcx - 70.0, street, 2.5), 60.0, 1.0),
-            View("village_center.png", cp(68.0, 120.0, 3.5), cp(24.0, 73.0, -2.2), 72.0, 1.5),
+            // From high on the sports lab's glass (local y 76), down over the roller floor (x 40-66) and the ice (8-34).
+            View("village_center.png", cp(62.0, 75.0, 4.6), cp(24.0, 38.0, -2.2), 62.0, 1.5),
             View("village_green.png", p(th[0] + 18.0, green, -0.6), p(th[0] + 108.0, green + 1.8, 0.8), 62.0, 1.0),
             View("village_climbing.png", cp(38.0, 32.0, -0.6), cp(28.0, 9.0, 0.6), 66.0, 1.6),
             View("village_fields.png", p(fcx + 30.0, fcy + 95.0, 1.5), p(fcx, fcy - 15.0, 0.0), 62.0, 1.0),

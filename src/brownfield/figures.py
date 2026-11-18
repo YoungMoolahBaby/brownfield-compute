@@ -441,3 +441,37 @@ def conference_map(a: dict, sites: dict, layers: dict, power_block, lays: dict, 
 
     land_map(a, sites, layers, power_block, path, extent=(-5500.0, 4500.0, -4900.0, 5100.0), extra=extra,
              title="The conference of communities on the real land (D17-D18)")
+
+
+# Pass 4: the construction workforce. The categorical slots in fixed order (the dataviz palette).
+SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+
+
+def workforce_chart(t, gas_w, sites_w: dict, need_base, need_band, units: float, path) -> None:
+    """Two panels on one time axis: workers on site by month (the gas plant and AWS's six sites,
+    stacked), and the rooms or homes crews from away need against those available."""
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(10, 7.6), dpi=150, sharex=True, facecolor=SURFACE,
+                                 gridspec_kw={"height_ratios": [3, 2], "hspace": 0.12})
+    for ax in (a1, a2):
+        _style(ax)
+        ax.grid(axis="y", color=GRID, lw=0.6)
+        ax.set_axisbelow(True)
+    names = ["the gas plant"] + list(sites_w)
+    ys = [gas_w] + [sites_w[s] for s in sites_w]
+    a1.stackplot(t, ys, labels=names, colors=SERIES[:len(ys)], edgecolor=SURFACE, linewidth=0.8)
+    a1.set_ylabel("workers on site", color=INK2)
+    a1.legend(loc="upper right", fontsize=8, frameon=False, ncol=2)
+    a1.set_title("The construction workforce at Homer City, by month (base case)", loc="left", fontsize=11, color=INK)
+    a2.fill_between(t, need_band[0], need_band[1], color=SERIES[0], alpha=0.18, lw=0, label="needed, P10-P90")
+    a2.plot(t, need_base, color=SERIES[0], lw=2, label="needed, base case")
+    a2.axhline(units, color=INK2, lw=1.2, ls=(0, (4, 3)))
+    a2.annotate(f"available without squeezing the town: {units:,.0f}", (t[-1], units), xytext=(0, 4), textcoords="offset points",
+                ha="right", va="bottom", fontsize=8, color=INK2)
+    a2.set_ylabel("rooms or homes", color=INK2)
+    a2.legend(loc="upper left", fontsize=8, frameon=False)
+    a2.set_title("Beds for crews from beyond a daily commute", loc="left", fontsize=10, color=INK)
+    a2.set_xlim(t[0], t[-1])
+    fig.text(0.01, 0.005, "HCR's reported counts; AWS Project Narrative schedule (2026-08-27); ~150 workers a building (AWS New Carlisle); "
+             "ACS 2019-2023 vacant rentals; hotel listings.", fontsize=6.5, color=MUTED)
+    fig.savefig(path, bbox_inches="tight", facecolor=SURFACE)
+    plt.close(fig)

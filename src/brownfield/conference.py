@@ -206,7 +206,7 @@ def report(p: dict, sites_h: dict, base: dict, high: dict, town: dict, lays: dic
     tpeople = sum(t["people"] for t in town.values())
     missing = {k: lay.missing() for k, lay in lays.items() if lay.missing()}
     L += [f"| **All five** | **{tpeople:,.0f}** | **{hb}** | **{people:,.0f}** | **{kids:.0f}** | **{people / tpeople:.0%}** | **{hh}** | | | | |", "",
-          f"- Every home placed." if not missing else f"- Not placed: {missing}.",
+          "- Every home placed." if not missing else f"- Not placed: {missing}.",
           f"- Homes keep {p[C + 'setback_m']:,.0f} m from AWS's buildings (pass 2's conventional cooling at night), {p[C + 'building_clear_m']:.0f} m "
           f"from existing buildings and 30 m from US 119 and US 22; each lot is at least 95% clear land, within a {p[C + 'walk_m']:.0f} m walk "
           f"of its spine's mouth, and its building's ground falls no more than {p[C + 'pad_fall_max_m']:.1f} m.",
@@ -301,4 +301,44 @@ def members_report(p: dict, mem: dict) -> str:
     n = sum(r["clubhouse"] for r in mem.values())
     L += ["", f"{n} clubhouses cost ${n * cl['build'] / 1e6:,.1f}M to build and ${n * cl['run'] / 1e6:,.2f}M a year to run: "
           f"${n * cl['run'] / hh:,.0f} a household across the conference's {hh:,.0f} households."]
+    return "\n".join(L)
+
+
+def heat(p: dict, wx: dict, th: dict, lays: dict, sites: dict) -> dict[str, dict]:
+    """D18: each town's new homes on a warm loop from AWS's nearest building, against their own heat
+    pumps (pass 3's comparison, `rings.loop_vs_heat_pump`, 20 years a home). The main is the straight
+    line from the nearest site's drawn development to the homes' middle: the shortest it could be."""
+    from shapely.geometry import Point
+
+    from . import rings
+
+    out = {}
+    for k, lay in lays.items():
+        n = th[k]["homes"]
+        if not n:
+            continue
+        km = min(s["footprint"].distance(Point(lay.centre())) for s in sites.values()) / 1000.0
+        row = {"homes": n, "main_km": km}
+        for kind, b in (("flats", 2), ("townhouses", 2)):
+            r = rings.loop_vs_heat_pump(p, wx["t"], kind, b, homes=n, main_km=km)
+            row[kind] = {"loop": r["A"], "operator": r["A_operator"], "heat_pump": r["B"], "main": r["main"]}
+        out[k] = row
+    return out
+
+
+def heat_report(p: dict, h: dict) -> str:
+    L = ["", "**Heat for the new homes** (D18: a warm loop from AWS's nearest building, against each home's own heat pump; "
+         f"pass 3's comparison, {p['cost.money.life_yr']:g} years a home)", "",
+         "| Town | New homes | Main, at the least | Two-bed flat: loop | its own heat pump | Townhouse: loop | its own heat pump |",
+         "|---|---|---|---|---|---|---|"]
+    for k, r in h.items():
+        f, t = r["flats"], r["townhouses"]
+        L.append(f"| {k} | {r['homes']} | {r['main_km']:.1f} km | ${f['loop']:,.0f} | ${f['heat_pump']:,.0f} | ${t['loop']:,.0f} | "
+                 f"${t['heat_pump']:,.0f} |")
+    lo = min(r["flats"]["main"] for r in h.values())
+    hi = max(r["flats"]["main"] for r in h.values())
+    k0 = min(r["main_km"] for r in h.values())
+    k1 = max(r["main_km"] for r in h.values())
+    L += ["", f"The main alone comes to ${lo:,.0f}-{hi:,.0f} a home: at the towns' edges, {k0:.1f}-{k1:.1f} km from AWS's buildings, every "
+          "new home heats itself with a heat pump. The loop's heat belongs to the food gates' glass at the sites."]
     return "\n".join(L)

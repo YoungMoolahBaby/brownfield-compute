@@ -1,0 +1,142 @@
+# Pass 4: the construction workforce at Homer City, 2026-2036 (src/brownfield/workforce.py): how many
+# build the gas plant and AWS's 39 data centers, how many need somewhere to sleep, and what their
+# shift change does to US 119.
+
+# AWS's filed schedule (Project Narrative, Homer City Energy Campus, 2026-08-27, p. 2), as decimal
+# years: construction start and completion by site. Buildings per site come from the master plan
+# (`land.site_counts`).
+start:
+  rura: {value: 2026.917, unit: year (December 2026), conf: high, source: "AWS Project Narrative, 2026-08-27, p. 2: Rura, construction start December 2026"}
+  west: {value: 2026.917, unit: year (December 2026), conf: high, source: "AWS Project Narrative, p. 2: West, December 2026"}
+  harvey_gaston: {value: 2027.917, unit: year (December 2027), conf: high, source: "AWS Project Narrative, p. 2: Harvey Gaston, December 2027"}
+  bruner: {value: 2028.083, unit: year (February 2028), conf: high, source: "AWS Project Narrative, p. 2: Bruner, February 2028"}
+  green: {value: 2028.083, unit: year (February 2028), conf: high, source: "AWS Project Narrative, p. 2: Green, February 2028"}
+  helen: {value: 2032.0, unit: year (January 2032), conf: high, source: "AWS Project Narrative, p. 2: Helen, January 2032"}
+finish:
+  rura: {value: 2030.833, unit: year (November 2030), conf: high, source: "AWS Project Narrative, p. 2: Rura, completion November 2030"}
+  west: {value: 2032.0, unit: year (January 2032), conf: high, source: "AWS Project Narrative, p. 2: West, January 2032"}
+  harvey_gaston: {value: 2030.25, unit: year (April 2030), conf: high, source: "AWS Project Narrative, p. 2: Harvey Gaston, April 2030"}
+  bruner: {value: 2032.417, unit: year (June 2032), conf: high, source: "AWS Project Narrative, p. 2: Bruner, June 2032"}
+  green: {value: 2030.667, unit: year (September 2030), conf: high, source: "AWS Project Narrative, p. 2: Green, September 2030"}
+  helen: {value: 2036.417, unit: year (June 2036), conf: high, source: "AWS Project Narrative, p. 2: Helen, June 2036"}
+
+building_years:
+  value: 1.5
+  low: 1.0
+  high: 2.0
+  unit: years to build one data center (225,000 ft2, two storeys), shell to commissioning
+  conf: low
+  source: "AWS's New Carlisle campus (Indiana): construction began September 2024 and its first buildings ran in late 2025, about 13-15 months (DCD; Converge Digest, 'AWS activates Project Rainier'); fit-out of later halls runs longer"
+workers_per_building:
+  value: 150
+  low: 100
+  high: 300
+  unit: construction workers on site a day for each data center under construction
+  conf: low
+  source: "AWS New Carlisle: more than 2,000 workers on site a day (PCI/IUPAT, January 2026) with about 14 buildings under construction (Measured AI): ~145; Meta Richland Parish's expanded campus (~10 million ft2) expects a peak of ~7,500 (Turner)"
+
+# HCR's gas plant (Kiewit): reported head counts, then its own end.
+gas_plateau:
+  value: 2000
+  low: 1800
+  high: 3000
+  unit: workers on site through 2027
+  conf: medium
+  source: "Homer City Redevelopment releases: more than 1,000 workers (2026-03-26), more than 1,800 (2026-09-04), 'approximately 2,000 total workers by year-end' (Business Wire); the high end allows for a peak above the year-end figure"
+gas_end:
+  value: 2028.75
+  low: 2028.5
+  high: 2029.25
+  unit: year the gas plant's construction crews are gone (first power plus commissioning)
+  conf: medium
+  source: "HCR (2026-09-04): first power targeted for early 2028; crews wind down over the months of commissioning after it (judgement)"
+
+local_share_reported:
+  value: 0.95
+  unit: share of the gas plant's skilled direct-hire craft workforce 'from the local area'
+  conf: medium
+  source: "HCR release, 2026-09-04 (Business Wire): 'approximately 95% of the skilled direct-hire craft workforce is from the local area'; 'local' is not defined"
+travel_share:
+  value: 0.3
+  low: 0.05
+  high: 0.6
+  unit: share of construction workers who live beyond a daily commute and need a bed near the site
+  conf: placeholder
+  source: "judgement between the gas plant's reported 5% from away (HCR, 2026-09-04) and Meta's rural Richland Parish, where the peak was expected to be largely out-of-state workers; AWS's peak is ~2x the gas plant's and mostly electrical trades, which run short first"
+commute_km:
+  value: 80
+  low: 50
+  high: 100
+  unit: km from the plant to a county's centre for its construction workers to count as within a daily commute (~75-90 minutes)
+  conf: low
+  source: "judgement: Pittsburgh (Allegheny County, 67 km) is the nearest metro and its union halls cover western Pennsylvania"
+workers_per_unit:
+  value: 1.5
+  low: 1.0
+  high: 2.0
+  unit: travelling workers to a hotel room or a rented home (crews share)
+  conf: placeholder
+  source: "judgement: some share two to a flat, some take a room each"
+
+hotel_rooms:
+  value: 550
+  low: 400
+  high: 800
+  unit: hotel rooms in and round Indiana borough
+  conf: low
+  source: "listed rooms of the named hotels: Ramada 158, Quality Inn & Suites 106, Hampton Inn 72, Holiday Inn Express 72 (HotelPlanner, HotelGuides), plus the Hilton Garden Inn at IUP and the Park Inn, not listed; no county total is published"
+hotel_share_crews:
+  value: 0.5
+  low: 0.3
+  high: 0.7
+  unit: share of those rooms crews can hold for months (the rest for other guests, IUP's visitors)
+  conf: placeholder
+  source: "judgement"
+healthy_vacancy:
+  value: 0.07
+  low: 0.05
+  high: 0.085
+  unit: rental vacancy rate of a balanced market; units vacant above it can house crews without tightening rents
+  conf: low
+  source: "HUD Comprehensive Housing Market Analyses label markets by their own history, with no fixed cutoff: Fort Worth balanced at 8.3% (2023), Durham balanced at 6.6% (2020), Tucson slightly soft at 9.4% (2024); balanced sits at ~6-8%"
+per_diem_lodging:
+  value: 110
+  unit: USD a night, the federal lodging rate for Indiana County (Homer City)
+  conf: high
+  source: "GSA CONUS per diem, FY2025 (held for FY2026): Indiana County, PA, standard rate $110 lodging, $68 meals"
+
+vehicle_occupancy:
+  value: 1.15
+  low: 1.05
+  high: 1.4
+  unit: construction workers a vehicle (carpools)
+  conf: medium
+  source: "FHWA, 2017 National Household Travel Survey: about 1.1 people a vehicle on trips to work; crews carpool somewhat more"
+arrive_hour_share:
+  value: 0.7
+  low: 0.5
+  high: 0.85
+  unit: share of a day shift arriving in the hour before it starts
+  conf: placeholder
+  source: "judgement: one main day shift starting about 7:00"
+via_119_share:
+  value: 0.8
+  low: 0.6
+  high: 0.95
+  unit: share of construction traffic reaching the site along US 119
+  conf: placeholder
+  source: "judgement: US 119 is the divided highway past the plant from Indiana (north) and US 22 (south)"
+k_factor:
+  value: 0.09
+  low: 0.08
+  high: 0.11
+  unit: share of a day's traffic in the morning peak hour
+  conf: medium
+  source: "Highway Capacity Manual (2016), rural multilane highways: K ~0.09-0.10"
+lane_capacity:
+  value: 1900
+  low: 1700
+  high: 2200
+  unit: vehicles an hour a lane, a multilane highway at its posted speed
+  conf: medium
+  source: "Highway Capacity Manual (2016), multilane highways: base capacity 1,900-2,200 passenger cars an hour a lane, less for trucks and grades"

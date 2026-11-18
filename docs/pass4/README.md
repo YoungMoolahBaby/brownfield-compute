@@ -123,11 +123,15 @@ is used.
 
 ## What it means
 
-- **Build 100-250 flats right at the campus's edge**, mixed: market-rate flats for AWS staff and
-  tax-credit flats for the town's lower-paid workers and the households already paying too much.
-  At ~200 flats on a 0.25 km main pass 3's warm loop came out ~$1,300 a flat cheaper than heat
-  pumps and ~$500 dearer than gas (pass 3, section 4), so the flats should stand at the fence
-  line to take the data center's heat, or heat themselves.
+- **Build 100-250 flats**, mixed: market-rate flats for AWS staff and tax-credit flats for the
+  town's lower-paid workers and the households already paying too much.
+  - **Where (D18):** at the edges of the towns already there, by their size, not at the campus's
+    fence. At ~200 flats on a 0.25 km main, pass 3's warm loop came out ~$1,300 a flat cheaper
+    than heat pumps (pass 3, section 4), which pointed to the fence line.
+  - **Why not the fence:** on the real land (D17-D18) homes keep 700 m from AWS's buildings, and
+    the towns are 1-5 km away. There the main costs $38,000-197,000 a home and the flats heat
+    themselves with heat pumps ([conference.md](../pass3/conference.md)). Joining the towns is
+    worth more than the free heat.
 - **Fund the gap in the community benefits agreement**: a housing fund of ~$20-55 million over
   the build-out, from the county and township shares or paid by AWS against them.
 - **The 1,000-flat neighbourhood isn't the campus's to fill.** It would need far more newcomers
@@ -142,6 +146,9 @@ is used.
   fixtures. The tax ranges from $48 to $224 million a year across that one input.
 - Operating costs, credit pricing and loan terms are underwriting rules of thumb, to check with
   PHFA; HUD's development cost is a limit, not a bid.
-- The construction workforce (2026-2036; the developers projected 10,000+ construction jobs for
-  the power plant and the campus together) needs housing too, for a decade: not modelled.
+- The construction workforce is now modelled ([workforce.md](workforce.md)): a peak of ~3,300 on
+  site in mid-2029 (2,900-5,300). Indiana's vacant rentals can house most crews from away, but in
+  32% of draws they run short for over a year. The towns next to the site have no spare rentals.
+  How many crews come from beyond a daily commute is the open question; a survey of the gas
+  plant's crews would set it.
 - The hospital, schools and services a growing town needs (the plan's other pass 4 questions).

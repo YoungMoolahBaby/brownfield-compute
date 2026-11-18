@@ -136,3 +136,15 @@ def test_steep_ground_takes_no_lots_and_a_plane_is_recovered():
     lot = nb.Lot("houses", 0.0, 0.0, 0.0, 1.0, 20.0, 40.0)
     zc, su, so = nb.plane(lot, g)
     assert su == pytest.approx(0.0, abs=1e-6) and so == pytest.approx(0.05, abs=1e-6)
+
+
+def test_the_loops_main_is_shared_by_the_towns_homes():
+    from brownfield import climate, food, screen
+
+    site = screen.plant_table(P).loc[3122]
+    wx = food.local(climate.hourly_weather(site.lat, site.lon), -5)
+    near = rings.loop_vs_heat_pump(P, wx["t"], "flats", 2, homes=100, main_km=0.5)
+    far = rings.loop_vs_heat_pump(P, wx["t"], "flats", 2, homes=100, main_km=3.0)
+    assert near["main"] == pytest.approx(500 * P["pass3.block.main_usd_m"] / 100)
+    assert far["A"] - near["A"] == pytest.approx(far["main"] - near["main"], rel=0.2)  # the main, plus its upkeep
+    assert far["A"] > far["B"]  # 3 km out, a flat heats itself
