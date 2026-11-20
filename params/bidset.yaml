@@ -90,3 +90,10 @@ flat_bedrooms:
   unit: bedrooms (sleeping rooms) in each of the walk-up's flats, each needing an escape window where 1030.1 applies
   conf: medium
   source: "pass 4 prices each walk-up flat as a 2-bedroom (pass4 flat TDC: HUD 2024 Unit Total Development Cost limits, walk-up 2 bedrooms); forge's flats are 45 x 20 ft, ~900 ft2. low and high: the village's mix runs from studios to 3 bedrooms (params/village.yaml flat_mix). The model has no rooms"
+
+addendum_1:
+  patio_door_width_in:
+    value: 60
+    unit: in, the patio doors' width after pass 3f's made-up Addendum 1 (forge `apartment-json addendum-1 60`)
+    conf: placeholder
+    source: "made up for pass 3f step 5, to run a change through the bid set: a stock 5'-0\" patio door width, narrower than the model's 6'-0\" so the windows beside it clear IBC 2018 2406.4.2's arc"

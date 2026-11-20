@@ -403,6 +403,19 @@ impl Building {
         }
     }
 
+    /// Addendum 1 (made up, pass 3f step 5, to run a change through the bid set): the patio doors
+    /// take a new `width` (mm), centred where they were. The width comes from params
+    /// (`bidset.addendum_1.patio_door_width_in`, passed on the command line), not from here.
+    /// Everything else follows from the model as usual.
+    pub fn addendum_1(&mut self, width: f64) {
+        let doors: Vec<usize> = (0..self.openings.len())
+            .filter(|&i| self.kind_of(&self.openings[i]) == OpeningKind::PatioDoor)
+            .collect();
+        for i in doors {
+            self.openings[i].width = width;
+        }
+    }
+
     /// The flat an opening belongs to, from where its centre is (None in the stair core). Found
     /// from the geometry, not from `flat_openings`, so the two can check each other.
     fn flat_at(&self, storey: usize, c: Vector3<f64>) -> Option<String> {

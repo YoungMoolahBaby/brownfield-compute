@@ -325,6 +325,11 @@ fn masonry_mode(root: &Path) -> std::io::Result<()> {
 /// systems and the roof, in metres: `../out/pass3/apartment.json`. Refuses to write a model that
 /// fails its own checks (`Building::model_errors`).
 fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result<serde_json::Value> {
+    write_apartment_json_to(root, b, "out/pass3/apartment.json", "")
+}
+
+/// The same, to `rel` (under the repo root), with `revision` noted in the file ("" for the base).
+fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revision: &str) -> std::io::Result<serde_json::Value> {
     let errs = b.model_errors();
     if !errs.is_empty() {
         return Err(std::io::Error::other(format!("the walk-up fails its model checks:\n  {}", errs.join("\n  "))));
@@ -368,9 +373,13 @@ fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result
         "levels": storeys,
         "openings": openings,
         "parts": parts,
+        "revision": revision,
     });
-    std::fs::create_dir_all(root.join("out/pass3"))?;
-    std::fs::write(root.join("out/pass3/apartment.json"), serde_json::to_string_pretty(&env)?)?;
+    let path = root.join(rel);
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    std::fs::write(path, serde_json::to_string_pretty(&env)?)?;
     Ok(env)
 }
 
@@ -588,8 +597,23 @@ fn main() {
             }
         }
         "apartment-json" => {
-            // The JSON alone, without meshing and drawing (~3 min).
-            if let Err(e) = write_apartment_json(root, &apartment::Building::example()) {
+            // The JSON alone, without meshing and drawing (~3 min). `apartment-json addendum-1 <in>`
+            // writes the walk-up with pass 3f's made-up Addendum 1 (the patio doors at <in> inches
+            // wide, from params/bidset.yaml) to its own file instead.
+            let res = match std::env::args().nth(2).as_deref() {
+                Some("addendum-1") => match std::env::args().nth(3).and_then(|s| s.parse::<f64>().ok()) {
+                    Some(width_in) => {
+                        let mut b = apartment::Building::example();
+                        b.addendum_1(width_in * 25.4);
+                        write_apartment_json_to(root, &b, "out/pass3/apartment-addendum-1.json", "addendum-1")
+                    }
+                    None => Err(std::io::Error::other(
+                        "apartment-json addendum-1 <patio door width, in>: the width is params/bidset.yaml's addendum_1.patio_door_width_in")),
+                },
+                Some(other) => Err(std::io::Error::other(format!("unknown revision {other}: try addendum-1"))),
+                None => write_apartment_json(root, &apartment::Building::example()),
+            };
+            if let Err(e) = res {
                 eprintln!("{e}");
                 std::process::exit(1);
             }

@@ -84,12 +84,15 @@ def read_json(name: str, how: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def load() -> tuple[dict, dict]:
-    apt = read_json("apartment.json", "run `cargo run --release -- apartment-json` in forge/")
+def load(name: str = "apartment.json") -> tuple[dict, dict]:
+    """forge's model (out/pass3/apartment.json, or a revision of it such as
+    apartment-addendum-1.json) and the frame's stud schedule."""
+    how = "run `cargo run --release -- apartment-json" + ("" if name == "apartment.json" else " " + name.removeprefix("apartment-").removesuffix(".json")) + "` in forge/"
+    apt = read_json(name, how)
     ops, parts = apt.get("openings") or [{}], {pt["id"] for pt in apt.get("parts", [])}
     # The shape this module reads: openings with their panels, each in its own storey's wall.
     if "panel_lo_m" not in ops[0] or ops[0].get("wall") not in parts:
-        raise SystemExit("out/pass3/apartment.json is from an older forge: rerun `cargo run --release -- apartment-json` in forge/")
+        raise SystemExit(f"out/pass3/{name} is from an older forge: {how}")
     return apt, read_json("frame.json", "run `uv run brownfield frame`")
 
 
@@ -222,10 +225,14 @@ def _note_source(ps, prop: str, param) -> None:
             q.Description = f"params {param.name} ({param.conf}): {param.value:g} {param.unit}; {param.source}"
 
 
-def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.file:
-    """params: `load_params()`'s Param objects, so each number can carry its source."""
+def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | None = None) -> ifcopenshell.file:
+    """params: `load_params()`'s Param objects, so each number can carry its source. spec: what a
+    specification says about each kind of unit, {kind: {property set: {property: value}}}, written
+    onto every type of that kind (an addendum's answers, say); strings are written as labels."""
     f = project.create_file("IFC4")
-    proj = _make(f, "IfcProject", "project", "brownfield-compute pass 3f: the walk-up's bid set")
+    revision = apt.get("revision") or ""
+    proj = _make(f, "IfcProject", "project", "brownfield-compute pass 3f: the walk-up's bid set"
+                 + (f" ({revision})" if revision else ""))
     si = {t: unit.add_si_unit(f, unit_type=t) for t in
           ("LENGTHUNIT", "AREAUNIT", "VOLUMEUNIT", "PLANEANGLEUNIT", "POWERUNIT", "THERMODYNAMICTEMPERATUREUNIT")}
     u_unit = unit.add_derived_unit(f, unit_type="THERMALTRANSMITTANCEUNIT", userdefinedtype=None,
@@ -298,7 +305,9 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
     for (kind, w, h, safe), mark in sorted(marks.items(), key=lambda kv: kv[1]):
         cls = "IfcWindowType" if kind == "window" else "IfcDoorType"
         attrs = {"PredefinedType": "WINDOW" if kind == "window" else "DOOR"}
-        e = _make(f, cls, f"type/{mark}", mark, **attrs,
+        # Keyed on what the type is, not its mark: marks are numbered by position, so a type
+        # withdrawn in an addendum would rename the ones after it.
+        e = _make(f, cls, f"type/{kind}/{round(w * 1e6)}/{round(h * 1e6)}/{int(safe)}", mark, **attrs,
                   Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in."
                               + (" Safety glazing: IBC 2018 2406.4.1-2406.4.3 call for it here." if safe else ""))
         ps = pset.add_pset(f, product=e, name="Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon")
@@ -309,6 +318,11 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
         code, title = MASTERFORMAT[kind]
         ref = classification.add_reference(f, products=[e], identification=code, name=title, classification=mf)
         ref.Description = MASTERFORMAT_WHY[kind]
+        for pset_name, props in (spec or {}).get(kind, {}).items():
+            # Add to the type's property set of that name if it has one (two would share a GlobalId).
+            more = next((q for q in e.HasPropertySets or () if q.Name == pset_name), None)                 or pset.add_pset(f, product=e, name=pset_name)
+            pset.edit_pset(f, pset=more, properties={k: f.createIfcLabel(v) if isinstance(v, str) else v
+                                                     for k, v in props.items()})
         type_of[mark] = e
 
     # Every opening: the void in its wall, and the window or door that fills it.

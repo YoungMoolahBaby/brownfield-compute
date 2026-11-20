@@ -626,6 +626,21 @@ def cmd_bidset(args) -> int:
     return 0 if all(ok for _, ok, _ in res + second) else 1
 
 
+def cmd_addendum(_args) -> int:
+    from . import addendum, bidset
+
+    r = addendum.run(load_params())
+    text = addendum.report(r)
+    print(text)
+    (addendum.OUT / "addendum-1.md").write_text(text + NL, encoding="utf-8")
+    print(NL + "wrote " + ", ".join(str(p.relative_to(OUT_DIR.parent)) for p in [addendum.OUT / "addendum-1.md", *r["written"]]))
+    why = bidset.webifc_status()
+    if why:
+        print(f"FAIL the second reader (web-ifc) didn't run: {why}")
+        return 1
+    return 0 if all(ok for _, ok, _ in r["checks"] + r["second"]) else 1
+
+
 def cmd_services(_args) -> int:
     """Pass 4b: where the campus's tax goes, the schools, the hospital and emergency services."""
     from . import ROOT, services
@@ -815,6 +830,7 @@ def main(argv=None) -> int:
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
+    sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")
     bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")
     bs.add_argument("--setup-reader", action="store_true", help="install the second reader, web-ifc (tools/webifc, npm ci with the dev group's Node)")
     sub.add_parser("food", help="pass 3d: winter food houses on the data center's warm water, and the arboretum")
@@ -826,7 +842,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum}.get(args.cmd or "check")
     return cmd(args)
 
 

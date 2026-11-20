@@ -39,6 +39,7 @@ version = "0.1.0"
 source = { editable = "." }
 default-groups = ["dev", "webifc"]
 dependencies = [
+    { name = "bcf-client" },
     { name = "ifcdiff" },
     { name = "ifcopenshell" },
     { name = "ifctester" },
@@ -63,6 +64,7 @@ webifc = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bcf-client", specifier = "==0.9.0" },
     { name = "ifcdiff", specifier = "==0.9.0" },
     { name = "ifcopenshell", specifier = "==0.9.0.post1" },
     { name = "ifctester", specifier = "==0.9.0" },

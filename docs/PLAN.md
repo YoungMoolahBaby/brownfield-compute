@@ -221,8 +221,10 @@ asks for the 32 fields a quote needs, and the model carries 8 of them. IBC 2018 
 call for safety glazing in 36 openings, 24 of them windows (type W2). The one stair is allowed
 (IBC 2018 Table 1006.3.3(1)) only with sprinklers and an escape window in every bedroom, 16 of
 them upstairs. Whether a window clears 1030's sizes depends on its operation, which the model
-lacks. The schedule, elevations and quantities now come from the IFC alone (step 4). Next: an
-addendum as a reviewed change (step 5).
+lacks. The schedule, elevations and quantities now come from the IFC alone (step 4). A made-up
+RFI and Addendum 1 ran as a reviewed change (step 5): 36 elements changed, safety glazing fell
+from 36 openings to 12, and every check passed on the revision. Next: the same building as PDFs
+only, to count what a bidder must find by eye (step 6).
 
 ## Decisions
 
@@ -1451,6 +1453,75 @@ addendum as a reviewed change (step 5).
        schedule doesn't say its glass) answered by an addendum with one data change (D1 tempered)
        and one size change (W1's height, the escape question). Re-export, `ifcdiff`, the IDS
        rerun and the drawings regenerated. That is the CI step.
+       - **Done 2026-11-19** (`uv run brownfield addendum`, after forge `apartment-json` and
+         `apartment-json addendum-1 60`; written to `out/pass3/bidset/addendum-1/`, with the base
+         as diffed beside it, `base.ifc`). The addendum is made up, to run a change through the
+         bid set, but it follows from the code check.
+         - **The RFI** (`rfi-001.bcf`, BCF 3.0): "what glass goes in the patio doors (D1)?" It
+           also asks whether the 24 windows beside them (W2), 23.1 in from a door's edge and
+           inside the 24 in arc, take safety glazing too, or whether the doors can narrow.
+           - Its words, and the answer's, are built from the model, the params and the code
+             check, so they can't drift from the run.
+           - A viewpoint selects the 12 doors by GlobalId, the camera in front of the building
+             looking at its middle.
+           - The answer is a comment a day later; the topic is closed. Topic type, statuses and
+             the two made-up roles (bidder, architect) are declared in the file's extensions, as
+             BCF 3.0 asks.
+         - **Addendum 1:**
+           - item 1 (data): D1 is glazed tempered, as properties on the patio door type;
+           - item 2 (size): the patio doors narrow to 5'-0", a stock width
+             (`bidset.addendum_1.patio_door_width_in`, a placeholder: made up), centred where they
+             were. This is made in forge (`Building::addendum_1`, the width on the command line),
+             so the model's own checks and the flats' glazing follow.
+           - Before anything runs, the revision is checked to be the base plus exactly this: the
+             same parts and openings, and only the patio doors moved, to the params width.
+         - **What changed** (`element_diff`): 36 units, 12 openings and 3 types; no other element,
+           opening or type.
+           - The 12 patio doors changed in attributes, geometry and properties, and their type:
+             the 5'-0" door is a new type object.
+           - The 24 windows beside them changed type (W2 -> W1) and properties.
+           - The 12 doors' openings in the walls narrowed.
+           - Types: D1 at 6'-0" and W2 withdrawn, D1 at 5'-0" new. Type GlobalIds are keyed on what
+             a type is (kind, size, safety glazing), not its mark, which is numbered by position.
+           - ifcdiff does only the attributes and geometry, because it stops at the first
+             relationship that differs. Type, storey and properties are compared directly, the
+             properties without the entity numbers ifcdiff counts. ifcdiff alone flags all 114
+             units.
+         - **The revision passes everything:** both readers, the schema, and a repeat export. The
+           report says so if the second reader couldn't run.
+         - **What moved:**
+           - safety glazing falls from 36 openings to 12: the windows are now 29.1 in from a
+             door's edge, outside the arc;
+           - in the IDS, tempered on the doors goes from 0 of 12 to 12 of 12, and so does safety
+             glazing on the doors;
+           - in the schedule, W2 is withdrawn, W1 becomes 101, and D1 is 5'-0" and tempered. The
+             schedule's changes match types by what they are, and report a renumbered mark as
+             such;
+           - the openings in the exterior walls go from 1,715 to 1,635 ft2;
+           - the elevations are redrawn. The revised front was rendered and looked at.
+         - **Tests:** `tests/test_addendum.py` has 10:
+           - forge changes only the patio doors;
+           - the code check follows the change;
+           - the diff is exactly the units, openings and types above;
+           - the revision must be the base plus the addendum, and a tampered one is refused;
+           - the revision passes its checks;
+           - the RFI is a closed topic on the 12 doors, answered later, with the camera on the
+             building;
+           - the words follow the params (a 30 in arc leaves the windows needing safety glazing);
+           - the schedule moves as the addendum says, and renumbering reads as renumbering;
+           - a spec adds to a property set the type already has.
+
+           All 224 tests pass.
+         - **Built:** a property comparison without entity numbers, and type and storey compared
+           directly (ifcdiff 0.9.0). bcf-client 0.9.0 is pinned (ifctester brought it in). The
+           BCF topic's own GUID and dates are new each run, since an issue is made once.
+         - **Code review** (before the commit): 15 findings, all fixed. The 5 important ones:
+           - the camera faced away from the building;
+           - the diff missed the openings and the types;
+           - ifcdiff's early return hid storey moves;
+           - marks renumbered by position would mislabel the schedule's changes and alias type
+             GlobalIds;
+           - nothing checked the revision against the base.
     6. **The conventional side:** the same building issued as a PDF set (elevations and the
        schedule sheet, generated). For each change in the addendum, count the places a bidder
        must find by eye on the sheets against the rows in the diff. Our sheets are cleaner than a
