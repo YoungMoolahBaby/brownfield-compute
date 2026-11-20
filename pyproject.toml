@@ -25,7 +25,10 @@ dependencies = [
 brownfield = "brownfield.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "pypdf==6.21.4",
+    "pytest>=8",
+]
 # Node for the bid set's second IFC reader (pass 3f, tools/webifc). Installed by default; where
 # no wheel fits the platform, `uv sync --no-group webifc` leaves it out and that check skips.
 webifc = ["nodejs-wheel-binaries==24.19.0"]

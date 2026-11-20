@@ -223,8 +223,9 @@ call for safety glazing in 36 openings, 24 of them windows (type W2). The one st
 them upstairs. Whether a window clears 1030's sizes depends on its operation, which the model
 lacks. The schedule, elevations and quantities now come from the IFC alone (step 4). A made-up
 RFI and Addendum 1 ran as a reviewed change (step 5): 36 elements changed, safety glazing fell
-from 36 openings to 12, and every check passed on the revision. Next: the same building as PDFs
-only, to count what a bidder must find by eye (step 6).
+from 36 openings to 12, and every check passed on the revision. As PDFs only (step 6), bidding
+means counting 114 tags by eye, and the addendum means finding 40 changed places on 3 sheets; the
+data side lists them. Next: the pass 3f report (step 7).
 
 ## Decisions
 
@@ -1526,6 +1527,63 @@ only, to count what a bidder must find by eye (step 6).
        schedule sheet, generated). For each change in the addendum, count the places a bidder
        must find by eye on the sheets against the rows in the diff. Our sheets are cleaner than a
        real set, so the count is a lower bound.
+       - **Done 2026-11-19** (`uv run brownfield pdfset`, after forge's `apartment-json` and
+         `apartment-json addendum-1 60`). It rebuilds both IFCs from forge's current model and
+         checks the revision is the base plus the addendum, so the narrative, the sheets and the
+         counts come from one run.
+         - **The sets:** the walk-up's bid set as an architect issues it, drawn from the IFC by
+           `pdfset.py`, on 36 x 24 in sheets at 1/4" = 1'-0", every title block marked "NOT FOR
+           CONSTRUCTION, a made-up bid set for a study". The drawings are checked to fit inside
+           the border and clear of the title block.
+           - `out/pass3/bidset/pdf/bidset.pdf`: A-201 and A-202 the front and back elevations,
+             A-203 the two ends, and A-601 the window and door schedule.
+           - On the schedule, blanks show as a dash, and U-factors are in the unit NFRC rates them
+             (U-0.30, with 1.70 W/m2K after). The remarks include "SAFETY GLAZING REQ'D" and, for
+             the entry door (mark D2), whose U-factor is a placeholder, "U-FACTOR TO BE
+             CONFIRMED".
+           - `out/pass3/bidset/addendum-1/pdf/addendum-1.pdf`: Addendum 1's narrative page, its
+             words from the run, then the revised sheets. Every change is in a revision cloud
+             with a delta, and the withdrawn W2 row is shown struck through as deleted, clouded.
+         - **What a bidder with only the PDFs does** (`addendum-1/conventional.md`):
+           - **to bid:** count 114 tags by eye on 3 elevation sheets (45, 45, 24) and tally them by
+             mark (W1 77, W2 24, D1 12, D2 1), then read the schedule's 4 rows. From the data,
+             `schedule.csv` carries the counts and `openings.csv` lists all 114 units, so there's
+             nothing to count;
+           - **for Addendum 1:** find 40 changed places on 3 revised sheets:
+             - A-201 and A-202: 18 each (6 doors narrower, 12 windows W2 -> W1);
+             - A-601: 3 cells (W1's quantity, D1's width and glazing) and W2's row gone.
+
+             From the data, the element diff lists 36 windows and doors, 12 openings and 3 types
+             by GlobalId, and the schedule 8 changes, so there's nothing to find.
+           - Units are matched across the two sets by their id, which the sheets don't show, so
+             a moved unit counts once.
+         - **A lower bound:** these sheets have no floor plans, sections, details, dimension
+           strings or specifications, where the same change shows up again. And every change here
+           is clouded, which in practice they aren't always.
+         - **Read back:** the PDFs keep their text (TrueType, set for these pages only), and pypdf
+           reads the tags back tallying to the schedule, as a takeoff tool would. The revised
+           sheets carry exactly 40 deltas, one per place counted. A scanned or flattened set
+           wouldn't allow that reading.
+         - **Checked by looking:** the revised front and the schedule were rendered and looked at.
+         - **Tests:** `tests/test_pdfset.py` has 10:
+           - every unit and schedule cell is a place;
+           - the addendum changes exactly those 40;
+           - the PDFs carry the tags as text;
+           - the addendum PDF clouds every place counted;
+           - an addendum that touches no sheet issues only its narrative;
+           - the schedule reads as a US set, with laminated glazing shown;
+           - a moved unit counts once;
+           - a building too long for the sheet is refused;
+           - drawing leaves matplotlib's settings alone;
+           - a schedule row that comes or goes counts once.
+
+           pypdf 6.21.4 is pinned in the dev group. All 234 tests pass.
+         - **Code review** (before the commit): 14 findings, all fixed. The 5 important ones:
+           - a withdrawn row had no cloud;
+           - an added row couldn't get one;
+           - laminated glazing printed as a dash;
+           - the narrative and the sheets could come from different runs;
+           - an addendum touching no sheet would have re-issued them all.
     7. **Report** with figures (an elevation from the IFC, the diff) and what we don't know.
   - **Checks (known cases):**
     - read back from the IFC: 114 openings, 101 / 12 / 1 by type, sizes exact, positions within
