@@ -20,6 +20,7 @@ def test_routes_and_nothing_outside_them():
         "/c:/windows/win.ini", "/models/C:%5cWindows",  # a drive
         "/NUL", "/models/NUL", "/CON.txt", "/vendor/three/com1",  # Windows devices
         "/index.html%00", "/models/apartment.ifc.", "/models/apartment.ifc%20",
+        "/node_modules/three/package.json", "/package.json", "/package-lock.json",  # the page's folder: only the page
     ]
     for sneaky in refused:
         assert viewer.resolve(sneaky) is None, sneaky

@@ -91,8 +91,9 @@ def load(name: str = "apartment.json") -> tuple[dict, dict]:
     how = "run `cargo run --release -- apartment-json" + ("" if name == "apartment.json" else " " + name.removeprefix("apartment-").removesuffix(".json")) + "` in forge/"
     apt = read_json(name, how)
     ops, parts = apt.get("openings") or [{}], {pt["id"] for pt in apt.get("parts", [])}
-    # The shape this module reads: openings with their panels, each in its own storey's wall.
-    if "panel_lo_m" not in ops[0] or ops[0].get("wall") not in parts:
+    # The shape this module reads: openings with their panels, each in its own storey's wall, and
+    # the stair (pass 3f step 8).
+    if "panel_lo_m" not in ops[0] or ops[0].get("wall") not in parts or "rails" not in apt.get("stair", {}):
         raise SystemExit(f"out/pass3/{name} is from an older forge: {how}")
     return apt, read_json("frame.json", "run `uv run brownfield frame`")
 

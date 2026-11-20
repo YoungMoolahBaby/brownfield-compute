@@ -1598,6 +1598,94 @@ test. Then the township brief's ask.
          (~0.9 MB): both IFCs, the IDS and its checklist, each IFC's drawings and schedule, the
          RFI and the addendum's diff, both PDF sets and the comparison. The README and pass 3's
          README link the report.
+    8. **The stair and the flats' doors** (2026-11-20, Jon: "go with the stair step"), after the
+       3D viewer showed neither was modelled. The code limits are in `params/bidset.yaml`
+       (`code.stair`, `code.exit_stair`, `code.door`). In three parts, each committed on its own:
+       - **8a, forge and the stair's code check.**
+         - **The stair:** a stair that turns back on itself, at the back of the core, with 11 in
+           treads. Each storey has:
+           - 6 risers of 6 in up to a landing whose top is the back stair windows' 36 in sill;
+           - then 12 risers of 7 in back towards the front.
+
+           Risers differ between the flights, which 1011.5.4 allows (it asks for uniformity
+           within a flight).
+           - **Why not 9 + 9:** it puts the landing across the windows, so they would move, and
+             pass 3b's framing, masonry and costs (which read the openings) would change.
+           - **Why not 5 + 13** (the first try): the review found the upper flight's handrail
+             extension ran across the back-right flats' doors, and that layout leaves no room
+             to move them.
+         - **The rest of the core:**
+           - a wall between the two flights, so the flights have no open sides;
+           - hall floors on levels 2 and 3;
+           - a wall closing the low space under the ground-floor upper flight;
+           - a 42 in guard on level 3, the one open edge;
+           - handrails on both sides of every flight, as rail paths with their extensions.
+         - **The 12 flat doors:** 36 x 84 in, in the stair walls, opening off the hall and
+           swinging into the flats.
+         - **Where they go:** forge's output gains a `stair` block. Nothing that reads the
+           existing model changes, and `bidset.load` rejects a model without it.
+         - **Done 2026-11-20**, after a code review (15 findings, all addressed).
+           - **forge** (`forge/src/stair.rs`) builds the stair from `apartment::Building`
+             without changing it. Pass 3b's volumes are unchanged (109.262 m3 of exterior wall,
+             197.202 m3 of floor systems), and the 114 openings and 30 parts are untouched.
+           - **What it adds:**
+             - 4 flights, 52.75 in wide;
+             - 2 landings 48 x 110 in;
+             - 4 hall floor pieces;
+             - the centre wall and the closure;
+             - one guard;
+             - 8 handrails;
+             - the 12 doors, one into every flat.
+           - **forge's checks** (`check` and the JSON writer) reject:
+             - parts overlapping by more than 0.01 mm on every axis;
+             - a landing across a window;
+             - a door outside its wall, in the spine or past the hall;
+             - a stair part in a door's 44 in approach, or a handrail across it.
+
+             Its 7 tests: the example holds, and 6 break it in those ways.
+           - **`brownfield bidset`** runs 17 checks against `code.stair` and `code.door`,
+             measured from the boxes rather than taken from forge. All pass:
+             - risers are 6-7 in, measured from the floor or landing found at each end;
+             - the least headroom is 101.00 in, landing 2 over flight 1b's first nosing.
+               Anything rising through the nosing line counts as an obstruction;
+             - every end of every flight has 48 in of landing or floor;
+             - of 6,944 edge samples none is an open drop, and 144 are at windows;
+             - each door has a clear 44 in landing (1010.1.6), with no part or handrail in it;
+             - the doors are 33.5 in clear wide, which takes a placeholder for what the leaf and
+               stop take off (`flat_door_clear_loss_in`, 2.5 in).
+           - **What the bid set doesn't show yet:** the back stair windows on levels 1 and 2 now
+             rise from the landings.
+             - 2406.4.3 makes both safety glazing, measured from the landing.
+             - The level-2 one also falls under 1015.8 (sill 13 ft up): if it opens, it needs a
+               fall measure, and the model doesn't say whether it opens.
+
+             `brownfield bidset` reports both. The bid set's types change in 8b.
+           - **Tests:** `tests/test_stair.py` (13 tests). Every check passes on the model.
+             - **Breaking the model fails the matching check:** a column on a tread, a low duct,
+               a hall floor 2 in low, a short hall, no guard, an uneven step, a missing
+               handrail, a narrow door, a door slid into a handrail.
+             - **Known values:** the headroom over two flights.
+             - **Not shown failing:** 9 of the 17 checks (a landing at each end, flight rise,
+               tread depth, width, handrail heights, extensions, reach and projection, and guard
+               height).
+           - **The review also fixed the viewer:**
+             - a file picked while another was parsing now replaces it;
+             - the server serves only the page itself outside its three routes.
+
+             The suite is 255 passing.
+           - **Not yet:** the IFC, which 8b does.
+       - **8b, the IFC and what's drawn from it.**
+         - `IfcStair` with `IfcStairFlight` (risers and treads), landing `IfcSlab`s and
+           `IfcRailing`s.
+         - The flat doors as door type D3: 1-hour fire door assemblies, self-closing, with
+           `Pset_DoorCommon.FireRating`.
+         - A fire rating on the stair walls.
+         - The checklist asks for a fire rating on doors into the stair, and not for a
+           U-factor on interior doors.
+         - The schedule, drawings, quantities and the web-ifc check follow.
+       - **8c, the PDF set, the addendum and the report:** republish, recount, and assess the
+         stair windows under 2406.4.6-2406.4.7 once Jon saves UpCodes' chapter 24 (the fetch
+         tools only get a summary of those sections).
          - It publishes only after both readers' checks pass on both IFCs, 46 in all, with a
            byte-for-byte repeat export. Otherwise it exits 1 and publishes nothing.
          - The published files repeat byte for byte, and carry no local time or time zone:

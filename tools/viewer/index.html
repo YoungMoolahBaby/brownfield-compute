@@ -498,6 +498,12 @@
   // ---- Switching models ----
   const pending = {};
   let wanted = null;  // the model last asked for: a slower load finishing later doesn't take over
+  let ownPick = 0;  // which file picked last: an older pick still parsing is dropped when it lands
+
+  function drop(r) {  // take a built model out of the scene and free its GPU memory
+    scene.remove(r.group);
+    r.group.traverse((o) => { o.geometry?.dispose(); if (o.material !== edgeMat) o.material?.dispose(); });
+  }
 
   async function load(key, source) {
     const bytes = source.bytes ?? await (async () => {
@@ -518,15 +524,18 @@
     if (!loaded[key]) {
       $("#loading").hidden = false;
       $("#loading").textContent = `Parsing ${source.name} with web-ifc…`;
+      const p = (pending[key] ??= load(key, source));
+      let r;
       try {
-        pending[key] ??= load(key, source);
-        loaded[key] = await pending[key];
+        r = await p;
       } catch (err) {
         if (wanted === key) $("#loading").textContent = `${source.name} didn't load: ${err.message}.`;
         return;
       } finally {
-        delete pending[key];
+        if (pending[key] === p) delete pending[key];
       }
+      if (key === "own" && source.pick !== ownPick) { drop(r); return; }  // a newer file was picked meanwhile
+      loaded[key] = r;
       if (wanted !== key) return;  // another model was asked for meanwhile; this one waits, loaded
     }
     state.model = key;
@@ -552,9 +561,10 @@
   $("#pick").addEventListener("change", async (ev) => {
     const f = ev.target.files[0];
     if (!f) return;
+    const pick = ++ownPick;
+    delete pending.own;  // a file still parsing is dropped when it lands (see show)
     if (loaded.own) {
-      scene.remove(loaded.own.group);
-      loaded.own.group.traverse((o) => { o.geometry?.dispose(); if (o.material !== edgeMat) o.material?.dispose(); });
+      drop(loaded.own);
       delete loaded.own;
       if (state.model === "own") state.model = "base";
     }
@@ -562,7 +572,7 @@
     own.hidden = false;
     own.textContent = f.name.length > 22 ? f.name.slice(0, 20) + "…" : f.name;
     state.selected = null;
-    await show("own", { name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+    await show("own", { name: f.name, pick, bytes: new Uint8Array(await f.arrayBuffer()) });
     ev.target.value = "";
   });
   for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => look(b.dataset.view));

@@ -21,6 +21,7 @@ mod house;
 mod masonry;
 mod masonry_build;
 mod render;
+mod stair;
 mod scene;
 mod sequence;
 mod site;
@@ -75,6 +76,15 @@ fn check() -> bool {
         println!("       {e}");
     }
     ok &= errs.is_empty();
+    let st = stair::Stair::example();
+    let serrs = st.errors(&b);
+    println!("{} stair, halls and flat doors (pass 3f step 8): {} flights, {} parts, {} rails, {} doors, {} errors",
+             if serrs.is_empty() { "ok  " } else { "FAIL" }, st.flights(&b).len(), st.parts(&b).len(), st.rails(&b).len(),
+             st.doors(&b).len(), serrs.len());
+    for e in &serrs {
+        println!("       {e}");
+    }
+    ok &= serrs.is_empty();
     ok
 }
 
@@ -330,7 +340,9 @@ fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result
 
 /// The same, to `rel` (under the repo root), with `revision` noted in the file ("" for the base).
 fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revision: &str) -> std::io::Result<serde_json::Value> {
-    let errs = b.model_errors();
+    let st = stair::Stair::example();
+    let mut errs = b.model_errors();
+    errs.extend(st.errors(b));
     if !errs.is_empty() {
         return Err(std::io::Error::other(format!("the walk-up fails its model checks:\n  {}", errs.join("\n  "))));
     }
@@ -373,6 +385,7 @@ fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revi
         "levels": storeys,
         "openings": openings,
         "parts": parts,
+        "stair": st.json(b, &r6),
         "revision": revision,
     });
     let path = root.join(rel);

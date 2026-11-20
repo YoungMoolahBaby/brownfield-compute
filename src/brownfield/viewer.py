@@ -54,11 +54,13 @@ def resolve(url_path: str) -> Path | None:
     segments = [s for s in norm.split("/") if s]
     if any(s.split(".")[0].lower() in DEVICES or s.endswith((" ", ".")) for s in segments):
         return None
-    base, rest = VIEWER, norm
+    base, rest = None, norm
     for prefix, root in ROUTES:
         if (norm + "/").startswith(prefix):
             base, rest = root, norm[len(prefix.rstrip("/")):]
             break
+    if base is None:  # outside the routes: the page itself, nothing else in its folder
+        return (VIEWER / "index.html").resolve() if norm in ("/", "/index.html") else None
     try:
         target = (base / rest.lstrip("/")).resolve()
         if not target.is_relative_to(base.resolve()):

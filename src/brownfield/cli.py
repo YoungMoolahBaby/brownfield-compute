@@ -616,6 +616,13 @@ def cmd_bidset(args) -> int:
     print(f"  exterior walls {q['gross_m2']:.1f} m2 gross, {q['openings_m2']:.1f} m2 of openings, {q['net_m2']:.1f} m2 net "
           f"({q['gross_m2'] / bidset.FT2:,.0f} / {q['openings_m2'] / bidset.FT2:,.0f} / {q['net_m2'] / bidset.FT2:,.0f} ft2)")
 
+    # The stair, its halls and the flat doors against IBC 2018 (step 8a), from forge's model.
+    from . import stair
+
+    stair_res = stair.check(apt, params)
+    print(NL + stair.report(apt, stair_res, params))
+    res += stair_res
+
     why = bidset.webifc_status()
     if why:
         # Two readers are the check; with one, say so and fail, so nobody takes it for both.
