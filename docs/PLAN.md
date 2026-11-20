@@ -225,8 +225,12 @@ lacks. The schedule, elevations and quantities now come from the IFC alone (step
 RFI and Addendum 1 ran as a reviewed change (step 5): 36 elements changed, safety glazing fell
 from 36 openings to 12, and every check passed on the revision. As PDFs only (step 6), bidding
 means counting 114 tags by eye, and the addendum means finding 40 changed places on 3 sheets; the
-data side lists them. The report is [docs/pass3/bidset.md](pass3/bidset.md) (step 7). Waiting on
-Jon: the rep test. Then the township brief's ask.
+data side lists them. The report is [docs/pass3/bidset.md](pass3/bidset.md) (step 7). Seen in
+3D (2026-11-20): the model has no stair, no hall floors upstairs, and no doors into the 12 flats,
+so the door schedule lists 13 of the shell's 25 doors; the report now says so. IBC 2018 1010, 1011, 1014,
+1015, 1019, 1023 and 716 are now read (Jon saved UpCodes' chapters 7 and 10) and in
+`params/bidset.yaml`. Next: model the stair and the flats' 1-hour doors. Waiting on Jon: the rep
+test. Then the township brief's ask.
 
 ## Decisions
 
@@ -1607,6 +1611,22 @@ Jon: the rep test. Then the township brief's ask.
            IDS like this one, and addenda as revised models with a diff. That goes into the
            township brief once the rep test is in.
          - Still open from Jon: the rep test.
+         - **Gaps seen in the 3D viewer** (2026-11-20, Jon: "i dont see the stairs"):
+           - no doors into the 12 flats, so the door schedule lists 13 of the shell's 25 doors;
+           - no stair flights, landings or railings, and no hall floors on levels 2 and 3, where
+             the floors stop at the stair walls.
+
+           Added to the report's "what we don't know". The code is read (2026-11-20):
+           - 1011.1-1011.7 from Jon's screenshots;
+           - the rest of chapter 10 and 716 from UpCodes' chapter 7 and 10 pages as Jon saved them.
+
+           Its limits are in `params/bidset.yaml` (`code.stair`, `code.exit_stair`, `code.door`).
+           The fit, worked by hand from them: 18 risers of 6.67 in and two 44 in flights need 88 x 176 in
+           of the 110 x 466 in core. The flat doors are 1-hour fire door assemblies (Table
+           716.1(2)).
+
+           Next step: model the stair, the hall floors and the 12 flat doors, and check them
+           against those limits.
        - **A local 3D viewer** (2026-11-19, Jon: "please do the native version", then "move it
          to tools/viewer in the repo"). Run `uv run brownfield viewer` and open
          http://127.0.0.1:8765/.

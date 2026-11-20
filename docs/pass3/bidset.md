@@ -285,6 +285,29 @@ To look at it in 3D, run `uv run brownfield viewer` and open http://127.0.0.1:87
   missing, and how long does it take against the PDFs? This is the test that says whether the
   data saves real time, and it hasn't been run. Jon is to hand the files to a rep; the answer goes
   in as one data point, with no names.
+- **What the model leaves out that a bid set can't.** These were found looking at the model in
+  3D, after the report was first written.
+  - **The flats' entry doors.** Every one of the 114 openings is in an outside wall, and the stair
+    walls have none. So the door schedule, the checklist and the PDF set list 13 doors where the
+    shell needs 25, leaving aside the doors inside the flats: the 12 doors from the stair into the
+    flats are missing. A door rep
+    quoting from the schedule would miss them. They open into the stair, which as the one exit
+    is enclosed by 1-hour fire barriers (IBC 2018 1023.2), so each is a 1-hour fire door
+    assembly: labelled, self-closing and latching (Table 716.1(2), 716.2.6).
+  - **The stair and the halls.** There are no flights, landings or railings. On levels 2 and 3
+    the floors stop at the stair walls, so the whole stair core is open, with nowhere to stand
+    at a flat's door. The core is 110 x 466 in between the walls, with 10 ft floor to floor.
+    - **A stair fits by size:** a stair that turns back on itself, with 18 risers of 6.67 in, two
+      44 in flights of 8 treads at 11 in, and 44 in landings, needs 88 x 176 in. That's worked
+      by hand from IBC 2018 1011's limits in `params/bidset.yaml`, and isn't a check in the code
+      yet.
+    - **Layout is still open:** every floor's four flat doors have to open off a hall on one
+      side of it. The landing halfway up sits 60 in above each floor, across the 36-84 in stair
+      windows if the stair runs to an outside wall.
+    - **Not modelled:** the stair, its halls and the 12 doors.
+    - **No fire rating on the stair walls:** they must be 1-hour fire barriers (1023.2), but the
+      model gives no wall a fire rating (`Pset_WallCommon.FireRating` is never set). So neither
+      the bid set nor its checklist says what assembly the stair walls need.
 - **What it costs an architect to deliver,** and the contract wording that makes the model, or
   the IDS's fields, part of the bid documents. The liability question is what keeps models in the
   office now, and nothing here tests it.

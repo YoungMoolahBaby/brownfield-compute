@@ -825,6 +825,68 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - **1030.2.1:** at least 24 in high and 20 in wide, "the result of normal operation of the
     opening".
   - **1030.3:** the bottom of the clear opening no more than 44 in above the floor.
+- **Stairways, IBC 2018 1011.1-1011.7.** Read by Jon on UpCodes' "Pennsylvania Building Code
+  2018" and shared as screenshots (2026-11-20). Used in `params/bidset.yaml` (`code.stair`).
+  - **1011.2:** at least 44 in wide. Exception 1 allows 36 in where the occupant load is under 50.
+  - **1011.3:** at least 80 in of headroom, measured vertically from the line of the nosings,
+    over the full width of the stairway and landing.
+  - **1011.5.2:** risers 4-7 in, and rectangular treads at least 11 in deep. Exception 3 allows
+    7 3/4 in risers and 10 in treads within R-2 dwelling units.
+  - **Pennsylvania's amendment:** UpCodes notes Pa. UCC 403.21(i), which for R-3 and within R-2
+    dwelling units allows 8 1/4 in risers and 9 in treads. It's about stairs inside a flat, not
+    the common stair.
+  - **1011.5.3:** no winders in means of egress stairways except within a dwelling unit.
+  - **1011.5.4:** risers, and treads, may differ by at most 3/8 in within a flight.
+  - **1011.5.5:** nosings project at most 1 1/4 in, and risers are solid.
+  - **1011.6:** a floor or landing at the top and bottom of each stairway.
+    - A landing is at least as wide as the stairway.
+    - Its depth in the direction of travel is at least the stairway's width or 48 in,
+      whichever is less.
+    - A door may not leave less than half the landing's required width, and fully open it may
+      project at most 7 in into it.
+  - **1011.7:** stairs are built of materials the construction type allows; wood handrails are
+    allowed in all types.
+- **The rest of the stair, the enclosure and doors, IBC 2018 chapter 10.** Read from UpCodes'
+  chapter 10 page ("Means of Egress", Pennsylvania Building Code 2018) as Jon saved it
+  (2026-11-20). Used in `params/bidset.yaml` (`code.stair`, `code.exit_stair`, `code.door`).
+  - **1011.8:** a flight rises at most 12 ft between floor levels or landings.
+  - **1011.11:** handrails on each side of a flight. One side is enough only within dwelling
+    units.
+  - **1014:** handrails are 34-38 in above the nosings, with 1 1/2 in clear of the wall.
+    - Where they aren't continuous between flights, they extend 12 in level beyond the top
+      riser and one tread beyond the bottom one.
+    - They project at most 4 1/2 in into the required width on each side.
+    - Every part of the required width is within 30 in of a handrail.
+  - **1015:** guards on open sides with more than a 30 in drop within 36 in of the edge.
+    - They are at least 42 in high, measured on stairs from the line of the nosings. The lower
+      guards are only for R-3 or within R-2 dwelling units.
+    - A 4 in sphere may not pass through them below 36 in.
+  - **1023.2:** an interior exit stairway's enclosure is a fire barrier rated at least 1 hour
+    where it connects fewer than four storeys.
+  - **1023.4:** its openings are limited to those for exit access from normally occupied
+    spaces and for egress, and are protected per 716 (below).
+  - **1023.7:** where the stair's exterior wall has unprotected openings and other parts of the
+    building face it at an angle under 180 degrees, the building's exterior walls within 10 ft
+    must be rated 1 hour, with 3/4 hour openings. The walk-up's stair windows sit in a flat
+    facade, at 180 degrees.
+  - **1019.3:** an open stair between storeys is allowed only in listed cases. The walk-up's
+    stair connects three storeys of separate flats, and none of the cases covers that, so it
+    is enclosed.
+  - **1010.1.1:** doors are at least 32 in clear wide and 80 in clear high.
+  - **1010.1.2.1:** a door must swing with egress only where it serves 50 or more occupants.
+- **Fire doors in the stair enclosure, IBC 2018 716.** Read from UpCodes' chapter 7 page ("Fire
+  and Smoke Protection Features", Pennsylvania Building Code 2018) as Jon saved it (2026-11-20).
+  Used in `params/bidset.yaml` (`code.exit_stair`).
+  - **Table 716.1(2), the 1-hour row:** fire barriers rated 1 hour that enclose interior exit
+    stairways need fire door assemblies rated 1 hour.
+    - A glass vision panel up to 100 sq in may be fire-protection-rated (marked D-H-60).
+      Larger panels must be fire-resistance-rated (D-H-T-W-60).
+    - Sidelights and transoms must be fire-resistance-rated, 1 hour (W-60).
+  - **716.2.6.1-716.2.6.2:** fire doors latch and are self- or automatic-closing.
+  - **716.2.2.3:** doors in interior exit stairways may let at most 450 F through after 30
+    minutes. This limit is waived in buildings sprinklered throughout, which the walk-up's
+    single exit needs anyway.
+  - **716.1:** installed per NFPA 80.
 - **Fenestration U-factor, 2018 IECC climate zone 5: U-0.30.** This is pass 3's source
   (`pass3.envelope.window_u`), reused as the IDS's limit (`bidset.code.fenestration_u_max`).
 - **CSI MasterFormat 2020, Division 08 Openings.** The level-2 titles used are 08 10 00 Doors and
