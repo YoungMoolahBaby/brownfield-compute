@@ -4,7 +4,8 @@
 //! - `house`: the first house, built, measured and drawn: `../out/pass3/house.json` (the envelope
 //!   the heat model reads) and `../docs/pass3/house.png`.
 //! - `apartment`: the 12-flat walk-up (pass 3b), built, measured and drawn:
-//!   `../out/pass3/apartment.json` (every flat's envelope) and `../docs/pass3/apartment.png`.
+//!   `../out/pass3/apartment.json` (every flat's envelope, and every opening and part by its stable
+//!   id for the bid set, pass 3f) and `../docs/pass3/apartment.png`. `apartment-json`: the JSON alone.
 //! - `conference`: each town's new homes and clubhouse on the real ground (D18), from
 //!   `../out/pass3/conference/` (`brownfield conference`), to `../docs/pass3/conference_*.png`.
 //! - `meshers`: CortenForge's uniform-grid mesher against its parallel adaptive one (time, triangles,
@@ -66,6 +67,14 @@ fn check() -> bool {
     test("apartment exterior walls, m3 (50 mm cells)", volume_m3(&b.exterior_walls(), 50.0), b.exterior_wall_volume_m3(), 0.02);
     test("apartment floor systems, m3 (50 mm cells)", volume_m3(&b.floors(), 50.0), b.floors_volume_m3(), 0.01);
     println!("({:.1} s)", t.elapsed().as_secs_f64());
+    let errs = b.model_errors();
+    let recs = b.opening_records();
+    println!("{} apartment model (pass 3f): {} openings, {} parts, {} errors",
+             if errs.is_empty() { "ok  " } else { "FAIL" }, recs.len(), b.parts().len(), errs.len());
+    for e in &errs {
+        println!("       {e}");
+    }
+    ok &= errs.is_empty();
     ok
 }
 
@@ -311,9 +320,36 @@ fn masonry_mode(root: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// The walk-up's envelope per flat and the dimensions the frame sizing needs:
-/// `../out/pass3/apartment.json`.
+/// The walk-up's envelope per flat, the dimensions the frame sizing needs, and (pass 3f, D27) the
+/// whole model as named parts: every opening with its stable id, every wall, the slab, the floor
+/// systems and the roof, in metres: `../out/pass3/apartment.json`. Refuses to write a model that
+/// fails its own checks (`Building::model_errors`).
 fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result<serde_json::Value> {
+    let errs = b.model_errors();
+    if !errs.is_empty() {
+        return Err(std::io::Error::other(format!("the walk-up fails its model checks:\n  {}", errs.join("\n  "))));
+    }
+    // mm to m, to the micrometre (drops float noise such as 0.9144000000000001).
+    let r6 = |mm: f64| (mm * 1e3).round() / 1e6;
+    let m = |v: Vector3<f64>| [r6(v.x), r6(v.y), r6(v.z)];
+    let openings: Vec<_> = b.opening_records().iter().map(|r| {
+        let o = &r.opening;
+        let base = (r.storey - 1) as f64 * b.storey;
+        json!({
+            "id": r.id, "kind": r.kind.name(), "glazed": o.glazed, "storey": r.storey, "flat": r.flat,
+            "face": o.face.name(), "index": r.index,
+            "width_m": r6(o.width), "height_m": r6(o.height),
+            "sill_m": r6(o.sill), "sill_above_floor_m": r6(o.sill - base), "along_m": r6(o.along),
+            "lo_m": m(r.lo), "hi_m": m(r.hi), "outward": m(o.face.outward() * 1e3),
+            "wall": format!("ext-{}", o.face.name()),
+        })
+    }).collect();
+    let parts: Vec<_> = b.parts().iter().map(|p| json!({
+        "id": p.id, "kind": p.kind, "storey": p.storey, "lo_m": m(p.lo), "hi_m": m(p.hi),
+    })).collect();
+    let storeys: Vec<_> = (1..=b.storeys).map(|k| json!({
+        "storey": k, "elevation_m": r6((k - 1) as f64 * b.storey), "height_m": r6(b.storey),
+    })).collect();
     let flats: Vec<_> = b.flats.iter().map(|f| b.flat_envelope(f)).collect();
     let mut facade_widths: Vec<f64> = b.openings.iter()
         .filter(|o| matches!(o.face, apartment::Face::Front | apartment::Face::Back))
@@ -327,6 +363,10 @@ fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result
         "stair_len_m": b.stair_len / 1e3, "facade_opening_widths_m": facade_widths,
         "frontage_per_flat_m": b.length / 1e3 / b.flats.len() as f64,
         "flats": flats,
+        "frame": "metres; x across the depth (front facade at x = 0), y along the length, z up from the top of the ground slab",
+        "levels": storeys,
+        "openings": openings,
+        "parts": parts,
     });
     std::fs::create_dir_all(root.join("out/pass3"))?;
     std::fs::write(root.join("out/pass3/apartment.json"), serde_json::to_string_pretty(&env)?)?;

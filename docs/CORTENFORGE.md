@@ -54,6 +54,13 @@ the end collects the features this project wanted, with what we built instead.
   scaled and moved onto each box, draws the 3,027-member frame exactly in ~43,000 triangles; the
   members stay cf-design solids for measuring (one of each kind measured at -0.15% to +1.6% of
   exact by `mass_properties`, thin members reading heavy as before).
+- **gap** (2026-11-19, pass 3f, the bid set): a `Solid` carries no identity or metadata, and
+  nothing exports to a building format such as IFC. Once the walk-up's 114 openings are
+  subtracted from one wall solid, which window is which is gone, and a bid set needs every
+  element named, typed and placed. Instead: `forge/src/apartment.rs` keeps the building as named
+  boxes beside its solids (`Part`, `OpeningRecord`, with their own checks in `model_errors`),
+  `apartment-json` writes them out, and IfcOpenShell (Python) is to write the IFC. See
+  Suggestions.
 
 ## sim-therm-env, sim-thermostat
 
@@ -202,3 +209,8 @@ Nice-to-haves for CortenForge, with what this project built instead.
   footprint into it (a level pad blending out), and extruding a footprint with a roof. With
   instancing, thousands of trees on it. Instead: `forge/src/conference.rs` builds each by hand
   (~350 lines), the grading done in Python (`neighbourhood._grade`).
+- **Named parts and an IFC export** (2026-11-19, pass 3f): stable ids and kinds on parts (the
+  assemblies entry above, with ids that stay the same from one export to the next), and an
+  exporter to IFC4, so a model can leave as building data and not only as meshes. Instead: named
+  boxes beside the solids in `forge/src/apartment.rs`, written to JSON, with the IFC from
+  IfcOpenShell in Python.

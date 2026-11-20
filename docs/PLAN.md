@@ -214,7 +214,8 @@ Its window schedule and elevations are generated from that model, and a made-up 
 a reviewed change: an element-level diff, the checks rerun, the drawings regenerated. All of it is
 set against the same building issued as PDFs only. It is not an exchange and not construction
 documents. Jon: a window quote needs every field on the list in D27. The spike passed (D27 step
-0). Next: forge writes the whole model (step 1).
+0), and forge now writes the whole walk-up with a stable id on every opening (step 1). Next: the
+IFC (step 2).
 
 ## Decisions
 
@@ -1140,6 +1141,26 @@ documents. Jon: a window quote needs every field on the list in D27. The spike p
     1. **Forge writes the whole model** to `out/pass3/apartment.json`: every opening with a
        stable id (storey, flat, face, index) and its size and position; walls, slabs and the roof.
        Today the file carries only the opening widths.
+       - **Done 2026-11-19** (`cargo run --release -- apartment-json`, under a second). The file
+         gains three keys and its old ones are unchanged (all 181 tests pass):
+         - `openings`: all 114, each with id, kind, storey, flat, face, size, sill, its box
+           through the wall, outward normal and wall;
+         - `parts`: 14 boxes, namely the four exterior walls, the spine and stair walls, the
+           ground slab, four floor systems and the roof;
+         - `levels`: the three storeys.
+       - **Ids** are `<space>/<face>/<index>`: `2-back-right/back/3` is a patio door,
+         `1-stair/front/0` the entry door. The space comes from where the opening is, so an id
+         doesn't depend on the order openings were made in.
+       - **Checks:** forge refuses to write a model that fails its own checks
+         (`Building::model_errors`, also in `check` mode). `tests/test_bidset.py` has 5 tests:
+         - the counts by kind and storey, and ids that are unique;
+         - glazing per flat, found from the openings, equals pass 3b's `flat_envelope` exactly;
+         - every opening sits in its wall at its size;
+         - the four wall boxes make exactly the shell.
+       - **Found:** the solid model's floor systems run through the spine and stair walls (the
+         framed model's members don't). In an IFC that is a clash, so step 2 stops them at the
+         walls.
+       - CORTENFORGE.md: no identity on a `Solid`, no IFC export (gap and suggestion).
     2. **The IFC** (`src/brownfield/bidset.py`): site, building, three storeys; walls, slabs and
        roof; windows and doors with their types (W1, D1, D2) and voids.
        - GlobalIds derived from the stable ids, so a re-export changes nothing.

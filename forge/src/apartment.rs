@@ -44,6 +44,75 @@ pub struct Opening {
     pub glazed: bool,
 }
 
+/// What an opening is: a door starts at its storey's floor (glazed: the patio door; solid: the
+/// stair's entry door), a window above it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum OpeningKind {
+    Window,
+    PatioDoor,
+    EntryDoor,
+}
+
+impl OpeningKind {
+    pub fn name(self) -> &'static str {
+        match self {
+            OpeningKind::Window => "window",
+            OpeningKind::PatioDoor => "patio_door",
+            OpeningKind::EntryDoor => "entry_door",
+        }
+    }
+}
+
+impl Face {
+    pub fn name(self) -> &'static str {
+        match self {
+            Face::Front => "front",
+            Face::Back => "back",
+            Face::Left => "left",
+            Face::Right => "right",
+        }
+    }
+
+    /// The outward normal in the building's frame.
+    pub fn outward(self) -> Vector3<f64> {
+        match self {
+            Face::Front => Vector3::new(-1.0, 0.0, 0.0),
+            Face::Back => Vector3::new(1.0, 0.0, 0.0),
+            Face::Left => Vector3::new(0.0, -1.0, 0.0),
+            Face::Right => Vector3::new(0.0, 1.0, 0.0),
+        }
+    }
+}
+
+/// One opening as the bid set names it (pass 3f, D27). The id is `<space>/<face>/<index>`: the
+/// space is the flat (`2-back-right`) or the stair of a storey (`1-stair`), found from where the
+/// opening is, and the index counts along the face within that space. So an id stays put while
+/// the layout does, whatever order the openings were made in.
+#[derive(Clone, Debug)]
+pub struct OpeningRecord {
+    pub id: String,
+    pub kind: OpeningKind,
+    pub storey: usize,
+    pub flat: Option<String>,
+    pub index: usize,
+    pub opening: Opening,
+    /// The opening through the wall's full thickness (mm), no overshoot.
+    pub lo: Vector3<f64>,
+    pub hi: Vector3<f64>,
+}
+
+/// One box of the building (mm): a wall, a floor system, the ground slab or the roof.
+#[derive(Clone, Debug)]
+pub struct Part {
+    pub id: String,
+    pub kind: &'static str,
+    /// The storey it belongs to: walls run full height from storey 1; a floor system is the floor
+    /// of the storey above it; the roof sits on the top storey.
+    pub storey: usize,
+    pub lo: Vector3<f64>,
+    pub hi: Vector3<f64>,
+}
+
 #[derive(Clone, Debug)]
 pub struct Flat {
     pub name: String,
@@ -139,20 +208,32 @@ impl Building {
         self.storeys as f64 * self.storey
     }
 
-    fn opening_box(&self, o: &Opening) -> Solid {
-        let (t, e) = (self.ext_t, CUT);
+    /// An opening's box through the wall, overshooting both faces by `e` (mm).
+    fn opening_span(&self, o: &Opening, e: f64) -> (Vector3<f64>, Vector3<f64>) {
+        let t = self.ext_t;
         let (z0, z1) = (o.sill, o.sill + o.height);
         let (a0, a1) = (o.along - o.width / 2.0, o.along + o.width / 2.0);
         match o.face {
-            Face::Front => cuboid(Vector3::new(-e, a0, z0), Vector3::new(t + e, a1, z1)),
-            Face::Back => cuboid(Vector3::new(self.depth - t - e, a0, z0), Vector3::new(self.depth + e, a1, z1)),
-            Face::Left => cuboid(Vector3::new(a0, -e, z0), Vector3::new(a1, t + e, z1)),
-            Face::Right => cuboid(Vector3::new(a0, self.length - t - e, z0), Vector3::new(a1, self.length + e, z1)),
+            Face::Front => (Vector3::new(0.0 - e, a0, z0), Vector3::new(t + e, a1, z1)),
+            Face::Back => (Vector3::new(self.depth - t - e, a0, z0), Vector3::new(self.depth + e, a1, z1)),
+            Face::Left => (Vector3::new(a0, 0.0 - e, z0), Vector3::new(a1, t + e, z1)),
+            Face::Right => (Vector3::new(a0, self.length - t - e, z0), Vector3::new(a1, self.length + e, z1)),
         }
     }
 
+    fn opening_box(&self, o: &Opening) -> Solid {
+        let (lo, hi) = self.opening_span(o, CUT);
+        cuboid(lo, hi)
+    }
+
     pub fn ground_slab(&self) -> Solid {
-        cuboid(Vector3::new(0.0, 0.0, -self.slab_t), Vector3::new(self.depth, self.length, 0.0))
+        let s = self.ground_slab_part();
+        cuboid(s.lo, s.hi)
+    }
+
+    fn ground_slab_part(&self) -> Part {
+        Part { id: "slab-ground".into(), kind: "ground_slab", storey: 1,
+               lo: Vector3::new(0.0, 0.0, -self.slab_t), hi: Vector3::new(self.depth, self.length, 0.0) }
     }
 
     /// The exterior walls, full height, openings cut.
@@ -165,33 +246,49 @@ impl Building {
 
     /// Party walls: the spine between front and back flats, and the two stair walls.
     pub fn party_walls(&self) -> Solid {
+        union_all(self.party_wall_parts().iter().map(|p| cuboid(p.lo, p.hi)).collect())
+    }
+
+    fn party_wall_parts(&self) -> Vec<Part> {
         let (w, l, h, t, p) = (self.depth, self.length, self.height(), self.ext_t, self.party_t);
         let (s0, s1) = (self.flat_len, l - self.flat_len);
-        union_all(vec![
-            cuboid(Vector3::new(w / 2.0 - p / 2.0, t, 0.0), Vector3::new(w / 2.0 + p / 2.0, s0 - p / 2.0, h)),
-            cuboid(Vector3::new(w / 2.0 - p / 2.0, s1 + p / 2.0, 0.0), Vector3::new(w / 2.0 + p / 2.0, l - t, h)),
-            cuboid(Vector3::new(t, s0 - p / 2.0, 0.0), Vector3::new(w - t, s0 + p / 2.0, h)),
-            cuboid(Vector3::new(t, s1 - p / 2.0, 0.0), Vector3::new(w - t, s1 + p / 2.0, h)),
-        ])
+        let part = |id: &str, lo, hi| Part { id: id.to_string(), kind: "party_wall", storey: 1, lo, hi };
+        vec![
+            part("spine-left", Vector3::new(w / 2.0 - p / 2.0, t, 0.0), Vector3::new(w / 2.0 + p / 2.0, s0 - p / 2.0, h)),
+            part("spine-right", Vector3::new(w / 2.0 - p / 2.0, s1 + p / 2.0, 0.0), Vector3::new(w / 2.0 + p / 2.0, l - t, h)),
+            part("stair-left", Vector3::new(t, s0 - p / 2.0, 0.0), Vector3::new(w - t, s0 + p / 2.0, h)),
+            part("stair-right", Vector3::new(t, s1 - p / 2.0, 0.0), Vector3::new(w - t, s1 + p / 2.0, h)),
+        ]
     }
 
     /// The floor systems between storeys (inside the exterior walls; the stair keeps its opening).
     pub fn floors(&self) -> Solid {
+        union_all(self.floor_parts().iter().map(|p| cuboid(p.lo, p.hi)).collect())
+    }
+
+    fn floor_parts(&self) -> Vec<Part> {
         let (w, l, t) = (self.depth, self.length, self.ext_t);
         let (s0, s1) = (self.flat_len + self.party_t / 2.0, l - self.flat_len - self.party_t / 2.0);
         let mut parts = Vec::new();
         for k in 1..self.storeys {
             let top = k as f64 * self.storey;
             let z0 = top - self.floor_t;
-            parts.push(cuboid(Vector3::new(t, t, z0), Vector3::new(w - t, s0, top)));
-            parts.push(cuboid(Vector3::new(t, s1, z0), Vector3::new(w - t, l - t, top)));
+            let part = |side: &str, lo, hi| Part { id: format!("floor-{}-{side}", k + 1), kind: "floor", storey: k + 1, lo, hi };
+            parts.push(part("left", Vector3::new(t, t, z0), Vector3::new(w - t, s0, top)));
+            parts.push(part("right", Vector3::new(t, s1, z0), Vector3::new(w - t, l - t, top)));
         }
-        union_all(parts)
+        parts
+    }
+
+    fn roof_part(&self) -> Part {
+        let h = self.height();
+        Part { id: "roof".into(), kind: "roof", storey: self.storeys,
+               lo: Vector3::new(-150.0, -150.0, h), hi: Vector3::new(self.depth + 150.0, self.length + 150.0, h + self.roof_t) }
     }
 
     pub fn roof(&self) -> Solid {
-        let h = self.height();
-        cuboid(Vector3::new(-150.0, -150.0, h), Vector3::new(self.depth + 150.0, self.length + 150.0, h + self.roof_t))
+        let r = self.roof_part();
+        cuboid(r.lo, r.hi)
     }
 
     fn panels(&self, glazed: bool, pane: f64) -> Solid {
@@ -263,5 +360,143 @@ impl Building {
         let (w, t) = (self.depth, self.ext_t);
         let piece = self.flat_len + self.party_t / 2.0 - t;
         (self.storeys - 1) as f64 * (w - 2.0 * t) * 2.0 * piece * self.floor_t / 1e9
+    }
+
+    // ---- The model as named parts, for the bid set (pass 3f, D27) ----
+
+    /// The storey an opening is in (1-based), from its sill.
+    pub fn storey_of(&self, o: &Opening) -> usize {
+        ((o.sill + 1.0) / self.storey).floor() as usize + 1
+    }
+
+    pub fn kind_of(&self, o: &Opening) -> OpeningKind {
+        let above_floor = o.sill - (self.storey_of(o) - 1) as f64 * self.storey;
+        match (above_floor < 1.0, o.glazed) {
+            (false, _) => OpeningKind::Window,
+            (true, true) => OpeningKind::PatioDoor,
+            (true, false) => OpeningKind::EntryDoor,
+        }
+    }
+
+    /// The flat an opening belongs to, from where its centre is (None in the stair core). Found
+    /// from the geometry, not from `flat_openings`, so the two can check each other.
+    fn flat_at(&self, storey: usize, c: Vector3<f64>) -> Option<String> {
+        let side = if c.y < self.flat_len { "left" } else if c.y > self.length - self.flat_len { "right" } else { return None };
+        Some(format!("{storey}-{}-{side}", if c.x < self.depth / 2.0 { "front" } else { "back" }))
+    }
+
+    /// Every opening with its stable id (see `OpeningRecord`), in id order.
+    pub fn opening_records(&self) -> Vec<OpeningRecord> {
+        let mut recs: Vec<OpeningRecord> = self.openings.iter().map(|o| {
+            let storey = self.storey_of(o);
+            let (lo, hi) = self.opening_span(o, 0.0);
+            OpeningRecord { id: String::new(), kind: self.kind_of(o), storey, flat: self.flat_at(storey, (lo + hi) / 2.0),
+                            index: 0, opening: *o, lo, hi }
+        }).collect();
+        let space = |r: &OpeningRecord| r.flat.clone().unwrap_or_else(|| format!("{}-stair", r.storey));
+        recs.sort_by(|a, b| (a.storey, space(a), a.opening.face.name()).cmp(&(b.storey, space(b), b.opening.face.name()))
+            .then(a.opening.along.total_cmp(&b.opening.along)));
+        let mut prev = String::new();
+        let mut n = 0;
+        for r in recs.iter_mut() {
+            let group = format!("{}/{}", space(r), r.opening.face.name());
+            n = if group == prev { n + 1 } else { 0 };
+            r.index = n;
+            r.id = format!("{group}/{n}");
+            prev = group;
+        }
+        recs
+    }
+
+    /// The exterior walls as four boxes: front and back run the full length, the end walls fit
+    /// between them. Together they are exactly the shell `exterior_walls` cuts its openings from.
+    pub fn exterior_wall_parts(&self) -> Vec<Part> {
+        let (w, l, h, t) = (self.depth, self.length, self.height(), self.ext_t);
+        let part = |face: Face, lo, hi| Part { id: format!("ext-{}", face.name()), kind: "exterior_wall", storey: 1, lo, hi };
+        vec![
+            part(Face::Front, Vector3::new(0.0, 0.0, 0.0), Vector3::new(t, l, h)),
+            part(Face::Back, Vector3::new(w - t, 0.0, 0.0), Vector3::new(w, l, h)),
+            part(Face::Left, Vector3::new(t, 0.0, 0.0), Vector3::new(w - t, t, h)),
+            part(Face::Right, Vector3::new(t, l - t, 0.0), Vector3::new(w - t, l, h)),
+        ]
+    }
+
+    /// Every part of the building but its openings: walls, the ground slab, floors and the roof.
+    pub fn parts(&self) -> Vec<Part> {
+        let mut v = self.exterior_wall_parts();
+        v.extend(self.party_wall_parts());
+        v.push(self.ground_slab_part());
+        v.extend(self.floor_parts());
+        v.push(self.roof_part());
+        v
+    }
+
+    /// The model's own checks before it is written out (empty when it holds): ids unique, every
+    /// opening in a known flat or the stair, inside its wall and its storey (under the floor system
+    /// above), clear of the party and stair walls where they meet the facade, no two openings
+    /// overlapping, no two walls or two horizontal parts overlapping, and the wall boxes summing to
+    /// the shell.
+    pub fn model_errors(&self) -> Vec<String> {
+        let mut errs = Vec::new();
+        let recs = self.opening_records();
+        let parts = self.parts();
+        let vol = |lo: Vector3<f64>, hi: Vector3<f64>| (hi - lo).map(|d| d.max(0.0)).product();
+        let overlap = |a: (Vector3<f64>, Vector3<f64>), b: (Vector3<f64>, Vector3<f64>)| vol(a.0.sup(&b.0), a.1.inf(&b.1));
+        let mut ids: Vec<&str> = recs.iter().map(|r| r.id.as_str()).collect();
+        ids.sort();
+        ids.dedup();
+        if ids.len() != recs.len() {
+            errs.push(format!("{} openings but {} distinct ids", recs.len(), ids.len()));
+        }
+        let (p, mid) = (self.party_t, self.depth / 2.0);
+        let junctions = [self.flat_len, self.length - self.flat_len];
+        for r in &recs {
+            if let Some(f) = &r.flat {
+                if !self.flats.iter().any(|g| &g.name == f) {
+                    errs.push(format!("{}: no flat {f}", r.id));
+                }
+            }
+            let wall = parts.iter().find(|w| w.id == format!("ext-{}", r.opening.face.name())).expect("four walls");
+            if (0..3).any(|i| r.lo[i] < wall.lo[i] - 0.01 || r.hi[i] > wall.hi[i] + 0.01) {
+                errs.push(format!("{}: outside {}", r.id, wall.id));
+            }
+            let base = (r.storey - 1) as f64 * self.storey;
+            if r.opening.sill < base - 0.01 || r.opening.sill + r.opening.height > base + self.storey - self.floor_t + 0.01 {
+                errs.push(format!("{}: not within storey {} under the floor system", r.id, r.storey));
+            }
+            let (a0, a1) = (r.opening.along - r.opening.width / 2.0, r.opening.along + r.opening.width / 2.0);
+            let walls_meeting: Vec<f64> = match r.opening.face {
+                Face::Front | Face::Back => junctions.to_vec(),
+                Face::Left | Face::Right => vec![mid],
+            };
+            if walls_meeting.iter().any(|&c| a1 > c - p / 2.0 && a0 < c + p / 2.0) {
+                errs.push(format!("{}: meets a party or stair wall", r.id));
+            }
+        }
+        for (i, a) in recs.iter().enumerate() {
+            for b in &recs[i + 1..] {
+                if overlap((a.lo, a.hi), (b.lo, b.hi)) > 0.0 {
+                    errs.push(format!("openings {} and {} overlap", a.id, b.id));
+                }
+            }
+        }
+        // Walls against walls, and slab, floors and roof against each other. Walls against floors
+        // are left out: this model's floor systems run through the spine and stair walls (the
+        // framed model's members never overlap; `framing` mode checks every pair).
+        let is_wall = |p: &Part| p.kind.ends_with("_wall");
+        for (i, a) in parts.iter().enumerate() {
+            for b in parts[i + 1..].iter().filter(|b| is_wall(a) == is_wall(b)) {
+                if overlap((a.lo, a.hi), (b.lo, b.hi)) > 0.0 {
+                    errs.push(format!("parts {} and {} overlap", a.id, b.id));
+                }
+            }
+        }
+        let (w, l, h, t) = (self.depth, self.length, self.height(), self.ext_t);
+        let shell = (w * l - (w - 2.0 * t) * (l - 2.0 * t)) * h;
+        let walls: f64 = self.exterior_wall_parts().iter().map(|p| vol(p.lo, p.hi)).sum();
+        if ((walls - shell) / shell).abs() > 1e-9 {
+            errs.push(format!("wall boxes {:.6} m3 against the shell's {:.6}", walls / 1e9, shell / 1e9));
+        }
+        errs
     }
 }
