@@ -6,6 +6,20 @@ data center on the same site.
 
 ## Status (2026-11-15)
 
+**The repository's front door (2026-11-20, Jon: "go ahead with 1-3").**
+- **`README.md` is a front page:** the question, who it's for, headline findings each linked to its
+  report, the design in brief, and a map of the folders. It's 154 lines, down from 303.
+- **`docs/README.md` indexes every report** in reading order, under plain titles with a one-line
+  finding each. It also holds:
+  - the campus's full design description and the garden's numbers, which lived only in the
+    README;
+  - the working files and a glossary (pass, D-number, module, known cases);
+  - each report's command and code.
+
+The pass-by-pass detail that was in the README is in the index and the reports, and every link
+was checked. Not done, on purpose: moving `docs/pass3/`'s images (16 source files write there),
+splitting `src/brownfield/` into subpackages, and renaming passes.
+
 **Pass 1 done (first full run): [docs/pass1/](pass1/README.md).** 205 coal plant sites, 154.8 GW
 of coal leaving; both known cases pass (Homer City 3rd of 205 on *can host*, Bull Run 38th); 18
 sites in the top quarter on both axes. Jon picked **Homer City** for pass 2 (D6).
