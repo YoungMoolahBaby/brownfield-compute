@@ -773,3 +773,40 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
 - **PublicSource** (2025-05-05; https://www.publicsource.org/coal-gas-transition-homer-city-pennsylvania/):
   - Indiana County's director of emergency management: "funding a full-time emergency medical
     service can't be done with raffle ticket sales, bingo and chicken dinners".
+
+## The bid set as data (pass 3f, D27, 2026-11-19)
+
+- **Open formats.** IFC4 (ISO 16739-1:2018) for the model; buildingSMART IDS 1.0 (2024) for
+  machine-checkable information requirements; BCF for issues tied to model elements. The tools
+  are IfcOpenShell 0.9.0.post1, ifctester 0.9.0 and ifcdiff 0.9.0 (PyPI, 2026-09/10), plus That
+  Open's web-ifc 0.0.78 (npm, 2026-09-21, MPL-2.0) as a second, independent reader.
+- **Safety glazing, IBC 2018 2406.4.** Read on UpCodes' "Pennsylvania Building Code 2018
+  (adopts with amendments)" (https://up.codes/viewer/pennsylvania/ibc-2018/chapter/24/glass-and-glazing,
+  2026-11-19). Pennsylvania's amendments were not checked.
+  - **2406.4.1:** glazing in all fixed and operable panels of swinging, sliding and bifold
+    doors is a hazardous location. Its exceptions are a 3-inch sphere that can't pass,
+    decorative glazing, revolving doors' curved panels, and commercial refrigerated cabinets.
+  - **2406.4.2:** glazing beside a door is hazardous when both of these hold:
+    - its nearest vertical edge is within a 24-inch arc of either vertical edge of the closed
+      door;
+    - its bottom edge is less than 60 inches above the walking surface.
+
+    It has four exceptions: decorative glazing; an intervening wall or barrier; a closet or
+    storage door no more than 3 ft deep; and glazing on the latch side of, and perpendicular
+    to, the door, in R-2 dwelling units. None is about the fixed panel of a patio door.
+  - **2406.4.3:** a window is hazardous when all four of these hold:
+    - a pane is over 9 ft2;
+    - its bottom edge is under 18 in above the floor;
+    - its top edge is over 36 in above the floor;
+    - a walking surface is within 36 in.
+
+    The exceptions are decorative glazing, a protective rail, and outboard panes 25 ft or more up.
+- **Emergency escape and rescue openings, IBC 2018 section 1030 (2021: 1031): not read.**
+  UpCodes' chapter 10 pages (Pennsylvania 2018, Colorado 2021) cut off before the section, and
+  codes.iccsafe.org returned 403. Where escape openings are required for R-2, and their minimum
+  sizes, still need the code's text.
+- **Fenestration U-factor, 2018 IECC climate zone 5: U-0.30.** This is pass 3's source
+  (`pass3.envelope.window_u`), reused as the IDS's limit (`bidset.code.fenestration_u_max`).
+- **CSI MasterFormat 2020, Division 08 Openings.** The level-2 titles used are 08 10 00 Doors and
+  Frames, 08 50 00 Windows, and the division 08 00 00 Openings. The level-3 sections named as
+  examples are 08 32 00 Sliding Glass Doors and 08 51-08 54 by frame material.

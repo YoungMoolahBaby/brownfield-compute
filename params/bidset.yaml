@@ -1,0 +1,46 @@
+# Pass 3f (D27): the numbers the bid set's checks use. The fields a window quote needs (Jon,
+# 2026-11-19) are names, not numbers, and live in src/brownfield/bidset.py's IDS table.
+#
+# IBC 2018 is the edition Pennsylvania's UCC adopted. Its text was read on UpCodes'
+# "Pennsylvania Building Code 2018 (adopts with amendments)", chapter 24
+# (https://up.codes/viewer/pennsylvania/ibc-2018/chapter/24/glass-and-glazing, 2026-11-19);
+# Pennsylvania's amendments were not checked. The emergency escape section (1030) could not be
+# read (the chapter page cut off before it, codes.iccsafe.org refused), so no escape sizes here.
+
+code:
+  fenestration_u_max:
+    value: 0.30
+    unit: Btu/h ft2 F, the highest U-factor a window or glazed door may have (climate zone 5)
+    conf: medium
+    source: "2018 IECC climate zone 5: fenestration U-0.30, the source of pass3.envelope.window_u (2018 IECC zone 5 and the Lebanon County residential energy worksheet)"
+  safety_glazing:
+    door_arc_in:
+      value: 24
+      unit: in, glazing whose nearest vertical edge is within this arc of either vertical edge of a closed door is a hazardous location (with the bottom-edge test below)
+      conf: high
+      source: "IBC 2018 2406.4.2 Glazing adjacent to doors, on UpCodes (Pennsylvania Building Code 2018): 'within a 24-inch (610 mm) arc of either vertical edge of the door in a closed position'"
+    door_bottom_in:
+      value: 60
+      unit: in above the walking surface, the bottom exposed edge below which glazing next to a door is a hazardous location
+      conf: high
+      source: "IBC 2018 2406.4.2, same page: 'less than 60 inches (1524 mm) above the walking surface'"
+    window_area_ft2:
+      value: 9
+      unit: ft2, an individual pane larger than this is one of 2406.4.3's four conditions for a window
+      conf: high
+      source: "IBC 2018 2406.4.3 Glazing in windows, same page: exposed area of an individual pane greater than 9 square feet (0.84 m2)"
+    window_bottom_in:
+      value: 18
+      unit: in above the floor, a bottom edge below this is one of 2406.4.3's conditions
+      conf: high
+      source: "IBC 2018 2406.4.3, same page: bottom edge less than 18 inches (457 mm) above the floor"
+    window_top_in:
+      value: 36
+      unit: in above the floor, a top edge above this is one of 2406.4.3's conditions
+      conf: high
+      source: "IBC 2018 2406.4.3, same page: top edge greater than 36 inches (914 mm) above the floor"
+    window_walk_in:
+      value: 36
+      unit: in, horizontally from the plane of the glazing, a walking surface within this is one of 2406.4.3's conditions
+      conf: high
+      source: "IBC 2018 2406.4.3, same page: one or more walking surfaces within 36 inches (914 mm), measured horizontally in a straight line, of the plane of the glazing"

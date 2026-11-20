@@ -92,13 +92,13 @@ def ifc(tmp_path_factory):
     return apt, frame, params, path
 
 
-def _results(path, apt):
-    return {label.split(" (")[0]: ok for label, ok, _ in bidset.check(path, apt)}
+def _results(path, apt, p):
+    return {label.split(" (")[0]: ok for label, ok, _ in bidset.check(path, apt, p)}
 
 
 def test_the_ifc_holds_to_forges_model(ifc):
-    apt, _, _, path = ifc
-    res = bidset.check(path, apt)
+    apt, _, p, path = ifc
+    res = bidset.check(path, apt, p)
     assert all(ok for _, ok, _ in res), bidset.report(res)
 
 
@@ -110,26 +110,28 @@ def test_the_ifc_is_the_same_every_export(ifc, tmp_path):
 
 
 def test_the_check_catches_a_window_moved_or_resized(ifc):
-    apt, _, _, path = ifc
+    apt, _, p, path = ifc
     moved = copy.deepcopy(apt)
     o = moved["openings"][0]
     o["panel_lo_m"][2] += 0.005
     o["panel_hi_m"][2] += 0.005
-    assert _results(path, moved)["every wall, slab, window and door where forge has it"] is False
+    assert _results(path, moved, p)["every wall, slab, window and door where forge has it"] is False
     resized = copy.deepcopy(apt)
     resized["openings"][0]["width_m"] += 0.001
-    assert _results(path, resized)["sizes exact"] is False
+    assert _results(path, resized, p)["sizes exact"] is False
 
 
 def test_types_and_their_u_factors(ifc):
     apt, _, p, path = ifc
-    assert bidset.types(apt) == {("window", 0.9144, 1.2192): "W1", ("patio_door", 1.8288, 2.032): "D1",
-                                 ("entry_door", 1.0668, 2.032): "D2"}
+    # The windows the code calls for safety glazing in are their own type, W2.
+    assert bidset.types(apt, bidset.safety_glazing(apt, p)) == {
+        ("window", 0.9144, 1.2192, False): "W1", ("window", 0.9144, 1.2192, True): "W2",
+        ("patio_door", 1.8288, 2.032, True): "D1", ("entry_door", 1.0668, 2.032, False): "D2"}
     f = ifcopenshell.open(str(path))
     u = {t.Name: ue.get_psets(t)["Pset_WindowCommon" if t.is_a("IfcWindowType") else "Pset_DoorCommon"]["ThermalTransmittance"]
          for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")}
     window_u, door_u = p["pass3.envelope.window_u"].value * BTU_FT2, p["pass3.envelope.door_u"].value * BTU_FT2
-    assert u == pytest.approx({"W1": window_u, "D1": window_u, "D2": door_u})
+    assert u == pytest.approx({"W1": window_u, "W2": window_u, "D1": window_u, "D2": door_u})
 
 
 def test_each_u_factor_says_where_it_comes_from(ifc):
@@ -154,10 +156,10 @@ def test_bearing_walls_follow_the_frame(ifc):
 
 
 def test_the_check_catches_a_missing_part(ifc):
-    apt, _, _, path = ifc
+    apt, _, p, path = ifc
     extra = copy.deepcopy(apt)
     extra["parts"].append(dict(extra["parts"][-1], id="roof-2"))
-    assert _results(path, extra)["every wall, slab and roof of forge's model, once, and nothing else"] is False
+    assert _results(path, extra, p)["every wall, slab and roof of forge's model, once, and nothing else"] is False
 
 
 def test_an_addendum_changes_only_what_it_changes(ifc, tmp_path):
@@ -221,3 +223,121 @@ def test_web_ifc_check_fails_on_an_empty_mesh_or_a_missing_size(ifc, monkeypatch
     assert res["web-ifc's own geometry: every wall, slab, window and door where forge has it"] is False
     assert res["web-ifc: sizes exact"] is False
     assert res["web-ifc: glazing per flat equals pass 3b's flat_envelope"] is False
+
+
+# ---- What a quote needs: safety glazing and the IDS (step 3) ----
+
+def test_safety_glazing_by_the_layout(ifc):
+    # Every patio door (2406.4.1), and the two windows beside each, whose edges are
+    # 45 ft / 7 - 6 ft / 2 - 3 ft / 2 = 23.14 in from the door's: inside the 24 in arc, with sills
+    # at 36 in, under 60 (2406.4.2). The 3 x 4 ft windows' sills are above 18 in, so 2406.4.3 doesn't
+    # reach them.
+    apt, _, p, _ = ifc
+    h = bidset.safety_glazing(apt, p)
+    kinds = Counter(r.split(":")[0] for r in h.values())
+    assert kinds == {"IBC 2018 2406.4.1": 12, "IBC 2018 2406.4.2": 24}
+    gap = 45 * 12 / 7 - 36 - 18
+    assert all(f"{gap:.1f} in from the edge of door" in r for r in h.values() if "4.2" in r)
+    doors = {o["id"] for o in apt["openings"] if o["kind"] == "patio_door"}
+    assert doors <= set(h)
+
+
+@pytest.fixture(scope="module")
+def checklist(ifc, tmp_path_factory):
+    _, _, p, _ = ifc
+    path = tmp_path_factory.mktemp("ids") / "bidset.ids"
+    return bidset.write_ids(p, path), path
+
+
+def test_the_ids_is_valid_and_reads_back(ifc, checklist):
+    # Read back from the file, every specification carries the identifier it was written with.
+    doc, path = checklist
+    want = [f"{f['key']}/{on}" for f in bidset.ids_fields(ifc[2]) for on in f["on"]]
+    assert [s.identifier for s in doc.specifications] == want
+    assert len(want) == 52 and len(set(want)) == len(want)
+
+
+def test_what_the_walk_up_carries(ifc, checklist):
+    rows = bidset.run_ids(checklist[0], ifc[3])
+    carried, fields = bidset.ids_carried(rows)
+    assert fields == 28
+    assert carried == ["type mark", "storey", "exterior or not", "unit width", "unit height",
+                       "U-factor within the code's limit", "in a wall", "the wall's construction (on exterior walls)"]
+
+
+def _complete(path, out):
+    """A copy of the bid set with every field a quote needs filled in (made-up values), to show
+    the IDS passes a model that has them."""
+    import ifcopenshell.api.classification as classification
+    import ifcopenshell.api.material as material
+    import ifcopenshell.api.pset as pset
+
+    f = ifcopenshell.open(str(path))
+    mf = f.by_type("IfcClassification")[0]
+    vinyl = material.add_material(f, name="vinyl")
+    for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType"):
+        window = t.is_a("IfcWindowType")
+        material.assign_material(f, products=[t], material=vinyl)
+        classification.add_reference(f, products=[t], identification="08 53 13" if window else "08 32 13",
+                                     name="made up for the test", classification=mf)
+        if not window:
+            t.OperationType = "SLIDING_TO_LEFT"
+        common = next(ps for ps in t.HasPropertySets if ps.Name in ("Pset_WindowCommon", "Pset_DoorCommon"))
+        pset.edit_pset(f, pset=common, properties={"WindLoadRating": "LC-PG50", **({"FireExit": False} if window else {})})
+        glass = pset.add_pset(f, product=t, name="Pset_DoorWindowGlazingType")
+        pset.edit_pset(f, pset=glass, properties={"IsCoated": True, "FillGas": "argon", "IsTempered": True,
+                                                  "SolarHeatGainTransmittance": 0.3})
+        ours = pset.add_pset(f, product=t, name="BidSet_Unit")
+        label = f.createIfcLabel
+        pset.edit_pset(f, pset=ours, properties={
+            "RoughOpeningWidth": f.createIfcLengthMeasure(1.0), "RoughOpeningHeight": f.createIfcLengthMeasure(1.3),
+            "Operation": label("casement"), "FrameColourInside": label("white"), "FrameColourOutside": label("bronze"),
+            "ObscureGlass": False, "Screen": True, "Grilles": label("none"), "HardwareFinish": label("white"),
+            "InstallType": label("nail fin"), "SafetyGlazing": label("tempered")})
+    f.write(str(out))
+    return f
+
+
+def test_the_ids_passes_a_complete_model_and_fails_a_broken_one(ifc, checklist, tmp_path):
+    doc, ids_path = checklist
+    full = tmp_path / "complete.ifc"
+    f = _complete(ifc[3], full)
+    rows = bidset.run_ids(doc, full)
+    assert all(r["status"] for r in rows), [r["id"] for r in rows if not r["status"]]
+    # And every one applies to something (a specification that applies to nothing passes).
+    assert all(r["applicable"] > 0 for r in rows), [r["id"] for r in rows if not r["applicable"]]
+    applies = {r["id"]: r["applicable"] for r in rows}
+    assert (applies["safety/IFCWINDOW+hazard"], applies["safety/IFCDOOR+hazard"]) == (24, 12)
+    w = f.by_type("IfcWindow")[0]
+    w.OverallWidth = None
+    broken = tmp_path / "broken.ifc"
+    f.write(str(broken))
+    failed = [r["id"] for r in bidset.run_ids(bidset.read_ids(ids_path), broken) if not r["status"]]
+    assert failed == ["width/IFCWINDOW"]
+
+
+def test_safety_glazing_finds_a_sidelite_tight_against_a_door(ifc):
+    # Edge to edge with the entry door: the gap is zero, or -1e-15 to rounding, and still counts.
+    apt, _, p, _ = ifc
+    a = copy.deepcopy(apt)
+    door = next(o for o in a["openings"] if o["kind"] == "entry_door")
+    w = 18 * 0.0254
+    side = dict(door, id="1-stair/front/sidelite", kind="window", glazed=True, width_m=w,
+                along_m=door["along_m"] + door["width_m"] / 2 + w / 2)
+    side["lo_m"] = [door["lo_m"][0], door["hi_m"][1], door["lo_m"][2]]
+    side["hi_m"] = [door["hi_m"][0], door["hi_m"][1] + w, door["hi_m"][2]]
+    a["openings"].append(side)
+    assert "2406.4.2: 0.0 in" in bidset.safety_glazing(a, p)[side["id"]]
+
+
+def test_safety_glazing_looks_round_a_corner(ifc):
+    # A window in the end wall within the arc of a door at the corner of the facade is flagged,
+    # and the reason says exception 4 turns on the door's handing.
+    apt, _, p, _ = ifc
+    a = copy.deepcopy(apt)
+    win = next(o for o in a["openings"] if o["face"] == "left" and o["storey"] == 1)
+    door = next(o for o in a["openings"] if o["kind"] == "patio_door" and o["storey"] == 1 and o["face"] == "front")
+    door["lo_m"][1], door["hi_m"][1] = 0.2, 0.2 + door["width_m"]  # slid to the corner
+    win["lo_m"][0], win["hi_m"][0] = 0.3, 0.3 + win["width_m"]     # and the window to it
+    reason = bidset.safety_glazing(a, p).get(win["id"], "")
+    assert "round the corner" in reason and "handing" in reason

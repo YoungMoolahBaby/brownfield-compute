@@ -18,6 +18,7 @@ it changed. Then `check` reads the file back and holds it to forge's model (see 
 from __future__ import annotations
 
 import json
+import math
 import uuid
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -91,20 +92,22 @@ def load() -> tuple[dict, dict]:
     return apt, read_json("frame.json", "run `uv run brownfield frame`")
 
 
-def types(apt: dict) -> dict[tuple, str]:
-    """Type marks by (kind, width, height): windows W1, W2... by size, then doors D1, D2... by
-    kind (patio, entry) and size."""
-    sizes = sorted({(KINDS.index(o["kind"]), o["width_m"], o["height_m"]) for o in apt["openings"]})
+def types(apt: dict, hazards=()) -> dict[tuple, str]:
+    """Type marks by (kind, width, height, safety glazing): windows W1, W2... by size and then
+    by safety glazing, then doors D1, D2... by kind (patio, entry), size and the same. A unit the
+    code says must be safety glazed (`hazards`, from `safety_glazing`) is its own type, so a
+    schedule priced by type can't miss it."""
+    sizes = sorted({(KINDS.index(o["kind"]), o["width_m"], o["height_m"], o["id"] in hazards) for o in apt["openings"]})
     marks, n = {}, Counter()
-    for k, w, h in sizes:
+    for k, w, h, safe in sizes:
         letter = "W" if KINDS[k] == "window" else "D"
         n[letter] += 1
-        marks[(KINDS[k], w, h)] = f"{letter}{n[letter]}"
+        marks[(KINDS[k], w, h, safe)] = f"{letter}{n[letter]}"
     return marks
 
 
-def mark_of(o: dict, marks: dict) -> str:
-    return marks[(o["kind"], o["width_m"], o["height_m"])]
+def mark_of(o: dict, marks: dict, hazards=()) -> str:
+    return marks[(o["kind"], o["width_m"], o["height_m"], o["id"] in hazards)]
 
 
 def _inches(mm: float) -> str:
@@ -257,6 +260,9 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
         e = _make(f, "IfcWallType", f"walltype/{name}", name, PredefinedType="STANDARD",
                   Description=f"{t['rows']} row{'s' if t['rows'] > 1 else ''} of {t['size']} studs at "
                               f"{t['spacing_mm']:.1f} mm (brownfield frame, pass 3b)")
+        # What a window or door installer needs to know about the wall it goes in (pass 3f step 3).
+        ps = pset.add_pset(f, product=e, name="BidSet_Wall")
+        pset.edit_pset(f, pset=ps, properties={"Construction": name})
         wall_type[name] = e
     walls = {}
     for part in apt["parts"]:
@@ -284,14 +290,16 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
         spatial.assign_container(f, products=[e], relating_structure=storeys[k])
         _place_box(f, body, e, part["lo_m"], part["hi_m"])
 
-    # Window and door types.
-    marks = types(apt)
+    # Window and door types: by size, and by whether the code calls for safety glazing.
+    hazards = safety_glazing(apt, params)
+    marks = types(apt, hazards)
     type_of = {}
-    for (kind, w, h), mark in sorted(marks.items(), key=lambda kv: kv[1]):
+    for (kind, w, h, safe), mark in sorted(marks.items(), key=lambda kv: kv[1]):
         cls = "IfcWindowType" if kind == "window" else "IfcDoorType"
         attrs = {"PredefinedType": "WINDOW" if kind == "window" else "DOOR"}
         e = _make(f, cls, f"type/{mark}", mark, **attrs,
-                  Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in.")
+                  Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in."
+                              + (" Safety glazing: IBC 2018 2406.4 calls for it here." if safe else ""))
         ps = pset.add_pset(f, product=e, name="Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon")
         u = params[U_PARAM[kind]]
         pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": True,
@@ -305,7 +313,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
     # Every opening: the void in its wall, and the window or door that fills it.
     for o in apt["openings"]:
         axes = _face_axes(o["outward"])
-        mark = mark_of(o, marks)
+        mark = mark_of(o, marks, hazards)
         void = _make(f, "IfcOpeningElement", f"opening/{o['id']}", o["id"], PredefinedType="OPENING")
         feature.add_feature(f, feature=void, element=walls[o["wall"]])
         _place_box(f, body, void, o["lo_m"], o["hi_m"], axes)
@@ -322,7 +330,10 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
             "Id": o["id"], "Kind": o["kind"], "Glazed": o["glazed"], "Flat": o["flat"] or f"{o['storey']}-stair",
             "Face": o["face"], "Index": o["index"],
             # Typed as a length, so it carries the project's metre.
-            "SillHeightAboveFloor": f.createIfcLengthMeasure(o["sill_above_floor_m"])})
+            "SillHeightAboveFloor": f.createIfcLengthMeasure(o["sill_above_floor_m"]),
+            # Our reading of IBC 2018 2406.4.1-2406.4.3 from the geometry (`safety_glazing`).
+            "SafetyGlazingRequired": o["id"] in hazards,
+            "SafetyGlazingReason": hazards.get(o["id"], NO_HAZARD)})
 
     _derive_gids(f)
     _sort_sets(f)
@@ -356,7 +367,7 @@ def body_text(path: Path) -> list[str]:
     return lines[lines.index("DATA;"):]
 
 
-def check(path: Path, apt: dict) -> list[tuple[str, bool, str]]:
+def check(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
     """Read the IFC back and hold it to forge's model: every part, opening and unit there and
     nothing else, counts and types, sizes, every element where forge has it (to 1 mm), no clashes,
     glazing per flat against pass 3b, unique GlobalIds, and IfcOpenShell's schema validation with
@@ -365,7 +376,8 @@ def check(path: Path, apt: dict) -> list[tuple[str, bool, str]]:
     res = []
     ops = {o["id"]: o for o in apt["openings"]}
     parts = {pt["id"]: pt for pt in apt["parts"]}
-    marks = types(apt)
+    hazards = safety_glazing(apt, params)
+    marks = types(apt, hazards)
     fills = f.by_type("IfcWindow") + f.by_type("IfcDoor")
     built = f.by_type("IfcWall") + f.by_type("IfcSlab")
     voids = f.by_type("IfcOpeningElement")
@@ -392,7 +404,7 @@ def check(path: Path, apt: dict) -> list[tuple[str, bool, str]]:
         return t.Name if t else None
 
     got = Counter(type_name(e) for e in fills)
-    want = Counter(mark_of(o, marks) for o in ops.values())
+    want = Counter(mark_of(o, marks, hazards) for o in ops.values())
     res.append(("windows and doors by type", got == want, ", ".join(f"{k} {v}" for k, v in sorted(got.items(), key=str))))
     bad = [e.Name for e in fills if abs(e.OverallWidth - ops[e.Name]["width_m"]) > 1e-9
            or abs(e.OverallHeight - ops[e.Name]["height_m"]) > 1e-9]
@@ -444,6 +456,243 @@ def check(path: Path, apt: dict) -> list[tuple[str, bool, str]]:
 
 def report(res: list[tuple[str, bool, str]]) -> str:
     return "\n".join(f"{'ok  ' if ok else 'FAIL'} {label}: {detail}" for label, ok, detail in res)
+
+
+# ---- Safety glazing (IBC 2018 2406.4.1-2406.4.3), from forge's geometry ----
+
+FT2 = 0.3048 ** 2
+TOL_M = 1e-9  # edges that touch, to rounding
+NO_HAZARD = "none found under IBC 2018 2406.4.1-2406.4.3 (2406.4.4-2406.4.7 not assessed)"
+
+
+def _plan_gap(a: dict, b: dict) -> float:
+    """The plan distance (m) between two openings' boxes: along the face for two in one wall,
+    corner to corner for two in walls that meet."""
+    d = [max(0.0, b["lo_m"][i] - a["hi_m"][i], a["lo_m"][i] - b["hi_m"][i]) for i in (0, 1)]
+    return float(np.hypot(*d))
+
+
+def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
+    """The openings whose glazing IBC 2018 2406.4.1-2406.4.3 make a hazardous location (so it must
+    be safety glazing), each with the reason, from forge's geometry and params/bidset.yaml:
+
+    - 2406.4.1: glazing in a door (the patio doors);
+    - 2406.4.2: glazing within the arc of a closed door's vertical edge, measured in plan on the
+      same storey (along the wall, or round a corner), with its bottom edge under the height above
+      the floor. Exceptions 1-3 (decorative glazing, a wall between, a closet door) don't fit
+      this building. Exception 4 (on the latch side of, and perpendicular to, a door in an R-2
+      unit) needs the door's handing, which the model doesn't carry, so glazing round a corner
+      is flagged and the reason says so;
+    - 2406.4.3: a pane over the area, its bottom edge under and top edge over the heights, and a
+      walking surface within the distance. The unit's whole glass stands in for its largest pane
+      (the model has no panes), and the floor inside, which meets the wall, is the walking surface.
+
+    Not assessed: 2406.4.4 (guards and railings), 2406.4.5 (wet areas), 2406.4.6 and 2406.4.7
+    (beside stairs and landings, and at the bottom of a stair). The model has no stair flights or
+    landings, so the stair windows wait for them.
+    """
+    c = "bidset.code.safety_glazing."
+    arc, door_bottom = params[c + "door_arc_in"].value * IN, params[c + "door_bottom_in"].value * IN
+    area, w_bottom, w_top, walk = (params[c + "window_area_ft2"].value * FT2, params[c + "window_bottom_in"].value * IN,
+                                   params[c + "window_top_in"].value * IN, params[c + "window_walk_in"].value * IN)
+    floor_from_glass = 0.0  # the floor inside runs to the wall
+    ops = apt["openings"]
+    doors = [d for d in ops if d["kind"] != "window"]
+    out = {}
+    for o in ops:
+        if not o["glazed"]:
+            continue
+        if o["kind"] != "window":
+            out[o["id"]] = "IBC 2018 2406.4.1: glazing in a door"
+            continue
+        for d in doors:
+            if d["storey"] != o["storey"]:
+                continue
+            gap = _plan_gap(o, d)
+            if gap <= arc + TOL_M and o["sill_above_floor_m"] < door_bottom:
+                where = ("" if d["wall"] == o["wall"] else
+                         ", round the corner (exception 4 may apply on the door's latch side; the model has no handing)")
+                out[o["id"]] = (f"IBC 2018 2406.4.2: {gap / IN:.1f} in from the edge of door {d['id']}{where}, "
+                                f"bottom edge {o['sill_above_floor_m'] / IN:.0f} in above the floor")
+                break
+        bottom, top = o["sill_above_floor_m"], o["sill_above_floor_m"] + o["height_m"]
+        if (o["id"] not in out and o["width_m"] * o["height_m"] > area and bottom < w_bottom and top > w_top
+                and floor_from_glass <= walk):
+            out[o["id"]] = "IBC 2018 2406.4.3: a large pane low in the wall"
+    return out
+
+
+# ---- The IDS: what a bid set's windows and doors must carry ----
+
+UNIT_PSET = {"IFCWINDOW": "Pset_WindowCommon", "IFCDOOR": "Pset_DoorCommon"}
+GLAZING = "Pset_DoorWindowGlazingType"
+OPERATIONS = ["casement", "awning", "hopper", "double-hung", "single-hung", "horizontal slider", "fixed", "tilt-turn"]
+SAFETY_GLAZING = ["tempered", "laminated"]
+
+
+def ids_fields(params: dict) -> list[dict]:
+    """The fields a quote needs (Jon, 2026-11-19, and D27's list), each as an IDS requirement:
+    which classes it applies to, whether it is a standard IFC property or one of ours (BidSet_),
+    and the facet. Standard where IFC4 has the property; ours where it doesn't."""
+    from ifctester import ids
+
+    def prop(ps, name, value=None, dt=None):
+        return lambda cls: ids.Property(propertySet=ps(cls) if callable(ps) else ps, baseName=name, value=value, dataType=dt)
+
+    def const(facet):
+        return lambda cls: facet()
+
+    # The code's U-0.30 in W/m2K, rounded up to 3 decimals: a unit rated U-0.30 and written
+    # rounded (1.7035) still passes, and nothing over 0.3001 does.
+    u_max = math.ceil(params["bidset.code.fenestration_u_max"].value * BTU_FT2 * 1e3) / 1e3
+    door_ops = [x for x in ifcopenshell.ifcopenshell_wrapper.schema_by_name("IFC4")
+                .declaration_by_name("IfcDoorTypeOperationEnum").enumeration_items() if x not in ("USERDEFINED", "NOTDEFINED")]
+    both, windows, glazed = ("IFCWINDOW", "IFCDOOR"), ("IFCWINDOW",), ("IFCWINDOW", "IFCDOOR+glazed")
+    unit = lambda cls: UNIT_PSET[cls]  # noqa: E731
+    return [
+        dict(key="type", label="type mark", on=both, std=True, facet=prop(unit, "Reference")),
+        dict(key="storey", label="storey", on=both, std=True,
+             facet=const(lambda: ids.PartOf(name="IFCBUILDINGSTOREY", relation="IFCRELCONTAINEDINSPATIALSTRUCTURE"))),
+        dict(key="external", label="exterior or not", on=both, std=True, facet=prop(unit, "IsExternal")),
+        dict(key="width", label="unit width", on=both, std=True, facet=const(lambda: ids.Attribute(name="OverallWidth"))),
+        dict(key="height", label="unit height", on=both, std=True, facet=const(lambda: ids.Attribute(name="OverallHeight"))),
+        dict(key="ro_width", label="rough opening width", on=both, std=False,
+             note="IFC's opening element is the hole in the model; this is the size to frame",
+             facet=prop("BidSet_Unit", "RoughOpeningWidth", dt="IFCLENGTHMEASURE")),
+        dict(key="ro_height", label="rough opening height", on=both, std=False,
+             note="IFC's opening element is the hole in the model; this is the size to frame",
+             facet=prop("BidSet_Unit", "RoughOpeningHeight", dt="IFCLENGTHMEASURE")),
+        dict(key="operation", label="operation", on=windows, std=False,
+             note="in a supplier's words; IFC4 describes a panel's operation in IfcWindowPanelProperties, in panel terms",
+             facet=prop("BidSet_Unit", "Operation", ids.Restriction(options={"enumeration": OPERATIONS}), "IFCLABEL")),
+        dict(key="door_operation", label="operation (on the door type)", on=("IFCDOORTYPE",), std=True,
+             facet=const(lambda: ids.Attribute(name="OperationType", value=ids.Restriction(options={"enumeration": door_ops})))),
+        dict(key="material", label="frame material", on=both, std=True, facet=const(lambda: ids.Material())),
+        dict(key="colour_in", label="frame colour inside", on=both, std=False, note="IFC's styles colour a drawing, not a product", facet=prop("BidSet_Unit", "FrameColourInside", dt="IFCLABEL")),
+        dict(key="colour_out", label="frame colour outside", on=both, std=False, note="IFC's styles colour a drawing, not a product", facet=prop("BidSet_Unit", "FrameColourOutside", dt="IFCLABEL")),
+        dict(key="low_e", label="glass: low-e coating (yes or no)", on=glazed, std=True, facet=prop(GLAZING, "IsCoated", dt="IFCBOOLEAN")),
+        dict(key="gas", label="glass: gas fill", on=glazed, std=True, facet=prop(GLAZING, "FillGas", dt="IFCLABEL")),
+        dict(key="tempered", label="glass: tempered (yes or no)", on=glazed, std=True, facet=prop(GLAZING, "IsTempered", dt="IFCBOOLEAN")),
+        dict(key="obscure", label="glass: obscure (yes or no)", on=glazed, std=False, facet=prop("BidSet_Unit", "ObscureGlass", dt="IFCBOOLEAN")),
+        dict(key="u", label="U-factor within the code's limit", on=glazed, std=True,
+             facet=prop(unit, "ThermalTransmittance", ids.Restriction(options={"maxInclusive": u_max}, base="double"),
+                        "IFCTHERMALTRANSMITTANCEMEASURE")),
+        dict(key="shgc", label="SHGC", on=glazed, std=True, facet=prop(GLAZING, "SolarHeatGainTransmittance", dt="IFCNORMALISEDRATIOMEASURE")),
+        dict(key="grade", label="performance grade (design pressure)", on=both, std=True,
+             facet=prop(unit, "WindLoadRating", ids.Restriction(options={"pattern": "(R|LC|CW|AW)-PG[0-9]+.*"}), "IFCLABEL")),
+        dict(key="escape", label="escape window (yes or no)", on=windows, std=True, facet=prop("Pset_WindowCommon", "FireExit", dt="IFCBOOLEAN")),
+        dict(key="screen", label="screen (yes or no)", on=glazed, std=False, facet=prop("BidSet_Unit", "Screen", dt="IFCBOOLEAN")),
+        dict(key="grilles", label="grilles", on=glazed, std=False, facet=prop("BidSet_Unit", "Grilles", dt="IFCLABEL")),
+        dict(key="hardware", label="hardware finish", on=both, std=False, facet=prop("BidSet_Unit", "HardwareFinish", dt="IFCLABEL")),
+        dict(key="install", label="install type", on=both, std=False, facet=prop("BidSet_Unit", "InstallType", dt="IFCLABEL")),
+        dict(key="in_wall", label="in a wall", on=both, std=True,
+             facet=const(lambda: ids.PartOf(name="IFCWALL", relation="IFCRELVOIDSELEMENT IFCRELFILLSELEMENT"))),
+        dict(key="wall_construction", label="the wall's construction (on exterior walls)", on=("IFCWALL+external",), std=False,
+             facet=prop("BidSet_Wall", "Construction", dt="IFCLABEL")),
+        dict(key="masterformat", label="MasterFormat section, level 3", on=both, std=True,
+             facet=const(lambda: ids.Classification(system="MasterFormat",
+                                                    value=ids.Restriction(options={"pattern": "08 [0-9][1-9] [0-9]{2}"})))),
+        dict(key="safety", label="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it", on=("IFCWINDOW+hazard", "IFCDOOR+hazard"),
+             std=False, note="IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code", facet=prop("BidSet_Unit", "SafetyGlazing", ids.Restriction(options={"enumeration": SAFETY_GLAZING}), "IFCLABEL")),
+    ]
+
+
+def _applicability(on: str):
+    """The entity a field applies to, and any filter: '+glazed', '+hazard' (BF_Opening flags) or
+    '+external' (a wall's Pset_WallCommon)."""
+    from ifctester import ids
+
+    cls, _, only = on.partition("+")
+    facets = [ids.Entity(name=cls)]
+    if only == "glazed":
+        facets.append(ids.Property(propertySet="BF_Opening", baseName="Glazed", value="TRUE", dataType="IFCBOOLEAN"))
+    elif only == "hazard":
+        facets.append(ids.Property(propertySet="BF_Opening", baseName="SafetyGlazingRequired", value="TRUE", dataType="IFCBOOLEAN"))
+    elif only == "external":
+        facets.append(ids.Property(propertySet="Pset_WallCommon", baseName="IsExternal", value="TRUE", dataType="IFCBOOLEAN"))
+    return cls, facets
+
+
+def write_ids(params: dict, path: Path):
+    """The IDS (buildingSMART IDS 1.0) for a bid set's windows and doors: one specification per
+    field and class, so the results read as a checklist. Written to `path` and read back against
+    the IDS schema."""
+    from ifctester import ids
+
+    doc = ids.Ids(title="Windows and doors in a bid set (brownfield-compute pass 3f)", version="0.1",
+                  description="What a supplier needs to price a window or door, as requirements an IFC model can be "
+                              "checked against. Properties named BidSet_ are ours, where IFC4 has no standard one.",
+                  purpose="bidding", milestone="bid set")
+    for fld in ids_fields(params):
+        for on in fld["on"]:
+            cls, facets = _applicability(on)
+            spec = ids.Specification(name=f"{fld['label']} ({cls.lower().removeprefix('ifc')})", ifcVersion=["IFC4"],
+                                     identifier=f"{fld['key']}/{on}",
+                                     description=("IFC4 standard" if fld["std"] else
+                                                  f"BidSet_ (ours: {fld.get('note', 'IFC4 has no property for it')})"))
+            spec.applicability.extend(facets)
+            spec.requirements.append(fld["facet"](cls))
+            doc.specifications.append(spec)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc.to_xml(str(path))
+    return read_ids(path)
+
+
+def read_ids(path: Path):
+    """The IDS read back from its file, checked against the IDS schema. ifctester 0.9.0 doesn't
+    read a specification's `identifier` back, so it is restored from the XML, in order."""
+    import xml.etree.ElementTree as ET
+
+    from ifctester import ids
+
+    doc = ids.open(str(path), validate=True)
+    tags = [e for e in ET.parse(path).getroot().iter() if e.tag.rsplit("}", 1)[-1] == "specification"]
+    if len(tags) != len(doc.specifications):
+        raise ValueError(f"{path}: {len(tags)} specifications in the XML, {len(doc.specifications)} read")
+    for spec, tag in zip(doc.specifications, tags):
+        spec.identifier = tag.get("identifier")
+    return doc
+
+
+def run_ids(doc, ifc_path: Path) -> list[dict]:
+    """Each specification's result on the file: how many elements it applies to and how many pass."""
+    f = ifcopenshell.open(str(ifc_path))
+    doc.validate(f)
+    return [{"id": s.identifier, "name": s.name, "standard": s.description.startswith("IFC4"),
+             "applicable": len(s.applicable_entities), "passed": len(s.passed_entities), "status": bool(s.status)}
+            for s in doc.specifications]
+
+
+def ids_carried(rows: list[dict]) -> tuple[list[str], int]:
+    """The fields the model carries (every specification of the field passes, on at least one
+    element), by label, and how many fields there are."""
+    by = defaultdict(list)
+    for r in rows:
+        by[r["id"].split("/", 1)[0]].append(r)
+    carried = [rs[0]["name"].rsplit(" (", 1)[0] for rs in by.values()
+               if all(r["status"] for r in rs) and sum(r["applicable"] for r in rs) > 0]
+    return carried, len(by)
+
+
+def ids_report(rows: list[dict]) -> str:
+    """The checklist: per field, how many pass of those it applies to, for windows, doors, and
+    (for the two fields that sit elsewhere) the door types or the exterior walls."""
+    fields: dict[str, dict] = {}
+    for r in rows:
+        key, on = r["id"].split("/", 1)
+        d = fields.setdefault(key, {"name": r["name"].rsplit(" (", 1)[0], "std": r["standard"]})
+        d[on.split("+")[0]] = r
+
+    def cell(r, what=""):
+        return f"{r['passed']} of {r['applicable']}{what}" if r else ""
+
+    lines = ["| Field | Where | Windows | Doors | Door types or walls |", "|---|---|---|---|---|"]
+    for d in fields.values():
+        other = (cell(d.get("IFCDOORTYPE"), " door types") if "IFCDOORTYPE" in d
+                 else cell(d.get("IFCWALL"), " exterior walls") if "IFCWALL" in d else "")
+        lines.append(f"| {d['name']} | {'IFC4' if d['std'] else 'BidSet_'} | {cell(d.get('IFCWINDOW'))} | "
+                     f"{cell(d.get('IFCDOOR'))} | {other} |")
+    return "\n".join(lines)
 
 
 # ---- A second, independent reader: That Open's web-ifc (tools/webifc) ----
@@ -550,7 +799,8 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
             f"{w.get('reader')} (lock: {locked}), {w.get('schema')}")]
     ops = {o["id"]: o for o in apt["openings"]}
     parts = {pt["id"]: pt for pt in apt["parts"]}
-    marks = types(apt)
+    hazards = safety_glazing(apt, params)
+    marks = types(apt, hazards)
     by = defaultdict(list)
     for e in w["elements"]:
         if e["name"] is None:
@@ -569,7 +819,7 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
 
     units = [e for c in ("IFCWINDOW", "IFCDOOR") for e in by[c] if e["name"] in ops]
     got = Counter(e["type"] for e in units)
-    res.append(("web-ifc: windows and doors by type", got == Counter(mark_of(o, marks) for o in ops.values()),
+    res.append(("web-ifc: windows and doors by type", got == Counter(mark_of(o, marks, hazards) for o in ops.values()),
                 ", ".join(f"{k} {v}" for k, v in sorted(got.items(), key=str))))
     wrong = [e["name"] for e in units if not (abs(_num(e["width"]) - ops[e["name"]]["width_m"]) <= 1e-9
                                               and abs(_num(e["height"]) - ops[e["name"]]["height_m"]) <= 1e-9)]

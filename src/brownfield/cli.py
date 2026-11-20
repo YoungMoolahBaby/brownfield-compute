@@ -581,20 +581,35 @@ def cmd_bidset(args) -> int:
     path = bidset.OUT / "apartment.ifc"
     bidset.write_ifc(apt, frame, params, path)
     print(f"wrote {path.relative_to(OUT_DIR.parent)} ({path.stat().st_size / 1e3:.0f} kB)")
-    res = bidset.check(path, apt)
+    res = bidset.check(path, apt, params)
     with tempfile.TemporaryDirectory() as tmp:
         again = Path(tmp) / "apartment.ifc"
         bidset.write_ifc(apt, frame, params, again)
         res.append(("a second export is the same file (header aside)", bidset.body_text(again) == bidset.body_text(path),
                     f"{len(bidset.body_text(path)):,} lines"))
     print(bidset.report(res))
+
+    # What a quote needs (step 3): the IDS, and how much of it the model carries. It needs only
+    # IfcOpenShell, so it runs whether or not the second reader can. Fields the model lacks are
+    # the finding, not a failed run.
+    ids_path = bidset.OUT / "bidset.ids"
+    rows = bidset.run_ids(bidset.write_ids(params, ids_path), path)
+    table = bidset.ids_report(rows)
+    carried, fields = bidset.ids_carried(rows)
+    hazards = bidset.safety_glazing(apt, params)
+    summary = (f"The model carries {len(carried)} of the {fields} fields a quote needs ({', '.join(carried)}). "
+               f"IBC 2018 2406.4.1-2406.4.3 call for safety glazing in {len(hazards)} of the {len(apt['openings'])} "
+               f"openings (2406.4.4-2406.4.7, stairs and wet areas among them, not assessed).")
+    print(NL + f"wrote {ids_path.relative_to(OUT_DIR.parent)} ({len(rows)} specifications)" + NL + table + NL + NL + summary)
+    (bidset.OUT / "checklist.md").write_text(table + NL + NL + summary + NL, encoding="utf-8")
+
     why = bidset.webifc_status()
     if why:
         # Two readers are the check; with one, say so and fail, so nobody takes it for both.
-        print(f"FAIL the second reader (web-ifc) didn't run: {why}")
+        print(NL + f"FAIL the second reader (web-ifc) didn't run: {why}")
         return 1
     second = bidset.check_webifc(path, apt, params)
-    print(bidset.report(second))
+    print(NL + bidset.report(second))
     return 0 if all(ok for _, ok, _ in res + second) else 1
 
 

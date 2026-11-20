@@ -216,8 +216,10 @@ set against the same building issued as PDFs only. It is not an exchange and not
 documents. Jon: a window quote needs every field on the list in D27. The spike passed (D27 step
 0), and forge now writes the whole walk-up with a stable id on every opening (step 1).
 `brownfield bidset` writes it as IFC4 and holds the file to forge's model on every check (step 2).
-A second reader, That Open's web-ifc, reads the same building on every export. Next: the IDS
-(step 3).
+A second reader, That Open's web-ifc, reads the same building on every export. The IDS (step 3)
+asks for the 28 fields a quote needs, and the model carries 8 of them. IBC 2018 2406.4.1-2406.4.3
+call for safety glazing in 36 openings, 24 of them windows (type W2). Next: the schedule and elevations from the IFC
+(step 4).
 
 ## Decisions
 
@@ -1273,6 +1275,69 @@ A second reader, That Open's web-ifc, reads the same building on every export. N
          Finding what a design model leaves out is the point.
        - The list is checked against what a window quote needs: from Jon, and from the published
          rating fields (NFRC U-factor and SHGC; NAFS performance grade, edition to confirm).
+       - **Done 2026-11-19.** `uv run brownfield bidset` now also writes
+         `out/pass3/bidset/bidset.ids` and `checklist.md`, whether or not the second reader can
+         run.
+         - **The IDS:** 52 specifications (buildingSMART IDS 1.0), one per field and class, and
+           checked against the IDS schema when read back.
+           - They cover 28 fields: Jon's list, plus type mark, storey, exterior or not, which wall
+             the unit is in, and the wall's construction.
+           - 16 fields use IFC4 standard properties or attributes. 12 are ours (`BidSet_`), each
+             saying why, e.g. "IFC's opening element is the hole in the model; this is the size to
+             frame".
+           - The U-factor limit comes from `params/bidset.yaml`: 2018 IECC zone 5, U-0.30. That's
+             1.704 W/m2K, rounded up to 3 decimals so a rated U-0.30 written rounded still passes.
+         - **What the walk-up carries: 8 of the 28 fields.** These are the type mark, storey,
+           exterior or not, unit width and height, a U-factor within the code's limit, which wall
+           it's in, and that wall's construction (`BidSet_Wall`, from the frame's stud schedule).
+           **It carries none of the other 20**: rough opening; operation; frame material and both
+           colours; the glass (low-e, gas, tempered, obscure); SHGC; the design pressure rating;
+           escape windows; screens; grilles; hardware finish; install type; a level-3 MasterFormat
+           section; and safety glazing where the code calls for it.
+         - **Safety glazing, IBC 2018 2406.4.1-2406.4.3:** read on UpCodes' Pennsylvania IBC
+           2018; the numbers are in `params/bidset.yaml`. It applies to 36 of the 114 openings:
+           - the 12 patio doors (glazing in a door, 2406.4.1);
+           - 24 windows, the two beside each patio door. Their edges are 23.1 in from the door's,
+             inside the 24 in arc, and their sills are 36 in up, under 60 (2406.4.2). None of
+             2406.4.2's four exceptions applies, and none of them is about a patio door's fixed
+             panel.
+
+           2406.4.2 is measured in plan on the same storey, round corners as well as along a wall.
+           Round a corner, exception 4 turns on the door's handing, which the model lacks, so the
+           reason says so. 2406.4.3 doesn't reach the windows, because their sills are above
+           18 in.
+         - **The 24 are their own type, W2.** The schedule is W1 77, W2 24, D1 12, D2 1, so a quote
+           priced by type can't miss them, and both readers confirm the split. A quote that prices
+           them as ordinary glass is wrong, and nothing in the model said so until now. Each
+           unit's `BF_Opening` carries the flag and the reason.
+         - **Checks:**
+           - the IDS passes a copy of the model with every field filled in (made-up values), and
+             every specification applies to something (24 windows and 12 doors for safety
+             glazing);
+           - it fails exactly the one requirement broken, a window without its width;
+           - read back, each specification has the identifier it was written with;
+           - the safety-glazing count and the 23.1 in follow from the layout;
+           - a sidelite tight against a door, gap 0 to rounding, is caught;
+           - a window round a corner from a door is caught, with the handing caveat.
+
+           `tests/test_bidset.py` has 6 more tests (23 now). All 204 pass. The IFC is now 339 kB
+           with 814 GlobalIds: the 4 wall types' construction property sets, and type W2 with its
+           property set and type relationship.
+         - **Not yet, and what we don't know:**
+           - **Escape opening sizes** (IBC 2018 1030). The text came later from Jon; the next step
+             puts it in.
+           - **2406.4.4-2406.4.7 not assessed:** guards and railings, wet areas, beside stairs and
+             landings, and the bottom of a stair. The model has no stair flights or landings, so
+             the 5 stair windows wait for them.
+           - **2406.4.3's walking surface is assumed:** the floor inside runs to the wall, so it is
+             always within the 36 in.
+           - **The whole unit stands in for its largest pane**, because the model has no panes.
+         - **Built:** ifctester 0.9.0 writes each specification's `identifier` but doesn't read
+           it back, so `read_ids` restores it from the XML.
+         - **Code review** (before the commit): 13 findings, all fixed. The 3 important ones:
+           - the count was written as "IBC 2406.4" when only 4.1-4.3 were checked;
+           - a sidelite tight against a door could be missed to rounding;
+           - one type, W1, mixed the windows that need safety glazing with those that don't.
     4. **From the IFC alone** (not from forge, to show the file is enough): the window and door
        schedule (CSV), the four elevations with tags (SVG), and quantities (glazed area per flat,
        net wall area).
