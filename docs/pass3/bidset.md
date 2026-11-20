@@ -337,7 +337,7 @@ IfcOpenShell and That Open's web-ifc both read the IFC. Commercial viewers weren
 
 **Online:** [the walk-up's plan room](https://youngmoolahbaby.github.io/brownfield-compute/) lists these files as a builders exchange lists a
 project: the drawings, the model, the schedule and the checklist, then Addendum 1 with its changes and
-RFI. The model opens in 3D in the browser.
+RFI. The model is on its front page in 3D, in the browser.
 - The site is rebuilt on each push that changes the viewer or these files
   (`.github/workflows/pages.yml`, running `tools/viewer/build_site.py`).
 - Its counts and sizes are read from the files, and the addendum's items from the RFI.

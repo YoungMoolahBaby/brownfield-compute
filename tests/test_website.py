@@ -46,9 +46,15 @@ def test_every_link_in_the_plan_room_is_in_the_site(site):
     local = [x for x in _links(page) if not x.startswith(("http://", "https://"))]
     assert local, "no links"
     for link in local:
-        path = link.split("#")[0]
+        path = link.split("#")[0].split("?")[0]
         assert not path.startswith("/"), f"{link}: absolute, breaks under the site's prefix"
         assert (site / path).is_file(), link
+    # The model is on the front page, embedded (the viewer hides its own notice and links there).
+    assert '<iframe src="model.html?embed"' in page
+    viewer_page = (site / "model.html").read_text(encoding="utf-8")
+    assert 'has("embed")' in viewer_page and ".embed .notice" in viewer_page
+    # ...and starts inert there, so the page scrolls past it until it is clicked.
+    assert 'id="activate"' in viewer_page and "explore(false)" in viewer_page
 
 
 @ready

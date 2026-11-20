@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Walk-up IFC Viewer</title>
+<script>
+  // Embedded in the plan room (model.html?embed): the page round it has the notice and the links.
+  if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");
+</script>
 <style>
   /* One-screen app: a header with the model switch and file picker; the 3D view beside an
      inspector. Drawing-office palette: cool paper, drafting blue, code red for safety glazing.
@@ -38,6 +42,7 @@
     color: var(--ink); font-size: 13px; line-height: 1.45;
   }
   .notice a { color: var(--accent); }
+  .embed .notice, .embed #back { display: none !important; }
   .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--chip); }
   .seg button, .file {
@@ -57,6 +62,12 @@
     font-family: var(--font-mono); font-size: 13px; text-align: center; padding: 24px; background: var(--viewport);
   }
   .views { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  /* Embedded, the model starts inert so the page round it scrolls; a click or tap turns it on. */
+  .activate { position: absolute; inset: 0; display: none; place-items: center; border: 0; padding: 0;
+              background: transparent; cursor: pointer; font: inherit; }
+  .embed .activate { display: grid; }
+  .activate span { padding: 8px 14px; border-radius: 999px; background: var(--panel); color: var(--ink);
+                   border: 1px solid var(--rule); font-weight: 600; font-size: 13px; }
   .views button {
     font: 500 12px var(--font-mono); color: var(--ink); background: var(--panel); border: 1px solid var(--rule);
     border-radius: 6px; padding: 6px 10px; cursor: pointer;
@@ -119,6 +130,7 @@
   <main class="main">
     <section class="view" id="view" aria-label="3D model">
       <canvas id="c"></canvas>
+      <button type="button" class="activate" id="activate"><span>Click to explore the model</span></button>
       <div class="loading" id="loading">Starting web-ifc (WebAssembly)&hellip;</div>
       <div class="views" role="group" aria-label="Camera">
         <button type="button" data-view="iso">3D</button>
@@ -292,6 +304,19 @@
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   controls.addEventListener("change", () => { dirty = true; });
+  // Embedded in the plan room, the model is off until clicked, so a wheel or a swipe over it scrolls
+  // the page (OrbitControls lets events through while disabled, and the canvas lets the browser pan).
+  // A mouse leaving it turns it off again.
+  function explore(on) {
+    controls.enabled = on;
+    canvas.style.touchAction = on ? "none" : "pan-x pan-y";
+    $("#activate").hidden = on;
+  }
+  if (document.documentElement.classList.contains("embed")) {
+    explore(false);
+    $("#activate").addEventListener("click", () => explore(true));
+    view.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") explore(false); });
+  }
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8a9099, 1.15));
   const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(-25, 35, 18);

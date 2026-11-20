@@ -13,6 +13,12 @@ data center on the same site.
     model, schedule, openings, quantities, elevations, the IDS), then Addendum 1 (its PDF, the
     revised model and schedule, what changed, the RFI).
   - **The 3D viewer (`model.html`):** links back to the plan room; `#addendum` opens Addendum 1.
+    It is also embedded on the plan room's front page (`model.html?embed`, which hides its own
+    notice and link), at Jon's ask ("can we have the 3d model on the front/main page as well?").
+    Every visit to the front page now loads the viewer, about 7.5 MB before compression. Embedded,
+    the model starts inert under a "Click to explore the model" label, so a wheel or a swipe over it
+    scrolls the page. A click turns it on, and a mouse leaving turns it off again. Without that, it
+    trapped the page's scroll: 80% of a phone's screen couldn't be scrolled past.
 - **What it won't do:** it says plainly that the building is made up, with no owner, bid date or
   plan holders, and it carries no real exchange's name or look.
 - **Built and deployed by `.github/workflows/pages.yml`:**
