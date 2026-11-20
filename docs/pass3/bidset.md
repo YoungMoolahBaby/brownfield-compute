@@ -328,7 +328,8 @@ publish leaves every file byte-for-byte the same.
 - `apartment.ifc` and `apartment-addendum-1.ifc`;
 - `bidset.ids`, and `checklist.md`, its result on the model;
 - `drawings/` and `drawings-addendum-1/`: each IFC's schedule, openings and quantities as CSV,
-  and its four elevations as SVG;
+  and its four elevations as SVG. The schedule gives each U-factor as a US rep quotes it
+  (`u_factor_btu_h_ft2_f`, 0.30) and as the IFC holds it (`u_factor_w_m2k`, 1.703);
 - `rfi-001.bcf`, and `addendum-1-diff.md`, the element diff and the schedule's changes;
 - `bidset.pdf` and `addendum-1.pdf`, with `conventional.md`, what they cost a bidder against the
   data.

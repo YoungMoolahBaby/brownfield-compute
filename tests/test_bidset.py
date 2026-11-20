@@ -552,6 +552,11 @@ def test_the_schedule_from_the_ifc_alone(drawings):
     # The flat doors: inside, a 1-hour fire door, self-closing, with no U-factor.
     assert (s["D3"]["is_external"], s["D3"]["fire_rating"], s["D3"]["self_closing"], s["D3"]["u_factor_w_m2k"]) == (
         "False", "1 h", "True", bidset.NOT_IN_MODEL)
+    # The U-factor in the unit a US rep quotes (NFRC's, Btu/h ft2 F): params' own numbers back again.
+    p = load_params()
+    window_u, door_u = (f"{p[f'pass3.envelope.{k}_u'].value:.2f}" for k in ("window", "door"))
+    assert {m: r["u_factor_btu_h_ft2_f"] for m, r in s.items()} == {
+        "W1": window_u, "W2": window_u, "D1": window_u, "D2": door_u, "D3": bidset.NOT_IN_MODEL}
     # What the model lacks shows as such, so a rep sees the gap; where a number comes from shows
     # too, so D2's placeholder U-factor reads as one, and our MasterFormat choice as judgement.
     assert all(r["operation"] == r["frame_material"] == r["shgc"] == bidset.NOT_IN_MODEL for r in s.values())
@@ -642,6 +647,7 @@ def test_the_drawings_read_an_odd_file_without_crashing(ifc, tmp_path):
     assert s["W1"]["width"].startswith("varies") and bidset.NOT_IN_MODEL in s["W1"]["width"]
     assert s["W2"]["rough_opening"] == f"3'-1\" x {bidset.NOT_IN_MODEL}"
     assert s["W1"]["u_factor_w_m2k"].startswith("varies") and "1.2" in s["W1"]["u_factor_w_m2k"]
+    assert s["W1"]["u_factor_btu_h_ft2_f"] == "varies: 0.21; 0.30"  # 1.2 W/m2K is 0.21
     assert s["D2"]["frame_material"] == "steel door, insulated core"
     assert d["quantities"]["unsized"] == 1
     import xml.etree.ElementTree as ET

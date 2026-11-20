@@ -1363,7 +1363,8 @@ def schedule_rows(rb: dict) -> list[dict]:
     """The window and door schedule, one row per type mark: every field the IDS asks for, each
     from the units' own properties over their type's, or 'not in the model'. Where the units of a
     mark differ (a size, a property), the cell says 'varies' and lists them. Each U-factor carries
-    its source as the file gives it, so a placeholder reads as one."""
+    its source as the file gives it, so a placeholder reads as one. The U-factor is in both units:
+    Btu/h ft2 F as NFRC rates it and a US rep quotes it (0.30), then W/m2K as the IFC holds it."""
     by_mark = defaultdict(list)
     for u in rb["units"]:
         by_mark[u["mark"]].append(u)
@@ -1405,6 +1406,7 @@ def schedule_rows(rb: dict) -> list[dict]:
             "obscure": val(ours, "ObscureGlass"),
             "safety_glazing_required": "yes (" + ", ".join(reasons) + ")" if reasons else "no",
             "safety_glazing": val(ours, "SafetyGlazing"),
+            "u_factor_btu_h_ft2_f": val(common, "ThermalTransmittance", lambda v: f"{v / BTU_FT2:.2f}"),
             "u_factor_w_m2k": val(common, "ThermalTransmittance", lambda v: round(v, 3)),
             "u_factor_source": _common((u["u_note"] or "").split(":")[0] or NOT_IN_MODEL for u in us),
             "shgc": val(glass, "SolarHeatGainTransmittance"),
