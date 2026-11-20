@@ -213,7 +213,8 @@ open model (IFC4) with a machine-checked list of what a bid set must carry (buil
 Its window schedule and elevations are generated from that model, and a made-up addendum is run as
 a reviewed change: an element-level diff, the checks rerun, the drawings regenerated. All of it is
 set against the same building issued as PDFs only. It is not an exchange and not construction
-documents. Waiting on Jon: what a window rep needs on a schedule to quote.
+documents. Jon: a window quote needs every field on the list in D27. The spike passed (D27 step
+0). Next: forge writes the whole model (step 1).
 
 ## Decisions
 
@@ -1125,8 +1126,17 @@ documents. Waiting on Jon: what a window rep needs on a schedule to quote.
     0. **Spike first.** Pin IfcOpenShell 0.9.0.post1, ifctester 0.9.0 and ifcdiff 0.9.0 (PyPI,
        2026-09/10; wheels of 43 MB and 25 MB, the rest small). One wall and one window to IFC4;
        export it twice and get an empty diff; check it against a one-line IDS. If any of that
-       fails, stop
-       and report.
+       fails, stop and report.
+       - **Done 2026-11-19, passed** (a scratch environment, 230 MB installed):
+         - all 18 GlobalIds and the file's entity text are identical across two exports;
+         - `ifcdiff`: nothing on the re-export; W1's height 4'-0" to 4'-6" changes exactly that
+           window;
+         - schema validation finds 0 errors;
+         - the IDS passes width, U-factor and MasterFormat section, and fails SHGC as expected;
+           without the type's property set it fails the U-factor too;
+         - the window's geometry reads back at 0.9144 x 1.2192 m with its sill at 0.9144 m.
+       - **Built:** the API gives property sets and relationships random GlobalIds, so we derive
+         them from what they join (~20 lines).
     1. **Forge writes the whole model** to `out/pass3/apartment.json`: every opening with a
        stable id (storey, flat, face, index) and its size and position; walls, slabs and the roof.
        Today the file carries only the opening widths.
@@ -1166,7 +1176,16 @@ documents. Waiting on Jon: what a window rep needs on a schedule to quote.
     - glazed area per flat equals pass 3b's `flat_envelope`; the elevations put every opening
       where forge's drawing does.
   - **From Jon:**
-    - what his rep needs on a schedule to quote a window;
+    - what a rep needs on a schedule to quote a window. Jon (2026-11-19), asked about each: "i
+      believe youd need all of those". So the IDS asks for every one:
+      - rough opening or unit size (and which);
+      - operation (casement, double-hung, slider, picture);
+      - frame material, and inside and outside colors;
+      - glass (low-e, argon, tempered, obscure);
+      - U-factor, SHGC and performance grade (the design pressure rating);
+      - which windows are escape windows;
+      - screens, grilles and hardware finish;
+      - install type (nail fin or replacement) and the wall it goes in;
     - the rep test: hand the schedule, the IFC and the PDFs to a rep and ask whether the quoting
       software takes it, what's missing, and the time against working from PDFs. One data point,
       reported as one, with no names.
