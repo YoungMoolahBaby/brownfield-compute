@@ -38,6 +38,7 @@ import ifcopenshell.api.type as itype
 import ifcopenshell.api.unit as unit
 import ifcopenshell.geom
 import ifcopenshell.guid
+import ifcopenshell.util.classification
 import ifcopenshell.util.element
 import ifcopenshell.validate
 
@@ -299,7 +300,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path) -> ifcopenshell.
         attrs = {"PredefinedType": "WINDOW" if kind == "window" else "DOOR"}
         e = _make(f, cls, f"type/{mark}", mark, **attrs,
                   Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in."
-                              + (" Safety glazing: IBC 2018 2406.4 calls for it here." if safe else ""))
+                              + (" Safety glazing: IBC 2018 2406.4.1-2406.4.3 call for it here." if safe else ""))
         ps = pset.add_pset(f, product=e, name="Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon")
         u = params[U_PARAM[kind]]
         pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": True,
@@ -811,6 +812,330 @@ def ids_report(rows: list[dict], escape_needed: tuple[int, int] | None = None) -
         lines.append(f"| {d['name']} | {'IFC4' if d['std'] else 'BidSet_'} | {cell(d.get('IFCWINDOW'))} | "
                      f"{cell(d.get('IFCDOOR'))} | {other} |")
     return "\n".join(lines)
+
+
+# ---- From the IFC alone: schedule, elevations, quantities (step 4) ----
+#
+# Everything here reads the IFC file and nothing else (not forge's JSON), to show the file is
+# enough to price and draw from. The tests hold what comes out to forge's model. Optional IFC
+# attributes may be missing in a file from elsewhere: they read as "not in the model", never as
+# a crash.
+
+FACES = ("front", "back", "left", "right")
+NOT_IN_MODEL = "not in the model"
+
+
+def _host_wall(e):
+    """The wall a window or door sits in: the one voided by the opening it fills."""
+    for fill in e.FillsVoids or ():
+        for void in fill.RelatingOpeningElement.VoidsElements or ():
+            return void.RelatingBuildingElement
+    return None
+
+
+def _material_name(mat) -> str | None:
+    """A material's name, whatever kind of IFC material it is."""
+    if mat is None:
+        return None
+    for attr in ("Name", "LayerSetName", "ProfileSetName"):
+        if getattr(mat, attr, None):
+            return getattr(mat, attr)
+    if mat.is_a("IfcMaterialList"):
+        return ", ".join(m.Name for m in mat.Materials if m.Name) or None
+    if mat.is_a("IfcMaterialLayerSetUsage"):
+        return _material_name(mat.ForLayerSet)
+    if mat.is_a("IfcMaterialLayerSet"):
+        return ", ".join(lay.Material.Name for lay in mat.MaterialLayers if lay.Material and lay.Material.Name) or None
+    return None
+
+
+def _property_note(e, t, pset_name: str, prop: str) -> str | None:
+    """The Description of a property (where our files say a number's source), on the unit if it
+    has the property, else on its type."""
+    sets = [r.RelatingPropertyDefinition for r in getattr(e, "IsDefinedBy", ()) or () if r.is_a("IfcRelDefinesByProperties")]
+    sets += list((t.HasPropertySets or ()) if t is not None else ())
+    for ps in sets:
+        if ps.is_a("IfcPropertySet") and ps.Name == pset_name:
+            for q in ps.HasProperties or ():
+                if q.Name == prop:
+                    return q.Description
+    return None
+
+
+def read_back(path: Path) -> dict:
+    """What the drawings need, read from the IFC: storeys, the building's extent (its exterior
+    walls), the roofs, and every window and door in an exterior wall, each with its type, size,
+    place and properties (its own over its type's, as IFC has it)."""
+    f = ifcopenshell.open(str(path))
+    ext = [w for w in f.by_type("IfcWall") if (ifcopenshell.util.element.get_pset(w, "Pset_WallCommon") or {}).get("IsExternal")]
+    ext_ids = {w.id() for w in ext}
+    units = [e for e in list(f.by_type("IfcWindow")) + list(f.by_type("IfcDoor"))
+             if (h := _host_wall(e)) is not None and h.id() in ext_ids]
+    roofs = [s for s in f.by_type("IfcSlab") if s.PredefinedType == "ROOF"]
+    boxes = _world_boxes(f, ext + units + roofs)
+    lo = np.min([boxes[w.GlobalId][0] for w in ext], axis=0)
+    hi = np.max([boxes[w.GlobalId][1] for w in ext], axis=0)
+    out = {"storeys": sorted(((s.Elevation or 0.0), s.Name or "(unnamed storey)") for s in f.by_type("IfcBuildingStorey")),
+           "lo": lo, "hi": hi, "roofs": [boxes[r.GlobalId] for r in roofs], "units": [], "types": {}}
+    for e in units:
+        t = ifcopenshell.util.element.get_type(e)
+        mark = t.Name if t is not None and t.Name else "(no type)"
+        box = boxes[e.GlobalId]
+        container = ifcopenshell.util.element.get_container(e)
+        out["units"].append({
+            "name": e.Name or e.GlobalId, "cls": e.is_a(), "mark": mark, "width": e.OverallWidth, "height": e.OverallHeight,
+            "lo": box[0], "hi": box[1], "face": _face_of(box, lo, hi),
+            "storey": container.Name if container is not None else "(no storey)",
+            "storey_z": (container.Elevation or 0.0) if container is not None and container.is_a("IfcBuildingStorey") else 0.0,
+            "props": ifcopenshell.util.element.get_pset(e, "BF_Opening") or {},
+            "psets": ifcopenshell.util.element.get_psets(e),  # its own over its type's
+            "operation": getattr(e, "OperationType", None) or (getattr(t, "OperationType", None) if t is not None else None),
+            "material": _material_name(ifcopenshell.util.element.get_material(e)),
+            "u_note": _property_note(e, t, "Pset_WindowCommon" if e.is_a("IfcWindow") else "Pset_DoorCommon", "ThermalTransmittance"),
+        })
+        if mark not in out["types"]:
+            refs = []
+            if t is not None:
+                for r in ifcopenshell.util.classification.get_references(t):
+                    system = ifcopenshell.util.classification.get_classification(r)
+                    if system is not None and system.Name == "MasterFormat":
+                        refs.append((r.Identification or "", r.Name or "", r.Description or ""))
+            out["types"][mark] = {"cls": t.is_a() if t is not None else None,
+                                  "description": (t.Description if t is not None else None) or "", "refs": sorted(refs)}
+    return out
+
+
+def _face_of(b, lo, hi) -> str:
+    """The facade a unit is in: the building side its centre is nearest to."""
+    c = (np.asarray(b[0]) + np.asarray(b[1])) / 2
+    d = {"front": c[0] - lo[0], "back": hi[0] - c[0], "left": c[1] - lo[1], "right": hi[1] - c[1]}
+    return min(d, key=d.get)
+
+
+def _along(face: str, lo, hi, x: float, y: float) -> float:
+    """Distance along a facade, left to right as seen from outside it (m)."""
+    return {"front": hi[1] - y, "back": y - lo[1], "left": x - lo[0], "right": hi[0] - x}[face]
+
+
+def elevation(rb: dict, face: str) -> dict:
+    """A facade seen from outside: its width, the walls' bottom and top, the roofs' edges, the
+    storey levels, and each unit as a rectangle (u0, u1 along; z0, z1 up), with its mark."""
+    lo, hi = rb["lo"], rb["hi"]
+    width = float(hi[1] - lo[1]) if face in ("front", "back") else float(hi[0] - lo[0])
+    rects = []
+    for u in (u for u in rb["units"] if u["face"] == face):
+        a = sorted([_along(face, lo, hi, u["lo"][0], u["lo"][1]), _along(face, lo, hi, u["hi"][0], u["hi"][1])])
+        rects.append({"name": u["name"], "mark": u["mark"], "cls": u["cls"], "u0": float(a[0]), "u1": float(a[1]),
+                      "z0": float(u["lo"][2]), "z1": float(u["hi"][2]), "glazed": bool(u["props"].get("Glazed")),
+                      "safety": bool(u["props"].get("SafetyGlazingRequired"))})
+    roofs = []
+    for r_lo, r_hi in rb["roofs"]:
+        a = sorted([_along(face, lo, hi, r_lo[0], r_lo[1]), _along(face, lo, hi, r_hi[0], r_hi[1])])
+        roofs.append((float(a[0]), float(a[1]), float(r_lo[2]), float(r_hi[2])))
+    return {"face": face, "width": width, "z0": float(lo[2]), "z1": float(hi[2]), "levels": rb["storeys"], "roofs": roofs,
+            "rects": sorted(rects, key=lambda r: (r["z0"], r["u0"]))}
+
+
+def _ftin(m) -> str:
+    if m is None:
+        return NOT_IN_MODEL
+    inches = round(m / IN * 8) / 8
+    ft, rest = divmod(inches, 12)
+    return f"{int(ft)}'-{rest:g}\""
+
+
+def elevation_svg(el: dict, scale: float = 40.0) -> str:
+    """The elevation as SVG: 1 m = `scale` px. Wall, roof edges, storey levels (dashed), each window
+    and door with its mark, safety-glazed units outlined heavier, and a legend. Text from the IFC
+    is XML-escaped."""
+    from xml.sax.saxutils import escape
+
+    pad, right, head, foot = 60.0, 120.0, 50.0, 90.0  # right: room for the level labels
+    u_min = min([0.0] + [r[0] for r in el["roofs"]])
+    u_max = max([el["width"]] + [r[1] for r in el["roofs"]])
+    top = max([el["z1"]] + [r[3] for r in el["roofs"]])
+    bottom = min(el["z0"], 0.0)
+    w, h = (u_max - u_min) * scale + pad + right, (top - bottom) * scale + head + foot
+    X = lambda u: pad + (u - u_min) * scale  # noqa: E731
+    Y = lambda z: head + (top - z) * scale  # noqa: E731
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:.0f}" height="{h:.0f}" viewBox="0 0 {w:.1f} {h:.1f}" '
+           'font-family="Helvetica, Arial, sans-serif">',
+           f'<rect x="0" y="0" width="{w:.1f}" height="{h:.1f}" fill="#ffffff"/>',
+           f'<text x="{pad:.1f}" y="24" font-size="16" fill="#222">{escape(el["face"].capitalize())} elevation, seen from outside</text>',
+           f'<text x="{pad:.1f}" y="40" font-size="11" fill="#555">Drawn from apartment.ifc alone. 1 m = {scale:g} px. '
+           f'{el["width"]:.2f} m ({escape(_ftin(el["width"]))}) wide.</text>',
+           f'<rect x="{X(0):.1f}" y="{Y(el["z1"]):.1f}" width="{el["width"] * scale:.1f}" '
+           f'height="{(el["z1"] - el["z0"]) * scale:.1f}" fill="#efe9df" stroke="#444" stroke-width="1.5"/>']
+    for r in el["roofs"]:
+        out.append(f'<rect x="{X(r[0]):.1f}" y="{Y(r[3]):.1f}" width="{(r[1] - r[0]) * scale:.1f}" '
+                   f'height="{(r[3] - r[2]) * scale:.1f}" fill="#555"/>')
+    out.append(f'<line x1="{X(u_min) - 20:.1f}" y1="{Y(0):.1f}" x2="{X(u_max) + 20:.1f}" y2="{Y(0):.1f}" stroke="#222" stroke-width="2"/>')
+    for z, name in el["levels"]:
+        out.append(f'<line x1="{X(0):.1f}" y1="{Y(z):.1f}" x2="{X(el["width"]):.1f}" y2="{Y(z):.1f}" stroke="#999" '
+                   'stroke-dasharray="6 4" stroke-width="0.8"/>')
+        out.append(f'<text x="{X(el["width"]) + 6:.1f}" y="{Y(z) - 3:.1f}" font-size="10" fill="#555">{escape(name)} '
+                   f'+{escape(_ftin(z))}</text>')
+    for r in el["rects"]:
+        fill = "#bcd7ee" if r["glazed"] else "#8b6a4f"
+        stroke, sw = ("#b00020", 2.2) if r["safety"] else ("#333", 1.0)
+        out.append(f'<rect x="{X(r["u0"]):.1f}" y="{Y(r["z1"]):.1f}" width="{(r["u1"] - r["u0"]) * scale:.1f}" '
+                   f'height="{(r["z1"] - r["z0"]) * scale:.1f}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}">'
+                   f'<title>{escape(str(r["name"]))}: {escape(str(r["mark"]))}</title></rect>')
+        out.append(f'<text x="{X((r["u0"] + r["u1"]) / 2):.1f}" y="{Y((r["z0"] + r["z1"]) / 2) + 4:.1f}" font-size="10" '
+                   f'text-anchor="middle" fill="#111">{escape(str(r["mark"]))}</text>')
+    marks = sorted({r["mark"] for r in el["rects"]}, key=_mark_key)
+    safe = sorted({r["mark"] for r in el["rects"] if r["safety"]}, key=_mark_key)
+    ly = Y(min(el["z0"], 0.0)) + 30
+    out.append(f'<text x="{pad:.1f}" y="{ly:.1f}" font-size="11" fill="#222">Marks: {escape(", ".join(marks))}. '
+               f'{len(el["rects"])} units on this face.</text>')
+    if safe:
+        out.append(f'<rect x="{pad:.1f}" y="{ly + 12:.1f}" width="14" height="10" fill="#bcd7ee" stroke="#b00020" stroke-width="2.2"/>'
+                   f'<text x="{pad + 20:.1f}" y="{ly + 21:.1f}" font-size="11" fill="#222">Safety glazing: IBC 2018 '
+                   f'2406.4.1-2406.4.3 call for it ({escape(", ".join(safe))}).</text>')
+    out.append("</svg>")
+    return "\n".join(out)
+
+
+def _mark_key(mark: str):
+    """W before D, then by number: W2 before W10."""
+    digits = "".join(ch for ch in mark if ch.isdigit())
+    return (mark[:1] != "W", mark[:1], int(digits) if digits else 0, mark)
+
+
+def _common(values) -> str:
+    """One value if every unit agrees, else 'varies: ...' (so a schedule never hides a difference)."""
+    vals = sorted({str(v) for v in values})
+    return vals[0] if len(vals) == 1 else "varies: " + "; ".join(vals)
+
+
+def schedule_rows(rb: dict) -> list[dict]:
+    """The window and door schedule, one row per type mark: every field the IDS asks for, each
+    from the units' own properties over their type's, or 'not in the model'. Where the units of a
+    mark differ (a size, a property), the cell says 'varies' and lists them. Each U-factor carries
+    its source as the file gives it, so a placeholder reads as one."""
+    by_mark = defaultdict(list)
+    for u in rb["units"]:
+        by_mark[u["mark"]].append(u)
+    glass, ours = "Pset_DoorWindowGlazingType", "BidSet_Unit"
+    rows = []
+    for mark in sorted(by_mark, key=_mark_key):
+        us, t = by_mark[mark], rb["types"].get(mark, {})
+        window = us[0]["cls"] == "IfcWindow"
+        common = "Pset_WindowCommon" if window else "Pset_DoorCommon"
+
+        def val(pset, prop, fmt=lambda v: v):
+            return _common(NOT_IN_MODEL if (v := (u["psets"].get(pset) or {}).get(prop)) is None else fmt(v) for u in us)
+
+        def length(pset, prop):
+            return val(pset, prop, _ftin)
+
+        def ro(u):
+            p = u["psets"].get(ours) or {}
+            w, h = p.get("RoughOpeningWidth"), p.get("RoughOpeningHeight")
+            return NOT_IN_MODEL if w is None and h is None else f"{_ftin(w)} x {_ftin(h)}"
+
+        reasons = sorted({u["props"].get("SafetyGlazingReason", "").split(":")[0] for u in us if u["props"].get("SafetyGlazingRequired")})
+        refs = t.get("refs", [])
+        rows.append({
+            "mark": mark, "kind": "window" if window else "door", "count": len(us),
+            "per_storey": "; ".join(f"{name}: {n}" for (_, name), n in sorted(Counter((u["storey_z"], u["storey"]) for u in us).items())),
+            "width": _common(_ftin(u["width"]) for u in us), "height": _common(_ftin(u["height"]) for u in us),
+            "width_mm": _common(NOT_IN_MODEL if u["width"] is None else round(u["width"] * 1e3, 1) for u in us),
+            "height_mm": _common(NOT_IN_MODEL if u["height"] is None else round(u["height"] * 1e3, 1) for u in us),
+            "description": t.get("description", ""),
+            "is_external": val(common, "IsExternal"),
+            "rough_opening": _common(ro(u) for u in us),
+            "operation": _common((u["operation"] if u["operation"] not in (None, "NOTDEFINED") else NOT_IN_MODEL) for u in us)
+            if not window else val(ours, "Operation"),
+            "frame_material": _common(u["material"] or NOT_IN_MODEL for u in us),
+            "frame_colour_inside": val(ours, "FrameColourInside"), "frame_colour_outside": val(ours, "FrameColourOutside"),
+            "low_e": val(glass, "IsCoated"), "gas_fill": val(glass, "FillGas"), "tempered": val(glass, "IsTempered"),
+            "obscure": val(ours, "ObscureGlass"),
+            "safety_glazing_required": "yes (" + ", ".join(reasons) + ")" if reasons else "no",
+            "safety_glazing": val(ours, "SafetyGlazing"),
+            "u_factor_w_m2k": val(common, "ThermalTransmittance", lambda v: round(v, 3)),
+            "u_factor_source": _common((u["u_note"] or "").split(":")[0] or NOT_IN_MODEL for u in us),
+            "shgc": val(glass, "SolarHeatGainTransmittance"),
+            "design_pressure": val(common, "WindLoadRating"),
+            "escape_window": val("Pset_WindowCommon", "FireExit") if window else "",
+            "clear_opening_area_ft2": val(ours, "ClearOpeningArea", lambda v: round(v / FT2, 2)) if window else "",
+            "clear_opening_width": length(ours, "ClearOpeningWidth") if window else "",
+            "clear_opening_height": length(ours, "ClearOpeningHeight") if window else "",
+            "clear_opening_sill": length(ours, "ClearOpeningSillHeight") if window else "",
+            "screen": val(ours, "Screen"), "grilles": val(ours, "Grilles"),
+            "hardware_finish": val(ours, "HardwareFinish"), "install_type": val(ours, "InstallType"),
+            "masterformat": "; ".join(f"{c} {n}" + (" (judgement)" if d.startswith("judgement") else "") for c, n, d in refs)
+            or NOT_IN_MODEL,
+        })
+    return rows
+
+
+def opening_rows(rb: dict) -> list[dict]:
+    """Every window and door: id, mark, storey, flat, face, size, sill, and safety glazing."""
+    rows = []
+    for u in sorted(rb["units"], key=lambda u: str(u["name"])):
+        p = u["props"]
+        rows.append({"id": u["name"], "mark": u["mark"], "storey": u["storey"], "flat": p.get("Flat", ""),
+                     "face": u["face"], "width": _ftin(u["width"]), "height": _ftin(u["height"]),
+                     "sill_above_floor": _ftin(p.get("SillHeightAboveFloor")),
+                     "safety_glazing": p.get("SafetyGlazingReason", "") if p.get("SafetyGlazingRequired") else "no"})
+    return rows
+
+
+def quantities_from_ifc(rb: dict) -> dict:
+    """Areas from the IFC alone (m2): each facade's wall, gross (its width by the walls' height),
+    its openings (drawn, from the geometry), and net; and the glazing in each flat (BF_Opening.Flat,
+    from each unit's overall size; a unit without one is counted in `unsized`)."""
+    faces = {}
+    for face in FACES:
+        el = elevation(rb, face)
+        gross = el["width"] * (el["z1"] - el["z0"])
+        openings = sum((r["u1"] - r["u0"]) * (r["z1"] - r["z0"]) for r in el["rects"])
+        faces[face] = {"gross_m2": gross, "openings_m2": openings, "net_m2": gross - openings, "units": len(el["rects"])}
+    glazed, unsized = defaultdict(float), 0
+    for u in rb["units"]:
+        p = u["props"]
+        if p.get("Glazed") and not str(p.get("Flat", "")).endswith("stair"):
+            if u["width"] is None or u["height"] is None:
+                unsized += 1
+                continue
+            glazed[p["Flat"]] += u["width"] * u["height"]
+    total = {k: sum(f[k] for f in faces.values()) for k in ("gross_m2", "openings_m2", "net_m2", "units")}
+    lo, hi = rb["lo"], rb["hi"]
+    return {"faces": faces, "total": total, "glazed_by_flat_m2": dict(sorted(glazed.items())), "unsized": unsized,
+            "extent_m": [float(hi[i] - lo[i]) for i in range(3)]}
+
+
+def write_drawings(path: Path, out: Path) -> dict:
+    """The schedule (CSV), the openings list (CSV), four elevations (SVG) and the quantities (CSV),
+    all from the IFC at `path`, into `out`. Returns what was read and written."""
+    import csv
+
+    rb = read_back(path)
+    out.mkdir(parents=True, exist_ok=True)
+    written = []
+
+    def write_csv(name, rows):
+        with open(out / name, "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        written.append(out / name)
+
+    sched, units = schedule_rows(rb), opening_rows(rb)
+    write_csv("schedule.csv", sched)
+    write_csv("openings.csv", units)
+    els = {face: elevation(rb, face) for face in FACES}
+    for face, el in els.items():
+        (out / f"elevation_{face}.svg").write_text(elevation_svg(el), encoding="utf-8")
+        written.append(out / f"elevation_{face}.svg")
+    q = quantities_from_ifc(rb)
+    qrows = [{"facade": face, "units": v["units"], "gross_m2": round(v["gross_m2"], 3), "openings_m2": round(v["openings_m2"], 3),
+              "net_m2": round(v["net_m2"], 3), "gross_ft2": round(v["gross_m2"] / FT2, 1),
+              "openings_ft2": round(v["openings_m2"] / FT2, 1), "net_ft2": round(v["net_m2"] / FT2, 1)}
+             for face, v in [*q["faces"].items(), ("all", q["total"])]]
+    write_csv("quantities.csv", qrows)
+    return {"read": rb, "schedule": sched, "openings": units, "elevations": els, "quantities": q, "written": written}
 
 
 # ---- A second, independent reader: That Open's web-ifc (tools/webifc) ----

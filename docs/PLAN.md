@@ -221,7 +221,8 @@ asks for the 32 fields a quote needs, and the model carries 8 of them. IBC 2018 
 call for safety glazing in 36 openings, 24 of them windows (type W2). The one stair is allowed
 (IBC 2018 Table 1006.3.3(1)) only with sprinklers and an escape window in every bedroom, 16 of
 them upstairs. Whether a window clears 1030's sizes depends on its operation, which the model
-lacks. Next: the schedule and elevations from the IFC (step 4).
+lacks. The schedule, elevations and quantities now come from the IFC alone (step 4). Next: an
+addendum as a reviewed change (step 5).
 
 ## Decisions
 
@@ -1399,6 +1400,53 @@ lacks. Next: the schedule and elevations from the IFC (step 4).
     4. **From the IFC alone** (not from forge, to show the file is enough): the window and door
        schedule (CSV), the four elevations with tags (SVG), and quantities (glazed area per flat,
        net wall area).
+       - **Done 2026-11-19.** `uv run brownfield bidset` now also writes, to
+         `out/pass3/bidset/drawings/`, from the IFC alone (`bidset.read_back` opens nothing
+         else). Missing optional attributes read as "not in the model", never as a crash.
+         - **`schedule.csv`:** one row per type, 35 columns.
+           - **Every IDS field** has a column, read from the units' own properties over their
+             type's, as IFC has it, or "not in the model". It reads W1 77, W2 24 (safety glazing,
+             2406.4.2), D1 12 (2406.4.1) and D2 1, with sizes in feet and inches and mm, the count
+             per storey, the U-factor and the MasterFormat section.
+           - **Where a number comes from shows:** D2's U-factor source reads
+             "params pass3.envelope.door_u (placeholder)", and the sections are marked
+             "(judgement)".
+           - **Where a type's units differ** (a size, a property), the cell says "varies" and
+             lists them.
+           - **The fields the model lacks say "not in the model".** This is the sheet to hand a
+             rep for the rep test.
+         - **`openings.csv`:** all 114 units with id, type, storey, flat, face, size, sill height
+           and safety glazing.
+         - **`elevation_{front,back,left,right}.svg`:** each facade seen from outside, with the
+           storey levels, the roofs' edges, and every unit in an exterior wall tagged with its
+           type. The safety-glazed ones are outlined in red, with a legend. Text from the IFC is
+           escaped. Rendered and looked at (resvg, in a scratch folder).
+         - **`quantities.csv`:** each facade's wall, gross, openings and net. In all: 780.4 m2
+           gross, 159.4 m2 of openings, 621.0 m2 net (8,400 / 1,715 / 6,685 ft2), and the glazing
+           in each flat.
+         - **Checks (tests):**
+           - the schedule's counts, sizes, safety glazing and sources, with the missing fields
+             showing as missing and every IDS field having a column;
+           - every unit on the elevations where forge has it (within 1 mm), on the right facade,
+             once. Left to right is written out in the test, so a mirrored drawing fails;
+           - gross wall area equals 2 x (width + length) x height, and the openings' total equals
+             forge's;
+           - glazing per flat equals pass 3b's `flat_envelope`;
+           - the SVG files as written are well-formed, with one titled rectangle per unit;
+           - an odd file (a window without its width, half a rough opening, a U-factor on one
+             window over its type's, a material layer set, an ampersand in a storey's name) reads
+             without crashing, the differences showing as "varies";
+           - units in a wall that isn't exterior are left off the facades.
+
+           `tests/test_bidset.py` has 33 tests. All 214 pass.
+         - **Code review** (before the commit): 15 findings, all fixed. The important ones:
+           - the schedule left out fields and dropped the placeholder note;
+           - missing attributes crashed it;
+           - it read only types' properties and showed only the first unit's size;
+           - it took in interior doors;
+           - its SVG text wasn't escaped;
+           - it missed materials that aren't plain IfcMaterial;
+           - it drew walls from z = 0 and only one roof.
     5. **The addendum as a reviewed change:** an RFI as a BCF topic on the patio door type (the
        schedule doesn't say its glass) answered by an addendum with one data change (D1 tempered)
        and one size change (W1's height, the escape question). Re-export, `ifcdiff`, the IDS

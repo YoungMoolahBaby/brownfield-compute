@@ -5,6 +5,7 @@ import copy
 from collections import Counter, defaultdict
 
 import ifcopenshell
+import numpy as np
 import ifcopenshell.util.element as ue
 import pytest
 
@@ -406,3 +407,129 @@ def test_an_escape_window_too_short_to_clear_24_inches_fails(ifc, checklist, tmp
     assert failed == ["escape_area/IFCWINDOW+escape", "escape_height/IFCWINDOW+escape"]
     applies = {r["id"]: r["applicable"] for r in rows}
     assert applies["escape_height/IFCWINDOW+escape"] == 77  # W1's, not W2's 24
+
+
+
+# ---- From the IFC alone: schedule, elevations, quantities (step 4) ----
+
+@pytest.fixture(scope="module")
+def drawings(ifc, tmp_path_factory):
+    return bidset.write_drawings(ifc[3], tmp_path_factory.mktemp("drawings"))
+
+
+def test_the_schedule_from_the_ifc_alone(drawings):
+    s = {r["mark"]: r for r in drawings["schedule"]}
+    assert {m: r["count"] for m, r in s.items()} == {"W1": 77, "W2": 24, "D1": 12, "D2": 1}
+    assert (s["W1"]["width"], s["W1"]["height"], s["D1"]["width"], s["D1"]["height"]) == ("3'-0\"", "4'-0\"", "6'-0\"", "6'-8\"")
+    assert (s["W1"]["safety_glazing_required"], s["W2"]["safety_glazing_required"],
+            s["D1"]["safety_glazing_required"]) == ("no", "yes (IBC 2018 2406.4.2)", "yes (IBC 2018 2406.4.1)")
+    # What the model lacks shows as such, so a rep sees the gap; where a number comes from shows
+    # too, so D2's placeholder U-factor reads as one, and our MasterFormat choice as judgement.
+    assert all(r["operation"] == r["frame_material"] == r["shgc"] == bidset.NOT_IN_MODEL for r in s.values())
+    assert s["D2"]["u_factor_source"] == "params pass3.envelope.door_u (placeholder)"
+    assert all(r["masterformat"].endswith("(judgement)") for r in s.values())
+    # Every field the IDS asks for has a column.
+    for col in ("is_external", "safety_glazing", "clear_opening_area_ft2", "clear_opening_width", "clear_opening_height",
+                "clear_opening_sill", "rough_opening", "design_pressure", "escape_window", "install_type"):
+        assert col in s["W1"], col
+    assert len(drawings["openings"]) == 114
+    assert {p.name for p in drawings["written"]} == {"schedule.csv", "openings.csv", "quantities.csv",
+                                                     *(f"elevation_{f}.svg" for f in bidset.FACES)}
+
+
+def test_the_elevations_put_every_opening_where_forge_has_it(ifc, drawings):
+    # Seen from outside, left to right: the front (x = 0) runs from y = length down to 0, the back
+    # from y = 0 up, the left end (y = 0) from x = 0 (the front) up, the right end from x = depth
+    # down. Written out here, not taken from bidset, so a mirrored drawing fails.
+    apt = ifc[0]
+    ops = {o["id"]: o for o in apt["openings"]}
+    w, l = apt["depth_m"], apt["length_m"]
+    centre = {"front": lambda a: l - a, "back": lambda a: a, "left": lambda a: a, "right": lambda a: w - a}
+    seen = Counter()
+    for face, el in drawings["elevations"].items():
+        for r in el["rects"]:
+            o = ops[r["name"]]
+            assert o["face"] == face
+            c = centre[face](o["along_m"])
+            got = np.array([r["u0"], r["u1"], r["z0"], r["z1"]])
+            want = [c - o["width_m"] / 2, c + o["width_m"] / 2, o["panel_lo_m"][2], o["panel_hi_m"][2]]
+            assert np.abs(got - want).max() < 1e-3, r["name"]
+            seen[r["name"]] += 1
+    assert seen == Counter(list(ops))  # every opening, once
+
+
+def test_the_quantities_from_the_ifc_alone(ifc, drawings):
+    apt = ifc[0]
+    q = drawings["quantities"]
+    w, l, h = apt["depth_m"], apt["length_m"], apt["storey_m"] * apt["storeys"]
+    assert abs(q["total"]["gross_m2"] - 2 * (w + l) * h) < 1e-6
+    assert abs(q["total"]["openings_m2"] - sum(o["width_m"] * o["height_m"] for o in apt["openings"])) < 1e-6
+    assert q["total"]["units"] == 114
+    assert set(q["glazed_by_flat_m2"]) == {f["name"] for f in apt["flats"]}
+    for f in apt["flats"]:
+        assert abs(q["glazed_by_flat_m2"][f["name"]] - f["glazed_m2"]) < 1e-9
+
+
+def test_the_elevation_svgs_are_well_formed(drawings):
+    # The files as written: one titled rectangle per unit on that face.
+    import xml.etree.ElementTree as ET
+
+    ns = "{http://www.w3.org/2000/svg}"
+    files = {p.stem.removeprefix("elevation_"): p for p in drawings["written"] if p.suffix == ".svg"}
+    assert set(files) == set(bidset.FACES)
+    for face, path in files.items():
+        root = ET.parse(path).getroot()
+        titled = [r for r in root.iter(ns + "rect") if r.find(ns + "title") is not None]
+        assert len(titled) == len(drawings["elevations"][face]["rects"]) > 0, face
+
+
+def test_the_drawings_read_an_odd_file_without_crashing(ifc, tmp_path):
+    # A file from elsewhere may miss optional attributes or carry values the type doesn't: a
+    # window without its width, a rough opening with only a width, a U-factor set on one window
+    # over its type's, a material layer set, a storey name with an ampersand. All of it reads,
+    # and differences show as "varies".
+    import ifcopenshell.api.material as material
+    import ifcopenshell.api.pset as pset
+
+    f = ifcopenshell.open(str(ifc[3]))
+    w1 = [w for w in f.by_type("IfcWindow") if ue.get_type(w).Name == "W1"]
+    w1[0].OverallWidth = None
+    w2 = next(t for t in f.by_type("IfcWindowType") if t.Name == "W2")
+    ours = pset.add_pset(f, product=w2, name="BidSet_Unit")
+    pset.edit_pset(f, pset=ours, properties={"RoughOpeningWidth": f.createIfcLengthMeasure(0.94)})
+    own = pset.add_pset(f, product=w1[1], name="Pset_WindowCommon")
+    pset.edit_pset(f, pset=own, properties={"ThermalTransmittance": 1.2})
+    d2 = next(t for t in f.by_type("IfcDoorType") if t.Name == "D2")
+    layers = material.add_material_set(f, name="steel door, insulated core", set_type="IfcMaterialLayerSet")
+    material.add_layer(f, layer_set=layers, material=material.add_material(f, name="steel"))
+    material.assign_material(f, products=[d2], material=layers)
+    f.by_type("IfcBuildingStorey")[0].Name = "Level 1 & mezzanine"
+    odd = tmp_path / "odd.ifc"
+    f.write(str(odd))
+    d = bidset.write_drawings(odd, tmp_path / "drawings")
+    s = {r["mark"]: r for r in d["schedule"]}
+    assert s["W1"]["width"].startswith("varies") and bidset.NOT_IN_MODEL in s["W1"]["width"]
+    assert s["W2"]["rough_opening"] == f"3'-1\" x {bidset.NOT_IN_MODEL}"
+    assert s["W1"]["u_factor_w_m2k"].startswith("varies") and "1.2" in s["W1"]["u_factor_w_m2k"]
+    assert s["D2"]["frame_material"] == "steel door, insulated core"
+    assert d["quantities"]["unsized"] == 1
+    import xml.etree.ElementTree as ET
+    for p in d["written"]:
+        if p.suffix == ".svg":
+            ET.parse(p)  # the ampersand is escaped
+
+
+def test_the_drawings_leave_out_units_in_walls_that_arent_exterior(ifc, tmp_path):
+    # A window or door in an interior wall isn't on any facade: mark one exterior wall interior,
+    # and its units drop out of the elevations and the quantities.
+    import ifcopenshell.api.pset as pset
+
+    f = ifcopenshell.open(str(ifc[3]))
+    wall = next(w for w in f.by_type("IfcWall") if w.Name == "ext-front-2")
+    hosted = sum(1 for e in list(f.by_type("IfcWindow")) + list(f.by_type("IfcDoor")) if bidset._host_wall(e) == wall)
+    ps = next(r.RelatingPropertyDefinition for r in wall.IsDefinedBy if r.RelatingPropertyDefinition.Name == "Pset_WallCommon")
+    pset.edit_pset(f, pset=ps, properties={"IsExternal": False})
+    inner = tmp_path / "inner.ifc"
+    f.write(str(inner))
+    rb = bidset.read_back(inner)
+    assert hosted > 0 and len(rb["units"]) == 114 - hosted

@@ -606,6 +606,16 @@ def cmd_bidset(args) -> int:
     print(NL + f"wrote {ids_path.relative_to(OUT_DIR.parent)} ({len(rows)} specifications)" + NL + table + NL + NL + summary)
     (bidset.OUT / "checklist.md").write_text(table + NL + NL + summary + NL, encoding="utf-8")
 
+    # From the IFC alone (step 4): the schedule, the openings, four elevations, the quantities.
+    d = bidset.write_drawings(path, bidset.OUT / "drawings")
+    print(NL + "From the IFC alone: " + ", ".join(str(x.relative_to(OUT_DIR.parent)) for x in d["written"]))
+    for r in d["schedule"]:
+        print(f"  {r['mark']}: {r['count']} {r['kind']}{'s' if r['count'] != 1 else ''} {r['width']} x {r['height']} ({r['per_storey']}); "
+              f"safety glazing {r['safety_glazing_required']}; operation {r['operation']}")
+    q = d["quantities"]["total"]
+    print(f"  exterior walls {q['gross_m2']:.1f} m2 gross, {q['openings_m2']:.1f} m2 of openings, {q['net_m2']:.1f} m2 net "
+          f"({q['gross_m2'] / bidset.FT2:,.0f} / {q['openings_m2'] / bidset.FT2:,.0f} / {q['net_m2'] / bidset.FT2:,.0f} ft2)")
+
     why = bidset.webifc_status()
     if why:
         # Two readers are the check; with one, say so and fail, so nobody takes it for both.
