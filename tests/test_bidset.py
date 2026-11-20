@@ -254,13 +254,13 @@ def test_the_ids_is_valid_and_reads_back(ifc, checklist):
     doc, path = checklist
     want = [f"{f['key']}/{on}" for f in bidset.ids_fields(ifc[2]) for on in f["on"]]
     assert [s.identifier for s in doc.specifications] == want
-    assert len(want) == 52 and len(set(want)) == len(want)
+    assert len(want) == 56 and len(set(want)) == len(want)
 
 
 def test_what_the_walk_up_carries(ifc, checklist):
     rows = bidset.run_ids(checklist[0], ifc[3])
     carried, fields = bidset.ids_carried(rows)
-    assert fields == 28
+    assert fields == 32
     assert carried == ["type mark", "storey", "exterior or not", "unit width", "unit height",
                        "U-factor within the code's limit", "in a wall", "the wall's construction (on exterior walls)"]
 
@@ -283,7 +283,7 @@ def _complete(path, out):
         if not window:
             t.OperationType = "SLIDING_TO_LEFT"
         common = next(ps for ps in t.HasPropertySets if ps.Name in ("Pset_WindowCommon", "Pset_DoorCommon"))
-        pset.edit_pset(f, pset=common, properties={"WindLoadRating": "LC-PG50", **({"FireExit": False} if window else {})})
+        pset.edit_pset(f, pset=common, properties={"WindLoadRating": "LC-PG50", **({"FireExit": True} if window else {})})
         glass = pset.add_pset(f, product=t, name="Pset_DoorWindowGlazingType")
         pset.edit_pset(f, pset=glass, properties={"IsCoated": True, "FillGas": "argon", "IsTempered": True,
                                                   "SolarHeatGainTransmittance": 0.3})
@@ -293,7 +293,10 @@ def _complete(path, out):
             "RoughOpeningWidth": f.createIfcLengthMeasure(1.0), "RoughOpeningHeight": f.createIfcLengthMeasure(1.3),
             "Operation": label("casement"), "FrameColourInside": label("white"), "FrameColourOutside": label("bronze"),
             "ObscureGlass": False, "Screen": True, "Grilles": label("none"), "HardwareFinish": label("white"),
-            "InstallType": label("nail fin"), "SafetyGlazing": label("tempered")})
+            "InstallType": label("nail fin"), "SafetyGlazing": label("tempered"),
+            # A casement's clear opening, comfortably over IBC 2018 1030's minimums.
+            "ClearOpeningArea": f.createIfcAreaMeasure(0.80), "ClearOpeningWidth": f.createIfcLengthMeasure(0.80),
+            "ClearOpeningHeight": f.createIfcLengthMeasure(1.10), "ClearOpeningSillHeight": f.createIfcLengthMeasure(0.95)})
     f.write(str(out))
     return f
 
@@ -341,3 +344,65 @@ def test_safety_glazing_looks_round_a_corner(ifc):
     win["lo_m"][0], win["hi_m"][0] = 0.3, 0.3 + win["width_m"]     # and the window to it
     reason = bidset.safety_glazing(a, p).get(win["id"], "")
     assert "round the corner" in reason and "handing" in reason
+
+
+
+def test_one_stair_fits_the_table_but_the_model_misses_footnote_a(ifc):
+    # IBC 2018 Table 1006.3.3(1): 3 storeys, 4 flats a storey; the common path bounded by a flat
+    # corner to corner (45 + 20 = 65 ft) and, on the ground floor, the back flats' far corner to
+    # the front door in the middle of its 7 in wall (40 ft - 3.5 in + 50 ft). It fits, but
+    # footnote a wants escape windows in every
+    # bedroom (2 a flat, pass 4's flats: 16 upstairs, 8 on the ground floor), and none is marked.
+    apt, _, p, _ = ifc
+    se = bidset.single_exit(apt, p)
+    assert (se["storeys"], se["units_per_storey"], se["fits_table"]) == (3, 4, True)
+    assert (round(se["path_to_stair_ft"], 6), round(se["path_to_entry_ft"], 6)) == (65.0, round(90 - 3.5 / 12, 6))
+    assert (se["escape_needed_upper"], se["escape_needed_ground"], se["meets_footnote_a"]) == (16, 8, False)
+    assert bidset.single_exit(apt, p, marked=16)["meets_footnote_a"] is True
+    assert "does NOT meet it yet" in bidset.single_exit_report(se, p)
+
+
+def test_one_stair_fails_the_table_past_each_limit(ifc):
+    apt, _, p, _ = ifc
+    four = copy.deepcopy(apt)
+    four["storeys"] = 4
+    five = copy.deepcopy(apt)
+    five["flats"].append(dict(five["flats"][0], name="2-extra"))
+    five["flats"][-1]["floor"] = 2
+    far = copy.deepcopy(apt)
+    far["flat_len_m"] = 130 * 0.3048  # a flat 130 ft long: past 125 ft of common path
+    for a in (four, five, far):
+        assert bidset.single_exit(a, p)["fits_table"] is False
+
+
+def test_escape_counts_round_up(ifc):
+    apt, _, p, _ = ifc
+    q = dict(p)
+    q["bidset.flat_bedrooms"] = type(p["bidset.flat_bedrooms"])(**{**vars(p["bidset.flat_bedrooms"]), "value": 1.7})
+    se = bidset.single_exit(apt, q)
+    assert (se["escape_needed_upper"], se["escape_needed_ground"]) == (14, 7)  # 13.6 and 6.8, up
+
+
+def test_an_escape_window_too_short_to_clear_24_inches_fails(ifc, checklist, tmp_path):
+    # A double-hung 3 x 4 ft opens about half its height, under 1030.2.1's 24 in: marked as an
+    # escape window, it fails the clear height (and the area), and nothing else. Windows marked as
+    # not escape windows (W2 here) are left out of the escape sizes.
+    import ifcopenshell.api.pset as pset
+
+    doc, _ = checklist
+    full = tmp_path / "complete.ifc"
+    f = _complete(ifc[3], full)
+    for t in f.by_type("IfcWindowType"):
+        ours = next(ps for ps in t.HasPropertySets if ps.Name == "BidSet_Unit")
+        pset.edit_pset(f, pset=ours, properties={"ClearOpeningHeight": f.createIfcLengthMeasure(0.55),
+                                                 "ClearOpeningArea": f.createIfcAreaMeasure(0.45)})
+        if t.Name == "W2":  # not an escape window: left out of the escape sizes
+            common = next(ps for ps in t.HasPropertySets if ps.Name == "Pset_WindowCommon")
+            pset.edit_pset(f, pset=common, properties={"FireExit": False})
+    short = tmp_path / "short.ifc"
+    f.write(str(short))
+    rows = bidset.run_ids(doc, short)
+    failed = sorted(r["id"] for r in rows if not r["status"])
+    assert failed == ["escape_area/IFCWINDOW+escape", "escape_height/IFCWINDOW+escape"]
+    applies = {r["id"]: r["applicable"] for r in rows}
+    assert applies["escape_height/IFCWINDOW+escape"] == 77  # W1's, not W2's 24

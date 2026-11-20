@@ -217,9 +217,11 @@ documents. Jon: a window quote needs every field on the list in D27. The spike p
 0), and forge now writes the whole walk-up with a stable id on every opening (step 1).
 `brownfield bidset` writes it as IFC4 and holds the file to forge's model on every check (step 2).
 A second reader, That Open's web-ifc, reads the same building on every export. The IDS (step 3)
-asks for the 28 fields a quote needs, and the model carries 8 of them. IBC 2018 2406.4.1-2406.4.3
-call for safety glazing in 36 openings, 24 of them windows (type W2). Next: the schedule and elevations from the IFC
-(step 4).
+asks for the 32 fields a quote needs, and the model carries 8 of them. IBC 2018 2406.4.1-2406.4.3
+call for safety glazing in 36 openings, 24 of them windows (type W2). The one stair is allowed
+(IBC 2018 Table 1006.3.3(1)) only with sprinklers and an escape window in every bedroom, 16 of
+them upstairs. Whether a window clears 1030's sizes depends on its operation, which the model
+lacks. Next: the schedule and elevations from the IFC (step 4).
 
 ## Decisions
 
@@ -1324,8 +1326,8 @@ call for safety glazing in 36 openings, 24 of them windows (type W2). Next: the 
            with 814 GlobalIds: the 4 wall types' construction property sets, and type W2 with its
            property set and type relationship.
          - **Not yet, and what we don't know:**
-           - **Escape opening sizes** (IBC 2018 1030). The text came later from Jon; the next step
-             puts it in.
+           - **Escape opening sizes** (IBC 2018 1030): the text came later from Jon, and they are
+             in now (below).
            - **2406.4.4-2406.4.7 not assessed:** guards and railings, wet areas, beside stairs and
              landings, and the bottom of a stair. The model has no stair flights or landings, so
              the 5 stair windows wait for them.
@@ -1338,6 +1340,62 @@ call for safety glazing in 36 openings, 24 of them windows (type W2). Next: the 
            - the count was written as "IBC 2406.4" when only 4.1-4.3 were checked;
            - a sidelite tight against a door could be missed to rounding;
            - one type, W1, mixed the windows that need safety glazing with those that don't.
+       - **The one stair and escape windows**, done 2026-11-19. The source is IBC 2018 1006.3.3,
+         Table 1006.3.3(1) and 1030, which Jon read in an online IBC 2018 viewer and shared as
+         screenshots, since the fetch tools couldn't reach them. The numbers are in
+         `params/bidset.yaml`.
+         - **The table** allows one exit on the first to third storey above grade, with at most 4
+           dwelling units and 125 ft of common path. The walk-up has 3 storeys and 4 flats a storey.
+           Its common path is bounded by straight lines, since interior walls aren't modelled:
+           - ~65 ft from a flat's far corner to its door to the stair;
+           - ~90 ft on to the front door on the ground floor, if the stair hall there is exit
+             access rather than part of the stair's enclosure.
+
+           **So it fits the table, but footnote a allows one stair only with:**
+           - sprinklers throughout (903.3.1.1 or 903.3.1.2). The village assumes NFPA 13R (pass
+             3e). Whether pass 4's cost covers them is unchecked: HUD's per-unit limit is a cap,
+             not an itemised estimate;
+           - escape openings by 1030.
+
+           **The model doesn't meet that yet.** It marks no escape windows, has no rooms to say
+           which windows serve bedrooms, and has no sprinkler system in it.
+         - **1030.1 then needs an escape window in every sleeping room.** That's 16 on the upper
+           storeys, at 2 bedrooms a flat as pass 4 prices them (`flat_bedrooms`, 1-3 across the
+           village's mix; counts round up). The ground floor's 8 are needed too unless its patio
+           doors count as a second way out. Exception 2 would need a door from the bedroom itself
+           to the yard or an exit balcony, and the model has no rooms.
+         - **Each one must clear 5.7 ft2, 24 in high and 20 in wide "in normal operation", with the
+           bottom of the opening no more than 44 in up.**
+           - The units' sills are at 36 in. The clear opening's bottom sits a little higher (frame
+             and sash), so it is likely under 44 in, but that's unchecked until the clear opening
+             is known.
+           - The clear opening is the window's operation. A 3'-0" x 4'-0" casement swings fully
+             open. A double-hung of that size opens about half its height, and a slider about half
+             its width, so they likely miss 24 in or 20 in.
+           - **The field that decides code compliance is one the design model leaves out.**
+           - Whether a window is an escape window belongs on each window, not its type: W1 serves
+             bedrooms and living rooms alike.
+         - **The IDS gains 4 fields** (32 now, 56 specifications) for any window marked as an
+           escape window: clear opening area, width, height, and its bottom above the floor.
+           - They are `BidSet_` properties, since IFC4 has no net clear opening.
+           - The bounds are in metres, to 0.1 mm, so a value written rounded still passes. That
+             leans to the supplier, by under 0.1 mm.
+           - On the walk-up they apply to no window, and the checklist says "none marked; 16 needed
+             (24 with the ground floor)" so the rows can't read as a pass.
+         - **`brownfield bidset` says all this** in its summary.
+         - **Tests:**
+           - the table's result (3 storeys, 4 flats, 65 and ~90 ft) and footnote a unmet;
+           - the table fails past each limit (a fourth storey, a fifth flat, a 130 ft flat);
+           - escape counts round up;
+           - the complete model passes with casement-sized clear openings;
+           - a window marked as an escape window but too short (0.55 m, as a double-hung) fails
+             exactly the clear height and area, while windows marked as not escape windows are
+             left out.
+
+           `tests/test_bidset.py` has 27 tests. All 208 pass.
+         - **Code review** (before the commit): 10 findings, all fixed. The important one: the
+           escape sizes applied only to windows marked as escape windows, so with none marked
+           they could never fail. The checklist and summary now say what's needed.
     4. **From the IFC alone** (not from forge, to show the file is enough): the window and door
        schedule (CSV), the four elevations with tags (SVG), and quantities (glazed area per flat,
        net wall area).

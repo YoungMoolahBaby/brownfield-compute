@@ -522,12 +522,99 @@ def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
     return out
 
 
+# ---- One stair: IBC 2018 1006.3.3 and Table 1006.3.3(1), and so escape windows (1030) ----
+
+def single_exit(apt: dict, params: dict, marked: int = 0) -> dict:
+    """Whether the walk-up's one stair fits IBC 2018 1006.3.3 item 1 and Table 1006.3.3(1) (R-2
+    dwelling units), what that brings with it, and how far the model is from it. `marked` is the
+    number of windows the model marks as escape windows.
+
+    - **The table** allows one exit on the first to third storey above grade, with at most 4
+      dwelling units a storey and at most 125 ft of common path of egress travel. Its footnote a
+      holds it to buildings sprinklered throughout (903.3.1.1 or 903.3.1.2) and given escape
+      openings by section 1030. So `fits_table` is only half of it: `meets_footnote_a` asks
+      whether the model has the escape windows. Sprinklers aren't in the model at all.
+    - **Common path:** bounded by straight lines, interior walls not modelled. On every storey, a
+      flat corner to its far corner (length plus width), where the flat's door to the stair is
+      the exit. On the ground floor, if the stair hall there is exit access and not part of the
+      stair's enclosure, the walk runs on to the front entry door: the farthest flat corner to that
+      door, by x plus y.
+    - **Escape windows:** a storey with one exit brings 1030.1 item 1, an escape opening in every
+      sleeping room. Exception 2 (a door from the room straight to a yard or an exterior exit
+      balcony) is for rooms the model doesn't have. That is certain on the upper storeys, whose
+      only way out is the stair. The ground floor too, unless its flats' patio doors to the yard
+      count as a second way out; the model and this reading leave that open. Counts round up.
+    """
+    c = "bidset.code.single_exit."
+    per_storey = Counter(fl["floor"] for fl in apt["flats"])
+    units = max(per_storey.values())
+    storeys = apt["storeys"]
+    ft = 0.3048
+    to_stair_ft = (apt["flat_len_m"] + apt["depth_m"] / 2) / ft
+    entry = next((o for o in apt["openings"] if o["kind"] == "entry_door"), None)
+    to_entry_ft = None
+    if entry is not None:
+        ex, ey = (entry["lo_m"][0] + entry["hi_m"][0]) / 2, entry["along_m"]
+        corners = []
+        for fl in (fl for fl in apt["flats"] if fl["floor"] == 1):
+            name = fl["name"]
+            x0, x1 = (0.0, apt["depth_m"] / 2) if "-front-" in name else (apt["depth_m"] / 2, apt["depth_m"])
+            y0, y1 = (0.0, apt["flat_len_m"]) if name.endswith("-left") else (apt["length_m"] - apt["flat_len_m"], apt["length_m"])
+            corners += [abs(x - ex) + abs(y - ey) for x in (x0, x1) for y in (y0, y1)]
+        to_entry_ft = max(corners) / ft if corners else None
+    path_ft = max(to_stair_ft, to_entry_ft or 0.0)
+    fits = (storeys <= params[c + "r2_max_storey"].value and units <= params[c + "r2_max_units"].value
+            and path_ft <= params[c + "r2_max_common_path_ft"].value)
+    bedrooms = params["bidset.flat_bedrooms"].value
+    upper = sum(n for k, n in per_storey.items() if k > 1)
+    need_upper = math.ceil(upper * bedrooms)
+    need_ground = math.ceil(per_storey.get(1, 0) * bedrooms)
+    return {"storeys": storeys, "units_per_storey": units, "path_to_stair_ft": to_stair_ft, "path_to_entry_ft": to_entry_ft,
+            "fits_table": fits, "escape_needed_upper": need_upper, "escape_needed_ground": need_ground,
+            "escape_marked": marked, "meets_footnote_a": fits and marked >= need_upper}
+
+
+def single_exit_report(se: dict, params: dict) -> str:
+    """The single-stair finding in a few sentences, saying plainly how far the model is from it."""
+    c, e = "bidset.code.single_exit.", "bidset.code.escape."
+    v = lambda k: params[k].value  # noqa: E731
+    path = f"~{se['path_to_stair_ft']:.0f} ft from a flat's far corner to its door to the stair"
+    if se["path_to_entry_ft"] is not None:
+        path += (f", or ~{se['path_to_entry_ft']:.0f} ft on to the front door on the ground floor if its stair hall is "
+                 "exit access")
+    head = (f"One stair: IBC 2018 Table 1006.3.3(1) allows a single exit on the first {v(c + 'r2_max_storey'):g} storeys "
+            f"with at most {v(c + 'r2_max_units'):g} dwelling units a storey and {v(c + 'r2_max_common_path_ft'):g} ft of "
+            f"common path. The walk-up has {se['storeys']} storeys and {se['units_per_storey']} flats a storey; its "
+            f"common path is bounded by {path} (straight lines; interior walls not modelled).")
+    if not se["fits_table"]:
+        return head + " So one stair does NOT fit the table: the walk-up needs a second exit."
+    return (head + " It fits the table, but the table's footnote a allows it only in a building sprinklered throughout "
+            "(903.3.1.1 or 903.3.1.2) and given escape openings (1030): an escape window in every sleeping room, "
+            f"{se['escape_needed_upper']} on the upper storeys and {se['escape_needed_ground']} more on the ground floor "
+            "unless its patio doors count as a second way out. Each must clear "
+            f"{v(e + 'min_area_ft2'):g} ft2, {v(e + 'min_height_in'):g} in high and {v(e + 'min_width_in'):g} in wide in "
+            f"normal operation, its bottom no more than {v(e + 'max_sill_in'):g} in up. "
+            + ("The model meets that for the escape windows. " if se["meets_footnote_a"] else
+               f"The model does NOT meet it yet: it marks {se['escape_marked']} escape windows of at least "
+               f"{se['escape_needed_upper']} needed, has no rooms to say which windows serve bedrooms, ")
+            + "and has no sprinkler system in it.")
+
+
 # ---- The IDS: what a bid set's windows and doors must carry ----
 
 UNIT_PSET = {"IFCWINDOW": "Pset_WindowCommon", "IFCDOOR": "Pset_DoorCommon"}
 GLAZING = "Pset_DoorWindowGlazingType"
 OPERATIONS = ["casement", "awning", "hopper", "double-hung", "single-hung", "horizontal slider", "fixed", "tilt-turn"]
 SAFETY_GLAZING = ["tempered", "laminated"]
+
+
+def _down(x: float) -> float:
+    """x rounded down to 0.0001, after clearing float noise (24 in is 0.6096 m, not 0.6095)."""
+    return math.floor(round(x * 1e4, 6)) / 1e4
+
+
+def _up(x: float) -> float:
+    return math.ceil(round(x * 1e4, 6)) / 1e4
 
 
 def ids_fields(params: dict) -> list[dict]:
@@ -545,6 +632,13 @@ def ids_fields(params: dict) -> list[dict]:
     # The code's U-0.30 in W/m2K, rounded up to 3 decimals: a unit rated U-0.30 and written
     # rounded (1.7035) still passes, and nothing over 0.3001 does.
     u_max = math.ceil(params["bidset.code.fenestration_u_max"].value * BTU_FT2 * 1e3) / 1e3
+    # Escape windows (IBC 2018 1030), in metres, to 0.1 mm (0.0001 m2): a unit that meets the code
+    # and is written rounded still passes. That leans to the supplier, by under 0.1 mm.
+    e = "bidset.code.escape."
+    esc_area = _down(params[e + "min_area_ft2"].value * FT2)
+    esc_width = _down(params[e + "min_width_in"].value * IN)
+    esc_height = _down(params[e + "min_height_in"].value * IN)
+    esc_sill = _up(params[e + "max_sill_in"].value * IN)
     door_ops = [x for x in ifcopenshell.ifcopenshell_wrapper.schema_by_name("IFC4")
                 .declaration_by_name("IfcDoorTypeOperationEnum").enumeration_items() if x not in ("USERDEFINED", "NOTDEFINED")]
     both, windows, glazed = ("IFCWINDOW", "IFCDOOR"), ("IFCWINDOW",), ("IFCWINDOW", "IFCDOOR+glazed")
@@ -581,6 +675,20 @@ def ids_fields(params: dict) -> list[dict]:
         dict(key="grade", label="performance grade (design pressure)", on=both, std=True,
              facet=prop(unit, "WindLoadRating", ids.Restriction(options={"pattern": "(R|LC|CW|AW)-PG[0-9]+.*"}), "IFCLABEL")),
         dict(key="escape", label="escape window (yes or no)", on=windows, std=True, facet=prop("Pset_WindowCommon", "FireExit", dt="IFCBOOLEAN")),
+        # On a window marked as an escape window, IBC 2018 1030.2-1030.3 (params). IFC4 has no
+        # net clear opening; it is "the result of normal operation of the opening" (1030.2.1).
+        dict(key="escape_area", label="escape window: clear opening area", on=("IFCWINDOW+escape",), std=False,
+             note="IFC4 has no net clear opening",
+             facet=prop("BidSet_Unit", "ClearOpeningArea", ids.Restriction(options={"minInclusive": esc_area}, base="double"), "IFCAREAMEASURE")),
+        dict(key="escape_width", label="escape window: clear opening width", on=("IFCWINDOW+escape",), std=False,
+             note="IFC4 has no net clear opening",
+             facet=prop("BidSet_Unit", "ClearOpeningWidth", ids.Restriction(options={"minInclusive": esc_width}, base="double"), "IFCLENGTHMEASURE")),
+        dict(key="escape_height", label="escape window: clear opening height", on=("IFCWINDOW+escape",), std=False,
+             note="IFC4 has no net clear opening",
+             facet=prop("BidSet_Unit", "ClearOpeningHeight", ids.Restriction(options={"minInclusive": esc_height}, base="double"), "IFCLENGTHMEASURE")),
+        dict(key="escape_sill", label="escape window: bottom of the clear opening above the floor", on=("IFCWINDOW+escape",), std=False,
+             note="IFC4 has no net clear opening",
+             facet=prop("BidSet_Unit", "ClearOpeningSillHeight", ids.Restriction(options={"maxInclusive": esc_sill}, base="double"), "IFCLENGTHMEASURE")),
         dict(key="screen", label="screen (yes or no)", on=glazed, std=False, facet=prop("BidSet_Unit", "Screen", dt="IFCBOOLEAN")),
         dict(key="grilles", label="grilles", on=glazed, std=False, facet=prop("BidSet_Unit", "Grilles", dt="IFCLABEL")),
         dict(key="hardware", label="hardware finish", on=both, std=False, facet=prop("BidSet_Unit", "HardwareFinish", dt="IFCLABEL")),
@@ -598,8 +706,8 @@ def ids_fields(params: dict) -> list[dict]:
 
 
 def _applicability(on: str):
-    """The entity a field applies to, and any filter: '+glazed', '+hazard' (BF_Opening flags) or
-    '+external' (a wall's Pset_WallCommon)."""
+    """The entity a field applies to, and any filter: '+glazed', '+hazard' (BF_Opening flags),
+    '+escape' (a window marked as an escape window) or '+external' (a wall's Pset_WallCommon)."""
     from ifctester import ids
 
     cls, _, only = on.partition("+")
@@ -608,6 +716,8 @@ def _applicability(on: str):
         facets.append(ids.Property(propertySet="BF_Opening", baseName="Glazed", value="TRUE", dataType="IFCBOOLEAN"))
     elif only == "hazard":
         facets.append(ids.Property(propertySet="BF_Opening", baseName="SafetyGlazingRequired", value="TRUE", dataType="IFCBOOLEAN"))
+    elif only == "escape":
+        facets.append(ids.Property(propertySet="Pset_WindowCommon", baseName="FireExit", value="TRUE", dataType="IFCBOOLEAN"))
     elif only == "external":
         facets.append(ids.Property(propertySet="Pset_WallCommon", baseName="IsExternal", value="TRUE", dataType="IFCBOOLEAN"))
     return cls, facets
@@ -674,9 +784,12 @@ def ids_carried(rows: list[dict]) -> tuple[list[str], int]:
     return carried, len(by)
 
 
-def ids_report(rows: list[dict]) -> str:
+def ids_report(rows: list[dict], escape_needed: tuple[int, int] | None = None) -> str:
     """The checklist: per field, how many pass of those it applies to, for windows, doors, and
-    (for the two fields that sit elsewhere) the door types or the exterior walls."""
+    (for the two fields that sit elsewhere) the door types or the exterior walls. An escape
+    window's sizes apply only to windows marked as escape windows; with `escape_needed` (upper
+    storeys, ground floor, from `single_exit`), a row that applies to none says how many are
+    needed, so it can't read as a pass."""
     fields: dict[str, dict] = {}
     for r in rows:
         key, on = r["id"].split("/", 1)
@@ -684,7 +797,12 @@ def ids_report(rows: list[dict]) -> str:
         d[on.split("+")[0]] = r
 
     def cell(r, what=""):
-        return f"{r['passed']} of {r['applicable']}{what}" if r else ""
+        if not r:
+            return ""
+        if escape_needed and r["id"].startswith("escape_") and r["applicable"] == 0:
+            up, ground = escape_needed
+            return f"none marked; {up} needed ({up + ground} with the ground floor)"
+        return f"{r['passed']} of {r['applicable']}{what}"
 
     lines = ["| Field | Where | Windows | Doors | Door types or walls |", "|---|---|---|---|---|"]
     for d in fields.values():

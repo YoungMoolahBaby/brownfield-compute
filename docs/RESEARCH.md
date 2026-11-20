@@ -801,10 +801,30 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - a walking surface is within 36 in.
 
     The exceptions are decorative glazing, a protective rail, and outboard panes 25 ft or more up.
-- **Emergency escape and rescue openings, IBC 2018 section 1030 (2021: 1031): not read.**
-  UpCodes' chapter 10 pages (Pennsylvania 2018, Colorado 2021) cut off before the section, and
-  codes.iccsafe.org returned 403. Where escape openings are required for R-2, and their minimum
-  sizes, still need the code's text.
+- **Single exits and escape openings, IBC 2018 1006.3.3, Table 1006.3.3(1) and 1030.** Read
+  by Jon in an online IBC 2018 viewer and shared as screenshots (2026-11-19). The fetch tools
+  couldn't reach them: UpCodes' chapter 10 pages cut off before 1030, and codes.iccsafe.org
+  returned 403. Pennsylvania's amendments were not checked.
+  - **1006.3.3:** a single exit is allowed from a storey where, among other cases, "the occupant
+    load, number of dwelling units and common path of egress travel distance do not exceed the
+    values in Table 1006.3.3(1) or 1006.3.3(2)" (item 1). Item 5 lets an individual dwelling
+    unit have one exit if its exit discharges directly to the exterior at the level of exit
+    discharge, or reaches two independent exits.
+  - **Table 1006.3.3(1), R-2 dwelling units:** one exit is allowed on the basement, first,
+    second or third storey above grade plane, with at most 4 dwelling units and 125 ft of common
+    path. It is not permitted on the fourth storey and above. Footnote a limits the R-2 row to
+    buildings "equipped throughout with an automatic sprinkler system in accordance with Section
+    903.3.1.1 or 903.3.1.2 and provided with emergency escape and rescue openings in accordance
+    with Section 1030".
+  - **1030.1:** escape openings are required in "Group R-2 occupancies located in stories with
+    only one exit or access to only one exit as permitted by Tables 1006.3.3(1) and 1006.3.3(2)",
+    in basements and sleeping rooms below the fourth storey. Of its four exceptions, exception 2
+    exempts sleeping rooms with an exit or exit access door "directly into a public way or to a
+    yard, court or exterior exit balcony that opens to a public way".
+  - **1030.2:** a net clear opening of at least 5.7 ft2 (5 ft2 for grade-floor openings).
+  - **1030.2.1:** at least 24 in high and 20 in wide, "the result of normal operation of the
+    opening".
+  - **1030.3:** the bottom of the clear opening no more than 44 in above the floor.
 - **Fenestration U-factor, 2018 IECC climate zone 5: U-0.30.** This is pass 3's source
   (`pass3.envelope.window_u`), reused as the IDS's limit (`bidset.code.fenestration_u_max`).
 - **CSI MasterFormat 2020, Division 08 Openings.** The level-2 titles used are 08 10 00 Doors and

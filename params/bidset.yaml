@@ -1,11 +1,12 @@
 # Pass 3f (D27): the numbers the bid set's checks use. The fields a window quote needs (Jon,
 # 2026-11-19) are names, not numbers, and live in src/brownfield/bidset.py's IDS table.
 #
-# IBC 2018 is the edition Pennsylvania's UCC adopted. Its text was read on UpCodes'
-# "Pennsylvania Building Code 2018 (adopts with amendments)", chapter 24
-# (https://up.codes/viewer/pennsylvania/ibc-2018/chapter/24/glass-and-glazing, 2026-11-19);
-# Pennsylvania's amendments were not checked. The emergency escape section (1030) could not be
-# read (the chapter page cut off before it, codes.iccsafe.org refused), so no escape sizes here.
+# IBC 2018 is the edition Pennsylvania's UCC adopted. Chapter 24 was read on UpCodes'
+# "Pennsylvania Building Code 2018 (adopts with amendments)"
+# (https://up.codes/viewer/pennsylvania/ibc-2018/chapter/24/glass-and-glazing, 2026-11-19).
+# Sections 1006.3.3, Table 1006.3.3(1) and 1030 were read by Jon in an online IBC 2018 viewer
+# and shared as screenshots (2026-11-19); the fetch tools couldn't reach them. Pennsylvania's
+# amendments were not checked.
 
 code:
   fenestration_u_max:
@@ -44,3 +45,48 @@ code:
       unit: in, horizontally from the plane of the glazing, a walking surface within this is one of 2406.4.3's conditions
       conf: high
       source: "IBC 2018 2406.4.3, same page: one or more walking surfaces within 36 inches (914 mm), measured horizontally in a straight line, of the plane of the glazing"
+  escape:
+    min_area_ft2:
+      value: 5.7
+      unit: ft2, the least net clear opening of an emergency escape and rescue opening (an escape window)
+      conf: high
+      source: "IBC 2018 1030.2 Minimum size: 'a minimum net clear opening of 5.7 square feet (0.53 m2)'. Its exception, 5 ft2 for grade-floor openings, isn't used: 5.7 everywhere is the safe side"
+    min_height_in:
+      value: 24
+      unit: in, the least net clear opening height of an escape window
+      conf: high
+      source: "IBC 2018 1030.2.1 Minimum dimensions: 'The minimum net clear opening height dimension shall be 24 inches (610 mm)'; the dimensions 'shall be the result of normal operation of the opening'"
+    min_width_in:
+      value: 20
+      unit: in, the least net clear opening width of an escape window
+      conf: high
+      source: "IBC 2018 1030.2.1: 'The minimum net clear opening width dimension shall be 20 inches (508 mm)'"
+    max_sill_in:
+      value: 44
+      unit: in above the floor, the highest the bottom of an escape window's clear opening may be
+      conf: high
+      source: "IBC 2018 1030.3 Maximum height from floor: the bottom of the clear opening 'not greater than 44 inches (1118 mm) measured from the floor'"
+  single_exit:
+    r2_max_storey:
+      value: 3
+      unit: storeys above grade plane, the highest storey of an R-2 building (dwelling units) that may have a single exit
+      conf: high
+      source: "IBC 2018 Table 1006.3.3(1) Stories with one exit or access to one exit for R-2 occupancies: 'Basement, first, second or third story above grade plane' R-2 (footnotes a, b); 'Fourth story above grade plane and higher' NP. Footnote a: R-2 buildings 'equipped throughout with an automatic sprinkler system in accordance with Section 903.3.1.1 or 903.3.1.2 and provided with emergency escape and rescue openings in accordance with Section 1030'"
+    r2_max_units:
+      value: 4
+      unit: dwelling units, the most on a storey with a single exit
+      conf: high
+      source: "IBC 2018 Table 1006.3.3(1): maximum number of dwelling units '4 dwelling units'"
+    r2_max_common_path_ft:
+      value: 125
+      unit: ft, the longest common path of egress travel on a storey with a single exit
+      conf: high
+      source: "IBC 2018 Table 1006.3.3(1): maximum common path of egress travel distance '125 feet'"
+
+flat_bedrooms:
+  value: 2
+  low: 1
+  high: 3
+  unit: bedrooms (sleeping rooms) in each of the walk-up's flats, each needing an escape window where 1030.1 applies
+  conf: medium
+  source: "pass 4 prices each walk-up flat as a 2-bedroom (pass4 flat TDC: HUD 2024 Unit Total Development Cost limits, walk-up 2 bedrooms); forge's flats are 45 x 20 ft, ~900 ft2. low and high: the village's mix runs from studios to 3 bedrooms (params/village.yaml flat_mix). The model has no rooms"

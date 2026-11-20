@@ -594,12 +594,15 @@ def cmd_bidset(args) -> int:
     # the finding, not a failed run.
     ids_path = bidset.OUT / "bidset.ids"
     rows = bidset.run_ids(bidset.write_ids(params, ids_path), path)
-    table = bidset.ids_report(rows)
+    marked = next((r["applicable"] for r in rows if r["id"].startswith("escape_area/")), 0)
+    se = bidset.single_exit(apt, params, marked)
+    table = bidset.ids_report(rows, (se["escape_needed_upper"], se["escape_needed_ground"]))
     carried, fields = bidset.ids_carried(rows)
     hazards = bidset.safety_glazing(apt, params)
     summary = (f"The model carries {len(carried)} of the {fields} fields a quote needs ({', '.join(carried)}). "
                f"IBC 2018 2406.4.1-2406.4.3 call for safety glazing in {len(hazards)} of the {len(apt['openings'])} "
                f"openings (2406.4.4-2406.4.7, stairs and wet areas among them, not assessed).")
+    summary += NL + NL + bidset.single_exit_report(se, params)
     print(NL + f"wrote {ids_path.relative_to(OUT_DIR.parent)} ({len(rows)} specifications)" + NL + table + NL + NL + summary)
     (bidset.OUT / "checklist.md").write_text(table + NL + NL + summary + NL, encoding="utf-8")
 
