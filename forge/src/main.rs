@@ -335,13 +335,14 @@ fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result
     let openings: Vec<_> = b.opening_records().iter().map(|r| {
         let o = &r.opening;
         let base = (r.storey - 1) as f64 * b.storey;
+        let (plo, phi) = b.panel_span(o);
         json!({
             "id": r.id, "kind": r.kind.name(), "glazed": o.glazed, "storey": r.storey, "flat": r.flat,
             "face": o.face.name(), "index": r.index,
             "width_m": r6(o.width), "height_m": r6(o.height),
             "sill_m": r6(o.sill), "sill_above_floor_m": r6(o.sill - base), "along_m": r6(o.along),
-            "lo_m": m(r.lo), "hi_m": m(r.hi), "outward": m(o.face.outward() * 1e3),
-            "wall": format!("ext-{}", o.face.name()),
+            "lo_m": m(r.lo), "hi_m": m(r.hi), "panel_lo_m": m(plo), "panel_hi_m": m(phi),
+            "outward": m(o.face.outward() * 1e3), "wall": b.wall_of(r),
         })
     }).collect();
     let parts: Vec<_> = b.parts().iter().map(|p| json!({

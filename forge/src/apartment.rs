@@ -17,6 +17,9 @@ use crate::house::FT;
 
 const CUT: f64 = 1000.0;
 const IN: f64 = 25.4;
+/// The glass and the door panels as drawn: slabs this thick (mm) at the middle of the wall.
+const GLASS: f64 = 20.0;
+const DOOR_PANEL: f64 = 45.0;
 
 fn cuboid(lo: Vector3<f64>, hi: Vector3<f64>) -> Solid {
     Solid::cuboid((hi - lo) / 2.0).translate((hi + lo) / 2.0)
@@ -106,8 +109,8 @@ pub struct OpeningRecord {
 pub struct Part {
     pub id: String,
     pub kind: &'static str,
-    /// The storey it belongs to: walls run full height from storey 1; a floor system is the floor
-    /// of the storey above it; the roof sits on the top storey.
+    /// The storey it belongs to: every wall is one storey's; a floor system is the floor of the
+    /// storey above it; the roof sits on the top storey.
     pub storey: usize,
     pub lo: Vector3<f64>,
     pub hi: Vector3<f64>,
@@ -249,16 +252,32 @@ impl Building {
         union_all(self.party_wall_parts().iter().map(|p| cuboid(p.lo, p.hi)).collect())
     }
 
+    /// The spine and stair walls, a storey at a time, platform-framed as `framing` builds them:
+    /// each storey's walls stand on the floor below and stop under the floor above, which bears on
+    /// them (pass 3f, D27; until then they ran full height and the floors ran through them).
     fn party_wall_parts(&self) -> Vec<Part> {
-        let (w, l, h, t, p) = (self.depth, self.length, self.height(), self.ext_t, self.party_t);
+        let (w, l, t, p) = (self.depth, self.length, self.ext_t, self.party_t);
         let (s0, s1) = (self.flat_len, l - self.flat_len);
-        let part = |id: &str, lo, hi| Part { id: id.to_string(), kind: "party_wall", storey: 1, lo, hi };
-        vec![
-            part("spine-left", Vector3::new(w / 2.0 - p / 2.0, t, 0.0), Vector3::new(w / 2.0 + p / 2.0, s0 - p / 2.0, h)),
-            part("spine-right", Vector3::new(w / 2.0 - p / 2.0, s1 + p / 2.0, 0.0), Vector3::new(w / 2.0 + p / 2.0, l - t, h)),
-            part("stair-left", Vector3::new(t, s0 - p / 2.0, 0.0), Vector3::new(w - t, s0 + p / 2.0, h)),
-            part("stair-right", Vector3::new(t, s1 - p / 2.0, 0.0), Vector3::new(w - t, s1 + p / 2.0, h)),
-        ]
+        let mut v = Vec::new();
+        for k in 1..=self.storeys {
+            let (z0, z1) = self.wall_z(k, true);
+            let mut part = |id: &str, lo: Vector3<f64>, hi: Vector3<f64>| v.push(Part {
+                id: format!("{id}-{k}"), kind: "party_wall", storey: k, lo: Vector3::new(lo.x, lo.y, z0), hi: Vector3::new(hi.x, hi.y, z1) });
+            part("spine-left", Vector3::new(w / 2.0 - p / 2.0, t, 0.0), Vector3::new(w / 2.0 + p / 2.0, s0 - p / 2.0, 0.0));
+            part("spine-right", Vector3::new(w / 2.0 - p / 2.0, s1 + p / 2.0, 0.0), Vector3::new(w / 2.0 + p / 2.0, l - t, 0.0));
+            part("stair-left", Vector3::new(t, s0 - p / 2.0, 0.0), Vector3::new(w - t, s0 + p / 2.0, 0.0));
+            part("stair-right", Vector3::new(t, s1 - p / 2.0, 0.0), Vector3::new(w - t, s1 + p / 2.0, 0.0));
+        }
+        v
+    }
+
+    /// A storey's walls from bottom to top (mm): from its floor level up to the floor system above
+    /// (`under_floor`, the walls the floors bear on) or the next level (the exterior walls, which
+    /// the floors stop inside); the top storey's walls run to the roof.
+    fn wall_z(&self, k: usize, under_floor: bool) -> (f64, f64) {
+        let z0 = (k - 1) as f64 * self.storey;
+        let top = k as f64 * self.storey;
+        (z0, if under_floor && k < self.storeys { top - self.floor_t } else { top })
     }
 
     /// The floor systems between storeys (inside the exterior walls; the stair keeps its opening).
@@ -291,27 +310,33 @@ impl Building {
         cuboid(r.lo, r.hi)
     }
 
-    fn panels(&self, glazed: bool, pane: f64) -> Solid {
+    /// The glass or door panel in an opening: a slab `pane` thick at the middle of the wall (mm).
+    pub fn panel_span(&self, o: &Opening) -> (Vector3<f64>, Vector3<f64>) {
+        let pane = if o.glazed { GLASS } else { DOOR_PANEL };
         let mid = self.ext_t / 2.0;
-        let parts = self.openings.iter().filter(|o| o.glazed == glazed).map(|o| {
-            let (z0, z1) = (o.sill, o.sill + o.height);
-            let (a0, a1) = (o.along - o.width / 2.0, o.along + o.width / 2.0);
-            match o.face {
-                Face::Front => cuboid(Vector3::new(mid - pane / 2.0, a0, z0), Vector3::new(mid + pane / 2.0, a1, z1)),
-                Face::Back => cuboid(Vector3::new(self.depth - mid - pane / 2.0, a0, z0), Vector3::new(self.depth - mid + pane / 2.0, a1, z1)),
-                Face::Left => cuboid(Vector3::new(a0, mid - pane / 2.0, z0), Vector3::new(a1, mid + pane / 2.0, z1)),
-                Face::Right => cuboid(Vector3::new(a0, self.length - mid - pane / 2.0, z0), Vector3::new(a1, self.length - mid + pane / 2.0, z1)),
-            }
-        });
-        union_all(parts.collect())
+        let (z0, z1) = (o.sill, o.sill + o.height);
+        let (a0, a1) = (o.along - o.width / 2.0, o.along + o.width / 2.0);
+        match o.face {
+            Face::Front => (Vector3::new(mid - pane / 2.0, a0, z0), Vector3::new(mid + pane / 2.0, a1, z1)),
+            Face::Back => (Vector3::new(self.depth - mid - pane / 2.0, a0, z0), Vector3::new(self.depth - mid + pane / 2.0, a1, z1)),
+            Face::Left => (Vector3::new(a0, mid - pane / 2.0, z0), Vector3::new(a1, mid + pane / 2.0, z1)),
+            Face::Right => (Vector3::new(a0, self.length - mid - pane / 2.0, z0), Vector3::new(a1, self.length - mid + pane / 2.0, z1)),
+        }
+    }
+
+    fn panels(&self, glazed: bool) -> Solid {
+        union_all(self.openings.iter().filter(|o| o.glazed == glazed).map(|o| {
+            let (lo, hi) = self.panel_span(o);
+            cuboid(lo, hi)
+        }).collect())
     }
 
     pub fn glass(&self) -> Solid {
-        self.panels(true, 20.0)
+        self.panels(true)
     }
 
     pub fn doors(&self) -> Solid {
-        self.panels(false, 45.0)
+        self.panels(false)
     }
 
     // ---- Analytic envelope per flat (m, m2, m3) ----
@@ -408,17 +433,28 @@ impl Building {
         recs
     }
 
-    /// The exterior walls as four boxes: front and back run the full length, the end walls fit
-    /// between them. Together they are exactly the shell `exterior_walls` cuts its openings from.
+    /// The exterior walls, four boxes a storey (`ext-front-2`): front and back run the full length,
+    /// the end walls fit between them, each storey from its level to the next (the floors stop
+    /// inside them). Together they are exactly the shell `exterior_walls` cuts its openings from.
     pub fn exterior_wall_parts(&self) -> Vec<Part> {
-        let (w, l, h, t) = (self.depth, self.length, self.height(), self.ext_t);
-        let part = |face: Face, lo, hi| Part { id: format!("ext-{}", face.name()), kind: "exterior_wall", storey: 1, lo, hi };
-        vec![
-            part(Face::Front, Vector3::new(0.0, 0.0, 0.0), Vector3::new(t, l, h)),
-            part(Face::Back, Vector3::new(w - t, 0.0, 0.0), Vector3::new(w, l, h)),
-            part(Face::Left, Vector3::new(t, 0.0, 0.0), Vector3::new(w - t, t, h)),
-            part(Face::Right, Vector3::new(t, l - t, 0.0), Vector3::new(w - t, l, h)),
-        ]
+        let (w, l, t) = (self.depth, self.length, self.ext_t);
+        let mut v = Vec::new();
+        for k in 1..=self.storeys {
+            let (z0, z1) = self.wall_z(k, false);
+            let mut part = |face: Face, lo: (f64, f64), hi: (f64, f64)| v.push(Part {
+                id: format!("ext-{}-{k}", face.name()), kind: "exterior_wall", storey: k,
+                lo: Vector3::new(lo.0, lo.1, z0), hi: Vector3::new(hi.0, hi.1, z1) });
+            part(Face::Front, (0.0, 0.0), (t, l));
+            part(Face::Back, (w - t, 0.0), (w, l));
+            part(Face::Left, (t, 0.0), (w - t, t));
+            part(Face::Right, (t, l - t), (w - t, l));
+        }
+        v
+    }
+
+    /// The exterior wall an opening is in: its face, its storey.
+    pub fn wall_of(&self, r: &OpeningRecord) -> String {
+        format!("ext-{}-{}", r.opening.face.name(), r.storey)
     }
 
     /// Every part of the building but its openings: walls, the ground slab, floors and the roof.
@@ -434,8 +470,7 @@ impl Building {
     /// The model's own checks before it is written out (empty when it holds): ids unique, every
     /// opening in a known flat or the stair, inside its wall and its storey (under the floor system
     /// above), clear of the party and stair walls where they meet the facade, no two openings
-    /// overlapping, no two walls or two horizontal parts overlapping, and the wall boxes summing to
-    /// the shell.
+    /// overlapping, no two parts overlapping, and the wall boxes summing to the shell.
     pub fn model_errors(&self) -> Vec<String> {
         let mut errs = Vec::new();
         let recs = self.opening_records();
@@ -456,7 +491,10 @@ impl Building {
                     errs.push(format!("{}: no flat {f}", r.id));
                 }
             }
-            let wall = parts.iter().find(|w| w.id == format!("ext-{}", r.opening.face.name())).expect("four walls");
+            let Some(wall) = parts.iter().find(|w| w.id == self.wall_of(r)) else {
+                errs.push(format!("{}: no wall {}", r.id, self.wall_of(r)));
+                continue;
+            };
             if (0..3).any(|i| r.lo[i] < wall.lo[i] - 0.01 || r.hi[i] > wall.hi[i] + 0.01) {
                 errs.push(format!("{}: outside {}", r.id, wall.id));
             }
@@ -480,12 +518,9 @@ impl Building {
                 }
             }
         }
-        // Walls against walls, and slab, floors and roof against each other. Walls against floors
-        // are left out: this model's floor systems run through the spine and stair walls (the
-        // framed model's members never overlap; `framing` mode checks every pair).
-        let is_wall = |p: &Part| p.kind.ends_with("_wall");
+        // Every pair of parts: no clashes (an IFC checker would flag any).
         for (i, a) in parts.iter().enumerate() {
-            for b in parts[i + 1..].iter().filter(|b| is_wall(a) == is_wall(b)) {
+            for b in &parts[i + 1..] {
                 if overlap((a.lo, a.hi), (b.lo, b.hi)) > 0.0 {
                     errs.push(format!("parts {} and {} overlap", a.id, b.id));
                 }

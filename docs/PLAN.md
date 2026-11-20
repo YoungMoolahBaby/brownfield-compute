@@ -214,8 +214,9 @@ Its window schedule and elevations are generated from that model, and a made-up 
 a reviewed change: an element-level diff, the checks rerun, the drawings regenerated. All of it is
 set against the same building issued as PDFs only. It is not an exchange and not construction
 documents. Jon: a window quote needs every field on the list in D27. The spike passed (D27 step
-0), and forge now writes the whole walk-up with a stable id on every opening (step 1). Next: the
-IFC (step 2).
+0), and forge now writes the whole walk-up with a stable id on every opening (step 1).
+`brownfield bidset` writes it as IFC4 and holds the file to forge's model on every check (step 2).
+Next: a second, independent reader (That Open's web-ifc, Jon's choice), then the IDS (step 3).
 
 ## Decisions
 
@@ -1166,6 +1167,65 @@ IFC (step 2).
        - GlobalIds derived from the stable ids, so a re-export changes nothing.
        - Thermal transmittance from `params/pass3.yaml` `window_u` (the number the heat model
          used); a MasterFormat classification per type (our choice, marked judgement).
+       - **Done 2026-11-19** (`uv run brownfield bidset`, ~7 s): `out/pass3/bidset/apartment.ifc`,
+         310 kB.
+         - **Walls and slabs:** 24 walls, a storey at a time (12 exterior, 12 spine and stair), with
+           the ground slab, 4 floor systems and the roof. The 4 wall types come from the frame's
+           stud schedule: exterior 2x6 at 16 in.; party double 2x4 at 12 in. (storey 1) and 16 in.
+           (storeys 2-3); stair double 2x4 at 16 in.
+         - **Bearing walls follow `framing`:** the facades and the spine bear the floors and the
+           roof, and the stair walls bear the roof over the stair. The end walls bear neither.
+         - **Windows and doors:** W1 (101), D1 (12), D2 (1). Their U-factors come from
+           `window_u` and `door_u`: 1.70 W/m2K, and 1.14 W/m2K for D2, a **placeholder**. Each
+           U-factor's description in the file names its params entry, confidence and source, so
+           the placeholder reads as one there too.
+         - **MasterFormat:** 08 50 00, 08 00 00 and 08 10 00, each marked "judgement" in the file.
+           A window's level-3 section is its frame material, and the patio door gets only the
+           division until we know whether it swings or slides.
+         - Every opening voids its own storey's wall. Each window and door carries its id, flat,
+           face, index and sill height (`BF_Opening`, the sill as a length in metres).
+       - **The clash fixed in forge:** the spine and stair walls are now a storey at a time and
+         stop under each floor, as `framing` builds them. The exterior walls are per storey too.
+         The floors are unchanged (CortenForge still measures them at 197.35 against 197.20 m3),
+         and forge's check now holds every pair of parts clash-free. `docs/pass3/apartment.png`
+         isn't redrawn: the walls and floors together look the same.
+       - **Checks** (`bidset.check`, reading the file back), all passing:
+         - every wall, slab, opening, window and door of forge's model is in the file once, and
+           nothing else is;
+         - 101 / 12 / 1 by type, and every size exact;
+         - every wall, slab, window, door and opening where forge has it (worst 0.0000 mm);
+         - every opening voids its own wall and holds its own unit;
+         - 0 clashes among the 30 walls and slabs;
+         - glazing per flat equals pass 3b's `flat_envelope`;
+         - 807 unique GlobalIds;
+         - IfcOpenShell's schema validation with the express rules finds 0 issues;
+         - a second export is the same file, header aside.
+
+         A mismatch is reported as a failure, not a crash. `tests/test_bidset.py` has 14 tests,
+         including these:
+         - the check catches a window moved 5 mm or made 1 mm wider, and a part missing from the
+           file;
+         - dropping one window removes only that window's six records;
+         - the bearing walls follow the frame;
+         - the placeholder is labelled in the file.
+
+         All 195 tests pass.
+       - **Built:**
+         - IfcOpenShell writes IFC SETs in an order that changes from run to run, so `_sort_sets`
+           sorts them (by GlobalId, or entity number).
+         - A relationship's GlobalId is keyed on its relating side, plus the one related element
+           for a void or a filling. So an addendum that adds or drops a window leaves the storey's
+           and the type's relationships alone.
+
+         Those two and the derived GlobalIds make the file repeatable, and make a diff show only
+         what changed.
+       - **Code review** (2026-11-19, before the commit): 14 findings, all fixed. The 2 important
+         ones were the stair walls marked non-bearing and the check never confirming that every
+         part was in the file.
+       - **Not yet:** a second, independent reader. Jon chose That Open's web-ifc: a scripted check
+         that reruns every export, with Node from the `nodejs-wheel-binaries` wheel (pinned in the
+         project) and web-ifc 0.0.78. Its browser viewer, built on the same parser, serves for
+         looking.
     3. **The IDS**, generated from `params/bidset.yaml` so its numbers live in params: type,
        storey, overall width and height, external or not, U-factor, MasterFormat section,
        operation (casement, slider...), safety glazing where IBC 2406 requires it, escape size
