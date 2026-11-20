@@ -11,7 +11,8 @@ needed only to install. The server listens on 127.0.0.1 only, binds its port exc
 serves four places, nothing else:
 - `/` the page (tools/viewer);
 - `/vendor/web-ifc/` and `/vendor/three/` the two installed packages;
-- `/models/` the published bid set (docs/pass3/bidset).
+- `/models/` the published bid set (docs/pass3/bidset), or with `--latest` this run's models
+  (out/pass3/bidset, the addendum's from its own folder; `use_models`).
 
 A request's path is checked as text before anything touches the filesystem: no backslashes,
 colons, NUL bytes, `..` or Windows device names. On Windows, a path naming a network share would
@@ -34,11 +35,21 @@ from . import OUT_DIR
 ROOT = OUT_DIR.parent
 VIEWER = ROOT / "tools" / "viewer"
 MODELS = ROOT / "docs" / "pass3" / "bidset"
-ROUTES = [  # URL prefix -> directory; anything else comes from the page's own folder
+LATEST = OUT_DIR / "pass3" / "bidset"  # this run's models (`brownfield bidset`, `addendum`), not yet published
+# Where this run keeps a model the published folder names differently.
+LATEST_NAMES = {"apartment-addendum-1.ifc": "addendum-1/apartment.ifc"}
+ROUTES = [  # URL prefix -> directory; outside them, only the page itself
     ("/vendor/web-ifc/", VIEWER / "node_modules" / "web-ifc"),
     ("/vendor/three/", VIEWER / "node_modules" / "three"),
     ("/models/", MODELS),
 ]
+
+
+def use_models(folder: Path) -> None:
+    """Serve the models from `folder` (the published bid set, or this run's)."""
+    global MODELS
+    MODELS = folder
+    ROUTES[2] = ("/models/", folder)
 PACKAGES = ("web-ifc", "three")
 TYPES = {".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript", ".ifc": "application/octet-stream"}
 DEVICES = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(10)), *(f"lpt{i}" for i in range(10))}
@@ -59,6 +70,8 @@ def resolve(url_path: str) -> Path | None:
         if (norm + "/").startswith(prefix):
             base, rest = root, norm[len(prefix.rstrip("/")):]
             break
+    if base == LATEST:
+        rest = "/" + LATEST_NAMES.get(rest.lstrip("/"), rest.lstrip("/"))
     if base is None:  # outside the routes: the page itself, nothing else in its folder
         return (VIEWER / "index.html").resolve() if norm in ("/", "/index.html") else None
     try:
@@ -122,8 +135,10 @@ def status() -> tuple[str, str]:
     """('ok', ''), ('install', why) when the packages are missing or not the lock's versions, or
     ('missing', why) when something an install can't fix is missing."""
     for f in ("apartment.ifc", "apartment-addendum-1.ifc"):
+        f = LATEST_NAMES.get(f, f) if MODELS == LATEST else f
         if not (MODELS / f).exists():
-            return "missing", f"no docs/pass3/bidset/{f}: run `uv run brownfield pdfset --publish`"
+            how = "`uv run brownfield bidset` and `uv run brownfield addendum`" if MODELS == LATEST else "`uv run brownfield pdfset --publish`"
+            return "missing", f"no {MODELS.relative_to(ROOT).as_posix()}/{f}: run {how}"
     for pkg in PACKAGES:
         have, want = installed(pkg), locked(pkg)
         if have is None or have != want:

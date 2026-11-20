@@ -103,6 +103,41 @@ def test_the_ifc_holds_to_forges_model(ifc):
     assert all(ok for _, ok, _ in res), bidset.report(res)
 
 
+def test_the_stair_is_in_the_ifc(ifc):
+    # Pass 3f step 8: an IfcStair a storey (1 and 2), each of its two flights, its landing and its
+    # four handrails; the guard on its own on level 3.
+    apt, _, p, path = ifc
+    f = ifcopenshell.open(str(path))
+    stairs = {s.Name: sorted(e.Name for e in ue.get_decomposition(s)) for s in f.by_type("IfcStair")}
+    assert stairs == {
+        f"stair-{k}": sorted([f"flight-{k}a", f"flight-{k}b", f"landing-{k}",
+                              *(f"rail-{k}{s}-{side}" for s in "ab" for side in ("wall", "centre"))]) for k in (1, 2)}
+    flight = next(e for e in f.by_type("IfcStairFlight") if e.Name == "flight-1b")
+    assert (flight.NumberOfRisers, flight.NumberOfTreads) == (12, 11)
+    assert (round(flight.RiserHeight / 0.0254, 6), round(flight.TreadLength / 0.0254, 6)) == (7.0, 11.0)
+    guard = next(e for e in f.by_type("IfcRailing") if e.Name == "guard-3")
+    assert guard.PredefinedType == "GUARDRAIL" and ue.get_container(guard).Name == "Level 3"
+
+
+def test_the_check_catches_a_stair_out_of_line(ifc, tmp_path):
+    # A missing flight, a step moved 5 mm, flat doors written with the wrong fire rating: each
+    # fails its own check.
+    apt, frame, p, path = ifc
+    less = copy.deepcopy(apt)
+    less["stair"]["flights"] = less["stair"]["flights"][1:]
+    assert _results(path, less, p)["the stair's flights and railings, once, and nothing else"] is False
+    moved = copy.deepcopy(apt)
+    s = next(x for x in moved["stair"]["parts"] if x["id"] == "flight-2a-0")
+    s["lo_m"][0] -= 0.005
+    assert _results(path, moved, p)["every flight and the guard where forge has it"] is False
+    q = dict(p)
+    rating = p["bidset.code.exit_stair.door_rating_h"]
+    q["bidset.code.exit_stair.door_rating_h"] = type(rating)(**{**vars(rating), "value": 0.75})
+    wrong = tmp_path / "wrong-rating.ifc"
+    bidset.write_ifc(apt, frame, q, wrong)
+    assert _results(wrong, apt, p)["the flat doors 1 h fire doors, self-closing, and the stair walls rated 1 h"] is False
+
+
 def test_the_ifc_is_the_same_every_export(ifc, tmp_path):
     apt, frame, p, path = ifc
     again = tmp_path / "again.ifc"
@@ -126,15 +161,21 @@ def test_the_check_catches_a_window_moved_or_resized(ifc):
 
 def test_types_and_their_u_factors(ifc):
     apt, _, p, path = ifc
-    # The windows the code calls for safety glazing in are their own type, W2.
+    # The windows the code calls for safety glazing in are their own type, W2; the flat doors
+    # into the stair (pass 3f step 8) are D3.
     assert bidset.types(apt, bidset.safety_glazing(apt, p)) == {
         ("window", 0.9144, 1.2192, False): "W1", ("window", 0.9144, 1.2192, True): "W2",
-        ("patio_door", 1.8288, 2.032, True): "D1", ("entry_door", 1.0668, 2.032, False): "D2"}
+        ("patio_door", 1.8288, 2.032, True): "D1", ("entry_door", 1.0668, 2.032, False): "D2",
+        ("flat_door", 0.9144, 2.1336, False): "D3"}
     f = ifcopenshell.open(str(path))
-    u = {t.Name: ue.get_psets(t)["Pset_WindowCommon" if t.is_a("IfcWindowType") else "Pset_DoorCommon"]["ThermalTransmittance"]
-         for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")}
+    common = {t.Name: ue.get_psets(t)["Pset_WindowCommon" if t.is_a("IfcWindowType") else "Pset_DoorCommon"]
+              for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")}
     window_u, door_u = p["pass3.envelope.window_u"].value * BTU_FT2, p["pass3.envelope.door_u"].value * BTU_FT2
+    u = {k: v.get("ThermalTransmittance") for k, v in common.items() if k != "D3"}
     assert u == pytest.approx({"W1": window_u, "W2": window_u, "D1": window_u, "D2": door_u})
+    # A flat door is inside the envelope: no U-factor; a 1-hour fire door, self-closing.
+    assert "ThermalTransmittance" not in common["D3"]
+    assert (common["D3"]["FireRating"], common["D3"]["SelfClosing"], common["D3"]["IsExternal"]) == ("1 h", True, False)
 
 
 def test_each_u_factor_says_where_it_comes_from(ifc):
@@ -150,19 +191,22 @@ def test_each_u_factor_says_where_it_comes_from(ifc):
 
 
 def test_bearing_walls_follow_the_frame(ifc):
-    # Facades and spine bear the floors; the stair walls the roof over the stair; end walls neither.
+    # Facades and spine bear the floors; the stair walls the roof over the stair; end walls and
+    # the stair's partitions neither. The stair walls are the exit's 1-hour enclosure.
     path = ifc[3]
     f = ifcopenshell.open(str(path))
-    bearing = {w.Name: ue.get_psets(w)["Pset_WallCommon"]["LoadBearing"] for w in f.by_type("IfcWall")}
-    for name, b in bearing.items():
-        assert b == (not name.startswith(("ext-left", "ext-right"))), name
+    psets = {w.Name: ue.get_psets(w)["Pset_WallCommon"] for w in f.by_type("IfcWall")}
+    for name, ps in psets.items():
+        assert ps["LoadBearing"] == (not name.startswith(("ext-left", "ext-right", "stair-centre", "stair-closure"))), name
+        assert ps.get("FireRating") == ("1 h" if name.startswith(("stair-left", "stair-right")) else None), name
 
 
 def test_the_check_catches_a_missing_part(ifc):
     apt, _, p, path = ifc
     extra = copy.deepcopy(apt)
-    extra["parts"].append(dict(extra["parts"][-1], id="roof-2"))
-    assert _results(path, extra, p)["every wall, slab and roof of forge's model, once, and nothing else"] is False
+    extra["parts"].append(dict(next(pt for pt in extra["parts"] if pt["kind"] == "roof"), id="roof-2"))
+    assert _results(path, extra, p)["every wall, slab and roof of forge's model, the stair's floors, landings and "
+                                    "partitions among them, once, and nothing else"] is False
 
 
 def test_an_addendum_changes_only_what_it_changes(ifc, tmp_path):
@@ -202,7 +246,7 @@ def test_web_ifc_check_catches_a_moved_window_and_a_wrong_sill(ifc):
     o["panel_hi_m"][2] += 0.005
     o["sill_above_floor_m"] += 0.005
     res = {label.split(" (")[0]: ok for label, ok, _ in bidset.check_webifc(path, moved, p)}
-    assert res["web-ifc's own geometry: every wall, slab, window and door where forge has it"] is False
+    assert res["web-ifc's own geometry: every wall, slab, window, door, flight and the guard where forge has it"] is False
     assert res["web-ifc: every unit's id, kind, flat, face, index and sill height"] is False
 
 
@@ -223,7 +267,7 @@ def test_web_ifc_check_fails_on_an_empty_mesh_or_a_missing_size(ifc, monkeypatch
 
     monkeypatch.setattr(bidset, "read_webifc", broken)
     res = {label.split(" (")[0]: ok for label, ok, _ in bidset.check_webifc(path, apt, p)}
-    assert res["web-ifc's own geometry: every wall, slab, window and door where forge has it"] is False
+    assert res["web-ifc's own geometry: every wall, slab, window, door, flight and the guard where forge has it"] is False
     assert res["web-ifc: sizes exact"] is False
     assert res["web-ifc: glazing per flat equals pass 3b's flat_envelope"] is False
 
@@ -233,16 +277,32 @@ def test_web_ifc_check_fails_on_an_empty_mesh_or_a_missing_size(ifc, monkeypatch
 def test_safety_glazing_by_the_layout(ifc):
     # Every patio door (2406.4.1), and the two windows beside each, whose edges are
     # 45 ft / 7 - 6 ft / 2 - 3 ft / 2 = 23.14 in from the door's: inside the 24 in arc, with sills
-    # at 36 in, under 60 (2406.4.2). The 3 x 4 ft windows' sills are above 18 in, so 2406.4.3 doesn't
-    # reach them.
+    # at 36 in, under 60 (2406.4.2). The 3 x 4 ft windows' sills are above 18 in over the floor,
+    # so 2406.4.3 doesn't reach them, except the two back stair windows that rise from a landing
+    # (pass 3f step 8): 12 ft2 of glass, its bottom at the landing, its top 48 in above it.
     apt, _, p, _ = ifc
     h = bidset.safety_glazing(apt, p)
     kinds = Counter(r.split(":")[0] for r in h.values())
-    assert kinds == {"IBC 2018 2406.4.1": 12, "IBC 2018 2406.4.2": 24}
+    assert kinds == {"IBC 2018 2406.4.1": 12, "IBC 2018 2406.4.2": 24, "IBC 2018 2406.4.3": 2}
+    assert {o: r.split(", ")[0] for o, r in h.items() if "2406.4.3" in r} == {
+        "1-stair/back/0": "IBC 2018 2406.4.3: a large pane low over landing-1",
+        "2-stair/back/0": "IBC 2018 2406.4.3: a large pane low over landing-2"}
     gap = 45 * 12 / 7 - 36 - 18
     assert all(f"{gap:.1f} in from the edge of door" in r for r in h.values() if "4.2" in r)
     doors = {o["id"] for o in apt["openings"] if o["kind"] == "patio_door"}
     assert doors <= set(h)
+
+
+def test_a_landing_a_little_off_the_sill_still_makes_safety_glazing(ifc):
+    # The review's case: landing 2 raised 2 mm, so the back window's glass starts just under it.
+    # It is still a large pane low over a walking surface (2406.4.3).
+    apt, _, p, _ = ifc
+    raised = copy.deepcopy(apt)
+    for part in raised["stair"]["parts"] + raised["parts"]:
+        if part["id"] == "landing-2":
+            part["lo_m"][2] += 0.002
+            part["hi_m"][2] += 0.002
+    assert "2406.4.3" in bidset.safety_glazing(raised, p)["2-stair/back/0"]
 
 
 @pytest.fixture(scope="module")
@@ -257,15 +317,16 @@ def test_the_ids_is_valid_and_reads_back(ifc, checklist):
     doc, path = checklist
     want = [f"{f['key']}/{on}" for f in bidset.ids_fields(ifc[2]) for on in f["on"]]
     assert [s.identifier for s in doc.specifications] == want
-    assert len(want) == 56 and len(set(want)) == len(want)
+    assert len(want) == 58 and len(set(want)) == len(want)
 
 
 def test_what_the_walk_up_carries(ifc, checklist):
     rows = bidset.run_ids(checklist[0], ifc[3])
     carried, fields = bidset.ids_carried(rows)
-    assert fields == 32
+    assert fields == 34
     assert carried == ["type mark", "storey", "exterior or not", "unit width", "unit height",
-                       "U-factor within the code's limit", "in a wall", "the wall's construction (on exterior walls)"]
+                       "U-factor within the code's limit", "fire rating (doors into the stair)",
+                       "self-closing (doors into the stair)", "in a wall", "the wall's construction (on exterior walls)"]
 
 
 def _complete(path, out):
@@ -313,7 +374,7 @@ def test_the_ids_passes_a_complete_model_and_fails_a_broken_one(ifc, checklist, 
     # And every one applies to something (a specification that applies to nothing passes).
     assert all(r["applicable"] > 0 for r in rows), [r["id"] for r in rows if not r["applicable"]]
     applies = {r["id"]: r["applicable"] for r in rows}
-    assert (applies["safety/IFCWINDOW+hazard"], applies["safety/IFCDOOR+hazard"]) == (24, 12)
+    assert (applies["safety/IFCWINDOW+hazard"], applies["safety/IFCDOOR+hazard"]) == (26, 12)  # 24 by the doors, 2 over landings
     w = f.by_type("IfcWindow")[0]
     w.OverallWidth = None
     broken = tmp_path / "broken.ifc"
@@ -408,7 +469,7 @@ def test_an_escape_window_too_short_to_clear_24_inches_fails(ifc, checklist, tmp
     failed = sorted(r["id"] for r in rows if not r["status"])
     assert failed == ["escape_area/IFCWINDOW+escape", "escape_height/IFCWINDOW+escape"]
     applies = {r["id"]: r["applicable"] for r in rows}
-    assert applies["escape_height/IFCWINDOW+escape"] == 77  # W1's, not W2's 24
+    assert applies["escape_height/IFCWINDOW+escape"] == 75  # W1's, not W2's 26
 
 
 
@@ -421,10 +482,13 @@ def drawings(ifc, tmp_path_factory):
 
 def test_the_schedule_from_the_ifc_alone(drawings):
     s = {r["mark"]: r for r in drawings["schedule"]}
-    assert {m: r["count"] for m, r in s.items()} == {"W1": 77, "W2": 24, "D1": 12, "D2": 1}
+    assert {m: r["count"] for m, r in s.items()} == {"W1": 75, "W2": 26, "D1": 12, "D2": 1, "D3": 12}
     assert (s["W1"]["width"], s["W1"]["height"], s["D1"]["width"], s["D1"]["height"]) == ("3'-0\"", "4'-0\"", "6'-0\"", "6'-8\"")
     assert (s["W1"]["safety_glazing_required"], s["W2"]["safety_glazing_required"],
-            s["D1"]["safety_glazing_required"]) == ("no", "yes (IBC 2018 2406.4.2)", "yes (IBC 2018 2406.4.1)")
+            s["D1"]["safety_glazing_required"]) == ("no", "yes (IBC 2018 2406.4.2, IBC 2018 2406.4.3)", "yes (IBC 2018 2406.4.1)")
+    # The flat doors: inside, a 1-hour fire door, self-closing, with no U-factor.
+    assert (s["D3"]["is_external"], s["D3"]["fire_rating"], s["D3"]["self_closing"], s["D3"]["u_factor_w_m2k"]) == (
+        "False", "1 h", "True", bidset.NOT_IN_MODEL)
     # What the model lacks shows as such, so a rep sees the gap; where a number comes from shows
     # too, so D2's placeholder U-factor reads as one, and our MasterFormat choice as judgement.
     assert all(r["operation"] == r["frame_material"] == r["shgc"] == bidset.NOT_IN_MODEL for r in s.values())
@@ -434,7 +498,7 @@ def test_the_schedule_from_the_ifc_alone(drawings):
     for col in ("is_external", "safety_glazing", "clear_opening_area_ft2", "clear_opening_width", "clear_opening_height",
                 "clear_opening_sill", "rough_opening", "design_pressure", "escape_window", "install_type"):
         assert col in s["W1"], col
-    assert len(drawings["openings"]) == 114
+    assert len(drawings["openings"]) == 126
     assert {p.name for p in drawings["written"]} == {"schedule.csv", "openings.csv", "quantities.csv",
                                                      *(f"elevation_{f}.svg" for f in bidset.FACES)}
 
@@ -457,7 +521,8 @@ def test_the_elevations_put_every_opening_where_forge_has_it(ifc, drawings):
             want = [c - o["width_m"] / 2, c + o["width_m"] / 2, o["panel_lo_m"][2], o["panel_hi_m"][2]]
             assert np.abs(got - want).max() < 1e-3, r["name"]
             seen[r["name"]] += 1
-    assert seen == Counter(list(ops))  # every opening, once
+    # Every opening in an outside wall, once; the flat doors, in the stair walls, on none.
+    assert seen == Counter(o for o in ops if ops[o]["face"] != "stair")
 
 
 def test_the_quantities_from_the_ifc_alone(ifc, drawings):
@@ -465,7 +530,8 @@ def test_the_quantities_from_the_ifc_alone(ifc, drawings):
     q = drawings["quantities"]
     w, l, h = apt["depth_m"], apt["length_m"], apt["storey_m"] * apt["storeys"]
     assert abs(q["total"]["gross_m2"] - 2 * (w + l) * h) < 1e-6
-    assert abs(q["total"]["openings_m2"] - sum(o["width_m"] * o["height_m"] for o in apt["openings"])) < 1e-6
+    outside = [o for o in apt["openings"] if o["face"] != "stair"]
+    assert abs(q["total"]["openings_m2"] - sum(o["width_m"] * o["height_m"] for o in outside)) < 1e-6
     assert q["total"]["units"] == 114
     assert set(q["glazed_by_flat_m2"]) == {f["name"] for f in apt["flats"]}
     for f in apt["flats"]:
@@ -523,7 +589,7 @@ def test_the_drawings_read_an_odd_file_without_crashing(ifc, tmp_path):
 
 def test_the_drawings_leave_out_units_in_walls_that_arent_exterior(ifc, tmp_path):
     # A window or door in an interior wall isn't on any facade: mark one exterior wall interior,
-    # and its units drop out of the elevations and the quantities.
+    # and its units join the flat doors as "interior", on no elevation.
     import ifcopenshell.api.pset as pset
 
     f = ifcopenshell.open(str(ifc[3]))
@@ -534,4 +600,6 @@ def test_the_drawings_leave_out_units_in_walls_that_arent_exterior(ifc, tmp_path
     inner = tmp_path / "inner.ifc"
     f.write(str(inner))
     rb = bidset.read_back(inner)
-    assert hosted > 0 and len(rb["units"]) == 114 - hosted
+    assert len(rb["units"]) == 126
+    assert hosted > 0 and sum(u["face"] == "interior" for u in rb["units"]) == 12 + hosted
+    assert sum(len(bidset.elevation(rb, face)["rects"]) for face in bidset.FACES) == 114 - hosted

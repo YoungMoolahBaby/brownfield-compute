@@ -289,6 +289,7 @@
   scene.add(ground);
   const edgeMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
   const COLOR = { wall: 0xd9d3c7, party: 0xc8c1b3, slab: 0xb8b3aa, roof: 0x5e6267, glass: 0x8fbde8, door: 0x8b6a4f,
+                  stair: 0xa98c6a, rail: 0x2f3a45,
                   other: 0xb7bcc2, safety: 0xd64545 };
   const SELECT = new THREE.Color(0x1d5fa8);
 
@@ -303,6 +304,8 @@
   function roleOf(e) {
     const c = e.cls, p = e.psets.BF_Opening || {};
     if (c.startsWith("IFCWALL")) return (e.psets.Pset_WallCommon || {}).IsExternal === false ? "party" : "wall";
+    if (c.startsWith("IFCSTAIRFLIGHT") || (c.startsWith("IFCSLAB") && e.predefined === "LANDING")) return "stair";
+    if (c.startsWith("IFCRAILING")) return "rail";
     if (c === "IFCROOF" || (c.startsWith("IFCSLAB") && (e.name === "roof" || e.predefined === "ROOF"))) return "roof";
     if (c.startsWith("IFCSLAB")) return "slab";
     if (c.startsWith("IFCWINDOW")) return "glass";
@@ -324,7 +327,7 @@
       const m = new THREE.Mesh(g, mat);
       // Keyed on the GlobalId: unique in a file, and the same unit keeps it across revisions.
       m.userData = { e, role, key: e.gid, unit: data.unit };
-      if (edges && !glassy) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
+      if (edges && !glassy && role !== "rail") m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
       group.add(m);
       byKey.set(m.userData.key, m);
     }
@@ -375,13 +378,16 @@
     return `${ft}'-${+(inches - ft * 12).toFixed(3)}"`;
   };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const KIND = { window: "Window", patio_door: "Patio door", entry_door: "Entry door" };
+  const KIND = { window: "Window", patio_door: "Patio door", entry_door: "Entry door", flat_door: "Flat entry door" };
+  // What a quote needs, as the checklist (bidset.ids) asks it: glass fields of glazed units only,
+  // and what only an exterior unit has (wind load, the outside, its install) of exterior units only.
   const QUOTE_FIELDS = [
     ["rough opening", "BidSet_Unit", "RoughOpeningWidth"], ["operation", "BidSet_Unit", "Operation"],
-    ["frame colours", "BidSet_Unit", "FrameColourOutside"], ["low-e coating", "Pset_DoorWindowGlazingType", "IsCoated"],
-    ["gas fill", "Pset_DoorWindowGlazingType", "FillGas"], ["tempered", "Pset_DoorWindowGlazingType", "IsTempered"],
-    ["SHGC", "Pset_DoorWindowGlazingType", "SolarHeatGainTransmittance"], ["design pressure", "*Common", "WindLoadRating"],
-    ["screen", "BidSet_Unit", "Screen"], ["hardware finish", "BidSet_Unit", "HardwareFinish"], ["install type", "BidSet_Unit", "InstallType"],
+    ["frame colour inside", "BidSet_Unit", "FrameColourInside"], ["frame colour outside", "BidSet_Unit", "FrameColourOutside", "outside"],
+    ["low-e coating", "Pset_DoorWindowGlazingType", "IsCoated", "glass"], ["gas fill", "Pset_DoorWindowGlazingType", "FillGas", "glass"],
+    ["tempered", "Pset_DoorWindowGlazingType", "IsTempered", "glass"], ["SHGC", "Pset_DoorWindowGlazingType", "SolarHeatGainTransmittance", "glass"],
+    ["design pressure", "*Common", "WindLoadRating", "outside"], ["screen", "BidSet_Unit", "Screen", "glass"],
+    ["hardware finish", "BidSet_Unit", "HardwareFinish"], ["install type", "BidSet_Unit", "InstallType", "outside"],
   ];
   const HELLO = `<p class="eyebrow">Selected</p><p class="hint">Click a window, door, wall or floor to see what the model says about it. Drag to orbit, scroll or pinch to zoom.</p>`;
 
@@ -398,11 +404,13 @@
       rows.push(["Unit", e.name], ["Storey", e.storey], ["Flat", p.Flat], ["Facade", p.Face],
                 ["Size", `${ftin(e.width)} × ${ftin(e.height)}`], ["Sill above floor", ftin(p.SillHeightAboveFloor)]);
       if (common.ThermalTransmittance != null) rows.push(["U-factor", `U-${(common.ThermalTransmittance / BTU).toFixed(2)} (${common.ThermalTransmittance.toFixed(2)} W/m²K)`]);
+      if (common.FireRating != null) rows.push(["Fire rating", `${common.FireRating}${common.SelfClosing ? ", self-closing" : ""}`]);
       if ((tp.BidSet_Unit || {}).SafetyGlazing) rows.push(["Glass", tp.BidSet_Unit.SafetyGlazing]);
       rows.push(["Safety glazing", { html: p.SafetyGlazingRequired
         ? `<span class="pill safety">required</span> ${esc(p.SafetyGlazingReason || "")}`
         : `<span class="pill ok">not required</span> by 2406.4.1-2406.4.3` }]);
-      const missing = QUOTE_FIELDS.filter(([, ps, prop]) => ((ps === "*Common" ? common : tp[ps] || {})[prop]) == null).map(([l]) => l);
+      const applies = ([, , , only]) => (only !== "glass" || p.Glazed) && (only !== "outside" || common.IsExternal !== false);
+      const missing = QUOTE_FIELDS.filter(applies).filter(([, ps, prop]) => ((ps === "*Common" ? common : tp[ps] || {})[prop]) == null).map(([l]) => l);
       if (e.material) rows.push(["Frame material", e.material]);
       else missing.push("frame material");
       extra = `<p class="missing"><b>Not in the model</b>, so a rep has to ask or guess: ${esc(missing.join(", "))}.</p>`;

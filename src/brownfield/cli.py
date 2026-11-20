@@ -672,6 +672,9 @@ def cmd_pdfset(args) -> int:
 def cmd_viewer(args) -> int:
     from . import viewer
 
+    if args.latest:
+        viewer.use_models(viewer.LATEST)
+        print(f"serving this run's models from {viewer.LATEST.relative_to(OUT_DIR.parent).as_posix()} (not the published ones)")
     state, why = viewer.status()
     if state == "install":
         print(f"installing the viewer's web-ifc and three.js from tools/viewer/package-lock.json ({why})")
@@ -875,6 +878,7 @@ def main(argv=None) -> int:
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
     vw = sub.add_parser("viewer", help="pass 3f: a local 3D viewer for the bid set's IFC (That Open's web-ifc in the browser), at http://127.0.0.1:8765/")
     vw.add_argument("--port", type=int, default=8765, help="the port to serve on, on this computer only (default 8765)")
+    vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
     sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")

@@ -34,13 +34,16 @@ BARRIER = {"exterior_wall", "party_wall", "stair_partition", "guard", "floor", "
 
 
 def _boxes(apt: dict) -> list[dict]:
-    """Every box of the building and its stair, as numpy arrays."""
-    return [{"id": p["id"], "kind": p["kind"], "lo": np.array(p["lo_m"]), "hi": np.array(p["hi_m"])}
-            for p in apt["parts"] + apt["stair"]["parts"]]
+    """Every box of the building and its stair, as numpy arrays, once each (the bid set's model,
+    `bidset.load`, already has the stair's floors, landings and partitions among its parts)."""
+    by_id = {p["id"]: p for p in apt["parts"] + apt["stair"]["parts"]}
+    return [{"id": p["id"], "kind": p["kind"], "lo": np.array(p["lo_m"]), "hi": np.array(p["hi_m"])} for p in by_id.values()]
 
 
 def _openings(apt: dict) -> list[dict]:
-    return [{"id": o["id"], "lo": np.array(o["lo_m"]), "hi": np.array(o["hi_m"]), "o": o} for o in apt["openings"]]
+    """Every opening, the flat doors among them, once each."""
+    by_id = {o["id"]: o for o in apt["openings"] + apt["stair"]["doors"]}
+    return [{"id": o["id"], "lo": np.array(o["lo_m"]), "hi": np.array(o["hi_m"]), "o": o} for o in by_id.values()]
 
 
 def _nose(f: dict):
@@ -195,7 +198,7 @@ def windows_by_walking(apt: dict, params: dict, es: list[dict] | None = None) ->
     es = edges(apt, params) if es is None else es
     wf, sg = "bidset.code.window_fall.", "bidset.code.safety_glazing."
     v = lambda k: params[k].value  # noqa: E731
-    by_id = {o["id"]: o for o in apt["openings"]}
+    by_id = {h["id"]: h["o"] for h in _openings(apt)}
     seen: dict[tuple[str, str], dict] = {}
     for e in es:
         if e["kind"] != "window":
@@ -374,5 +377,6 @@ def report(apt: dict, res: list[tuple[str, bool, str]], params: dict) -> str:
     lines.append(f"  The flat doors swing into the flats (forge's design, not measured), so none opens onto the hall. The stair "
                  f"is the one exit, so its enclosure is a {params['bidset.code.exit_stair.enclosure_rating_h'].value:g}-hour fire "
                  f"barrier (1023.2), and each flat door is a {rate:g}-hour fire door assembly, self-closing and latching "
-                 f"(Table 716.1(2), 716.2.6). The IFC carries the ratings from step 8b.")
+                 f"(Table 716.1(2), 716.2.6). The IFC carries both: FireRating on the flat doors' type (with SelfClosing) "
+                 f"and on the stair walls.")
     return "\n".join(lines)

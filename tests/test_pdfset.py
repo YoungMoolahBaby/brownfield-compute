@@ -26,18 +26,19 @@ def test_every_unit_and_schedule_cell_is_a_place(sets):
     p0 = sets["p0"]
     by_sheet = Counter(p.sheet for p in p0)
     assert {s: by_sheet[s] for s in pdfset.ELEVATIONS} == {"A-201": 45, "A-202": 45, "A-203": 24}
-    assert by_sheet[pdfset.SCHEDULE] == 4 * len(pdfset.COLUMNS)  # W1, W2, D1, D2
+    assert by_sheet[pdfset.SCHEDULE] == 5 * len(pdfset.COLUMNS)  # W1, W2, D1, D2, D3
 
 
-def test_the_addendum_changes_40_places_on_the_sheets(sets):
+def test_the_addendum_changes_41_places_on_the_sheets(sets):
     # Front and back: the 6 patio doors (narrower) and the 12 windows beside them (W2 -> W1) on
-    # each; the schedule: W1's quantity, D1's width and glazing, and W2's row gone.
+    # each. The schedule: D1's width and glazing, W1's quantity, and W2's quantity and remarks:
+    # W2 stays, for the 2 back stair windows over the landings (2406.4.3, pass 3f step 8).
     diff = pdfset.compare(sets["p0"], sets["p1"])
     counts = {s: (len(v["changed"]), len(v["added"]), len(v["removed"])) for s, v in diff.items()}
-    assert counts == {"A-201": (18, 0, 0), "A-202": (18, 0, 0), "A-601": (3, 0, 1)}
-    assert pdfset.count(diff) == 40
+    assert counts == {"A-201": (18, 0, 0), "A-202": (18, 0, 0), "A-601": (5, 0, 0)}
+    assert pdfset.count(diff) == 41
     cells = sorted(w for w, *_ in diff["A-601"]["changed"])
-    assert cells == [("D1", "GLAZING"), ("D1", "WIDTH"), ("W1", "QTY")]
+    assert cells == [("D1", "GLAZING"), ("D1", "WIDTH"), ("W1", "QTY"), ("W2", "QTY"), ("W2", "REMARKS")]
 
 
 def test_the_pdfs_carry_the_tags_as_text(sets):
@@ -53,12 +54,16 @@ def test_the_pdfs_carry_the_tags_as_text(sets):
         assert number in text and "NOT FOR CONSTRUCTION" in text
         if number in pdfset.ELEVATIONS:
             tags.update(re.findall(r"\b([WD]\d+)\b", text))
-    assert tags == {"W1": 77, "W2": 24, "D1": 12, "D2": 1}
+    # The flat doors (D3) are on no elevation: the set has no floor plans, so a bidder reads
+    # their count off the schedule alone.
+    assert tags == {"W1": 75, "W2": 26, "D1": 12, "D2": 1}
+    schedule = pages[order.index(pdfset.SCHEDULE)].extract_text()
+    assert "D3 12" in schedule and "1 H FIRE DOOR, SELF-CLOSING" in schedule
 
 
 def test_the_addendum_pdf_clouds_every_place_counted(sets):
-    # A narrative page, then the revised sheets; one delta per place counted (40), the withdrawn
-    # W2 row shown deleted and clouded too.
+    # A narrative page, then the revised sheets; one delta per place counted (41). No row is
+    # withdrawn: W2 keeps the back stair windows.
     diff = pdfset.compare(sets["p0"], sets["p1"])
     path = sets["dir"] / "addendum-1.pdf"
     order = pdfset.write_set(sets["rb1"], path, revision="addendum-1", changes=diff,
@@ -66,8 +71,8 @@ def test_the_addendum_pdf_clouds_every_place_counted(sets):
     assert order == ["ADD-1", "A-201", "A-202", "A-601"]
     texts = [pg.extract_text() for pg in PdfReader(str(path)).pages]
     assert "ADDENDUM 1" in texts[0] and len(texts) == 4
-    assert "TEMPERED" in texts[3] and "W2  DELETED" in texts[3]
-    assert [t.count(pdfset.DELTA) for t in texts] == [0, 18, 18, 4] and pdfset.count(diff) == 40
+    assert "TEMPERED" in texts[3] and "DELETED" not in texts[3]
+    assert [t.count(pdfset.DELTA) for t in texts] == [0, 18, 18, 5] and pdfset.count(diff) == 41
 
 
 def test_an_addendum_that_touches_no_sheet_issues_only_its_narrative(sets, tmp_path):

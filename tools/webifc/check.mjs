@@ -5,8 +5,10 @@
 //
 //   uv run python -m nodejs_wheel tools/webifc/check.mjs out/pass3/bidset/apartment.ifc report.json
 //
-// Every element (walls, slabs, openings, windows, doors) with its class, name, GlobalId, type,
-// storey, overall size, the wall it voids or the opening it fills, its property sets, and its
+// Every element (walls, slabs, openings, windows, doors, and the stair: its stairs, flights and
+// railings) with its class, name, GlobalId, type, storey (its own container's, or for a part of an
+// IfcStair, the stair's), overall size, the wall it voids or the opening it fills, its property
+// sets, and its
 // bounding box from web-ifc's own meshes (none for openings, which web-ifc cuts, not draws, nor
 // for a mesh with no vertices). Each class is read with its subclasses, as IfcOpenShell's by_type.
 // Coordinates are as web-ifc gives them: its meshes are y-up, so `axes` says so for the reader.
@@ -63,6 +65,7 @@ function psetOf(id) {
 const kinds = {
   IFCWALL: WebIFC.IFCWALL, IFCSLAB: WebIFC.IFCSLAB, IFCOPENINGELEMENT: WebIFC.IFCOPENINGELEMENT,
   IFCWINDOW: WebIFC.IFCWINDOW, IFCDOOR: WebIFC.IFCDOOR,
+  IFCSTAIR: WebIFC.IFCSTAIR, IFCSTAIRFLIGHT: WebIFC.IFCSTAIRFLIGHT, IFCRAILING: WebIFC.IFCRAILING,
 };
 const el = new Map(); // expressID -> record
 for (const [cls, type] of Object.entries(kinds)) {
@@ -71,7 +74,7 @@ for (const [cls, type] of Object.entries(kinds)) {
     el.set(id, {
       cls, ifcClass: api.GetNameFromTypeCode(api.GetLineType(model, id)), name: val(e.Name), globalId: val(e.GlobalId),
       width: val(e.OverallWidth) ?? null, height: val(e.OverallHeight) ?? null,
-      type: null, storey: null, voids: null, fills: null, psets: {}, bbox: null,
+      type: null, storey: null, partOf: null, voids: null, fills: null, psets: {}, bbox: null,
     });
   }
 }
@@ -81,9 +84,20 @@ for (const id of ids(WebIFC.IFCRELDEFINESBYTYPE)) {
   const r = line(id);
   for (const o of refs(r.RelatedObjects)) if (el.has(o)) el.get(o).type = name(r.RelatingType.value);
 }
+const parent = new Map(); // a part of an aggregate (a flight of an IfcStair) -> the aggregate
 for (const id of ids(WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE)) {
   const r = line(id);
   for (const o of refs(r.RelatedElements)) if (el.has(o)) el.get(o).storey = name(r.RelatingStructure.value);
+}
+for (const id of ids(WebIFC.IFCRELAGGREGATES)) {
+  const r = line(id);
+  for (const o of refs(r.RelatedObjects)) {
+    parent.set(o, r.RelatingObject.value);
+    if (el.has(o)) el.get(o).partOf = name(r.RelatingObject.value);
+  }
+}
+for (const [id, rec] of el) {
+  if (rec.storey === null && parent.has(id) && el.has(parent.get(id))) rec.storey = el.get(parent.get(id)).storey;
 }
 for (const id of ids(WebIFC.IFCRELVOIDSELEMENT)) {
   const r = line(id);

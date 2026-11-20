@@ -82,6 +82,8 @@ def _schedule_cells(row: dict) -> list[str]:
         remarks.append("SAFETY GLAZING REQ'D, " + row["safety_glazing_required"].removeprefix("yes (").removesuffix(")"))
     if "placeholder" in str(row.get("u_factor_source", "")):
         remarks.append("U-FACTOR TO BE CONFIRMED")
+    if row.get("fire_rating") not in (None, "", bidset.NOT_IN_MODEL):  # a flat door into the stair (pass 3f step 8)
+        remarks.append(f"{str(row['fire_rating']).upper()} FIRE DOOR" + (", SELF-CLOSING" if str(row.get("self_closing")) == "True" else ""))
     return [row["mark"], str(row["count"]), v(row["width"]), v(row["height"]), v(row["operation"]).upper(),
             v(row["frame_material"]).upper(), glazing, u_cell, "; ".join(remarks) or DASH]
 
@@ -438,7 +440,8 @@ def run(params: dict, publish_to: Path | None = None) -> dict:
         r = {"base_pdf": out_base, "addendum_pdf": out_add,
              "tags_by_sheet": {s: sum(1 for p in on_elev if p.sheet == s) for s in ELEVATIONS},
              "tags_by_mark": {m: sum(1 for p in on_elev if p.mark == m) for m in marks},
-             "schedule_rows": len(bidset.schedule_rows(rb0)), "diff": diff, "places_changed": count(diff),
+             "schedule_rows": len(bidset.schedule_rows(rb0)), "units": len(bidset.opening_rows(rb0)),
+             "diff": diff, "places_changed": count(diff),
              "revised_sheets": revised, "data_diff": data,
              "schedule_changes": addendum.schedule_changes(bidset.schedule_rows(rb0), bidset.schedule_rows(rb1)),
              "checks": checks, "publish_to": publish_to, "published": [],
@@ -457,7 +460,8 @@ def report(r: dict) -> str:
              f"({', '.join(f'{s}: {n}' for s, n in r['tags_by_sheet'].items())}), tallied by mark "
              f"({', '.join(f'{m} {n}' for m, n in r['tags_by_mark'].items())}), and read the schedule's {r['schedule_rows']} rows;",
              f"  from the data: schedule.csv's {r['schedule_rows']} rows carry the counts, and openings.csv lists all "
-             f"{sum(r['tags_by_mark'].values())} units. Nothing to count.", "",
+             f"{r['units']} units, the {r['units'] - sum(r['tags_by_mark'].values())} on no elevation among them. "
+             f"Nothing to count.", "",
              f"Addendum 1 from the PDFs (addendum-1.pdf: a narrative page and {len(r['revised_sheets'])} revised sheets):",
              f"  {r['places_changed']} places changed to find by eye, each clouded here:"]
     for sheet, v in r["diff"].items():

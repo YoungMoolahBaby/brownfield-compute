@@ -70,3 +70,18 @@ def test_the_server_serves_the_model_and_refuses_the_rest():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_latest_serves_this_runs_models():
+    # `brownfield viewer --latest`: /models/ from out/pass3/bidset, the addendum's IFC from its own
+    # folder under the published name; nothing outside the folder.
+    published, routes = viewer.MODELS, list(viewer.ROUTES)
+    try:
+        viewer.use_models(viewer.LATEST)
+        assert viewer.resolve("/models/apartment.ifc") == (viewer.LATEST / "apartment.ifc").resolve()
+        assert viewer.resolve("/models/apartment-addendum-1.ifc") == (viewer.LATEST / "addendum-1" / "apartment.ifc").resolve()
+        assert viewer.resolve("/models/../../README.md") is None
+    finally:
+        viewer.use_models(published)
+        viewer.ROUTES[:] = routes
+    assert viewer.resolve("/models/apartment.ifc") == (published / "apartment.ifc").resolve()

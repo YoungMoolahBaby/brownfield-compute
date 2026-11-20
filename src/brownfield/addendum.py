@@ -59,6 +59,8 @@ def check_revision(apt0: dict, apt1: dict, params: dict) -> list[str]:
         errs.append(f"its revision is {apt1.get('revision')!r}, not {REVISION!r}")
     if apt0["parts"] != apt1["parts"]:
         errs.append("its walls, slabs or roof differ from the base")
+    if apt0.get("stair") != apt1.get("stair"):
+        errs.append("its stair (flights, steps, handrails, guard or flat doors) differs from the base")
     ids0, ids1 = [o["id"] for o in apt0["openings"]], [o["id"] for o in apt1["openings"]]
     if ids0 != ids1:
         errs.append("its openings aren't the base's")
@@ -88,6 +90,21 @@ def words(apt0: dict, apt1: dict, params: dict) -> dict:
     wmarks0 = sorted({bidset.mark_of(o, m0, h0) for o in beside})
     wmarks1 = sorted({bidset.mark_of(next(x for x in apt1["openings"] if x["id"] == o["id"]), m1, h1) for o in beside})
     still = sum(1 for o in beside if o["id"] in h1)
+    # A type the windows leave is withdrawn only if no unit keeps it (the back stair windows over
+    # the landings keep W2's safety glazing, pass 3f step 8). Types are matched by what they are
+    # (kind, size, safety glazing), not by mark: marks are numbered by position, so a withdrawn type
+    # renumbers the ones after it.
+    key0 = {m: k for k, m in m0.items()}
+    left = sorted(set(wmarks0) - set(wmarks1))
+    kept = {m: key0[m] for m in left if key0[m] in m1}
+    gone = [m for m in left if m not in kept]
+
+    def units(key):
+        return sum(1 for o in apt1["openings"] if (o["kind"], o["width_m"], o["height_m"], o["id"] in h1) == key)
+
+    moved = (f"type {', '.join(gone)} is withdrawn; " if gone else "") + f"they are {', '.join(wmarks1)}" + "".join(
+        f"; {m} stays{f' (now {m1[k]})' if m1[k] != m else ''} for the {units(k)} other "
+        f"{'unit' if units(k) == 1 else 'units'} that still need it" for m, k in kept.items())
     w0, w1 = bidset._ftin(door["width_m"]), bidset._ftin(door1["width_m"])
     question = (f"The schedule gives the patio doors ({dmark}) no glass. IBC 2018 2406.4.1 makes glazing in a door a "
                 f"hazardous location: tempered or laminated? And the {len(beside)} windows beside them "
@@ -95,8 +112,7 @@ def words(apt0: dict, apt1: dict, params: dict) -> dict:
                 f"sills under {bottom:g} in: do they take safety glazing too, or can the doors narrow?")
     answer = (f"Answered by Addendum 1. Item 1: the patio doors' glazing is tempered. Item 2: the patio doors narrow from "
               f"{w0} to {w1}, centred where they were. "
-              + (f"The windows beside them then clear the {arc:g} in arc and take ordinary glazing "
-                 f"(type {', '.join(sorted(set(wmarks0) - set(wmarks1)))} is withdrawn; they are {', '.join(wmarks1)})."
+              + (f"The windows beside them then clear the {arc:g} in arc and take ordinary glazing ({moved})."
                  if still == 0 else f"{still} of the windows beside them still need safety glazing."))
     return {"title": f"RFI 001: what glass goes in the patio doors ({dmark})?", "question": question, "answer": answer,
             "items": [f"Item 1 (data): the patio doors ({dmark}) are glazed with tempered glass (IBC 2018 2406.4.1).",

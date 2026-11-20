@@ -40,24 +40,26 @@ def test_forge_changes_only_the_patio_doors(revision):
 
 def test_the_code_check_follows_the_change(revision):
     # The windows beside each door are now 45 ft / 7 - 2.5 ft - 1.5 ft = 29.1 in from its edge,
-    # outside the 24 in arc: only the doors themselves need safety glazing.
+    # outside the 24 in arc: only the doors themselves need safety glazing, and the two back stair
+    # windows over the landings (pass 3f step 8), which the addendum doesn't touch.
     p = revision["p"]
     h0, h1 = bidset.safety_glazing(revision["apt0"], p), bidset.safety_glazing(revision["apt1"], p)
-    assert (len(h0), len(h1)) == (36, 12)
-    assert all(r == "IBC 2018 2406.4.1: glazing in a door" for r in h1.values())
+    assert (len(h0), len(h1)) == (38, 14)
+    assert Counter(r.split(":")[0] for r in h1.values()) == {"IBC 2018 2406.4.1": 12, "IBC 2018 2406.4.3": 2}
+    assert {o for o, r in h1.items() if "2406.4.3" in r} == {"1-stair/back/0", "2-stair/back/0"}
 
 
 def test_the_diff_shows_exactly_what_the_addendum_changed(revision):
     # The 12 patio doors (narrower: attributes, geometry; tempered: properties; the 5'-0" door is
     # a new type), the 24 windows beside them (W2 -> W1), the 12 doors' openings, and the types:
-    # D1 at 6'-0" and W2 withdrawn, D1 at 5'-0" new. Nothing else.
+    # D1 at 6'-0" withdrawn, D1 at 5'-0" new. W2 stays, for the back stair windows. Nothing else.
     d = addendum.element_diff(revision["base"], revision["rev"])
     assert d["added"] == [] and d["deleted"] == []
     how = Counter((v["cls"], tuple(v["changes"])) for v in d["changed"].values())
     assert how == {("IfcDoor", ("attributes", "geometry", "properties", "type")): 12, ("IfcWindow", ("properties", "type")): 24}
     patio = {o["id"] for o in revision["apt0"]["openings"] if o["kind"] == "patio_door"}
     assert set(d["openings_resized"]) == patio
-    assert [x.split(" (")[0] for x in d["types"]["deleted"]] == ["D1", "W2"]
+    assert [x.split(" (")[0] for x in d["types"]["deleted"]] == ["D1"]
     assert [x.split(" (")[0] for x in d["types"]["added"]] == ["D1"] and d["types"]["changed"] == []
     # ifcdiff alone also flags elements whose only change is an entity number.
     assert d["ifcdiff_flagged"] > len(d["changed"])
@@ -71,6 +73,20 @@ def test_the_revision_must_be_the_base_plus_the_addendum(revision):
     w["sill_m"] += 0.01
     assert any("changed" in e for e in addendum.check_revision(a, moved, p))
     assert addendum.check_revision(a, a, p)  # the base itself isn't the revision
+    # The stair is the base's too: a flight a revision moves is a change the addendum didn't make.
+    shifted = json.loads(json.dumps(b))
+    shifted["stair"]["flights"][0]["z0_m"] += 0.01
+    assert any("stair" in e for e in addendum.check_revision(a, shifted, p))
+
+
+def test_a_type_nothing_keeps_is_said_withdrawn(revision, monkeypatch):
+    # Without the back stair windows' safety glazing (2406.4.3 over the landings), nothing keeps
+    # W2 after the addendum, and the answer says so; types are matched by what they are.
+    real = bidset.safety_glazing
+    monkeypatch.setattr(bidset, "safety_glazing",
+                        lambda apt, params: {k: v for k, v in real(apt, params).items() if "2406.4.3" not in v})
+    w = addendum.words(revision["apt0"], revision["apt1"], revision["p"])
+    assert "(type W2 is withdrawn; they are W1)" in w["answer"]
 
 
 def test_the_revision_passes_its_checks(revision):
@@ -108,7 +124,10 @@ def test_the_words_come_from_the_run(revision):
     p, a, b = revision["p"], revision["apt0"], revision["apt1"]
     w = addendum.words(a, b, p)
     assert "23.1 in from a door's edge, inside 2406.4.2's 24 in arc" in w["question"]
-    assert "6'-0\" to 5'-0\"" in w["answer"] and "type W2 is withdrawn; they are W1" in w["answer"]
+    assert "6'-0\" to 5'-0\"" in w["answer"]
+    # W2 isn't withdrawn: the two back stair windows over the landings keep it.
+    assert "(they are W1; W2 stays for the 2 other units that still need it)" in w["answer"]
+    assert "withdrawn" not in w["answer"]
     wide = dict(p)
     arc = p["bidset.code.safety_glazing.door_arc_in"]
     wide["bidset.code.safety_glazing.door_arc_in"] = type(arc)(**{**vars(arc), "value": 30.0, "high": 30.0})
@@ -142,7 +161,7 @@ def test_the_schedule_moves_as_the_addendum_says(revision):
     d0 = bidset.write_drawings(revision["base"], revision["dir"] / "d0")
     d1 = bidset.write_drawings(revision["rev"], revision["dir"] / "d1")
     lines = addendum.schedule_changes(d0["schedule"], d1["schedule"])
-    for want in ("W2: withdrawn (24 windows)", "W1 count: 77 -> 101", "D1 width: 6'-0\" -> 5'-0\"",
+    for want in ("W2 count: 26 -> 2", "W1 count: 75 -> 99", "D1 width: 6'-0\" -> 5'-0\"",
                  "D1 tempered: not in the model -> True", "D1 safety_glazing: not in the model -> tempered"):
         assert want in lines, want
 

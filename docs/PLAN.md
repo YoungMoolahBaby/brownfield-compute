@@ -1683,6 +1683,72 @@ test. Then the township brief's ask.
          - The checklist asks for a fire rating on doors into the stair, and not for a
            U-factor on interior doors.
          - The schedule, drawings, quantities and the web-ifc check follow.
+         - **Done 2026-11-20.**
+           - **`bidset.load` joins the stair to the bid set's model** (`with_stair`). The 12 doors
+             join the openings (126), and the hall floors, landings and partitions join the parts
+             (40). Pass 3b reads the building alone, so its numbers don't move.
+           - **The IFC:**
+             - an `IfcStair` a storey, aggregating its two `IfcStairFlight`s (their step boxes,
+               with `NumberOfRisers`, `NumberOfTreads`, `RiserHeight`, `TreadLength`), its landing
+               (`IfcSlab` LANDING) and four handrails (`IfcRailing` HANDRAIL, an
+               `IfcSweptDiskSolid` along each path);
+             - the guard (`IfcRailing` GUARDRAIL) on level 3;
+             - the partitions as walls with their own type;
+             - the stair walls with `Pset_WallCommon.FireRating` "1 h", and its source noted;
+             - the flat doors as D3, 36 x 84 in: `IsExternal` false, `FireRating` "1 h",
+               `SelfClosing`, no U-factor, MasterFormat 08 10 00 (our judgement).
+           - **Safety glazing:** 2406.4.3 is now measured from the stair's landings and hall floors
+             too, for a surface in front of the glass (overlapping it along the wall; the first
+             try also caught flat windows behind a stair wall). So the two back stair windows
+             join W2:
+             - the types are W1 75, W2 26, D1 12, D2 1, D3 12;
+             - safety glazing is 38 of 126 openings.
+           - **The checklist** has 34 fields (58 specifications). Fire rating and self-closing
+             apply to doors into the stair, and the model carries both. Design pressure, install
+             type and outside colour apply to exterior units only. The model carries 10 of the
+             34 fields.
+           - **From the IFC:**
+             - the schedule and the openings list take units in every wall;
+             - a unit in an inside wall is "interior", on no elevation;
+             - the PDF schedule's remarks give D3 "1 H FIRE DOOR, SELF-CLOSING".
+           - **The addendum's wording:** "W2 is withdrawn" was now false (W2 keeps the 2 stair
+             windows). A type is said to be withdrawn only if no unit keeps it: "they are W1; W2
+             stays for the 2 other units that still need it". The addendum changes 41 places on
+             the sheets (it was 40): W2's quantity (26 to 2) and remarks change, and its row is
+             no longer deleted.
+           - **Both readers check the stair:**
+             - IfcOpenShell: 6 new checks (every flight and railing once, flights and the guard
+               to 1 mm, handrails along their paths, risers and treads, each part in its
+               storey's IfcStair, the doors' and walls' ratings);
+             - web-ifc reads the stairs, flights and railings (`check.mjs` now resolves a part's
+               storey through its stair), meshes the swept handrails, and agrees.
+
+             `brownfield pdfset`'s 60 checks pass.
+           - **The viewer** colours the stair and names a flat door's fire rating.
+             `uv run brownfield viewer --latest` shows this run's models (out/) before they are
+             published.
+           - **Tests:** 2 new (the stair in the IFC; a missing flight, a moved step and a wrong
+             door rating each fail their check), and the counts above updated. The suite is 257
+             passing.
+           - **For 8c:** the paper set shows the flat doors only as a quantity on the schedule
+             (it has no floor plans), so a bidder working from PDFs can't count them on a sheet.
+           - **After a code review (15 findings, all addressed):**
+             - **The report's count:** the PDF set's report counts the units in openings.csv
+               (126, the 12 on no elevation among them), not the elevations' tags.
+             - **The addendum:** its wording matches types by what they are, not by mark (marks
+               renumber when a type is withdrawn), with a test that says "withdrawn" when
+               nothing keeps W2. Its revision check covers the stair too.
+             - **Safety glazing (2406.4.3):** it counts a landing at any height under the glass's
+               top (a landing 2 mm off the sill still counts, tested). It takes the straight
+               line from the glass's inside face with no wall in between (vectorised: 0.02 s).
+             - **Ratings:** the D3 description and the guard's come from params and the model.
+               The checklist asks for the params' fire rating, not just any.
+             - **Robustness:** every entry point joins the stair itself. A landing on a storey
+               without a stair stands on its own.
+             - **The viewer** asks a flat door only what the checklist asks of it.
+             - **`--latest`** has a test.
+
+             The suite is 260 passing.
        - **8c, the PDF set, the addendum and the report:** republish, recount, and assess the
          stair windows under 2406.4.6-2406.4.7 once Jon saves UpCodes' chapter 24 (the fetch
          tools only get a summary of those sections).

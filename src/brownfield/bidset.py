@@ -7,8 +7,12 @@
 - the site, the building, three storeys;
 - every wall a storey at a time (exterior, spine and stair), the ground slab, the floor systems
   and the roof, each a box as forge has it, with wall types from the frame's stud schedule;
-- every window and door, typed (W1, D1, D2), in an opening that voids its wall, with its U-factor
-  (the number the heat model uses), a MasterFormat section, and its id, flat, face and sill height.
+- the stair (pass 3f step 8, forge `stair`): an IfcStair a storey, of its two flights (their step
+  boxes), its landing and their handrails; the hall floors, the partitions in the stair core, the
+  guard on the top floor; the stair walls rated as the exit's enclosure;
+- every window and door, typed (W1, D1, D2, D3), in an opening that voids its wall, with its
+  U-factor (the number the heat model uses) or, for the flat doors into the stair, its fire rating,
+  a MasterFormat section, and its id, flat, face and sill height.
 
 GlobalIds come from the stable ids forge gives every part and opening, so writing the same model
 twice gives the same file (the header's timestamp aside), and a changed model differs only where
@@ -52,7 +56,9 @@ IN = 0.0254
 HEADER_TIME = "2026-11-19T00:00:00"  # D27's date: the IFC header's time stamp, fixed (see write_ifc)
 
 # The order types are numbered in (W1..., then D1, D2...).
-KINDS = ("window", "patio_door", "entry_door")
+KINDS = ("window", "patio_door", "entry_door", "flat_door")
+# The parts that are walls (IfcWall), as forge names their kinds; the rest of `parts` are slabs.
+WALL_KINDS = ("exterior_wall", "party_wall", "stair_partition")
 # CSI MasterFormat 2020, Division 08 Openings. Level 2 where it doesn't presume what the model
 # doesn't know: a window's level-3 section (08 51 aluminum, 08 52 wood, 08 53 plastic, 08 54
 # composite) is its frame material; a patio door is 08 10 00 if it swings, 08 32 00 (sliding glass
@@ -61,17 +67,29 @@ MASTERFORMAT = {
     "window": ("08 50 00", "Windows"),
     "patio_door": ("08 00 00", "Openings"),
     "entry_door": ("08 10 00", "Doors and Frames"),
+    "flat_door": ("08 10 00", "Doors and Frames"),
 }
 # Written into each reference, so the file says these are our choice, not a specifier's.
 MASTERFORMAT_WHY = {
     "window": "judgement (brownfield-compute pass 3f): level 2 until the frame material is chosen",
     "patio_door": "judgement (brownfield-compute pass 3f): the division only, until it is chosen to swing (08 10 00) or slide (08 32 00)",
     "entry_door": "judgement (brownfield-compute pass 3f): level 2 until the door and frame material are chosen",
+    "flat_door": "judgement (brownfield-compute pass 3f): level 2 until the door and frame material are chosen "
+                 "(a fire door assembly, as Table 716.1(2) asks)",
 }
 # The U-factor each kind takes from params/pass3.yaml: glazed units are fenestration.
 U_PARAM = {"window": "pass3.envelope.window_u", "patio_door": "pass3.envelope.window_u",
-           "entry_door": "pass3.envelope.door_u"}
-NAMES = {"window": "Window", "patio_door": "Patio door", "entry_door": "Entry door"}
+           "entry_door": "pass3.envelope.door_u", "flat_door": None}  # a flat door is inside the envelope
+NAMES = {"window": "Window", "patio_door": "Patio door", "entry_door": "Entry door", "flat_door": "Flat entry door"}
+# The flat doors open into the stair, the one exit, so each is a fire door assembly (IBC 2018
+# Table 716.1(2)); the stair walls are its enclosure (1023.2).
+FIRE_DOOR = "bidset.code.exit_stair.door_rating_h"
+ENCLOSURE = "bidset.code.exit_stair.enclosure_rating_h"
+PARTITION = "stair partition, 2x4 wood studs, 1/2 in. gypsum each side"
+
+
+def _hours(param) -> str:
+    return f"{param.value:g} h"
 
 
 def gid(key: str) -> str:
@@ -95,7 +113,22 @@ def load(name: str = "apartment.json") -> tuple[dict, dict]:
     # the stair (pass 3f step 8).
     if "panel_lo_m" not in ops[0] or ops[0].get("wall") not in parts or "rails" not in apt.get("stair", {}):
         raise SystemExit(f"out/pass3/{name} is from an older forge: {how}")
-    return apt, read_json("frame.json", "run `uv run brownfield frame`")
+    return with_stair(apt), read_json("frame.json", "run `uv run brownfield frame`")
+
+
+def with_stair(apt: dict) -> dict:
+    """The bid set's model: forge's building with its stair (forge `stair`, pass 3f step 8) joined
+    in. The 12 flat doors join the openings; the hall floors, landings and stair partitions join
+    the parts. The steps, handrails and guard stay under `stair`. Pass 3b reads the building alone
+    (`house.apartment()`), so its numbers don't move. Joining twice is joining once."""
+    if apt.get("with_stair") or "stair" not in apt:
+        return apt
+    st = apt["stair"]
+    out = dict(apt)
+    out["openings"] = apt["openings"] + st["doors"]
+    out["parts"] = apt["parts"] + [pt for pt in st["parts"] if pt["kind"] in ("floor", "landing", "stair_partition")]
+    out["with_stair"] = True
+    return out
 
 
 def types(apt: dict, hazards=()) -> dict[tuple, str]:
@@ -149,6 +182,41 @@ def _box_rep(f, ctx, dx: float, dy: float, dz: float):
         prof, f.createIfcAxis2Placement3D(f.createIfcCartesianPoint((0.0, 0.0, 0.0)), None, None),
         f.createIfcDirection((0.0, 0.0, 1.0)), dz)
     return f.createIfcShapeRepresentation(ctx, "Body", "SweptSolid", [solid])
+
+
+def _boxes_rep(f, ctx, origin, boxes):
+    """Several boxes (m, world lo..hi) as one body, each a rectangle extruded up, placed from
+    `origin`: a flight's steps."""
+    items = []
+    for lo, hi in boxes:
+        lo, hi = np.asarray(lo, float), np.asarray(hi, float)
+        dx, dy, dz = (float(v) for v in hi - lo)
+        prof = f.createIfcRectangleProfileDef(
+            "AREA", None, f.createIfcAxis2Placement2D(f.createIfcCartesianPoint((dx / 2, dy / 2)), None), dx, dy)
+        at = tuple(float(v) for v in lo - origin)
+        items.append(f.createIfcExtrudedAreaSolid(
+            prof, f.createIfcAxis2Placement3D(f.createIfcCartesianPoint(at), None, None), f.createIfcDirection((0.0, 0.0, 1.0)), dz))
+    return f.createIfcShapeRepresentation(ctx, "Body", "SweptSolid", items)
+
+
+def _place_boxes(f, ctx, product, boxes) -> None:
+    origin = np.min([np.asarray(lo, float) for lo, _ in boxes], axis=0)
+    m = np.eye(4)
+    m[:3, 3] = origin
+    geometry.edit_object_placement(f, product=product, matrix=m, is_si=True)
+    geometry.assign_representation(f, product=product, representation=_boxes_rep(f, ctx, origin, boxes))
+
+
+def _place_rail(f, ctx, product, points, diameter: float) -> None:
+    """A handrail: a disk of `diameter` swept along its path (m, world), placed from its first point."""
+    pts = np.asarray(points, float)
+    m = np.eye(4)
+    m[:3, 3] = pts[0]
+    geometry.edit_object_placement(f, product=product, matrix=m, is_si=True)
+    line = f.createIfcPolyline([f.createIfcCartesianPoint(tuple(float(v) for v in q - pts[0])) for q in pts])
+    solid = f.createIfcSweptDiskSolid(line, diameter / 2, None, None, None)
+    geometry.assign_representation(f, product=product,
+                                   representation=f.createIfcShapeRepresentation(ctx, "Body", "AdvancedSweptSolid", [solid]))
 
 
 def _face_axes(outward) -> np.ndarray:
@@ -231,6 +299,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
     """params: `load_params()`'s Param objects, so each number can carry its source. spec: what a
     specification says about each kind of unit, {kind: {property set: {property: value}}}, written
     onto every type of that kind (an addendum's answers, say); strings are written as labels."""
+    apt = with_stair(apt)
     f = project.create_file("IFC4")
     # A fixed header time, so a re-export is byte-for-byte the same file and the file carries no
     # local time or time zone (it is published).
@@ -277,10 +346,23 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
         ps = pset.add_pset(f, product=e, name="BidSet_Wall")
         pset.edit_pset(f, pset=ps, properties={"Construction": name})
         wall_type[name] = e
-    walls = {}
+    if any(pt["kind"] == "stair_partition" for pt in apt["parts"]):
+        e = _make(f, "IfcWallType", f"walltype/{PARTITION}", PARTITION, PredefinedType="PARTITIONING",
+                  Description="the walls between the stair's flights and under its ground-floor upper flight "
+                              "(forge stair, pass 3f step 8)")
+        ps = pset.add_pset(f, product=e, name="BidSet_Wall")
+        pset.edit_pset(f, pset=ps, properties={"Construction": PARTITION})
+        wall_type[PARTITION] = e
+    walls, landings = {}, {}
     for part in apt["parts"]:
         k = part["storey"]
-        if part["kind"].endswith("_wall"):
+        if part["kind"] == "stair_partition":
+            e = _make(f, "IfcWall", f"part/{part['id']}", part["id"], PredefinedType="PARTITIONING")
+            itype.assign_type(f, related_objects=[e], relating_type=wall_type[PARTITION], should_map_representations=False)
+            ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
+            pset.edit_pset(f, pset=ps, properties={"IsExternal": False, "LoadBearing": False})
+            walls[part["id"]] = e
+        elif part["kind"] in WALL_KINDS:
             prefix = part["id"].split("-")[0]
             external = part["kind"] == "exterior_wall"
             e = _make(f, "IfcWall", f"part/{part['id']}", part["id"], PredefinedType="STANDARD")
@@ -291,17 +373,63 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             # the stair walls bear the roof over the stair (its joists span between them), and the
             # stair walls below carry those above; the end walls bear neither.
             bearing = (external and face in ("front", "back")) or prefix in ("spine", "stair")
+            props = {"IsExternal": external, "LoadBearing": bearing}
+            if prefix == "stair":  # the exit's enclosure: a fire barrier (IBC 2018 1023.2)
+                props["FireRating"] = _hours(params[ENCLOSURE])
             ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
-            pset.edit_pset(f, pset=ps, properties={"IsExternal": external, "LoadBearing": bearing})
+            pset.edit_pset(f, pset=ps, properties=props)
+            if prefix == "stair":
+                _note_source(ps, "FireRating", params[ENCLOSURE])
             walls[part["id"]] = e
         else:
-            predefined = {"ground_slab": "BASESLAB", "floor": "FLOOR", "roof": "ROOF"}[part["kind"]]
+            predefined = {"ground_slab": "BASESLAB", "floor": "FLOOR", "roof": "ROOF", "landing": "LANDING"}[part["kind"]]
             e = _make(f, "IfcSlab", f"part/{part['id']}", part["id"], PredefinedType=predefined)
             ps = pset.add_pset(f, product=e, name="Pset_SlabCommon")
-            pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] != "floor",
+            pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] in ("ground_slab", "roof"),
                                                    "LoadBearing": True})
+            if part["kind"] == "landing":  # part of its storey's IfcStair (below), placed there
+                landings[part["id"]] = e
+                continue
         spatial.assign_container(f, products=[e], relating_structure=storeys[k])
         _place_box(f, body, e, part["lo_m"], part["hi_m"])
+
+    # The stair (pass 3f step 8): an IfcStair a storey, of its two flights, its landing and their
+    # handrails; and the guard on the top floor.
+    st = apt.get("stair") or {"flights": [], "parts": [], "rails": []}
+    boxes = {pt["id"]: pt for pt in st["parts"]}
+    for k in sorted({fl["storey"] for fl in st["flights"]}):
+        whole = _make(f, "IfcStair", f"stair/{k}", f"stair-{k}", PredefinedType="HALF_TURN_STAIR",
+                      Description="two flights and a landing between them, turning back on itself")
+        spatial.assign_container(f, products=[whole], relating_structure=storeys[k])
+        geometry.edit_object_placement(f, product=whole, matrix=np.array(np.eye(4)), is_si=True)
+        flights = [fl for fl in st["flights"] if fl["storey"] == k]
+        made = []
+        for fl in flights:
+            made.append(_make(f, "IfcStairFlight", f"part/{fl['id']}", fl["id"], PredefinedType="STRAIGHT",
+                              NumberOfRisers=fl["risers"], NumberOfTreads=fl["treads"],
+                              RiserHeight=fl["riser_m"], TreadLength=fl["tread_m"]))
+        lands = [landings[pid] for pid in sorted(landings) if boxes.get(pid, {}).get("storey") == k]
+        rails = [r for r in st["rails"] if r["storey"] == k]
+        made_rails = [_make(f, "IfcRailing", f"part/{r['id']}", r["id"], PredefinedType="HANDRAIL") for r in rails]
+        aggregate.assign_object(f, products=made + lands + made_rails, relating_object=whole)
+        for fl, e in zip(flights, made):
+            _place_boxes(f, body, e, [(boxes[s]["lo_m"], boxes[s]["hi_m"]) for s in fl["steps"]])
+        for e in lands:
+            _place_box(f, body, e, boxes[e.Name]["lo_m"], boxes[e.Name]["hi_m"])
+        for r, e in zip(rails, made_rails):
+            _place_rail(f, body, e, r["points_m"], r["diameter_m"])
+    stair_storeys = {fl["storey"] for fl in st["flights"]}
+    for pid, e in sorted(landings.items()):  # a landing on a storey with no stair stands on its own
+        part = next(pt for pt in apt["parts"] if pt["id"] == pid)
+        if part["storey"] not in stair_storeys:
+            spatial.assign_container(f, products=[e], relating_structure=storeys[part["storey"]])
+            _place_box(f, body, e, part["lo_m"], part["hi_m"])
+    for g in (pt for pt in st["parts"] if pt["kind"] == "guard"):
+        e = _make(f, "IfcRailing", f"part/{g['id']}", g["id"], PredefinedType="GUARDRAIL",
+                  Description=f"a solid guard, {(g['hi_m'][2] - g['lo_m'][2]) / IN:g} in. high, where the top floor's "
+                              "hall ends over the stair")
+        spatial.assign_container(f, products=[e], relating_structure=storeys[g["storey"]])
+        _place_box(f, body, e, g["lo_m"], g["hi_m"])
 
     # Window and door types: by size, and by whether the code calls for safety glazing.
     hazards = safety_glazing(apt, params)
@@ -314,12 +442,20 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
         # withdrawn in an addendum would rename the ones after it.
         e = _make(f, cls, f"type/{kind}/{round(w * 1e6)}/{round(h * 1e6)}/{int(safe)}", mark, **attrs,
                   Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in."
-                              + (" Safety glazing: IBC 2018 2406.4.1-2406.4.3 call for it here." if safe else ""))
+                              + (" Safety glazing: IBC 2018 2406.4.1-2406.4.3 call for it here." if safe else "")
+                              + (f" A {params[FIRE_DOOR].value:g}-hour fire door assembly, self-closing and latching: it "
+                                 "opens into the stair, the building's one exit (IBC 2018 1023.2, Table 716.1(2), 716.2.6)."
+                                 if kind == "flat_door" else ""))
         ps = pset.add_pset(f, product=e, name="Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon")
-        u = params[U_PARAM[kind]]
-        pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": True,
-                                               "ThermalTransmittance": u.value * BTU_FT2})
-        _note_source(ps, "ThermalTransmittance", u)
+        if U_PARAM[kind]:
+            u = params[U_PARAM[kind]]
+            pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": True,
+                                                   "ThermalTransmittance": u.value * BTU_FT2})
+            _note_source(ps, "ThermalTransmittance", u)
+        else:  # a flat door: inside the envelope, a fire door into the exit stair
+            pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": False,
+                                                   "FireRating": _hours(params[FIRE_DOOR]), "SelfClosing": True})
+            _note_source(ps, "FireRating", params[FIRE_DOOR])
         code, title = MASTERFORMAT[kind]
         ref = classification.add_reference(f, products=[e], identification=code, name=title, classification=mf)
         ref.Description = MASTERFORMAT_WHY[kind]
@@ -392,6 +528,7 @@ def check(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
     nothing else, counts and types, sizes, every element where forge has it (to 1 mm), no clashes,
     glazing per flat against pass 3b, unique GlobalIds, and IfcOpenShell's schema validation with
     the express rules. A mismatch is reported as a failure, not raised."""
+    apt = with_stair(apt)
     f = ifcopenshell.open(str(path))
     res = []
     ops = {o["id"]: o for o in apt["openings"]}
@@ -412,7 +549,8 @@ def check(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
                 detail += f"; {len(v)} {what}, first {v[0]}"
         res.append((label, not (missing or extra or twice), detail))
 
-    same("every wall, slab and roof of forge's model, once, and nothing else", built, parts)
+    same("every wall, slab and roof of forge's model, the stair's floors, landings and partitions among them, "
+         "once, and nothing else", built, parts)
     same("every opening, once, and nothing else", voids, ops)
     same("every window and door, once, and nothing else", fills, ops)
     built = [e for e in built if e.Name in parts]
@@ -471,6 +609,79 @@ def check(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
     ifcopenshell.validate.validate(f, log, express_rules=True)
     res.append(("schema validation (with express rules)", not log.statements,
                 f"{len(log.statements)} issues" + (f": {str(log.statements[0])[:160]}" if log.statements else "")))
+    res += _stair_checks(f, apt, params)
+    return res
+
+
+def _stair_checks(f, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
+    """The stair as written (pass 3f step 8): every flight and railing once, each where forge has it
+    (a flight is the box round its steps), with its risers and treads; each flight, landing and
+    handrail part of its storey's IfcStair, and that in its storey; the flat doors' type a fire door
+    and the stair walls rated."""
+    st = apt.get("stair")
+    if not st:
+        return []
+    res = []
+    step = {pt["id"]: pt for pt in st["parts"] if pt["kind"] == "step"}
+    guard = [pt for pt in st["parts"] if pt["kind"] == "guard"]
+    flights = {e.Name: e for e in f.by_type("IfcStairFlight")}
+    railings = {e.Name: e for e in f.by_type("IfcRailing")}
+    want_rails = {r["id"] for r in st["rails"]} | {g["id"] for g in guard}
+    res.append(("the stair's flights and railings, once, and nothing else",
+                set(flights) == {fl["id"] for fl in st["flights"]} and set(railings) == want_rails
+                and len(f.by_type("IfcStairFlight")) == len(flights) and len(f.by_type("IfcRailing")) == len(railings),
+                f"{len(flights)} flights, {len(railings)} railings ({len(st['rails'])} handrails and {len(guard)} guard)"))
+    got = _world_boxes(f, list(flights.values()) + [railings[g["id"]] for g in guard if g["id"] in railings])
+    worst = 0.0
+    for fl in st["flights"]:
+        e = flights.get(fl["id"])
+        if e is None:
+            continue
+        lo = np.min([step[s]["lo_m"] for s in fl["steps"]], axis=0)
+        hi = np.max([step[s]["hi_m"] for s in fl["steps"]], axis=0)
+        worst = max(worst, float(np.abs(got[e.GlobalId][0] - lo).max()), float(np.abs(got[e.GlobalId][1] - hi).max()))
+    for g in guard:
+        if g["id"] in railings:
+            b = got[railings[g["id"]].GlobalId]
+            worst = max(worst, float(np.abs(b[0] - g["lo_m"]).max()), float(np.abs(b[1] - g["hi_m"]).max()))
+    res.append(("every flight and the guard where forge has it (to 1 mm)", worst < 1e-3, f"worst {worst * 1e3:.4f} mm"))
+    off = []
+    rails_box = _world_boxes(f, [railings[r["id"]] for r in st["rails"] if r["id"] in railings])
+    for r in st["rails"]:
+        e = railings.get(r["id"])
+        if e is None:
+            continue
+        pts, rad = np.asarray(r["points_m"]), r["diameter_m"] / 2
+        b = rails_box[e.GlobalId]
+        # The tube holds its path and stays within a radius of it (and a millimetre).
+        if not (np.all(b[0] <= pts.min(0) + 1e-6) and np.all(b[1] >= pts.max(0) - 1e-6)
+                and np.all(b[0] >= pts.min(0) - rad - 1e-3) and np.all(b[1] <= pts.max(0) + rad + 1e-3)):
+            off.append(r["id"])
+    res.append(("every handrail along its path, within its radius", not off, f"{len(st['rails'])} handrails, {len(off)} off"))
+    attrs = [fl["id"] for fl in st["flights"] if fl["id"] in flights and not (
+        flights[fl["id"]].NumberOfRisers == fl["risers"] and flights[fl["id"]].NumberOfTreads == fl["treads"]
+        and abs(flights[fl["id"]].RiserHeight - fl["riser_m"]) < 1e-9 and abs(flights[fl["id"]].TreadLength - fl["tread_m"]) < 1e-9)]
+    res.append(("each flight's risers, treads, riser height and tread length", not attrs,
+                f"{len(st['flights'])} flights, {len(attrs)} differ"))
+    wrong = []
+    for e in list(flights.values()) + [x for x in f.by_type("IfcSlab") if x.PredefinedType == "LANDING"] + [
+            railings[r["id"]] for r in st["rails"] if r["id"] in railings]:
+        whole = ifcopenshell.util.element.get_aggregate(e)
+        storey = ifcopenshell.util.element.get_container(whole) if whole is not None else None
+        k = next((x["storey"] for x in st["flights"] + st["parts"] + st["rails"] if x["id"] == e.Name), None)
+        if whole is None or not whole.is_a("IfcStair") or storey is None or storey.Name != f"Level {k}" or whole.Name != f"stair-{k}":
+            wrong.append(e.Name)
+    res.append(("each flight, landing and handrail part of its storey's IfcStair", not wrong,
+                f"{len(f.by_type('IfcStair'))} stairs, {len(wrong)} wrong" + (f", first {wrong[0]}" if wrong else "")))
+    rate, enc = _hours(params[FIRE_DOOR]), _hours(params[ENCLOSURE])
+    doors = [d for d in f.by_type("IfcDoor") if (ifcopenshell.util.element.get_pset(d, "BF_Opening") or {}).get("Kind") == "flat_door"]
+    bad_doors = [d.Name for d in doors if (ifcopenshell.util.element.get_pset(d, "Pset_DoorCommon") or {}).get("FireRating") != rate
+                 or not (ifcopenshell.util.element.get_pset(d, "Pset_DoorCommon") or {}).get("SelfClosing")]
+    stair_walls = [w for w in f.by_type("IfcWall") if (w.Name or "").startswith("stair-left") or (w.Name or "").startswith("stair-right")]
+    bad_walls = [w.Name for w in stair_walls if (ifcopenshell.util.element.get_pset(w, "Pset_WallCommon") or {}).get("FireRating") != enc]
+    res.append((f"the flat doors {rate} fire doors, self-closing, and the stair walls rated {enc}",
+                bool(len(doors) == len(st["doors"]) and not bad_doors and stair_walls and not bad_walls),
+                f"{len(doors)} doors, {len(stair_walls)} stair walls; {len(bad_doors) + len(bad_walls)} wrong"))
     return res
 
 
@@ -492,6 +703,30 @@ def _plan_gap(a: dict, b: dict) -> float:
     return float(np.hypot(*d))
 
 
+def _inside_reach(o: dict, s: dict, walls: np.ndarray, n: int = 9) -> float:
+    """The plan distance (m) from a window's inside face to a walking surface, in a straight line
+    that crosses no wall, or infinity. The inside face is sampled across its width; from each point,
+    the nearest point of the surface; the line between them is tested against every wall's box in
+    plan (`walls`, shape (walls, 2 corners, 2 axes); a line through a wall is blocked)."""
+    lo, hi, out = np.asarray(o["lo_m"])[:2], np.asarray(o["hi_m"])[:2], np.asarray(o["outward"])[:2]
+    axis = 0 if abs(out[0]) > 0 else 1  # the wall's thickness runs along x (front, back) or y (the ends)
+    face = (lo[axis] if out[axis] > 0 else hi[axis]) - out[axis] * 1e-3  # 1 mm inside the inner face
+    s_lo, s_hi = np.asarray(s["lo_m"])[:2], np.asarray(s["hi_m"])[:2]
+    best = np.inf
+    for t in np.linspace(0.0, 1.0, n):
+        a = lo + (hi - lo) * t
+        a[axis] = face
+        b = np.clip(a, s_lo, s_hi)
+        d = float(np.hypot(*(b - a)))
+        if d >= best:
+            continue
+        line = a + np.outer(np.linspace(0.0, 1.0, 41), b - a)  # (points, 2)
+        inside = ((line[:, None, :] > walls[None, :, 0, :] + TOL_M) & (line[:, None, :] < walls[None, :, 1, :] - TOL_M)).all(-1)
+        if not inside.any():
+            best = d
+    return best
+
+
 def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
     """The openings whose glazing IBC 2018 2406.4.1-2406.4.3 make a hazardous location (so it must
     be safety glazing), each with the reason, from forge's geometry and params/bidset.yaml:
@@ -507,16 +742,23 @@ def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
       walking surface within the distance. The unit's whole glass stands in for its largest pane
       (the model has no panes), and the floor inside, which meets the wall, is the walking surface.
 
+    Since pass 3f step 8, 2406.4.3 is measured from the stair's landings and hall floors as well as
+    the floor of the storey. A window that rises from a landing is a pane low over a walking
+    surface.
+
     Not assessed: 2406.4.4 (guards and railings), 2406.4.5 (wet areas), 2406.4.6 and 2406.4.7
-    (beside stairs and landings, and at the bottom of a stair). The model has no stair flights or
-    landings, so the stair windows wait for them.
+    (beside stairs and landings, and at the bottom of a stair), whose text hasn't been read.
     """
+    apt = with_stair(apt)
     c = "bidset.code.safety_glazing."
     arc, door_bottom = params[c + "door_arc_in"].value * IN, params[c + "door_bottom_in"].value * IN
     area, w_bottom, w_top, walk = (params[c + "window_area_ft2"].value * FT2, params[c + "window_bottom_in"].value * IN,
                                    params[c + "window_top_in"].value * IN, params[c + "window_walk_in"].value * IN)
     floor_from_glass = 0.0  # the floor inside runs to the wall
     ops = apt["openings"]
+    # The stair's landings and hall floors: walking surfaces other than a storey's floor.
+    surfaces = [pt for pt in (apt.get("stair") or {}).get("parts", []) if pt["kind"] in ("landing", "floor")]
+    walls = np.array([[pt["lo_m"][:2], pt["hi_m"][:2]] for pt in apt["parts"] if pt["kind"] in WALL_KINDS])
     doors = [d for d in ops if d["kind"] != "window"]
     out = {}
     for o in ops:
@@ -539,6 +781,18 @@ def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
         if (o["id"] not in out and o["width_m"] * o["height_m"] > area and bottom < w_bottom and top > w_top
                 and floor_from_glass <= walk):
             out[o["id"]] = "IBC 2018 2406.4.3: a large pane low in the wall"
+        for s in surfaces:
+            # A walking surface within the distance of the glass, measured in a straight line from
+            # its inside face, with no wall in between (a landing behind a stair wall, near a
+            # flat's window, isn't). The glass may start below the surface: it is still low over it.
+            # The box gap first: the straight line from the inside face is never shorter.
+            if (o["id"] in out or o["width_m"] * o["height_m"] <= area or _plan_gap(o, s) > walk + TOL_M
+                    or _inside_reach(o, s, walls) > walk + TOL_M):
+                continue
+            bottom = o["sill_m"] - s["hi_m"][2]
+            if bottom < w_bottom and bottom + o["height_m"] > w_top:
+                out[o["id"]] = (f"IBC 2018 2406.4.3: a large pane low over {s['id']}, "
+                                f"its bottom edge {bottom / IN:.0f} in above it")
     return out
 
 
@@ -662,6 +916,7 @@ def ids_fields(params: dict) -> list[dict]:
     door_ops = [x for x in ifcopenshell.ifcopenshell_wrapper.schema_by_name("IFC4")
                 .declaration_by_name("IfcDoorTypeOperationEnum").enumeration_items() if x not in ("USERDEFINED", "NOTDEFINED")]
     both, windows, glazed = ("IFCWINDOW", "IFCDOOR"), ("IFCWINDOW",), ("IFCWINDOW", "IFCDOOR+glazed")
+    outside = ("IFCWINDOW", "IFCDOOR+exterior")  # what only an exterior unit has: wind load, the outside, its install
     unit = lambda cls: UNIT_PSET[cls]  # noqa: E731
     return [
         dict(key="type", label="type mark", on=both, std=True, facet=prop(unit, "Reference")),
@@ -683,7 +938,7 @@ def ids_fields(params: dict) -> list[dict]:
              facet=const(lambda: ids.Attribute(name="OperationType", value=ids.Restriction(options={"enumeration": door_ops})))),
         dict(key="material", label="frame material", on=both, std=True, facet=const(lambda: ids.Material())),
         dict(key="colour_in", label="frame colour inside", on=both, std=False, note="IFC's styles colour a drawing, not a product", facet=prop("BidSet_Unit", "FrameColourInside", dt="IFCLABEL")),
-        dict(key="colour_out", label="frame colour outside", on=both, std=False, note="IFC's styles colour a drawing, not a product", facet=prop("BidSet_Unit", "FrameColourOutside", dt="IFCLABEL")),
+        dict(key="colour_out", label="frame colour outside", on=outside, std=False, note="IFC's styles colour a drawing, not a product", facet=prop("BidSet_Unit", "FrameColourOutside", dt="IFCLABEL")),
         dict(key="low_e", label="glass: low-e coating (yes or no)", on=glazed, std=True, facet=prop(GLAZING, "IsCoated", dt="IFCBOOLEAN")),
         dict(key="gas", label="glass: gas fill", on=glazed, std=True, facet=prop(GLAZING, "FillGas", dt="IFCLABEL")),
         dict(key="tempered", label="glass: tempered (yes or no)", on=glazed, std=True, facet=prop(GLAZING, "IsTempered", dt="IFCBOOLEAN")),
@@ -692,7 +947,7 @@ def ids_fields(params: dict) -> list[dict]:
              facet=prop(unit, "ThermalTransmittance", ids.Restriction(options={"maxInclusive": u_max}, base="double"),
                         "IFCTHERMALTRANSMITTANCEMEASURE")),
         dict(key="shgc", label="SHGC", on=glazed, std=True, facet=prop(GLAZING, "SolarHeatGainTransmittance", dt="IFCNORMALISEDRATIOMEASURE")),
-        dict(key="grade", label="performance grade (design pressure)", on=both, std=True,
+        dict(key="grade", label="performance grade (design pressure)", on=outside, std=True,
              facet=prop(unit, "WindLoadRating", ids.Restriction(options={"pattern": "(R|LC|CW|AW)-PG[0-9]+.*"}), "IFCLABEL")),
         dict(key="escape", label="escape window (yes or no)", on=windows, std=True, facet=prop("Pset_WindowCommon", "FireExit", dt="IFCBOOLEAN")),
         # On a window marked as an escape window, IBC 2018 1030.2-1030.3 (params). IFC4 has no
@@ -712,7 +967,12 @@ def ids_fields(params: dict) -> list[dict]:
         dict(key="screen", label="screen (yes or no)", on=glazed, std=False, facet=prop("BidSet_Unit", "Screen", dt="IFCBOOLEAN")),
         dict(key="grilles", label="grilles", on=glazed, std=False, facet=prop("BidSet_Unit", "Grilles", dt="IFCLABEL")),
         dict(key="hardware", label="hardware finish", on=both, std=False, facet=prop("BidSet_Unit", "HardwareFinish", dt="IFCLABEL")),
-        dict(key="install", label="install type", on=both, std=False, facet=prop("BidSet_Unit", "InstallType", dt="IFCLABEL")),
+        dict(key="install", label="install type", on=outside, std=False, facet=prop("BidSet_Unit", "InstallType", dt="IFCLABEL")),
+        # A door into the stair (pass 3f step 8): a fire door assembly (IBC 2018 Table 716.1(2)).
+        dict(key="fire_rating", label="fire rating (doors into the stair)", on=("IFCDOOR+stair",), std=True,
+             facet=prop("Pset_DoorCommon", "FireRating", _hours(params[FIRE_DOOR]), "IFCLABEL")),
+        dict(key="self_closing", label="self-closing (doors into the stair)", on=("IFCDOOR+stair",), std=True,
+             facet=prop("Pset_DoorCommon", "SelfClosing", "TRUE", "IFCBOOLEAN")),
         dict(key="in_wall", label="in a wall", on=both, std=True,
              facet=const(lambda: ids.PartOf(name="IFCWALL", relation="IFCRELVOIDSELEMENT IFCRELFILLSELEMENT"))),
         dict(key="wall_construction", label="the wall's construction (on exterior walls)", on=("IFCWALL+external",), std=False,
@@ -727,7 +987,8 @@ def ids_fields(params: dict) -> list[dict]:
 
 def _applicability(on: str):
     """The entity a field applies to, and any filter: '+glazed', '+hazard' (BF_Opening flags),
-    '+escape' (a window marked as an escape window) or '+external' (a wall's Pset_WallCommon)."""
+    '+escape' (a window marked as an escape window), '+external' (a wall's Pset_WallCommon),
+    '+exterior' (a unit's own IsExternal) or '+stair' (a door into the stair, BF_Opening's face)."""
     from ifctester import ids
 
     cls, _, only = on.partition("+")
@@ -740,6 +1001,10 @@ def _applicability(on: str):
         facets.append(ids.Property(propertySet="Pset_WindowCommon", baseName="FireExit", value="TRUE", dataType="IFCBOOLEAN"))
     elif only == "external":
         facets.append(ids.Property(propertySet="Pset_WallCommon", baseName="IsExternal", value="TRUE", dataType="IFCBOOLEAN"))
+    elif only == "exterior":
+        facets.append(ids.Property(propertySet=UNIT_PSET[cls], baseName="IsExternal", value="TRUE", dataType="IFCBOOLEAN"))
+    elif only == "stair":
+        facets.append(ids.Property(propertySet="BF_Opening", baseName="Face", value="stair", dataType="IFCLABEL"))
     return cls, facets
 
 
@@ -883,13 +1148,13 @@ def _property_note(e, t, pset_name: str, prop: str) -> str | None:
 
 def read_back(path: Path) -> dict:
     """What the drawings need, read from the IFC: storeys, the building's extent (its exterior
-    walls), the roofs, and every window and door in an exterior wall, each with its type, size,
-    place and properties (its own over its type's, as IFC has it)."""
+    walls), the roofs, and every window and door in a wall, each with its type, size, place and
+    properties (its own over its type's, as IFC has it). A unit in an exterior wall has the facade
+    it is on; one in an inside wall (a flat's door into the stair) is "interior", on no elevation."""
     f = ifcopenshell.open(str(path))
     ext = [w for w in f.by_type("IfcWall") if (ifcopenshell.util.element.get_pset(w, "Pset_WallCommon") or {}).get("IsExternal")]
     ext_ids = {w.id() for w in ext}
-    units = [e for e in list(f.by_type("IfcWindow")) + list(f.by_type("IfcDoor"))
-             if (h := _host_wall(e)) is not None and h.id() in ext_ids]
+    units = [e for e in list(f.by_type("IfcWindow")) + list(f.by_type("IfcDoor")) if _host_wall(e) is not None]
     roofs = [s for s in f.by_type("IfcSlab") if s.PredefinedType == "ROOF"]
     boxes = _world_boxes(f, ext + units + roofs)
     lo = np.min([boxes[w.GlobalId][0] for w in ext], axis=0)
@@ -903,7 +1168,7 @@ def read_back(path: Path) -> dict:
         container = ifcopenshell.util.element.get_container(e)
         out["units"].append({
             "name": e.Name or e.GlobalId, "cls": e.is_a(), "mark": mark, "width": e.OverallWidth, "height": e.OverallHeight,
-            "lo": box[0], "hi": box[1], "face": _face_of(box, lo, hi),
+            "lo": box[0], "hi": box[1], "face": _face_of(box, lo, hi) if _host_wall(e).id() in ext_ids else "interior",
             "storey": container.Name if container is not None else "(no storey)",
             "storey_z": (container.Elevation or 0.0) if container is not None and container.is_a("IfcBuildingStorey") else 0.0,
             "props": ifcopenshell.util.element.get_pset(e, "BF_Opening") or {},
@@ -1076,6 +1341,8 @@ def schedule_rows(rb: dict) -> list[dict]:
             "u_factor_source": _common((u["u_note"] or "").split(":")[0] or NOT_IN_MODEL for u in us),
             "shgc": val(glass, "SolarHeatGainTransmittance"),
             "design_pressure": val(common, "WindLoadRating"),
+            "fire_rating": val(common, "FireRating") if not window else "",
+            "self_closing": val(common, "SelfClosing") if not window else "",
             "escape_window": val("Pset_WindowCommon", "FireExit") if window else "",
             "clear_opening_area_ft2": val(ours, "ClearOpeningArea", lambda v: round(v / FT2, 2)) if window else "",
             "clear_opening_width": length(ours, "ClearOpeningWidth") if window else "",
@@ -1254,6 +1521,7 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
     the one the lock pins; every element once by class (with subclasses) and name; types, sizes,
     storeys, voids and fillings; every BF_Opening property; the types' U-factors; every box from
     web-ifc's own geometry (to 1 mm); and glazing per flat. A mismatch is a failure, not raised."""
+    apt = with_stair(apt)
     w = read_webifc(path)
     locked = webifc_locked()
     res = [("web-ifc reads it, at the version the lock pins",
@@ -1268,11 +1536,15 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
         if e["name"] is None:
             e["name"] = f"<unnamed {e['globalId']}>"
         by[e["cls"]].append(e)
-    want = {"IFCWALL": {n for n, pt in parts.items() if pt["kind"].endswith("_wall")},
-            "IFCSLAB": {n for n, pt in parts.items() if not pt["kind"].endswith("_wall")},
+    st = apt.get("stair") or {"flights": [], "parts": [], "rails": []}
+    want = {"IFCWALL": {n for n, pt in parts.items() if pt["kind"] in WALL_KINDS},
+            "IFCSLAB": {n for n, pt in parts.items() if pt["kind"] not in WALL_KINDS},
             "IFCOPENINGELEMENT": set(ops),
             "IFCWINDOW": {n for n, o in ops.items() if o["kind"] == "window"},
-            "IFCDOOR": {n for n, o in ops.items() if o["kind"] != "window"}}
+            "IFCDOOR": {n for n, o in ops.items() if o["kind"] != "window"},
+            "IFCSTAIR": {f"stair-{k}" for k in {fl["storey"] for fl in st["flights"]}},
+            "IFCSTAIRFLIGHT": {fl["id"] for fl in st["flights"]},
+            "IFCRAILING": {r["id"] for r in st["rails"]} | {pt["id"] for pt in st["parts"] if pt["kind"] == "guard"}}
     bad = {c: sorted(set(e["name"] for e in by[c]) ^ want[c]) for c in want}
     twice = [c for c in want if len(by[c]) != len({e["name"] for e in by[c]})]
     res.append(("web-ifc: every element of forge's model, once, by class, and nothing else",
@@ -1289,6 +1561,9 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
     storey = [e["name"] for e in units if e["storey"] != f"Level {ops[e['name']]['storey']}"]
     storey += [e["name"] for c in ("IFCWALL", "IFCSLAB") for e in by[c]
                if e["name"] in parts and e["storey"] != f"Level {parts[e['name']]['storey']}"]
+    level = {x["id"]: x["storey"] for x in st["flights"] + st["parts"] + st["rails"]}
+    storey += [e["name"] for c in ("IFCSTAIRFLIGHT", "IFCRAILING") for e in by[c]
+               if e["name"] in level and e["storey"] != f"Level {level[e['name']]}"]
     res.append(("web-ifc: every element in its storey", not storey, f"{len(storey)} wrong"))
     hosts = [e["name"] for e in by["IFCOPENINGELEMENT"] if e["name"] in ops and e["voids"] != ops[e["name"]]["wall"]]
     hosts += [e["name"] for e in units if e["fills"] != e["name"]]
@@ -1308,26 +1583,48 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
     u_off = []
     for (kind, *_), mark in marks.items():
         ps = tps.get(mark, {}).get("Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon", {})
-        if not abs(_num(ps.get("ThermalTransmittance")) - params[U_PARAM[kind]].value * BTU_FT2) <= 1e-9:
+        if U_PARAM[kind]:
+            if not abs(_num(ps.get("ThermalTransmittance")) - params[U_PARAM[kind]].value * BTU_FT2) <= 1e-9:
+                u_off.append(mark)
+        elif not (ps.get("FireRating") == _hours(params[FIRE_DOOR]) and ps.get("SelfClosing") is True
+                  and ps.get("ThermalTransmittance") is None):
             u_off.append(mark)
-    res.append(("web-ifc: each type's U-factor is its params value", not u_off, f"{len(marks) - len(u_off)} of {len(marks)}"))
+    res.append(("web-ifc: each type's U-factor is its params value, or a flat door's its fire rating", not u_off,
+                f"{len(marks) - len(u_off)} of {len(marks)}"))
 
     tol, worst, missing = 1e-3, 0.0, []
-    for c in ("IFCWALL", "IFCSLAB", "IFCWINDOW", "IFCDOOR"):
+    step = {pt["id"]: pt for pt in st["parts"] if pt["kind"] == "step"}
+    want_box = {n: (pt["lo_m"], pt["hi_m"]) for n, pt in parts.items()}
+    want_box |= {n: (o["panel_lo_m"], o["panel_hi_m"]) for n, o in ops.items()}
+    want_box |= {fl["id"]: (np.min([step[s]["lo_m"] for s in fl["steps"]], axis=0), np.max([step[s]["hi_m"] for s in fl["steps"]], axis=0))
+                 for fl in st["flights"]}
+    want_box |= {pt["id"]: (pt["lo_m"], pt["hi_m"]) for pt in st["parts"] if pt["kind"] == "guard"}
+    for c in ("IFCWALL", "IFCSLAB", "IFCWINDOW", "IFCDOOR", "IFCSTAIRFLIGHT", "IFCRAILING"):
         for e in by[c]:
-            if e["name"] not in (parts if c in ("IFCWALL", "IFCSLAB") else ops):
-                continue
+            if e["name"] not in want_box:
+                continue  # a handrail: a swept tube, checked against its path below
             box = None if e["bbox"] is None else _ifc_axes(e["bbox"])
             if box is None or not (np.isfinite(box[0]).all() and np.isfinite(box[1]).all()):
                 missing.append(e["name"])  # no mesh, or an empty one
                 continue
-            src = parts[e["name"]] if c in ("IFCWALL", "IFCSLAB") else ops[e["name"]]
-            want_lo, want_hi = ((src["lo_m"], src["hi_m"]) if c in ("IFCWALL", "IFCSLAB")
-                                else (src["panel_lo_m"], src["panel_hi_m"]))
+            want_lo, want_hi = want_box[e["name"]]
             worst = max(worst, float(np.abs(box[0] - want_lo).max()), float(np.abs(box[1] - want_hi).max()))
-    res.append((f"web-ifc's own geometry: every wall, slab, window and door where forge has it (to {tol * 1e3:g} mm)",
+    res.append((f"web-ifc's own geometry: every wall, slab, window, door, flight and the guard where forge has it (to {tol * 1e3:g} mm)",
                 worst < tol and not missing,
                 f"worst {worst * 1e3:.4f} mm" + (f"; {len(missing)} without a mesh, first {missing[0]}" if missing else "")))
+    off, no_mesh = [], []
+    for r in st["rails"]:
+        e = next((x for x in by["IFCRAILING"] if x["name"] == r["id"]), None)
+        box = None if e is None or e["bbox"] is None else _ifc_axes(e["bbox"])
+        if box is None or not (np.isfinite(box[0]).all() and np.isfinite(box[1]).all()):
+            no_mesh.append(r["id"])
+            continue
+        pts, rad = np.asarray(r["points_m"]), r["diameter_m"] / 2
+        if not (np.all(box[0] <= pts.min(0) + 1e-3) and np.all(box[1] >= pts.max(0) - 1e-3)
+                and np.all(box[0] >= pts.min(0) - rad - 1e-3) and np.all(box[1] <= pts.max(0) + rad + 1e-3)):
+            off.append(r["id"])
+    res.append(("web-ifc's own geometry: every handrail along its path, within its radius", not off and not no_mesh,
+                f"{len(st['rails'])} handrails, {len(off)} off" + (f"; {len(no_mesh)} without a mesh" if no_mesh else "")))
 
     glazed, unsized = defaultdict(float), 0
     for e in units:
