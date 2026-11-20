@@ -52,7 +52,8 @@ def test_the_code_check_follows_the_change(revision):
 def test_the_diff_shows_exactly_what_the_addendum_changed(revision):
     # The 12 patio doors (narrower: attributes, geometry; tempered: properties; the 5'-0" door is
     # a new type), the 24 windows beside them (W2 -> W1), the 12 doors' openings, and the types:
-    # D1 at 6'-0" withdrawn, D1 at 5'-0" new. W2 stays, for the back stair windows. Nothing else.
+    # D1 at 6'-0" withdrawn, D1 at 5'-0" new. W2 stays, for the back stair windows, and its
+    # description drops 2406.4.2, which only the windows beside the doors were under. Nothing else.
     d = addendum.element_diff(revision["base"], revision["rev"])
     assert d["added"] == [] and d["deleted"] == []
     how = Counter((v["cls"], tuple(v["changes"])) for v in d["changed"].values())
@@ -60,7 +61,10 @@ def test_the_diff_shows_exactly_what_the_addendum_changed(revision):
     patio = {o["id"] for o in revision["apt0"]["openings"] if o["kind"] == "patio_door"}
     assert set(d["openings_resized"]) == patio
     assert [x.split(" (")[0] for x in d["types"]["deleted"]] == ["D1"]
-    assert [x.split(" (")[0] for x in d["types"]["added"]] == ["D1"] and d["types"]["changed"] == []
+    assert [x.split(" (")[0] for x in d["types"]["added"]] == ["D1"]
+    assert d["types"]["changed"] == ["W2 (description: Window, 36 x 48 in. Safety glazing: IBC 2018 2406.4.2, 2406.4.3 "
+                                     "and 2406.4.6 call for it here. -> Window, 36 x 48 in. Safety glazing: IBC 2018 "
+                                     "2406.4.3 and 2406.4.6 call for it here.)"]
     # ifcdiff alone also flags elements whose only change is an entity number.
     assert d["ifcdiff_flagged"] > len(d["changed"])
 

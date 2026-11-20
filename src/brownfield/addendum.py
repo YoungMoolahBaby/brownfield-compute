@@ -247,11 +247,19 @@ def element_diff(old: Path, new: Path) -> dict:
         return {"name": t.Name, "description": t.Description,
                 "op": getattr(t, "OperationType", None), "psets": _strip_ids(ifcopenshell.util.element.get_psets(t))}
 
+    def what(a, b):
+        """What changed on a type kept by GlobalId: its name, description or operation, as they were
+        and are, and whether its properties did."""
+        da, db = tdesc(a), tdesc(b)
+        out = [f"{k}: {da[k]} -> {db[k]}" for k in ("name", "description", "op") if da[k] != db[k]]
+        return "; ".join(out + (["properties"] if da["psets"] != db["psets"] else []))
+
     t0 = {t.GlobalId: t for t in f0.by_type("IfcTypeObject")}
     t1 = {t.GlobalId: t for t in f1.by_type("IfcTypeObject")}
     types = {"added": sorted(f"{t1[g].Name} ({t1[g].Description})" for g in t1.keys() - t0.keys()),
              "deleted": sorted(f"{t0[g].Name} ({t0[g].Description})" for g in t0.keys() - t1.keys()),
-             "changed": sorted(t0[g].Name for g in t0.keys() & t1.keys() if tdesc(t0[g]) != tdesc(t1[g]))}
+             "changed": sorted(f"{t0[g].Name} ({what(t0[g], t1[g])})" for g in t0.keys() & t1.keys()
+                               if tdesc(t0[g]) != tdesc(t1[g]))}
     return {"added": sorted(elems1.keys() - elems0.keys()), "deleted": sorted(elems0.keys() - elems1.keys()),
             "changed": {g: {"name": elems0[g].Name, "cls": elems0[g].is_a(), "changes": sorted(v)}
                         for g, v in sorted(changed.items(), key=lambda kv: elems0[kv[0]].Name or kv[0])},
@@ -350,7 +358,7 @@ def report(r: dict) -> str:
              f"  answered: {w['answer']}", "", "Addendum 1:", *(f"  {i}" for i in w["items"]), "",
              "What changed:", *(f"  {x}" for x in diff_summary(r["diff"])), "",
              "Checks on the revision:", *(f"  {x}" for x in bidset.report(r["checks"] + second).splitlines()), "",
-             f"Safety glazing (IBC 2018 2406.4.1-2406.4.3): {r['hazards'][0]} -> {r['hazards'][1]} openings.", "",
+             f"Safety glazing (assessed under {bidset.ASSESSED}): {r['hazards'][0]} -> {r['hazards'][1]} openings.", "",
              "The checklist (IDS), where it moved:", *(f"  {x}" for x in r["ids_changes"]), "",
              "The schedule, where it moved:", *(f"  {x}" for x in r["schedule_changes"]), "",
              f"Openings in the exterior walls: {q0['openings_m2']:.1f} -> {q1['openings_m2']:.1f} m2 "

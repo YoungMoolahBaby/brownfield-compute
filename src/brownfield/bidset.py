@@ -435,14 +435,22 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
     hazards = safety_glazing(apt, params)
     marks = types(apt, hazards)
     type_of = {}
+    cited = defaultdict(list)  # the sections a type's units are under, in order
+    for o in apt["openings"]:
+        for sec in sections_of(hazards.get(o["id"], "")):
+            key = (o["kind"], o["width_m"], o["height_m"], o["id"] in hazards)
+            if sec not in cited[key]:
+                cited[key].append(sec)
     for (kind, w, h, safe), mark in sorted(marks.items(), key=lambda kv: kv[1]):
+        secs = sorted(cited[(kind, w, h, safe)])
+        why = (f"{', '.join(secs[:-1])} and {secs[-1]} call" if len(secs) > 1 else f"{secs[0]} calls") if secs else ""
         cls = "IfcWindowType" if kind == "window" else "IfcDoorType"
         attrs = {"PredefinedType": "WINDOW" if kind == "window" else "DOOR"}
         # Keyed on what the type is, not its mark: marks are numbered by position, so a type
         # withdrawn in an addendum would rename the ones after it.
         e = _make(f, cls, f"type/{kind}/{round(w * 1e6)}/{round(h * 1e6)}/{int(safe)}", mark, **attrs,
                   Description=f"{NAMES[kind]}, {w / IN:g} x {h / IN:g} in."
-                              + (" Safety glazing: IBC 2018 2406.4.1-2406.4.3 call for it here." if safe else "")
+                              + (f" Safety glazing: IBC 2018 {why} for it here." if safe else "")
                               + (f" A {params[FIRE_DOOR].value:g}-hour fire door assembly, self-closing and latching: it "
                                  "opens into the stair, the building's one exit (IBC 2018 1023.2, Table 716.1(2), 716.2.6)."
                                  if kind == "flat_door" else ""))
@@ -487,7 +495,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             "Face": o["face"], "Index": o["index"],
             # Typed as a length, so it carries the project's metre.
             "SillHeightAboveFloor": f.createIfcLengthMeasure(o["sill_above_floor_m"]),
-            # Our reading of IBC 2018 2406.4.1-2406.4.3 from the geometry (`safety_glazing`).
+            # Our reading of IBC 2018 2406.4 from the geometry (`safety_glazing`).
             "SafetyGlazingRequired": o["id"] in hazards,
             "SafetyGlazingReason": hazards.get(o["id"], NO_HAZARD)})
 
@@ -689,11 +697,24 @@ def report(res: list[tuple[str, bool, str]]) -> str:
     return "\n".join(f"{'ok  ' if ok else 'FAIL'} {label}: {detail}" for label, ok, detail in res)
 
 
-# ---- Safety glazing (IBC 2018 2406.4.1-2406.4.3), from forge's geometry ----
+# ---- Safety glazing (IBC 2018 2406.4), from forge's geometry ----
 
 FT2 = 0.3048 ** 2
 TOL_M = 1e-9  # edges that touch, to rounding
-NO_HAZARD = "none found under IBC 2018 2406.4.1-2406.4.3 (2406.4.4-2406.4.7 not assessed)"
+# What `safety_glazing` assesses. 2406.4.4 (glazing in guards and railings) doesn't arise: the
+# model's guard and handrails have no glass. 2406.4.5 (wet areas) needs rooms the model doesn't have.
+ASSESSED = "IBC 2018 2406.4.1-2406.4.3, 2406.4.6 and 2406.4.7"
+NOT_ASSESSED = ("2406.4.4 doesn't arise: the guard and handrails have no glass; 2406.4.5, wet areas, not assessed: "
+                "the model has no rooms")
+NO_HAZARD = f"none found under {ASSESSED} ({NOT_ASSESSED})"
+SECTION = r"IBC 2018 (2406\.4\.\d)"
+
+
+def sections_of(reason: str) -> list[str]:
+    """Every section a safety glazing reason cites, in order, once each."""
+    import re
+
+    return list(dict.fromkeys(re.findall(SECTION, reason or "")))
 
 
 def _plan_gap(a: dict, b: dict) -> float:
@@ -703,15 +724,17 @@ def _plan_gap(a: dict, b: dict) -> float:
     return float(np.hypot(*d))
 
 
-def _inside_reach(o: dict, s: dict, walls: np.ndarray, n: int = 9) -> float:
+def _inside_reach(o: dict, s: dict, walls: np.ndarray, band: tuple[float, float], n: int = 9) -> float:
     """The plan distance (m) from a window's inside face to a walking surface, in a straight line
     that crosses no wall, or infinity. The inside face is sampled across its width; from each point,
-    the nearest point of the surface; the line between them is tested against every wall's box in
-    plan (`walls`, shape (walls, 2 corners, 2 axes); a line through a wall is blocked)."""
+    the nearest point of the surface; the line between them is tested in plan against every wall's
+    box (`walls`, shape (walls, 2 corners, xyz)) that stands in the height `band` (the surface up to
+    the glass's top), so a wall on another storey doesn't block it."""
     lo, hi, out = np.asarray(o["lo_m"])[:2], np.asarray(o["hi_m"])[:2], np.asarray(o["outward"])[:2]
     axis = 0 if abs(out[0]) > 0 else 1  # the wall's thickness runs along x (front, back) or y (the ends)
     face = (lo[axis] if out[axis] > 0 else hi[axis]) - out[axis] * 1e-3  # 1 mm inside the inner face
     s_lo, s_hi = np.asarray(s["lo_m"])[:2], np.asarray(s["hi_m"])[:2]
+    here = walls[(walls[:, 0, 2] < band[1] - TOL_M) & (walls[:, 1, 2] > band[0] + TOL_M)][:, :, :2]
     best = np.inf
     for t in np.linspace(0.0, 1.0, n):
         a = lo + (hi - lo) * t
@@ -721,15 +744,16 @@ def _inside_reach(o: dict, s: dict, walls: np.ndarray, n: int = 9) -> float:
         if d >= best:
             continue
         line = a + np.outer(np.linspace(0.0, 1.0, 41), b - a)  # (points, 2)
-        inside = ((line[:, None, :] > walls[None, :, 0, :] + TOL_M) & (line[:, None, :] < walls[None, :, 1, :] - TOL_M)).all(-1)
+        inside = ((line[:, None, :] > here[None, :, 0, :] + TOL_M) & (line[:, None, :] < here[None, :, 1, :] - TOL_M)).all(-1)
         if not inside.any():
             best = d
     return best
 
 
 def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
-    """The openings whose glazing IBC 2018 2406.4.1-2406.4.3 make a hazardous location (so it must
-    be safety glazing), each with the reason, from forge's geometry and params/bidset.yaml:
+    """The openings whose glazing IBC 2018 2406.4 makes a hazardous location (so it must be safety
+    glazing), as assessed under `ASSESSED`, each with its reasons, from forge's geometry and
+    params/bidset.yaml:
 
     - 2406.4.1: glazing in a door (the patio doors);
     - 2406.4.2: glazing within the arc of a closed door's vertical edge, measured in plan on the
@@ -740,14 +764,19 @@ def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
       is flagged and the reason says so;
     - 2406.4.3: a pane over the area, its bottom edge under and top edge over the heights, and a
       walking surface within the distance. The unit's whole glass stands in for its largest pane
-      (the model has no panes), and the floor inside, which meets the wall, is the walking surface.
+      (the model has no panes). The walking surface is the floor inside, which meets the wall, or
+      (pass 3f step 8) a landing or hall floor of the stair within the distance in a straight line
+      with no wall between; a window that rises from a landing is a pane low over it;
+    - 2406.4.6: glazing whose bottom edge is under the height above a stairway's treads or a landing
+      between flights, nearer than the reach (exception 2: 36 in or more is exempt), in a straight
+      line with no wall between. Exception 1 (a guard, the glass over 18 in from it) is for an open
+      side; the flights here have walls on both sides;
+    - 2406.4.7: glazing under the height above the landing at the bottom of a stairway (the floor of
+      a level, at the foot of a flight that starts there), within the arc of the bottom tread
+      nosing, any part of it on the landing's side.
 
-    Since pass 3f step 8, 2406.4.3 is measured from the stair's landings and hall floors as well as
-    the floor of the storey. A window that rises from a landing is a pane low over a walking
-    surface.
-
-    Not assessed: 2406.4.4 (guards and railings), 2406.4.5 (wet areas), 2406.4.6 and 2406.4.7
-    (beside stairs and landings, and at the bottom of a stair), whose text hasn't been read.
+    Every section that applies is found: the reason gives the first, then "also" each of the
+    others. Not assessed: see `NOT_ASSESSED`.
     """
     apt = with_stair(apt)
     c = "bidset.code.safety_glazing."
@@ -758,42 +787,80 @@ def safety_glazing(apt: dict, params: dict) -> dict[str, str]:
     ops = apt["openings"]
     # The stair's landings and hall floors: walking surfaces other than a storey's floor.
     surfaces = [pt for pt in (apt.get("stair") or {}).get("parts", []) if pt["kind"] in ("landing", "floor")]
-    walls = np.array([[pt["lo_m"][:2], pt["hi_m"][:2]] for pt in apt["parts"] if pt["kind"] in WALL_KINDS])
+    walls = np.array([[pt["lo_m"], pt["hi_m"]] for pt in apt["parts"] if pt["kind"] in WALL_KINDS])
     doors = [d for d in ops if d["kind"] != "window"]
     out = {}
     for o in ops:
         if not o["glazed"]:
             continue
+        found = []
         if o["kind"] != "window":
-            out[o["id"]] = "IBC 2018 2406.4.1: glazing in a door"
-            continue
-        for d in doors:
-            if d["storey"] != o["storey"]:
-                continue
-            gap = _plan_gap(o, d)
-            if gap <= arc + TOL_M and o["sill_above_floor_m"] < door_bottom:
-                where = ("" if d["wall"] == o["wall"] else
-                         ", round the corner (exception 4 may apply on the door's latch side; the model has no handing)")
-                out[o["id"]] = (f"IBC 2018 2406.4.2: {gap / IN:.1f} in from the edge of door {d['id']}{where}, "
-                                f"bottom edge {o['sill_above_floor_m'] / IN:.0f} in above the floor")
-                break
-        bottom, top = o["sill_above_floor_m"], o["sill_above_floor_m"] + o["height_m"]
-        if (o["id"] not in out and o["width_m"] * o["height_m"] > area and bottom < w_bottom and top > w_top
-                and floor_from_glass <= walk):
-            out[o["id"]] = "IBC 2018 2406.4.3: a large pane low in the wall"
-        for s in surfaces:
-            # A walking surface within the distance of the glass, measured in a straight line from
-            # its inside face, with no wall in between (a landing behind a stair wall, near a
-            # flat's window, isn't). The glass may start below the surface: it is still low over it.
-            # The box gap first: the straight line from the inside face is never shorter.
-            if (o["id"] in out or o["width_m"] * o["height_m"] <= area or _plan_gap(o, s) > walk + TOL_M
-                    or _inside_reach(o, s, walls) > walk + TOL_M):
-                continue
-            bottom = o["sill_m"] - s["hi_m"][2]
-            if bottom < w_bottom and bottom + o["height_m"] > w_top:
-                out[o["id"]] = (f"IBC 2018 2406.4.3: a large pane low over {s['id']}, "
-                                f"its bottom edge {bottom / IN:.0f} in above it")
+            found.append("IBC 2018 2406.4.1: glazing in a door")
+        else:
+            for d in doors:
+                if d["storey"] != o["storey"]:
+                    continue
+                gap = _plan_gap(o, d)
+                if gap <= arc + TOL_M and o["sill_above_floor_m"] < door_bottom:
+                    where = ("" if d["wall"] == o["wall"] else
+                             ", round the corner (exception 4 may apply on the door's latch side; the model has no handing)")
+                    found.append(f"IBC 2018 2406.4.2: {gap / IN:.1f} in from the edge of door {d['id']}{where}, "
+                                 f"bottom edge {o['sill_above_floor_m'] / IN:.0f} in above the floor")
+                    break
+            large = o["width_m"] * o["height_m"] > area
+            bottom, top = o["sill_above_floor_m"], o["sill_above_floor_m"] + o["height_m"]
+            if large and bottom < w_bottom and top > w_top and floor_from_glass <= walk:
+                found.append("IBC 2018 2406.4.3: a large pane low in the wall")
+            elif large:
+                for s in surfaces:
+                    bottom = o["sill_m"] - s["hi_m"][2]
+                    if not (bottom < w_bottom and bottom + o["height_m"] > w_top) or _plan_gap(o, s) > walk + TOL_M:
+                        continue  # the box gap first: the straight line from the inside face is never shorter
+                    band = (min(s["hi_m"][2], o["sill_m"]), o["sill_m"] + o["height_m"])
+                    if _inside_reach(o, s, walls, band) <= walk + TOL_M:
+                        found.append(f"IBC 2018 2406.4.3: a large pane low over {s['id']}, its bottom edge {bottom / IN:.0f} in above it")
+                        break
+        found += _by_the_stair(o, apt, params, walls)
+        if found:
+            out[o["id"]] = found[0] + "".join(f"; also {x}" for x in found[1:])
     return out
+
+
+def _by_the_stair(o: dict, apt: dict, params: dict, walls: np.ndarray) -> list[str]:
+    """IBC 2018 2406.4.6 and 2406.4.7 for one glazed opening (see `safety_glazing`)."""
+    c = "bidset.code.safety_glazing."
+    st = apt.get("stair") or {}
+    if not st:
+        return []
+    bottom6, reach6 = params[c + "stair_bottom_in"].value * IN, params[c + "stair_reach_in"].value * IN
+    arc7, height7 = params[c + "bottom_landing_arc_in"].value * IN, params[c + "bottom_landing_height_in"].value * IN
+    top = o["sill_m"] + o["height_m"]
+    hits = []
+    # 2406.4.6: beside a stairway's treads or a landing between flights; 36 in or more is exempt.
+    for s in (pt for pt in st["parts"] if pt["kind"] in ("step", "landing")):
+        bottom = o["sill_m"] - s["hi_m"][2]
+        if not (bottom < bottom6 and top > s["hi_m"][2]) or _plan_gap(o, s) >= reach6 - TOL_M:
+            continue
+        d = _inside_reach(o, s, walls, (min(s["hi_m"][2], o["sill_m"]), top))
+        if d < reach6 - TOL_M:
+            hits.append(f"IBC 2018 2406.4.6: its bottom edge {bottom / IN:.0f} in above {s['id']}, {d / IN:.0f} in from it")
+            break
+    # 2406.4.7: at the bottom of a stairway, within the arc of the bottom tread nosing.
+    levels = [lv["elevation_m"] for lv in apt.get("levels", [])]
+    for fl in st["flights"]:
+        if not any(abs(fl["z0_m"] - z) < 1e-6 for z in levels):
+            continue  # starts from a landing between flights, not the bottom of a stairway
+        xb, way = fl["x_bottom_m"], fl["dir"]
+        on_landing_side = min((o["lo_m"][0] - xb) * way, (o["hi_m"][0] - xb) * way) < 0
+        nosing = {"lo_m": [xb, fl["y0_m"], 0.0], "hi_m": [xb, fl["y1_m"], 0.0]}
+        above = o["sill_m"] - fl["z0_m"]
+        if not (on_landing_side and above < height7 and top > fl["z0_m"]) or _plan_gap(o, nosing) > arc7 + TOL_M:
+            continue
+        d = _inside_reach(o, nosing, walls, (min(fl["z0_m"], o["sill_m"]), top))
+        if d <= arc7 + TOL_M:
+            hits.append(f"IBC 2018 2406.4.7: {d / IN:.0f} in from {fl['id']}'s bottom nosing, {above / IN:.0f} in above its landing")
+            break
+    return hits
 
 
 # ---- One stair: IBC 2018 1006.3.3 and Table 1006.3.3(1), and so escape windows (1030) ----
@@ -980,7 +1047,7 @@ def ids_fields(params: dict) -> list[dict]:
         dict(key="masterformat", label="MasterFormat section, level 3", on=both, std=True,
              facet=const(lambda: ids.Classification(system="MasterFormat",
                                                     value=ids.Restriction(options={"pattern": "08 [0-9][1-9] [0-9]{2}"})))),
-        dict(key="safety", label="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it", on=("IFCWINDOW+hazard", "IFCDOOR+hazard"),
+        dict(key="safety", label=f"safety glazing where required (assessed under {ASSESSED})", on=("IFCWINDOW+hazard", "IFCDOOR+hazard"),
              std=False, note="IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code", facet=prop("BidSet_Unit", "SafetyGlazing", ids.Restriction(options={"enumeration": SAFETY_GLAZING}), "IFCLABEL")),
     ]
 
@@ -1274,8 +1341,8 @@ def elevation_svg(el: dict, scale: float = 40.0) -> str:
                f'{len(el["rects"])} units on this face.</text>')
     if safe:
         out.append(f'<rect x="{pad:.1f}" y="{ly + 12:.1f}" width="14" height="10" fill="#bcd7ee" stroke="#b00020" stroke-width="2.2"/>'
-                   f'<text x="{pad + 20:.1f}" y="{ly + 21:.1f}" font-size="11" fill="#222">Safety glazing: IBC 2018 '
-                   f'2406.4.1-2406.4.3 call for it ({escape(", ".join(safe))}).</text>')
+                   f'<text x="{pad + 20:.1f}" y="{ly + 21:.1f}" font-size="11" fill="#222">Safety glazing required '
+                   f'({escape(", ".join(safe))}), assessed under {escape(ASSESSED)}.</text>')
     out.append("</svg>")
     return "\n".join(out)
 
@@ -1318,7 +1385,8 @@ def schedule_rows(rb: dict) -> list[dict]:
             w, h = p.get("RoughOpeningWidth"), p.get("RoughOpeningHeight")
             return NOT_IN_MODEL if w is None and h is None else f"{_ftin(w)} x {_ftin(h)}"
 
-        reasons = sorted({u["props"].get("SafetyGlazingReason", "").split(":")[0] for u in us if u["props"].get("SafetyGlazingRequired")})
+        reasons = sorted({f"IBC 2018 {sec}" for u in us if u["props"].get("SafetyGlazingRequired")
+                          for sec in sections_of(u["props"].get("SafetyGlazingReason", ""))})
         refs = t.get("refs", [])
         rows.append({
             "mark": mark, "kind": "window" if window else "door", "count": len(us),

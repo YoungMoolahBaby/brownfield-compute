@@ -217,19 +217,24 @@ documents. Jon: a window quote needs every field on the list in D27. The spike p
 0), and forge now writes the whole walk-up with a stable id on every opening (step 1).
 `brownfield bidset` writes it as IFC4 and holds the file to forge's model on every check (step 2).
 A second reader, That Open's web-ifc, reads the same building on every export. The IDS (step 3)
-asks for the 32 fields a quote needs, and the model carries 8 of them. IBC 2018 2406.4.1-2406.4.3
-call for safety glazing in 36 openings, 24 of them windows (type W2). The one stair is allowed
+asks for the 34 fields a quote needs, and the model carries 10 of them. IBC 2018 2406.4 calls for
+safety glazing in 38 openings, 26 of them windows (type W2). The one stair is allowed
 (IBC 2018 Table 1006.3.3(1)) only with sprinklers and an escape window in every bedroom, 16 of
 them upstairs. Whether a window clears 1030's sizes depends on its operation, which the model
 lacks. The schedule, elevations and quantities now come from the IFC alone (step 4). A made-up
-RFI and Addendum 1 ran as a reviewed change (step 5): 36 elements changed, safety glazing fell
-from 36 openings to 12, and every check passed on the revision. As PDFs only (step 6), bidding
-means counting 114 tags by eye, and the addendum means finding 40 changed places on 3 sheets; the
-data side lists them. The report is [docs/pass3/bidset.md](pass3/bidset.md) (step 7). Seen in
-3D (2026-11-20): the model has no stair, no hall floors upstairs, and no doors into the 12 flats,
-so the door schedule lists 13 of the shell's 25 doors; the report now says so. IBC 2018 1010, 1011, 1014,
-1015, 1019, 1023 and 716 are now read (Jon saved UpCodes' chapters 7 and 10) and in
-`params/bidset.yaml`. Next: model the stair and the flats' 1-hour doors. Waiting on Jon: the rep
+RFI and Addendum 1 ran as a reviewed change (step 5). As PDFs only (step 6), bidding means counting
+114 tags by eye, and the addendum means finding changed places on 3 sheets; the data side lists
+them. The report is [docs/pass3/bidset.md](pass3/bidset.md) (step 7). Seen in 3D (2026-11-20): the
+model had no stair, no hall floors upstairs and no doors into the 12 flats. Step 8 modelled them
+(forge `stair`) and checked them against IBC 2018 1010-1015, 1023 and 716 (Jon saved UpCodes'
+chapters 7, 10 and 24):
+- 17 stair checks pass;
+- the 12 flat doors are 1-hour fire doors (D3);
+- safety glazing is 38 of 126 openings, and 14 after the addendum;
+- the addendum changes 41 places on the sheets;
+- the report and files are republished.
+
+Waiting on Jon: the rep
 test. Then the township brief's ask.
 
 ## Decisions
@@ -1598,6 +1603,58 @@ test. Then the township brief's ask.
          (~0.9 MB): both IFCs, the IDS and its checklist, each IFC's drawings and schedule, the
          RFI and the addendum's diff, both PDF sets and the comparison. The README and pass 3's
          README link the report.
+         - It publishes only after both readers' checks pass on both IFCs, 46 in all, with a
+           byte-for-byte repeat export. Otherwise it exits 1 and publishes nothing.
+         - The published files repeat byte for byte, and carry no local time or time zone:
+           - the IFC header's time is fixed (`bidset.HEADER_TIME`);
+           - the PDFs have no creation date;
+           - the BCF's random ids and dates are settled.
+         - 4 more tests (`tests/test_addendum.py` 11, `tests/test_pdfset.py` 13). All 238 pass.
+         - Code review (before the commit): 11 findings, all fixed. The important one: it
+           published IFCs nothing had checked.
+         - The report states what a town could ask for: the model as IFC, checked against an
+           IDS like this one, and addenda as revised models with a diff. That goes into the
+           township brief once the rep test is in.
+         - Still open from Jon: the rep test.
+         - **Gaps seen in the 3D viewer** (2026-11-20, Jon: "i dont see the stairs"):
+           - no doors into the 12 flats, so the door schedule lists 13 of the shell's 25 doors;
+           - no stair flights, landings or railings, and no hall floors on levels 2 and 3, where
+             the floors stop at the stair walls.
+
+           Added to the report's "what we don't know". The code is read (2026-11-20):
+           - 1011.1-1011.7 from Jon's screenshots;
+           - the rest of chapter 10 and 716 from UpCodes' chapter 7 and 10 pages as Jon saved them.
+
+           Its limits are in `params/bidset.yaml` (`code.stair`, `code.exit_stair`, `code.door`).
+           The fit, worked by hand from them: 18 risers of 6.67 in and two 44 in flights need 88 x 176 in
+           of the 110 x 466 in core. The flat doors are 1-hour fire door assemblies (Table
+           716.1(2)).
+
+           Next step: model the stair, the hall floors and the 12 flat doors, and check them
+           against those limits.
+       - **A local 3D viewer** (2026-11-19, Jon: "please do the native version", then "move it
+         to tools/viewer in the repo"). Run `uv run brownfield viewer` and open
+         http://127.0.0.1:8765/.
+         - **How it works:** That Open's web-ifc parses the IFC in the browser (WebAssembly):
+           the bid set in ~100-140 ms on Jon's machine. three.js draws it.
+         - **What it does:** click a unit for what the model says and what a quote still needs;
+           switch to Addendum 1; open any IFC file.
+         - **The parts:**
+           - `tools/viewer/` holds the page and a lock file pinning web-ifc 0.0.78 (the same as
+             `tools/webifc`) and three.js 0.160.0. `node_modules` is gitignored, and the
+             packages are installed from the lock the first time it runs.
+           - `src/brownfield/viewer.py` serves the page, the two packages and `docs/pass3/bidset/`
+             on 127.0.0.1 only: no directory listings, nothing outside those places.
+           - `tests/test_viewer.py` has 4 tests.
+         - **Review fixes before the first commit:**
+           - The server checks a request's path as text before touching the filesystem. On
+             Windows, a path naming a network share would otherwise have made the machine
+             connect out to that host over SMB. It also refuses device names and NUL, binds its
+             port alone, and re-installs when the lock moves.
+           - The page fixes see-through walls (three.js bakes transparency into the shader),
+             selection by GlobalId, the title per model, overlapping loads, a missing file
+             reported as one, sizes in the file's own length unit, files with no geometry,
+             freeing memory, and frame material read from the file.
     8. **The stair and the flats' doors** (2026-11-20, Jon: "go with the stair step"), after the
        3D viewer showed neither was modelled. The code limits are in `params/bidset.yaml`
        (`code.stair`, `code.exit_stair`, `code.door`). In three parts, each committed on its own:
@@ -1752,58 +1809,53 @@ test. Then the township brief's ask.
        - **8c, the PDF set, the addendum and the report:** republish, recount, and assess the
          stair windows under 2406.4.6-2406.4.7 once Jon saves UpCodes' chapter 24 (the fetch
          tools only get a summary of those sections).
-         - It publishes only after both readers' checks pass on both IFCs, 46 in all, with a
-           byte-for-byte repeat export. Otherwise it exits 1 and publishes nothing.
-         - The published files repeat byte for byte, and carry no local time or time zone:
-           - the IFC header's time is fixed (`bidset.HEADER_TIME`);
-           - the PDFs have no creation date;
-           - the BCF's random ids and dates are settled.
-         - 4 more tests (`tests/test_addendum.py` 11, `tests/test_pdfset.py` 13). All 238 pass.
-         - Code review (before the commit): 11 findings, all fixed. The important one: it
-           published IFCs nothing had checked.
-         - The report states what a town could ask for: the model as IFC, checked against an
-           IDS like this one, and addenda as revised models with a diff. That goes into the
-           township brief once the rep test is in.
-         - Still open from Jon: the rep test.
-         - **Gaps seen in the 3D viewer** (2026-11-20, Jon: "i dont see the stairs"):
-           - no doors into the 12 flats, so the door schedule lists 13 of the shell's 25 doors;
-           - no stair flights, landings or railings, and no hall floors on levels 2 and 3, where
-             the floors stop at the stair walls.
+         - **Done 2026-11-20.** Jon saved UpCodes' chapter 24.
+           - **The code:** 2406.4.4-2406.4.7 were read from it; no Pennsylvania note shows under
+             2406. The limits are in `params/bidset.yaml` (`code.safety_glazing.stair_*`,
+             `bottom_landing_*`), quotes checked against the page, and recorded in RESEARCH.md.
+           - **`safety_glazing` now assesses 2406.4.6 and 2406.4.7** from the geometry. The
+             files and drawings name what was assessed (`ASSESSED`), and each type and schedule
+             row the sections its units are under.
+             - The two back stair windows over the landings are also under 2406.4.6.
+             - Nothing is under 2406.4.7: the nearest glass is 103 in from a bottom nosing.
+             - The count stays 38 of 126.
+             - A test turns a flight to face the windows and finds 2406.4.7.
+             - 2406.4.4 doesn't arise (the guard and handrails have no glass). 2406.4.5 (wet
+               areas) isn't assessed: no rooms.
+           - **Republished:** `brownfield pdfset --publish` passed its 60 checks and wrote
+             `docs/pass3/bidset/` (now ~1.1 MB).
+           - **The report** (`docs/pass3/bidset.md`) and the README carry the new numbers:
+             - 10 of 34 fields;
+             - safety glazing in 38 of 126 openings, 26 of them windows;
+             - the stair's 17 checks and the 12 1-hour doors;
+             - 114 tags plus D3 on the schedule only;
+             - 41 places for the addendum;
+             - 38 to 14 safety-glazed openings after it.
 
-           Added to the report's "what we don't know". The code is read (2026-11-20):
-           - 1011.1-1011.7 from Jon's screenshots;
-           - the rest of chapter 10 and 716 from UpCodes' chapter 7 and 10 pages as Jon saved them.
-
-           Its limits are in `params/bidset.yaml` (`code.stair`, `code.exit_stair`, `code.door`).
-           The fit, worked by hand from them: 18 risers of 6.67 in and two 44 in flights need 88 x 176 in
-           of the 110 x 466 in core. The flat doors are 1-hour fire door assemblies (Table
-           716.1(2)).
-
-           Next step: model the stair, the hall floors and the 12 flat doors, and check them
-           against those limits.
-       - **A local 3D viewer** (2026-11-19, Jon: "please do the native version", then "move it
-         to tools/viewer in the repo"). Run `uv run brownfield viewer` and open
-         http://127.0.0.1:8765/.
-         - **How it works:** That Open's web-ifc parses the IFC in the browser (WebAssembly):
-           the bid set in ~100-140 ms on Jon's machine. three.js draws it.
-         - **What it does:** click a unit for what the model says and what a quote still needs;
-           switch to Addendum 1; open any IFC file.
-         - **The parts:**
-           - `tools/viewer/` holds the page and a lock file pinning web-ifc 0.0.78 (the same as
-             `tools/webifc`) and three.js 0.160.0. `node_modules` is gitignored, and the
-             packages are installed from the lock the first time it runs.
-           - `src/brownfield/viewer.py` serves the page, the two packages and `docs/pass3/bidset/`
-             on 127.0.0.1 only: no directory listings, nothing outside those places.
-           - `tests/test_viewer.py` has 4 tests.
-         - **Review fixes before the first commit:**
-           - The server checks a request's path as text before touching the filesystem. On
-             Windows, a path naming a network share would otherwise have made the machine
-             connect out to that host over SMB. It also refuses device names and NUL, binds its
-             port alone, and re-installs when the lock moves.
-           - The page fixes see-through walls (three.js bakes transparency into the shader),
-             selection by GlobalId, the title per model, overlapping loads, a missing file
-             reported as one, sizes in the file's own length unit, files with no geometry,
-             freeing memory, and frame material read from the file.
+             "What we don't know" now holds what the stair leaves open: it is boxes, the
+             landing windows' operation (1015.8) and rail alternative, the doors' placeholder
+             clear width, the 44 in width.
+           - **After a code review (12 findings, all addressed):**
+             - **Every section that applies is listed:** each reason gives the first and "also" the
+               others. The schedule and the PDF's remarks show all of them (W2: 2406.4.2,
+               2406.4.3, 2406.4.6), so nobody reads the rail as an alternative for the stair
+               windows. Each type's description cites only its units' sections, where before
+               every type cited all of them.
+             - **The element diff** says what changed on a kept type. W2's description drops
+               2406.4.2 after the addendum, so it lists 3 types.
+             - **2406.4.7:**
+               - the landing side works either way a flight runs;
+               - the stairway's bottom comes from the model's levels;
+               - "within" includes the arc's edge.
+             - **Walls block a straight line** only at their own height.
+             - **2406.4.4** is said not to arise (no glass in the guard or handrails), not claimed
+               as assessed.
+             - **Params:** the code limits carry low and high (equal to the value).
+             - **New tests:**
+               - the reach alone deciding (48 in exempt, 22 in caught);
+               - 2406.4.7 either way;
+               - the types' citations.
+           - **The suite:** 264 passing. A repeat publish is byte-for-byte the same (25 files).
   - **Checks (known cases):**
     - read back from the IFC: 114 openings, 101 / 12 / 1 by type, sizes exact, positions within
       1 mm of forge's;

@@ -408,7 +408,7 @@
       if ((tp.BidSet_Unit || {}).SafetyGlazing) rows.push(["Glass", tp.BidSet_Unit.SafetyGlazing]);
       rows.push(["Safety glazing", { html: p.SafetyGlazingRequired
         ? `<span class="pill safety">required</span> ${esc(p.SafetyGlazingReason || "")}`
-        : `<span class="pill ok">not required</span> by 2406.4.1-2406.4.3` }]);
+        : `<span class="pill ok">not required</span> ${esc(p.SafetyGlazingReason || "")}` }]);
       const applies = ([, , , only]) => (only !== "glass" || p.Glazed) && (only !== "outside" || common.IsExternal !== false);
       const missing = QUOTE_FIELDS.filter(applies).filter(([, ps, prop]) => ((ps === "*Common" ? common : tp[ps] || {})[prop]) == null).map(([l]) => l);
       if (e.material) rows.push(["Frame material", e.material]);

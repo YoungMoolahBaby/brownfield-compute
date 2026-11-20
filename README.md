@@ -233,12 +233,15 @@ yet.
   - [The bid set as data](docs/pass3/bidset.md) (pass 3f, D27): the walk-up issued as an open
     model (IFC) with a machine-checked list of what a quote needs, against the same building as
     PDFs only.
-    - The design model carries 8 of the 32 fields a window or door quote needs, and nothing
+    - The design model carries 10 of the 34 fields a window or door quote needs, and nothing
       about the product itself.
-    - The code calls for safety glazing in 24 windows nothing had flagged.
+    - The code calls for safety glazing in 26 windows nothing had flagged: 24 beside the patio
+      doors and 2 that rise from the stair's landings.
     - The one stair is allowed only with sprinklers and an escape window in every bedroom, and
       the windows' operation, which the model leaves out, decides whether they qualify.
-    - From PDFs, a bidder counts 114 tags by eye to bid and finds 40 changed places for one
+    - The stair core was empty until a 3D look showed it. Modelled and checked against the code,
+      it brings 12 doors into the flats, 1-hour fire doors that the schedule had missed.
+    - From PDFs, a bidder counts 114 tags by eye to bid and finds 41 changed places for one
       addendum. The data lists them, and a change runs through the model like a reviewed pull
       request.
   - [The real land](docs/pass3/land.md) (D17): AWS's six sites mapped on public data, fitted from

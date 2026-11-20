@@ -801,6 +801,27 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - a walking surface is within 36 in.
 
     The exceptions are decorative glazing, a protective rail, and outboard panes 25 ft or more up.
+- **Safety glazing by stairs, guards and wet areas, IBC 2018 2406.4.4-2406.4.7.** Read from
+  UpCodes' chapter 24 page ("Glass and Glazing", Pennsylvania Building Code 2018) as Jon saved it
+  (2026-11-20); the fetch tools got only a summary of these sections. No Pennsylvania amendment note
+  shows under 2406. Used in `params/bidset.yaml` (`code.safety_glazing`).
+  - **2406.4.4:** glazing in guards and railings is a hazardous location, whatever its area or
+    height.
+  - **2406.4.5:** glazing in walls, enclosures or fences containing or facing hot tubs, spas,
+    whirlpools, saunas, steam rooms, bathtubs, showers and pools, with its bottom edge under 60
+    in above any standing or walking surface, is hazardous. Its exception is glazing more than
+    60 in from the water's edge.
+  - **2406.4.6:** glazing with its bottom edge under 60 in above the plane of the adjacent walking
+    surface of stairways, landings between flights and ramps is hazardous. Its exceptions:
+    - a side with a guard (1015, 1607.8), the glass more than 18 in from the railing;
+    - glazing 36 in or more, measured horizontally, from the walking surface.
+  - **2406.4.7:** glazing adjacent to the landing at the bottom of a stairway is hazardous when it
+    is under 60 in above the landing and within a 60 in horizontal arc, under 180 degrees, from the
+    bottom tread nosing. Its exception is a guard with the glass more than 18 in from it.
+  - **2406.4.3's exception 2:** a horizontal rail 34-38 in above the walking surface on the
+    accessible side, holding 50 lb per linear foot without touching the glass and at least
+    1 1/2 in high in section, exempts a window from 2406.4.3. (It is not an exception to
+    2406.4.6.)
 - **Single exits and escape openings, IBC 2018 1006.3.3, Table 1006.3.3(1) and 1030.** Read
   by Jon in an online IBC 2018 viewer and shared as screenshots (2026-11-19). The fetch tools
   couldn't reach them: UpCodes' chapter 10 pages cut off before 1030, and codes.iccsafe.org

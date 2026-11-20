@@ -8,6 +8,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 1-back-left/back/6,W1,Level 1,1-back-left,back,"3'-0""","4'-0""","3'-0""",no
 1-back-left/left/0,W1,Level 1,1-back-left,left,"3'-0""","4'-0""","3'-0""",no
 1-back-left/left/1,W1,Level 1,1-back-left,left,"3'-0""","4'-0""","3'-0""",no
+1-back-left/stair/0,D3,Level 1,1-back-left,interior,"3'-0""","7'-0""","0'-0""",no
 1-back-right/back/0,W1,Level 1,1-back-right,back,"3'-0""","4'-0""","3'-0""",no
 1-back-right/back/1,W1,Level 1,1-back-right,back,"3'-0""","4'-0""","3'-0""",no
 1-back-right/back/2,W1,Level 1,1-back-right,back,"3'-0""","4'-0""","3'-0""",no
@@ -17,6 +18,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 1-back-right/back/6,W1,Level 1,1-back-right,back,"3'-0""","4'-0""","3'-0""",no
 1-back-right/right/0,W1,Level 1,1-back-right,right,"3'-0""","4'-0""","3'-0""",no
 1-back-right/right/1,W1,Level 1,1-back-right,right,"3'-0""","4'-0""","3'-0""",no
+1-back-right/stair/0,D3,Level 1,1-back-right,interior,"3'-0""","7'-0""","0'-0""",no
 1-front-left/front/0,W1,Level 1,1-front-left,front,"3'-0""","4'-0""","3'-0""",no
 1-front-left/front/1,W1,Level 1,1-front-left,front,"3'-0""","4'-0""","3'-0""",no
 1-front-left/front/2,W1,Level 1,1-front-left,front,"3'-0""","4'-0""","3'-0""",no
@@ -26,6 +28,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 1-front-left/front/6,W1,Level 1,1-front-left,front,"3'-0""","4'-0""","3'-0""",no
 1-front-left/left/0,W1,Level 1,1-front-left,left,"3'-0""","4'-0""","3'-0""",no
 1-front-left/left/1,W1,Level 1,1-front-left,left,"3'-0""","4'-0""","3'-0""",no
+1-front-left/stair/0,D3,Level 1,1-front-left,interior,"3'-0""","7'-0""","0'-0""",no
 1-front-right/front/0,W1,Level 1,1-front-right,front,"3'-0""","4'-0""","3'-0""",no
 1-front-right/front/1,W1,Level 1,1-front-right,front,"3'-0""","4'-0""","3'-0""",no
 1-front-right/front/2,W1,Level 1,1-front-right,front,"3'-0""","4'-0""","3'-0""",no
@@ -35,7 +38,8 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 1-front-right/front/6,W1,Level 1,1-front-right,front,"3'-0""","4'-0""","3'-0""",no
 1-front-right/right/0,W1,Level 1,1-front-right,right,"3'-0""","4'-0""","3'-0""",no
 1-front-right/right/1,W1,Level 1,1-front-right,right,"3'-0""","4'-0""","3'-0""",no
-1-stair/back/0,W1,Level 1,1-stair,back,"3'-0""","4'-0""","3'-0""",no
+1-front-right/stair/0,D3,Level 1,1-front-right,interior,"3'-0""","7'-0""","0'-0""",no
+1-stair/back/0,W2,Level 1,1-stair,back,"3'-0""","4'-0""","3'-0""","IBC 2018 2406.4.3: a large pane low over landing-1, its bottom edge 0 in above it; also IBC 2018 2406.4.6: its bottom edge 0 in above landing-1, 0 in from it"
 1-stair/front/0,D2,Level 1,1-stair,front,"3'-6""","6'-8""","0'-0""",no
 2-back-left/back/0,W1,Level 2,2-back-left,back,"3'-0""","4'-0""","3'-0""",no
 2-back-left/back/1,W1,Level 2,2-back-left,back,"3'-0""","4'-0""","3'-0""",no
@@ -46,6 +50,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 2-back-left/back/6,W1,Level 2,2-back-left,back,"3'-0""","4'-0""","3'-0""",no
 2-back-left/left/0,W1,Level 2,2-back-left,left,"3'-0""","4'-0""","3'-0""",no
 2-back-left/left/1,W1,Level 2,2-back-left,left,"3'-0""","4'-0""","3'-0""",no
+2-back-left/stair/0,D3,Level 2,2-back-left,interior,"3'-0""","7'-0""","0'-0""",no
 2-back-right/back/0,W1,Level 2,2-back-right,back,"3'-0""","4'-0""","3'-0""",no
 2-back-right/back/1,W1,Level 2,2-back-right,back,"3'-0""","4'-0""","3'-0""",no
 2-back-right/back/2,W1,Level 2,2-back-right,back,"3'-0""","4'-0""","3'-0""",no
@@ -55,6 +60,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 2-back-right/back/6,W1,Level 2,2-back-right,back,"3'-0""","4'-0""","3'-0""",no
 2-back-right/right/0,W1,Level 2,2-back-right,right,"3'-0""","4'-0""","3'-0""",no
 2-back-right/right/1,W1,Level 2,2-back-right,right,"3'-0""","4'-0""","3'-0""",no
+2-back-right/stair/0,D3,Level 2,2-back-right,interior,"3'-0""","7'-0""","0'-0""",no
 2-front-left/front/0,W1,Level 2,2-front-left,front,"3'-0""","4'-0""","3'-0""",no
 2-front-left/front/1,W1,Level 2,2-front-left,front,"3'-0""","4'-0""","3'-0""",no
 2-front-left/front/2,W1,Level 2,2-front-left,front,"3'-0""","4'-0""","3'-0""",no
@@ -64,6 +70,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 2-front-left/front/6,W1,Level 2,2-front-left,front,"3'-0""","4'-0""","3'-0""",no
 2-front-left/left/0,W1,Level 2,2-front-left,left,"3'-0""","4'-0""","3'-0""",no
 2-front-left/left/1,W1,Level 2,2-front-left,left,"3'-0""","4'-0""","3'-0""",no
+2-front-left/stair/0,D3,Level 2,2-front-left,interior,"3'-0""","7'-0""","0'-0""",no
 2-front-right/front/0,W1,Level 2,2-front-right,front,"3'-0""","4'-0""","3'-0""",no
 2-front-right/front/1,W1,Level 2,2-front-right,front,"3'-0""","4'-0""","3'-0""",no
 2-front-right/front/2,W1,Level 2,2-front-right,front,"3'-0""","4'-0""","3'-0""",no
@@ -73,7 +80,8 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 2-front-right/front/6,W1,Level 2,2-front-right,front,"3'-0""","4'-0""","3'-0""",no
 2-front-right/right/0,W1,Level 2,2-front-right,right,"3'-0""","4'-0""","3'-0""",no
 2-front-right/right/1,W1,Level 2,2-front-right,right,"3'-0""","4'-0""","3'-0""",no
-2-stair/back/0,W1,Level 2,2-stair,back,"3'-0""","4'-0""","3'-0""",no
+2-front-right/stair/0,D3,Level 2,2-front-right,interior,"3'-0""","7'-0""","0'-0""",no
+2-stair/back/0,W2,Level 2,2-stair,back,"3'-0""","4'-0""","3'-0""","IBC 2018 2406.4.3: a large pane low over landing-2, its bottom edge 0 in above it; also IBC 2018 2406.4.6: its bottom edge 0 in above landing-2, 0 in from it"
 2-stair/front/0,W1,Level 2,2-stair,front,"3'-0""","4'-0""","3'-0""",no
 3-back-left/back/0,W1,Level 3,3-back-left,back,"3'-0""","4'-0""","3'-0""",no
 3-back-left/back/1,W1,Level 3,3-back-left,back,"3'-0""","4'-0""","3'-0""",no
@@ -84,6 +92,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 3-back-left/back/6,W1,Level 3,3-back-left,back,"3'-0""","4'-0""","3'-0""",no
 3-back-left/left/0,W1,Level 3,3-back-left,left,"3'-0""","4'-0""","3'-0""",no
 3-back-left/left/1,W1,Level 3,3-back-left,left,"3'-0""","4'-0""","3'-0""",no
+3-back-left/stair/0,D3,Level 3,3-back-left,interior,"3'-0""","7'-0""","0'-0""",no
 3-back-right/back/0,W1,Level 3,3-back-right,back,"3'-0""","4'-0""","3'-0""",no
 3-back-right/back/1,W1,Level 3,3-back-right,back,"3'-0""","4'-0""","3'-0""",no
 3-back-right/back/2,W1,Level 3,3-back-right,back,"3'-0""","4'-0""","3'-0""",no
@@ -93,6 +102,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 3-back-right/back/6,W1,Level 3,3-back-right,back,"3'-0""","4'-0""","3'-0""",no
 3-back-right/right/0,W1,Level 3,3-back-right,right,"3'-0""","4'-0""","3'-0""",no
 3-back-right/right/1,W1,Level 3,3-back-right,right,"3'-0""","4'-0""","3'-0""",no
+3-back-right/stair/0,D3,Level 3,3-back-right,interior,"3'-0""","7'-0""","0'-0""",no
 3-front-left/front/0,W1,Level 3,3-front-left,front,"3'-0""","4'-0""","3'-0""",no
 3-front-left/front/1,W1,Level 3,3-front-left,front,"3'-0""","4'-0""","3'-0""",no
 3-front-left/front/2,W1,Level 3,3-front-left,front,"3'-0""","4'-0""","3'-0""",no
@@ -102,6 +112,7 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 3-front-left/front/6,W1,Level 3,3-front-left,front,"3'-0""","4'-0""","3'-0""",no
 3-front-left/left/0,W1,Level 3,3-front-left,left,"3'-0""","4'-0""","3'-0""",no
 3-front-left/left/1,W1,Level 3,3-front-left,left,"3'-0""","4'-0""","3'-0""",no
+3-front-left/stair/0,D3,Level 3,3-front-left,interior,"3'-0""","7'-0""","0'-0""",no
 3-front-right/front/0,W1,Level 3,3-front-right,front,"3'-0""","4'-0""","3'-0""",no
 3-front-right/front/1,W1,Level 3,3-front-right,front,"3'-0""","4'-0""","3'-0""",no
 3-front-right/front/2,W1,Level 3,3-front-right,front,"3'-0""","4'-0""","3'-0""",no
@@ -111,5 +122,6 @@ id,mark,storey,flat,face,width,height,sill_above_floor,safety_glazing
 3-front-right/front/6,W1,Level 3,3-front-right,front,"3'-0""","4'-0""","3'-0""",no
 3-front-right/right/0,W1,Level 3,3-front-right,right,"3'-0""","4'-0""","3'-0""",no
 3-front-right/right/1,W1,Level 3,3-front-right,right,"3'-0""","4'-0""","3'-0""",no
+3-front-right/stair/0,D3,Level 3,3-front-right,interior,"3'-0""","7'-0""","0'-0""",no
 3-stair/back/0,W1,Level 3,3-stair,back,"3'-0""","4'-0""","3'-0""",no
 3-stair/front/0,W1,Level 3,3-stair,front,"3'-0""","4'-0""","3'-0""",no

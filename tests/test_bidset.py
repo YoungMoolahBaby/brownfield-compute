@@ -305,6 +305,68 @@ def test_a_landing_a_little_off_the_sill_still_makes_safety_glazing(ifc):
     assert "2406.4.3" in bidset.safety_glazing(raised, p)["2-stair/back/0"]
 
 
+def test_the_stair_windows_under_2406_4_6_and_2406_4_7(ifc):
+    # 2406.4.6: the back stair windows rise from the landings between flights, their bottom edge
+    # 0 in above, 0 in away. The front ones and the level-3 back one have their bottom edge 60 in
+    # or more above any tread or landing near them. 2406.4.7: the nearest glass is 103 in from a
+    # bottom nosing, outside its 60 in arc.
+    apt, _, p, _ = ifc
+    h = bidset.safety_glazing(apt, p)
+    six = {o for o, r in h.items() if "2406.4.6" in r}
+    assert six == {"1-stair/back/0", "2-stair/back/0"}
+    assert not any("2406.4.7" in r for r in h.values())
+    assert bidset.sections_of(h["1-stair/back/0"]) == ["2406.4.3", "2406.4.6"]
+    assert "; also IBC 2018 2406.4.6: its bottom edge 0 in above landing-1, 0 in from it" in h["1-stair/back/0"]
+    # A flight turned to rise towards the front, its foot 33 in from the back windows: the
+    # level-1 back window is within its bottom nosing's arc, 36 in above its landing.
+    turned = copy.deepcopy(apt)
+    fl = next(f for f in turned["stair"]["flights"] if f["id"] == "flight-1a")
+    fl["dir"], fl["x_bottom_m"] = -1.0, (480 - 7 - 33) * 0.0254
+    reason = bidset.safety_glazing(turned, p)["1-stair/back/0"]
+    assert "IBC 2018 2406.4.7: 33 in from flight-1a's bottom nosing, 36 in above its landing" in reason
+
+
+def test_2406_4_6_reach_alone_decides(ifc):
+    # Without the landings, the level-1 back window's nearest stair surface is flight 1a's top tread:
+    # its bottom edge 6 in above it, but 48 in away, so exempt (36 in or more). Slide that tread to
+    # 22 in from the glass and it is caught.
+    apt, _, p, _ = ifc
+    bare = copy.deepcopy(apt)
+    bare["stair"]["parts"] = [x for x in bare["stair"]["parts"] if x["kind"] != "landing"]
+    bare["parts"] = [x for x in bare["parts"] if x["kind"] != "landing"]
+    assert "1-stair/back/0" not in bidset.safety_glazing(bare, p)
+    near = copy.deepcopy(bare)
+    step = next(x for x in near["stair"]["parts"] if x["id"] == "flight-1a-4")
+    shift = (473 - 22 - 425) * 0.0254
+    step["lo_m"][0] += shift
+    step["hi_m"][0] += shift
+    assert "IBC 2018 2406.4.6: its bottom edge 6 in above flight-1a-4, 22 in from it" in bidset.safety_glazing(near, p)["1-stair/back/0"]
+
+
+def test_2406_4_7_either_way_a_flight_runs(ifc):
+    # The review's case: glass in a wall beside a flight's foot, straddling its bottom nosing, 12 in
+    # above the floor. It is within the arc whichever way the flight rises.
+    apt, _, p, _ = ifc
+    fl = next(f for f in apt["stair"]["flights"] if f["id"] == "flight-1a")
+    xb, y = fl["x_bottom_m"], fl["y0_m"]
+    o = {"id": "test-window", "kind": "window", "glazed": True, "sill_m": 12 * 0.0254, "width_m": 0.4, "height_m": 1.2,
+         "lo_m": [xb - 0.2, y - 0.254, 12 * 0.0254], "hi_m": [xb + 0.2, y, 12 * 0.0254 + 1.2], "outward": [0.0, -1.0, 0.0]}
+    walls = np.array([[x["lo_m"], x["hi_m"]] for x in apt["parts"] if x["kind"] in bidset.WALL_KINDS])
+    for way in (1.0, -1.0):
+        turned = copy.deepcopy(apt)
+        next(f for f in turned["stair"]["flights"] if f["id"] == "flight-1a")["dir"] = way
+        assert any("2406.4.7" in r for r in bidset._by_the_stair(o, turned, p, walls)), way
+
+
+def test_each_type_says_which_sections_call_for_its_glazing(ifc):
+    _, _, _, path = ifc
+    f = ifcopenshell.open(str(path))
+    desc = {t.Name: t.Description for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")}
+    assert "Safety glazing: IBC 2018 2406.4.1 calls for it here." in desc["D1"]
+    assert "Safety glazing: IBC 2018 2406.4.2, 2406.4.3 and 2406.4.6 call for it here." in desc["W2"]
+    assert "Safety glazing" not in desc["W1"]
+
+
 @pytest.fixture(scope="module")
 def checklist(ifc, tmp_path_factory):
     _, _, p, _ = ifc
@@ -485,7 +547,8 @@ def test_the_schedule_from_the_ifc_alone(drawings):
     assert {m: r["count"] for m, r in s.items()} == {"W1": 75, "W2": 26, "D1": 12, "D2": 1, "D3": 12}
     assert (s["W1"]["width"], s["W1"]["height"], s["D1"]["width"], s["D1"]["height"]) == ("3'-0\"", "4'-0\"", "6'-0\"", "6'-8\"")
     assert (s["W1"]["safety_glazing_required"], s["W2"]["safety_glazing_required"],
-            s["D1"]["safety_glazing_required"]) == ("no", "yes (IBC 2018 2406.4.2, IBC 2018 2406.4.3)", "yes (IBC 2018 2406.4.1)")
+            s["D1"]["safety_glazing_required"]) == ("no", "yes (IBC 2018 2406.4.2, IBC 2018 2406.4.3, IBC 2018 2406.4.6)",
+                                                    "yes (IBC 2018 2406.4.1)")
     # The flat doors: inside, a 1-hour fire door, self-closing, with no U-factor.
     assert (s["D3"]["is_external"], s["D3"]["fire_rating"], s["D3"]["self_closing"], s["D3"]["u_factor_w_m2k"]) == (
         "False", "1 h", "True", bidset.NOT_IN_MODEL)

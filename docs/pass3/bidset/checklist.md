@@ -1,16 +1,16 @@
 | Field | Where | Windows | Doors | Door types or walls |
 |---|---|---|---|---|
-| type mark | IFC4 | 101 of 101 | 13 of 13 |  |
-| storey | IFC4 | 101 of 101 | 13 of 13 |  |
-| exterior or not | IFC4 | 101 of 101 | 13 of 13 |  |
-| unit width | IFC4 | 101 of 101 | 13 of 13 |  |
-| unit height | IFC4 | 101 of 101 | 13 of 13 |  |
-| rough opening width | BidSet_ | 0 of 101 | 0 of 13 |  |
-| rough opening height | BidSet_ | 0 of 101 | 0 of 13 |  |
+| type mark | IFC4 | 101 of 101 | 25 of 25 |  |
+| storey | IFC4 | 101 of 101 | 25 of 25 |  |
+| exterior or not | IFC4 | 101 of 101 | 25 of 25 |  |
+| unit width | IFC4 | 101 of 101 | 25 of 25 |  |
+| unit height | IFC4 | 101 of 101 | 25 of 25 |  |
+| rough opening width | BidSet_ | 0 of 101 | 0 of 25 |  |
+| rough opening height | BidSet_ | 0 of 101 | 0 of 25 |  |
 | operation | BidSet_ | 0 of 101 |  |  |
-| operation (on the door type) | IFC4 |  |  | 0 of 2 door types |
-| frame material | IFC4 | 0 of 101 | 0 of 13 |  |
-| frame colour inside | BidSet_ | 0 of 101 | 0 of 13 |  |
+| operation (on the door type) | IFC4 |  |  | 0 of 3 door types |
+| frame material | IFC4 | 0 of 101 | 0 of 25 |  |
+| frame colour inside | BidSet_ | 0 of 101 | 0 of 25 |  |
 | frame colour outside | BidSet_ | 0 of 101 | 0 of 13 |  |
 | glass: low-e coating (yes or no) | IFC4 | 0 of 101 | 0 of 12 |  |
 | glass: gas fill | IFC4 | 0 of 101 | 0 of 12 |  |
@@ -26,9 +26,11 @@
 | escape window: bottom of the clear opening above the floor | BidSet_ | none marked; 16 needed (24 with the ground floor) |  |  |
 | screen (yes or no) | BidSet_ | 0 of 101 | 0 of 12 |  |
 | grilles | BidSet_ | 0 of 101 | 0 of 12 |  |
-| hardware finish | BidSet_ | 0 of 101 | 0 of 13 |  |
+| hardware finish | BidSet_ | 0 of 101 | 0 of 25 |  |
 | install type | BidSet_ | 0 of 101 | 0 of 13 |  |
-| in a wall | IFC4 | 101 of 101 | 13 of 13 |  |
+| fire rating (doors into the stair) | IFC4 |  | 12 of 12 |  |
+| self-closing (doors into the stair) | IFC4 |  | 12 of 12 |  |
+| in a wall | IFC4 | 101 of 101 | 25 of 25 |  |
 | the wall's construction (on exterior walls) | BidSet_ |  |  | 12 of 12 exterior walls |
-| MasterFormat section, level 3 | IFC4 | 0 of 101 | 0 of 13 |  |
-| safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it | BidSet_ | 0 of 24 | 0 of 12 |  |
+| MasterFormat section, level 3 | IFC4 | 0 of 101 | 0 of 25 |  |
+| safety glazing where required (assessed under IBC 2018 2406.4.1-2406.4.3, 2406.4.6 and 2406.4.7) | BidSet_ | 0 of 26 | 0 of 12 |  |

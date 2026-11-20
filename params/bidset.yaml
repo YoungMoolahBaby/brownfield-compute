@@ -9,219 +9,330 @@
 # 1011.1-1011.7 (stairways) were read by Jon on the same UpCodes code and shared as screenshots
 # (2026-11-20); the rest of chapter 10 (1010, 1011.8 on, 1014, 1015, 1019, 1023) was read from
 # UpCodes' chapter 10 page as Jon saved it (2026-11-20), and 716 (opening protectives) from the
-# chapter 7 page as Jon saved it (2026-11-20). Pennsylvania's amendments were not checked, except the one UpCodes shows under
+# chapter 7 page as Jon saved it (2026-11-20), and 2406.4.4-2406.4.7 from the chapter 24 page as
+# Jon saved it (2026-11-20). Pennsylvania's amendments were not checked, except the one UpCodes shows under
 # 1011.5.2 (Pa. UCC 403.21), which is about stairs inside dwelling units.
 
 code:
   fenestration_u_max:
     value: 0.30
+    low: 0.30
+    high: 0.30
     unit: Btu/h ft2 F, the highest U-factor a window or glazed door may have (climate zone 5)
     conf: medium
     source: "2018 IECC climate zone 5: fenestration U-0.30, the source of pass3.envelope.window_u (2018 IECC zone 5 and the Lebanon County residential energy worksheet)"
   safety_glazing:
     door_arc_in:
       value: 24
+      low: 24
+      high: 24
       unit: in, glazing whose nearest vertical edge is within this arc of either vertical edge of a closed door is a hazardous location (with the bottom-edge test below)
       conf: high
       source: "IBC 2018 2406.4.2 Glazing adjacent to doors, on UpCodes (Pennsylvania Building Code 2018): 'within a 24-inch (610 mm) arc of either vertical edge of the door in a closed position'"
     door_bottom_in:
       value: 60
+      low: 60
+      high: 60
       unit: in above the walking surface, the bottom exposed edge below which glazing next to a door is a hazardous location
       conf: high
       source: "IBC 2018 2406.4.2, same page: 'less than 60 inches (1524 mm) above the walking surface'"
     window_area_ft2:
       value: 9
+      low: 9
+      high: 9
       unit: ft2, an individual pane larger than this is one of 2406.4.3's four conditions for a window
       conf: high
       source: "IBC 2018 2406.4.3 Glazing in windows, same page: exposed area of an individual pane greater than 9 square feet (0.84 m2)"
     window_bottom_in:
       value: 18
+      low: 18
+      high: 18
       unit: in above the floor, a bottom edge below this is one of 2406.4.3's conditions
       conf: high
       source: "IBC 2018 2406.4.3, same page: bottom edge less than 18 inches (457 mm) above the floor"
     window_top_in:
       value: 36
+      low: 36
+      high: 36
       unit: in above the floor, a top edge above this is one of 2406.4.3's conditions
       conf: high
       source: "IBC 2018 2406.4.3, same page: top edge greater than 36 inches (914 mm) above the floor"
     window_walk_in:
       value: 36
+      low: 36
+      high: 36
       unit: in, horizontally from the plane of the glazing, a walking surface within this is one of 2406.4.3's conditions
       conf: high
       source: "IBC 2018 2406.4.3, same page: one or more walking surfaces within 36 inches (914 mm), measured horizontally in a straight line, of the plane of the glazing"
+    stair_bottom_in:
+      value: 60
+      low: 60
+      high: 60
+      unit: in, glazing whose bottom edge is less than this above the adjacent walking surface of a stairway or a landing between flights is a hazardous location (2406.4.6)
+      conf: high
+      source: "IBC 2018 chapter 24, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 2406.4.6 'Glazing where the bottom exposed edge of the glazing is less than 60 inches (1524 mm) above the plane of the adjacent walking surface of stairways, landings between flights of stairs and ramps shall be considered to be a hazardous location.' Exception 1: a side with a guard (1015, 1607.8) and the glass more than 18 in from the railing"
+    stair_reach_in:
+      value: 36
+      low: 36
+      high: 36
+      unit: in, glazing this far or more from the stairway's walking surface, measured horizontally, is exempt from 2406.4.6
+      conf: high
+      source: "IBC 2018 chapter 24, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 2406.4.6 exception 2 'Glazing 36 inches (914 mm) or more measured horizontally from the walking surface.'"
+    bottom_landing_arc_in:
+      value: 60
+      low: 60
+      high: 60
+      unit: in, the radius of the horizontal arc (under 180 degrees, from the bottom tread nosing) within which glazing at the landing at the bottom of a stairway is a hazardous location (2406.4.7)
+      conf: high
+      source: "IBC 2018 chapter 24, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 2406.4.7 'Glazing adjacent to the landing at the bottom of a stairway where the glazing is less than 60 inches (1524 mm) above the landing and within a 60-inch (1524 mm) horizontal arc that is less than 180 degrees (3.14 rad) from the bottom tread nosing shall be considered to be a hazardous location.' The exception is a guard with the glass more than 18 in from it"
+    bottom_landing_height_in:
+      value: 60
+      low: 60
+      high: 60
+      unit: in above the bottom landing, glazing lower than this within the arc is a hazardous location (2406.4.7)
+      conf: high
+      source: "IBC 2018 chapter 24, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 2406.4.7, as above"
   escape:
     min_area_ft2:
       value: 5.7
+      low: 5.7
+      high: 5.7
       unit: ft2, the least net clear opening of an emergency escape and rescue opening (an escape window)
       conf: high
       source: "IBC 2018 1030.2 Minimum size: 'a minimum net clear opening of 5.7 square feet (0.53 m2)'. Its exception, 5 ft2 for grade-floor openings, isn't used: 5.7 everywhere is the safe side"
     min_height_in:
       value: 24
+      low: 24
+      high: 24
       unit: in, the least net clear opening height of an escape window
       conf: high
       source: "IBC 2018 1030.2.1 Minimum dimensions: 'The minimum net clear opening height dimension shall be 24 inches (610 mm)'; the dimensions 'shall be the result of normal operation of the opening'"
     min_width_in:
       value: 20
+      low: 20
+      high: 20
       unit: in, the least net clear opening width of an escape window
       conf: high
       source: "IBC 2018 1030.2.1: 'The minimum net clear opening width dimension shall be 20 inches (508 mm)'"
     max_sill_in:
       value: 44
+      low: 44
+      high: 44
       unit: in above the floor, the highest the bottom of an escape window's clear opening may be
       conf: high
       source: "IBC 2018 1030.3 Maximum height from floor: the bottom of the clear opening 'not greater than 44 inches (1118 mm) measured from the floor'"
   single_exit:
     r2_max_storey:
       value: 3
+      low: 3
+      high: 3
       unit: storeys above grade plane, the highest storey of an R-2 building (dwelling units) that may have a single exit
       conf: high
       source: "IBC 2018 Table 1006.3.3(1) Stories with one exit or access to one exit for R-2 occupancies: 'Basement, first, second or third story above grade plane' R-2 (footnotes a, b); 'Fourth story above grade plane and higher' NP. Footnote a: R-2 buildings 'equipped throughout with an automatic sprinkler system in accordance with Section 903.3.1.1 or 903.3.1.2 and provided with emergency escape and rescue openings in accordance with Section 1030'"
     r2_max_units:
       value: 4
+      low: 4
+      high: 4
       unit: dwelling units, the most on a storey with a single exit
       conf: high
       source: "IBC 2018 Table 1006.3.3(1): maximum number of dwelling units '4 dwelling units'"
     r2_max_common_path_ft:
       value: 125
+      low: 125
+      high: 125
       unit: ft, the longest common path of egress travel on a storey with a single exit
       conf: high
       source: "IBC 2018 Table 1006.3.3(1): maximum common path of egress travel distance '125 feet'"
   stair:  # the common stair, a means of egress stairway (not inside a dwelling unit)
     riser_max_in:
       value: 7
+      low: 7
+      high: 7
       unit: in, the tallest riser, measured vertically between the nosings of adjacent treads
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.5.2 'Stair riser heights shall be 7 inches (178 mm) maximum and 4 inches (102 mm) minimum.' Exception 3 (7 3/4 in within R-2 dwelling units) and Pa. UCC 403.21(i) (8 1/4 in within R-2 dwelling units, as UpCodes notes) are for stairs inside a flat, not the common stair"
     riser_min_in:
       value: 4
+      low: 4
+      high: 4
       unit: in, the shortest riser
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.5.2, as above"
     tread_min_in:
       value: 11
+      low: 11
+      high: 11
       unit: in, the least rectangular tread depth, nosing to nosing, at a right angle to the nosing
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.5.2 'Rectangular tread depths shall be 11 inches (279 mm) minimum'. Winders aren't allowed in means of egress stairways except within a dwelling unit (1011.5.3), so the stair turns on landings"
     width_min_in:
       value: 44
+      low: 44
+      high: 44
       unit: in, the least stairway width
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.2 'the minimum width shall be not less than 44 inches (1118 mm)'. Exception 1 allows 36 in for an occupant load under 50; it isn't used, since the occupant load table (1004.5) hasn't been read, and 44 is the safe side"
     headroom_min_in:
       value: 80
+      low: 80
+      high: 80
       unit: in, the least headroom, measured vertically from the line of the nosings, over the full width of the stairway and landing
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.3 'a headroom clearance of not less than 80 inches (2032 mm) measured vertically from a line connecting the edge of the nosings', continuous to one tread depth beyond the bottom riser"
     landing_depth_max_needed_in:
       value: 48
+      low: 48
+      high: 48
       unit: in, a landing's depth in the direction of travel must be at least the stair's width or this, whichever is less
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.6 'Every landing shall have a minimum depth, measured parallel to the direction of travel, equal to the width of the stairway or 48 inches (1219 mm), whichever is less.' A landing's width is at least the stairway's; a floor or landing at the top and bottom of each stairway"
     door_into_landing_max_in:
       value: 7
+      low: 7
+      high: 7
       unit: in, the most a fully open door may project into a landing (and a swinging door may not leave less than half the landing's required width)
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.6 'When fully open, the door shall not project more than 7 inches (178 mm) into a landing.'"
     uniformity_tol_in:
       value: 0.375
+      low: 0.375
+      high: 0.375
       unit: in, the most the largest and smallest riser (or tread) in a flight may differ
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.5.4 'shall not exceed 3/8 inch (9.5 mm) in any flight of stairs'"
     nosing_projection_max_in:
       value: 1.25
+      low: 1.25
+      high: 1.25
       unit: in, the most a tread's leading edge may project beyond the tread below; risers solid
       conf: high
       source: "IBC 2018 1011 Stairways, on UpCodes (Pennsylvania Building Code 2018), read by Jon, screenshots 2026-11-20: 1011.5.5.1 'shall project not more than 1 1/4 inches (32 mm) beyond the tread below'; 1011.5.5.3 'Risers shall be solid'"
     flight_rise_max_in:
       value: 144
+      low: 144
+      high: 144
       unit: in, the most a flight may rise between floor levels or landings
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1011.8 'A flight of stairs shall not have a vertical rise greater than 12 feet (3658 mm) between floor levels or landings.'"
     handrail_height_min_in:
       value: 34
+      low: 34
+      high: 34
       unit: in above the tread nosings, the lowest a handrail may be (handrails on each side of a flight, 1011.11)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1014.2 'not less than 34 inches (864 mm) and not more than 38 inches (965 mm)'; 1011.11 'Flights of stairways shall have handrails on each side' (one side only is allowed within dwelling units)"
     handrail_height_max_in:
       value: 38
+      low: 38
+      high: 38
       unit: in above the tread nosings, the highest a handrail may be
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1014.2, as above"
     handrail_extension_in:
       value: 12
+      low: 12
+      high: 12
       unit: in, how far a handrail that isn't continuous between flights extends level beyond the top riser (it continues to slope one tread depth beyond the bottom riser)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1014.6 'the handrails shall extend horizontally not less than 12 inches (305 mm) beyond the top riser and continue to slope for the depth of one tread beyond the bottom riser'"
     handrail_projection_max_in:
       value: 4.5
+      low: 4.5
+      high: 4.5
       unit: in, the most a handrail (or anything) may project into a stairway's required width on each side, at or below handrail height
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1014.8 'Projections into the required width of aisles, stairways and ramps at each side shall not exceed 4 1/2 inches (114 mm) at or below the handrail height.'"
     handrail_reach_max_in:
       value: 30
+      low: 30
+      high: 30
       unit: in, every part of the stairway's required width must be within this of a handrail
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1014.9 'all portions of the stairway minimum width or required capacity are within 30 inches (762 mm) of a handrail'"
     guard_drop_in:
       value: 30
+      low: 30
+      high: 30
       unit: in, a stair or landing's open side needs a guard where the floor below is more than this lower within 36 in of the edge
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.2 'located more than 30 inches (762 mm) measured vertically to the floor or grade below at any point within 36 inches (914 mm) horizontally to the edge of the open side'"
     guard_reach_in:
       value: 36
+      low: 36
+      high: 36
       unit: in, horizontally from an open edge, how far the drop below is looked for (a guard is needed where it exceeds guard_drop_in anywhere within this)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.2 'at any point within 36 inches (914 mm) horizontally to the edge of the open side'"
     guard_height_min_in:
       value: 42
+      low: 42
+      high: 42
       unit: in, the least guard height, on stairs measured from the line of the nosings
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.3 'not less than 42 inches (1067 mm) high'. Its exceptions for lower guards are for R-3 or within R-2 dwelling units, not the common stair"
     guard_sphere_in:
       value: 4
+      low: 4
+      high: 4
       unit: in, a sphere this size may not pass through a guard up to 36 in (4 3/8 in from 36 to 42 in; 6 in at the stair's triangle under the bottom rail)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.4 'shall not have openings that allow passage of a sphere 4 inches (102 mm) in diameter' and its exceptions 1 and 2"
   window_fall:  # IBC 2018 1015.8: operable windows with low sills high above grade
     sill_above_floor_max_in:
       value: 36
+      low: 36
+      high: 36
       unit: in, an operable window whose sill top is less than this above the finished floor (and over above_grade_min_in above grade) needs one of 1015.8's fall measures
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.8 'Windows in Group R-2 and R-3 buildings including dwelling units, where the top of the sill of an operable window opening is located less than 36 inches above the finished floor and more than 72 inches (1829 mm) above the finished grade or other surface below on the exterior of the building, shall comply with one of the following': openings that won't pass a 4 in sphere, ASTM F2090 fall prevention or opening control devices (1015.8.1), or ASTM F2006 devices above 75 ft"
     above_grade_min_in:
       value: 72
+      low: 72
+      high: 72
       unit: in, the sill height above grade (or the surface below outside) above which 1015.8 applies
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1015.8, as above"
   exit_stair:  # the stair as an interior exit stairway (IBC 2018 1023): the walk-up's one exit
     enclosure_rating_h:
       value: 1
+      low: 1
+      high: 1
       unit: hours, the least fire-resistance rating of the stair's enclosure (and not less than any floor assembly it passes through, up to 2 h)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1023.2 'not less than 1 hour where connecting less than four stories'; enclosures are fire barriers (707) or horizontal assemblies (711). 1023.4: openings limited to those for exit access from normally occupied spaces and egress, protected per 716 (below). None of 1019.3's cases lets a stair connecting three storeys of separate flats go unenclosed"
     door_rating_h:
       value: 1
+      low: 1
+      high: 1
       unit: hours, the fire protection rating of a door assembly (door, frame, hardware) in the stair's enclosure, such as a flat's entry door; labelled D-H-60, self-closing and latching
       conf: high
       source: "IBC 2018 chapter 7, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: Table 716.1(2) Opening fire protection assemblies, ratings and markings, row 'Fire barriers having a required fire-resistance rating of 1 hour: Enclosures for shafts, exit access stairways, exit access ramps, interior exit stairways and interior exit ramps; and exit passageway walls': wall 1 h, minimum fire door assembly rating 1 h, vision panel 100 sq. in. (D-H-60 up to 100 sq. in., D-H-T-W-60 above), sidelights and transoms: fire protection not permitted, fire resistance 1 h (W-60). 716.2.6.1 'Fire doors shall be latching and self- or automatic-closing'. 716.2.2.3's 450 F temperature-rise limit at 30 minutes doesn't apply in a building sprinklered throughout (903.3.1.1 or 903.3.1.2), which the single exit needs anyway. 716.1: installed per NFPA 80"
     door_vision_panel_max_in2:
       value: 100
+      low: 100
+      high: 100
       unit: in2, the largest fire-protection-rated glass panel in such a door (larger needs fire-resistance-rated glass, marked D-H-T-W-60)
       conf: high
       source: "IBC 2018 chapter 7, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: Table 716.1(2), as above, and 716.2.2.3.1 'Fire-protection-rated glazing in excess of 100 square inches (0.065 m2) is not permitted.'"
   door:  # a means of egress door, such as a flat's entry door
     clear_width_min_in:
       value: 32
+      low: 32
+      high: 32
       unit: in, the least clear opening width of a door, door open 90 degrees, face of door to stop
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1010.1.1 'shall provide a minimum clear opening width of 32 inches (813 mm)'; the maximum swinging leaf is 48 in nominal. Doors serving under 50 occupants needn't swing with egress (1010.1.2.1)"
     landing_length_min_in:
       value: 44
+      low: 44
+      high: 44
       unit: in, the least length of the landing in front of a door, in the direction of travel (and at least the door's width)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1010.1.6 'Landings shall have a length measured in the direction of travel of not less than 44 inches (1118 mm).' and 'a width not less than the width of the stairway or the door, whichever is greater'. The exception (36 in) is within individual R-2 units; a flat's entry door opens from the hall"
     clear_height_min_in:
       value: 80
+      low: 80
+      high: 80
       unit: in, the least clear opening height of a door (78 in within a dwelling unit)
       conf: high
       source: "IBC 2018 chapter 10, on UpCodes (Pennsylvania Building Code 2018), the page as Jon saved it 2026-11-20: 1010.1.1 'The minimum clear opening height of doors shall be not less than 80 inches (2032 mm).'"

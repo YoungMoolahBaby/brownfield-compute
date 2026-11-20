@@ -410,13 +410,24 @@
                 </property>
             </requirements>
         </specification>
-        <specification name="frame colour outside (door)" ifcVersion="IFC4" identifier="colour_out/IFCDOOR" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
+        <specification name="frame colour outside (door)" ifcVersion="IFC4" identifier="colour_out/IFCDOOR+exterior" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
             <applicability minOccurs="0" maxOccurs="unbounded">
                 <entity>
                     <name>
                         <simpleValue>IFCDOOR</simpleValue>
                     </name>
                 </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
             </applicability>
             <requirements>
                 <property dataType="IFCLABEL" cardinality="required">
@@ -757,13 +768,24 @@
                 </property>
             </requirements>
         </specification>
-        <specification name="performance grade (design pressure) (door)" ifcVersion="IFC4" identifier="grade/IFCDOOR" description="IFC4 standard">
+        <specification name="performance grade (design pressure) (door)" ifcVersion="IFC4" identifier="grade/IFCDOOR+exterior" description="IFC4 standard">
             <applicability minOccurs="0" maxOccurs="unbounded">
                 <entity>
                     <name>
                         <simpleValue>IFCDOOR</simpleValue>
                     </name>
                 </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
             </applicability>
             <requirements>
                 <property dataType="IFCLABEL" cardinality="required">
@@ -1095,13 +1117,24 @@
                 </property>
             </requirements>
         </specification>
-        <specification name="install type (door)" ifcVersion="IFC4" identifier="install/IFCDOOR" description="BidSet_ (ours: IFC4 has no property for it)">
+        <specification name="install type (door)" ifcVersion="IFC4" identifier="install/IFCDOOR+exterior" description="BidSet_ (ours: IFC4 has no property for it)">
             <applicability minOccurs="0" maxOccurs="unbounded">
                 <entity>
                     <name>
                         <simpleValue>IFCDOOR</simpleValue>
                     </name>
                 </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
             </applicability>
             <requirements>
                 <property dataType="IFCLABEL" cardinality="required">
@@ -1111,6 +1144,72 @@
                     <baseName>
                         <simpleValue>InstallType</simpleValue>
                     </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="fire rating (doors into the stair) (door)" ifcVersion="IFC4" identifier="fire_rating/IFCDOOR+stair" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCLABEL">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Face</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>stair</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireRating</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>1 h</simpleValue>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="self-closing (doors into the stair) (door)" ifcVersion="IFC4" identifier="self_closing/IFCDOOR+stair" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCLABEL">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Face</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>stair</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SelfClosing</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
                 </property>
             </requirements>
         </specification>
@@ -1222,7 +1321,7 @@
                 </classification>
             </requirements>
         </specification>
-        <specification name="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it (window)" ifcVersion="IFC4" identifier="safety/IFCWINDOW+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
+        <specification name="safety glazing where required (assessed under IBC 2018 2406.4.1-2406.4.3, 2406.4.6 and 2406.4.7) (window)" ifcVersion="IFC4" identifier="safety/IFCWINDOW+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
             <applicability minOccurs="0" maxOccurs="unbounded">
                 <entity>
                     <name>
@@ -1258,7 +1357,7 @@
                 </property>
             </requirements>
         </specification>
-        <specification name="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it (door)" ifcVersion="IFC4" identifier="safety/IFCDOOR+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
+        <specification name="safety glazing where required (assessed under IBC 2018 2406.4.1-2406.4.3, 2406.4.6 and 2406.4.7) (door)" ifcVersion="IFC4" identifier="safety/IFCDOOR+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
             <applicability minOccurs="0" maxOccurs="unbounded">
                 <entity>
                     <name>
