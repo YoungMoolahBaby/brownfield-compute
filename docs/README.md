@@ -232,6 +232,7 @@ code is in `src/brownfield/`.
 | [The real land](pass3/land.md) | `brownfield land` | `land.py` |
 | [The conference of communities](pass3/conference.md) | `brownfield conference`, then forge `conference` | `conference.py`, `neighbourhood.py` |
 | [The bid set as data](pass3/bidset.md) | forge `apartment-json`; `brownfield bidset`, `addendum`, `pdfset`, `viewer` | `bidset.py`, `stair.py`, `addendum.py`, `pdfset.py`, `viewer.py`; forge `stair.rs` |
+| [Its website](https://youngmoolahbaby.github.io/brownfield-compute/) | built on GitHub by `.github/workflows/pages.yml` | `tools/viewer/build_site.py`, `planroom.html` |
 | [The economic base](pass4/README.md) | `brownfield economy` | `econ.py`, `acs.py` |
 | [The workforce](pass4/workforce.md) | `brownfield workforce` | `workforce.py` |
 | [Where the tax goes](pass4/services.md) | `brownfield services` | `services.py` |

@@ -83,7 +83,8 @@ with the command and code that make each one.
 - **Bidding it.** Issued as an open model, the walk-up's bid set carries 10 of the 34 fields a
   window or door quote needs. From the PDFs, a bidder counts 114 tags by eye that the data lists.
   A look in 3D found the stair and 12 fire doors missing from the model
-  ([the bid set as data](docs/pass3/bidset.md)).
+  ([the bid set as data](docs/pass3/bidset.md)). Its documents and its model are in a
+  [plan room online](https://youngmoolahbaby.github.io/brownfield-compute/), with the model in 3D in the browser.
 
 ## The design so far
 
@@ -122,7 +123,7 @@ numbers, on its heat, its terraces, the rooftop coolers' noise and the warm basi
 | `params/` | every number the model uses, with its range, confidence and source |
 | `data/` | small derived tables, each naming its source (downloads go to `data/raw/`, not kept) |
 | `tests/` | the checks: known cases, closed forms and hand calculations |
-| `tools/` | the 3D viewer for the bid set, and a second IFC reader |
+| `tools/` | the 3D viewer and the [website](https://youngmoolahbaby.github.io/brownfield-compute/) for the bid set, and a second IFC reader |
 | [`docs/PLAN.md`](docs/PLAN.md) | the working log: decisions (D-numbers), status, what's next |
 | `CLAUDE.md` | the rules the AI agent working on this repository follows |
 

@@ -33,6 +33,11 @@
   }
   .ttl h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
   .ttl p { margin: 2px 0 0; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  .notice {
+    margin: 0; padding: 8px 16px; border-bottom: 1px solid var(--rule); background: var(--chip);
+    color: var(--ink); font-size: 13px; line-height: 1.45;
+  }
+  .notice a { color: var(--accent); }
   .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--chip); }
   .seg button, .file {
@@ -42,6 +47,7 @@
   .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
   .file { border: 1px solid var(--rule); border-radius: 8px; background: var(--chip); }
   .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  a.file { text-decoration: none; }
   button:focus-visible, .file:focus-within, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
   .view { position: relative; min-width: 0; min-height: 0; background: var(--viewport); }
@@ -86,12 +92,15 @@
   }
 </style>
 <script type="importmap">
-  { "imports": { "three": "/vendor/three/build/three.module.min.js",
-                 "three/addons/controls/OrbitControls.js": "/vendor/three/examples/jsm/controls/OrbitControls.js" } }
+  { "imports": { "three": "./vendor/three/build/three.module.min.js",
+                 "three/addons/controls/OrbitControls.js": "./vendor/three/examples/jsm/controls/OrbitControls.js" } }
 </script>
 </head>
 <body>
 <div class="app">
+  <p class="notice"><b>A made-up building from a public study</b>, not a real project and not construction
+    documents: the 12-flat walk-up from <a href="https://github.com/YoungMoolahBaby/brownfield-compute/blob/main/docs/pass3/bidset.md">brownfield-compute's
+    bid set as data</a>. Everything runs in your browser; an IFC file you open here stays on your computer.</p>
   <header class="bar">
     <div class="ttl">
       <h1 id="title">12-flat walk-up, as issued for bid</h1>
@@ -104,6 +113,7 @@
         <button type="button" data-model="own" aria-pressed="false" hidden>Your file</button>
       </div>
       <label class="file">Open an IFC file&hellip;<input type="file" id="pick" accept=".ifc"></label>
+      <a class="file" id="back" href="index.html" hidden>Plan room</a>
     </div>
   </header>
   <main class="main">
@@ -131,7 +141,7 @@
         <p class="eyebrow" id="counts-title">Windows and doors, by type</p>
         <div class="counts" id="counts"></div>
       </section>
-      <p class="note" id="note">Everything runs on this computer: That Open's web-ifc parses the IFC in the browser (WebAssembly), and three.js draws it. A study, not construction documents.</p>
+      <p class="note" id="note">That Open's web-ifc 0.0.78 parses the IFC in your browser (WebAssembly), and three.js r160 draws it, both unchanged: web-ifc is MPL-2.0 (<a href="https://github.com/ThatOpen/engine_web-ifc/tree/0.78">source</a>, <a href="vendor/web-ifc/LICENSE.md">licence</a>), three.js MIT (<a href="https://github.com/mrdoob/three.js/tree/r160">source</a>, <a href="vendor/three/LICENSE">licence</a>). Nothing is uploaded.</p>
     </aside>
   </main>
 </div>
@@ -139,20 +149,22 @@
 <script type="module">
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import * as WebIFC from "/vendor/web-ifc/web-ifc-api.js";
+  import * as WebIFC from "./vendor/web-ifc/web-ifc-api.js";
 
   const $ = (s) => document.querySelector(s);
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const IN = 0.0254, BTU = 5.678263;
-  const MODELS = { base: { file: "/models/apartment.ifc", label: "Bid set" },
-                   add: { file: "/models/apartment-addendum-1.ifc", label: "Addendum 1" } };
+  // Paths relative to the page, so it works served at a site's root (brownfield viewer) or under a
+  // prefix (GitHub Pages, /brownfield-compute/).
+  const MODELS = { base: { file: "./models/apartment.ifc", label: "Bid set" },
+                   add: { file: "./models/apartment-addendum-1.ifc", label: "Addendum 1" } };
   const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null };
   const loaded = {};
   let dirty = true;
 
   // ---- web-ifc: parse an IFC into meshes and properties, live ----
   const api = new WebIFC.IfcAPI();
-  api.SetWasmPath("/vendor/web-ifc/", true);
+  api.SetWasmPath("./vendor/web-ifc/", true);
   const ready = api.Init(undefined, true);
 
   async function parse(bytes, origin) {
@@ -598,10 +610,15 @@
   resize();
   applyTheme();
   frame();
+  // On the website the viewer is model.html (or /model) beside the plan room; served locally
+  // (`brownfield viewer`) it is the whole site. The link shows at once, whatever loads.
+  if (/\/model(\.html)?$/.test(location.pathname)) $("#back").hidden = false;
   try {
     await ready;
-    $("#loading").textContent = "Parsing apartment.ifc with web-ifc…";
-    await show("base", { name: "apartment.ifc", file: MODELS.base.file });
+    // `#addendum` opens Addendum 1 straight away; otherwise the bid set.
+    const first = location.hash === "#addendum" ? "add" : "base";
+    $("#loading").textContent = `Parsing ${MODELS[first].file.split("/").pop()} with web-ifc…`;
+    await show(first, { name: MODELS[first].file.split("/").pop(), file: MODELS[first].file });
   } catch (err) {
     $("#loading").textContent = `web-ifc didn't start: ${err.message}.`;
   }

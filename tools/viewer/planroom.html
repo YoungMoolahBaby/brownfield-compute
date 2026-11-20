@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walk-up Plan Room</title>
+<meta name="description" content="A made-up 12-flat walk-up issued for bid two ways: drawings as PDFs, and the same building as an open model (IFC) with its schedule and checklist. From the brownfield-compute study.">
+<style>
+  /* The plan room: a project's bid documents, as a bidder would look for them. Built by
+     tools/viewer/build_site.py, which fills in each size and count from the published files. */
+  :root {
+    --bg: #eef1f4; --panel: #ffffff; --ink: #18212b; --muted: #5a6777; --rule: #d4dae1;
+    --accent: #1d5fa8; --chip: #f1f4f7;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1116; --panel: #141a21; --ink: #e2e8ef; --muted: #93a1b1; --rule: #28313b;
+      --accent: #6ea9ea; --chip: #1b232c; color-scheme: dark;
+    }
+  }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); }
+  a { color: var(--accent); }
+  .notice { margin: 0; padding: 10px 16px; background: var(--chip); border-bottom: 1px solid var(--rule); font-size: 14px; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.01em; }
+  .lede { margin: 0 0 20px; color: var(--muted); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 0 0 28px; }
+  .fact { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; }
+  .fact b { display: block; font: 600 20px var(--font-mono); }
+  .fact span { color: var(--muted); font-size: 13px; }
+  .open { display: inline-block; margin: 0 0 28px; padding: 10px 16px; border-radius: 8px; background: var(--accent);
+          color: var(--panel); text-decoration: none; font-weight: 600; }
+  section { margin: 0 0 28px; }
+  h2 { margin: 0 0 10px; font-size: 18px; }
+  h2 small { font-weight: 400; color: var(--muted); font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-top: 0; background: var(--chip); }
+  td.k { font: 12px var(--font-mono); color: var(--muted); white-space: nowrap; }
+  td.s { font: 12px var(--font-mono); color: var(--muted); white-space: nowrap; text-align: right; }
+  .about { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+  .about p { margin: 0 0 8px; }
+  .about p:last-child { margin: 0; }
+  @media (max-width: 600px) { td.k { display: none; } th.k { display: none; } }
+</style>
+</head>
+<body>
+<p class="notice"><b>A made-up building from a public study</b>, not a real project and not construction documents:
+  nothing here is out to bid, and nothing will be built or ordered.</p>
+<main>
+  <h1>12-flat walk-up</h1>
+  <p class="lede">A 3-storey walk-up, 100 x 40 ft, with 12 flats round a central stair. Issued for bid two ways: the
+    drawings as PDFs, the way bid sets go out now, and the same building as an open model (IFC) with its schedule.</p>
+
+  <div class="facts">
+    <div class="fact"><b>{{count:windows}}</b><span>windows, in {{count:window_types}} types</span></div>
+    <div class="fact"><b>{{count:doors}}</b><span>doors, in {{count:door_types}} types</span></div>
+    <div class="fact"><b>{{count:safety}}</b><span>openings the code calls for safety glass in</span></div>
+    <div class="fact"><b>{{count:addenda}}</b><span>addendum</span></div>
+  </div>
+
+  <a class="open" href="model.html">Open the model in 3D</a>
+
+  <section>
+    <h2>Bid documents <small>as issued</small></h2>
+    <table>
+      <tr><th>Document</th><th class="k">File</th><th style="text-align:right">Size</th></tr>
+      <tr><td><a href="files/bidset.pdf" download>Drawings</a>: front and back elevations (A-201, A-202), the ends (A-203), the window and door schedule (A-601)</td><td class="k">bidset.pdf</td><td class="s">{{size:files/bidset.pdf}}</td></tr>
+      <tr><td><a href="files/apartment.ifc" download>The model</a>, IFC4: every wall, slab, stair, window and door, with its type and properties (<a href="model.html">open in 3D</a>)</td><td class="k">apartment.ifc</td><td class="s">{{size:files/apartment.ifc}}</td></tr>
+      <tr><td><a href="files/drawings/schedule.csv" download="schedule.csv">Window and door schedule</a>, one row per type</td><td class="k">schedule.csv</td><td class="s">{{size:files/drawings/schedule.csv}}</td></tr>
+      <tr><td><a href="files/drawings/openings.csv" download>Every window and door</a>: where it is, its size, whether it needs safety glass</td><td class="k">openings.csv</td><td class="s">{{size:files/drawings/openings.csv}}</td></tr>
+      <tr><td><a href="files/drawings/quantities.csv" download>Quantities</a>: wall and opening areas by facade</td><td class="k">quantities.csv</td><td class="s">{{size:files/drawings/quantities.csv}}</td></tr>
+      <tr><td>Elevations drawn from the model: <a href="files/drawings/elevation_front.svg">front</a>, <a href="files/drawings/elevation_back.svg">back</a>, <a href="files/drawings/elevation_left.svg">left</a>, <a href="files/drawings/elevation_right.svg">right</a></td><td class="k">elevation_*.svg</td><td class="s"></td></tr>
+      <tr><td><a href="files/bidset.ids" download>What a quote needs</a>, as a machine-checkable list (buildingSMART IDS 1.0), and <a href="files/checklist.md">how much of it the model carries</a></td><td class="k">bidset.ids</td><td class="s">{{size:files/bidset.ids}}</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Addendum 1 <small>{{addendum:items}}</small></h2>
+    <table>
+      <tr><th>Document</th><th class="k">File</th><th style="text-align:right">Size</th></tr>
+      <tr><td><a href="files/addendum-1.pdf" download>The addendum</a>: its narrative and the revised sheets, changes clouded</td><td class="k">addendum-1.pdf</td><td class="s">{{size:files/addendum-1.pdf}}</td></tr>
+      <tr><td><a href="files/addendum-1-diff.md">What changed</a>, element by element, and how the schedule moved</td><td class="k">addendum-1-diff.md</td><td class="s">{{size:files/addendum-1-diff.md}}</td></tr>
+      <tr><td><a href="files/apartment-addendum-1.ifc" download>The revised model</a>, IFC4 (<a href="model.html#addendum">open in 3D</a>)</td><td class="k">apartment-addendum-1.ifc</td><td class="s">{{size:files/apartment-addendum-1.ifc}}</td></tr>
+      <tr><td><a href="files/drawings-addendum-1/schedule.csv" download="schedule-addendum-1.csv">The revised schedule</a></td><td class="k">schedule.csv</td><td class="s">{{size:files/drawings-addendum-1/schedule.csv}}</td></tr>
+      <tr><td><a href="files/rfi-001.bcf" download>RFI 001</a>, the question it answers (BCF 3.0)</td><td class="k">rfi-001.bcf</td><td class="s">{{size:files/rfi-001.bcf}}</td></tr>
+    </table>
+  </section>
+
+  <section class="about">
+    <p><b>Why this exists.</b> Bid sets go out as PDFs, and every bidder rebuilds the building from them before they
+      can price it. This page puts the drawings and the model side by side, as a plan room could. What each costs a
+      bidder is in the study's report, <a href="https://github.com/YoungMoolahBaby/brownfield-compute/blob/main/docs/pass3/bidset.md">the bid set as data</a>.</p>
+    <p>The model opens in your browser; nothing is uploaded. The files are generated from the study's open model and
+      checked against it by two independent readers; the <a href="https://github.com/YoungMoolahBaby/brownfield-compute">code
+      is public</a>.</p>
+    <p>The viewer uses That Open's web-ifc 0.0.78 (MPL-2.0: <a href="https://github.com/ThatOpen/engine_web-ifc/tree/0.78">source</a>,
+      <a href="vendor/web-ifc/LICENSE.md">licence</a>) and three.js r160 (MIT: <a href="https://github.com/mrdoob/three.js/tree/r160">source</a>,
+      <a href="vendor/three/LICENSE">licence</a>), unchanged.</p>
+  </section>
+</main>
+</body>
+</html>

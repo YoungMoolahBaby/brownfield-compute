@@ -6,6 +6,50 @@ data center on the same site.
 
 ## Status (2026-11-15)
 
+**The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
+"what if we just put the files on the page? so its like a project from a builders exchange?".
+- **The site:** https://youngmoolahbaby.github.io/brownfield-compute/
+  - **A plan room (`index.html`):** the project, then its bid documents to download (drawings,
+    model, schedule, openings, quantities, elevations, the IDS), then Addendum 1 (its PDF, the
+    revised model and schedule, what changed, the RFI).
+  - **The 3D viewer (`model.html`):** links back to the plan room; `#addendum` opens Addendum 1.
+- **What it won't do:** it says plainly that the building is made up, with no owner, bid date or
+  plan holders, and it carries no real exchange's name or look.
+- **Built and deployed by `.github/workflows/pages.yml`:**
+  - triggered by a push that changes `tools/viewer/` or `docs/pass3/bidset/`;
+  - npm ci from the viewer's lock, with install scripts off and Node 24.19.0;
+  - the actions pinned to their release commits.
+
+  It runs `tools/viewer/build_site.py`, which is stdlib only and builds a site of 33 files and
+  10.2 MB.
+- **The page's numbers are read from the published files when it is built:** 101 windows in 2
+  types, 25 doors in 3, 38 openings needing safety glass, the number of addenda, the file sizes,
+  and the addendum's items from the RFI.
+- **What is written in the template is held to the model and the PDF set by tests:** the building's
+  description (3 storeys, 100 x 40 ft, 12 flats) and the sheet list.
+- **Pages was enabled with `gh`** (build type workflow, HTTPS enforced).
+- **The viewer** now loads by relative paths, so it works under the site's `/brownfield-compute/`
+  prefix and at the local server's root.
+- **`tests/test_website.py` (8 tests):**
+  - every link in the plan room is in the built site;
+  - every file the viewer loads or links is there, by a relative path;
+  - the counts and the type counts are the model's;
+  - the description and the sheets are the model's and the PDF set's;
+  - the addendum's items are the RFI's, whole;
+  - the builder refuses the repository, `out/`, or a folder it didn't make.
+- **After a code review (15 findings, all addressed):**
+  - the addendum's items no longer stop at a decimal point;
+  - the builder won't delete a folder it didn't make (it used to replace any output folder);
+  - the viewer links back to the plan room at once, and at `/model` too, and `#addendum` opens
+    the addendum without loading the bid set first;
+  - web-ifc's source (release 0.78, commit 4310503, npm 0.0.78's) and both licences are linked, as
+    MPL-2.0 asks of a distributor;
+  - the build job runs with read-only permissions, and only deploy gets Pages'.
+  - Smaller fixes:
+    - the two schedules download under different names;
+    - `site/` is gitignored;
+    - the `.nojekyll` file is dropped, since the deploy leaves it out anyway.
+
 **The repository's front door (2026-11-20, Jon: "go ahead with 1-3").**
 - **`README.md` is a front page:** the question, who it's for, headline findings each linked to its
   report, the design in brief, and a map of the folders. It's 154 lines, down from 303.
