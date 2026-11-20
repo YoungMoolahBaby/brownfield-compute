@@ -7,3 +7,4 @@ out/
 target/
 forge/.cargo/
 tools/webifc/node_modules/
+tools/viewer/node_modules/

@@ -1607,6 +1607,29 @@ Jon: the rep test. Then the township brief's ask.
            IDS like this one, and addenda as revised models with a diff. That goes into the
            township brief once the rep test is in.
          - Still open from Jon: the rep test.
+       - **A local 3D viewer** (2026-11-19, Jon: "please do the native version", then "move it
+         to tools/viewer in the repo"). Run `uv run brownfield viewer` and open
+         http://127.0.0.1:8765/.
+         - **How it works:** That Open's web-ifc parses the IFC in the browser (WebAssembly):
+           the bid set in ~100-140 ms on Jon's machine. three.js draws it.
+         - **What it does:** click a unit for what the model says and what a quote still needs;
+           switch to Addendum 1; open any IFC file.
+         - **The parts:**
+           - `tools/viewer/` holds the page and a lock file pinning web-ifc 0.0.78 (the same as
+             `tools/webifc`) and three.js 0.160.0. `node_modules` is gitignored, and the
+             packages are installed from the lock the first time it runs.
+           - `src/brownfield/viewer.py` serves the page, the two packages and `docs/pass3/bidset/`
+             on 127.0.0.1 only: no directory listings, nothing outside those places.
+           - `tests/test_viewer.py` has 4 tests.
+         - **Review fixes before the first commit:**
+           - The server checks a request's path as text before touching the filesystem. On
+             Windows, a path naming a network share would otherwise have made the machine
+             connect out to that host over SMB. It also refuses device names and NUL, binds its
+             port alone, and re-installs when the lock moves.
+           - The page fixes see-through walls (three.js bakes transparency into the shader),
+             selection by GlobalId, the title per model, overlapping loads, a missing file
+             reported as one, sizes in the file's own length unit, files with no geometry,
+             freeing memory, and frame material read from the file.
   - **Checks (known cases):**
     - read back from the IFC: 114 openings, 101 / 12 / 1 by type, sizes exact, positions within
       1 mm of forge's;

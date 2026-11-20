@@ -270,6 +270,15 @@ publish leaves every file byte-for-byte the same.
 
 IfcOpenShell and That Open's web-ifc both read the IFC. Commercial viewers weren't tried (below).
 
+To look at it in 3D, run `uv run brownfield viewer` and open http://127.0.0.1:8765/.
+- **How it works:** That Open's web-ifc parses the IFC in the browser (WebAssembly), and three.js
+  draws it. The page is `tools/viewer/`, and its two libraries are pinned in that folder's lock
+  file and installed the first time it runs.
+- **What it shows:** clicking a window or door gives what the model says about it and what a
+  quote still needs. It switches between the bid set and Addendum 1, and it opens any other IFC
+  file too.
+- **It serves this computer only.**
+
 ## What we don't know
 
 - **The rep test.** Would a window rep's quoting software take `schedule.csv` or the IFC, what's

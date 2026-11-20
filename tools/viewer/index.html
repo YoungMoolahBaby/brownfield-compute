@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walk-up IFC Viewer</title>
+<style>
+  /* One-screen app: a header with the model switch and file picker; the 3D view beside an
+     inspector. Drawing-office palette: cool paper, drafting blue, code red for safety glazing.
+     Fonts are the system's, so it all works offline. */
+  :root {
+    --bg: #eef1f4; --panel: #ffffff; --ink: #18212b; --muted: #5a6777; --rule: #d4dae1;
+    --accent: #1d5fa8; --accent-ink: #ffffff; --safety: #c8372d; --viewport: #e3e8ed; --ground: #d5dbe1;
+    --edge: #3c4652; --chip: #f1f4f7;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1116; --panel: #141a21; --ink: #e2e8ef; --muted: #93a1b1; --rule: #28313b;
+      --accent: #6ea9ea; --accent-ink: #0d1116; --safety: #ef6a5e; --viewport: #10161d; --ground: #19212a;
+      --edge: #aab6c3; --chip: #1b232c; color-scheme: dark;
+    }
+  }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; }
+  [hidden] { display: none !important; }
+  .app { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+  .bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px;
+    padding: 12px 16px; border-bottom: 1px solid var(--rule); background: var(--panel);
+  }
+  .ttl h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .ttl p { margin: 2px 0 0; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--chip); }
+  .seg button, .file {
+    font: 500 13px var(--font-body); color: var(--ink); background: transparent; border: 0; padding: 7px 14px; cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--rule); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .file { border: 1px solid var(--rule); border-radius: 8px; background: var(--chip); }
+  .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  button:focus-visible, .file:focus-within, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
+  .view { position: relative; min-width: 0; min-height: 0; background: var(--viewport); }
+  .view canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .loading {
+    position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted);
+    font-family: var(--font-mono); font-size: 13px; text-align: center; padding: 24px; background: var(--viewport);
+  }
+  .views { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .views button {
+    font: 500 12px var(--font-mono); color: var(--ink); background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  }
+  .views button:hover { border-color: var(--accent); }
+  .panel { min-width: 0; overflow-y: auto; border-left: 1px solid var(--rule); background: var(--panel); display: flex; flex-direction: column; }
+  .sec { padding: 16px; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow { margin: 0; font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .mark { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .mark b { font: 600 28px var(--font-mono); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .mark span { color: var(--muted); }
+  .hint { margin: 0; color: var(--muted); line-height: 1.5; }
+  dl.kv { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; }
+  dl.kv dt { color: var(--muted); }
+  dl.kv dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; }
+  .pill { display: inline-block; font: 500 11px var(--font-mono); padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; }
+  .pill.safety { color: var(--safety); }
+  .pill.ok { color: var(--muted); }
+  .missing { margin: 0; padding: 10px 12px; background: var(--chip); border-radius: 8px; line-height: 1.5; font-size: 13px; }
+  .psets { display: flex; flex-direction: column; gap: 8px; }
+  .psets h3 { margin: 0; font: 600 12px var(--font-mono); }
+  .chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .chk input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .counts { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--edge); }
+  .counts .n { font: 500 13px var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .counts .d { color: var(--muted); font-size: 12.5px; }
+  .note { margin: 0; padding: 16px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+  @media (max-width: 820px) {
+    .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: 58vh auto; overflow-y: auto; }
+    .panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
+  }
+</style>
+<script type="importmap">
+  { "imports": { "three": "/vendor/three/build/three.module.min.js",
+                 "three/addons/controls/OrbitControls.js": "/vendor/three/examples/jsm/controls/OrbitControls.js" } }
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="ttl">
+      <h1 id="title">12-flat walk-up, as issued for bid</h1>
+      <p id="sub">Parsing apartment.ifc in your browser with That Open's web-ifc&hellip;</p>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Model" id="models">
+        <button type="button" data-model="base" aria-pressed="true">Bid set</button>
+        <button type="button" data-model="add" aria-pressed="false">Addendum 1</button>
+        <button type="button" data-model="own" aria-pressed="false" hidden>Your file</button>
+      </div>
+      <label class="file">Open an IFC file&hellip;<input type="file" id="pick" accept=".ifc"></label>
+    </div>
+  </header>
+  <main class="main">
+    <section class="view" id="view" aria-label="3D model">
+      <canvas id="c"></canvas>
+      <div class="loading" id="loading">Starting web-ifc (WebAssembly)&hellip;</div>
+      <div class="views" role="group" aria-label="Camera">
+        <button type="button" data-view="iso">3D</button>
+        <button type="button" data-view="front">Front</button>
+        <button type="button" data-view="back">Back</button>
+        <button type="button" data-view="end">End</button>
+      </div>
+    </section>
+    <aside class="panel">
+      <section class="sec" id="inspect" aria-live="polite"></section>
+      <section class="sec">
+        <p class="eyebrow">Show</p>
+        <label class="chk"><input type="checkbox" id="opt-walls" checked> Walls</label>
+        <label class="chk"><input type="checkbox" id="opt-xray"> See through the walls</label>
+        <label class="chk"><input type="checkbox" id="opt-slabs" checked> Floors and roof</label>
+        <label class="chk"><input type="checkbox" id="opt-safety" checked> Mark safety glazing (IBC 2018 2406.4)</label>
+        <div class="row"><span class="hint">Storey</span><div class="seg" role="group" aria-label="Storey" id="storeys"></div></div>
+      </section>
+      <section class="sec">
+        <p class="eyebrow" id="counts-title">Windows and doors, by type</p>
+        <div class="counts" id="counts"></div>
+      </section>
+      <p class="note" id="note">Everything runs on this computer: That Open's web-ifc parses the IFC in the browser (WebAssembly), and three.js draws it. A study, not construction documents.</p>
+    </aside>
+  </main>
+</div>
+
+<script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+  import * as WebIFC from "/vendor/web-ifc/web-ifc-api.js";
+
+  const $ = (s) => document.querySelector(s);
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const IN = 0.0254, BTU = 5.678263;
+  const MODELS = { base: { file: "/models/apartment.ifc", label: "Bid set" },
+                   add: { file: "/models/apartment-addendum-1.ifc", label: "Addendum 1" } };
+  const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null };
+  const loaded = {};
+  let dirty = true;
+
+  // ---- web-ifc: parse an IFC into meshes and properties, live ----
+  const api = new WebIFC.IfcAPI();
+  api.SetWasmPath("/vendor/web-ifc/", true);
+  const ready = api.Init(undefined, true);
+
+  async function parse(bytes, origin) {
+    await ready;
+    const t0 = performance.now();
+    const model = api.OpenModel(bytes, { COORDINATE_TO_ORIGIN: origin });
+    if (model < 0) throw new Error("web-ifc couldn't open the file");
+    try {  // the model is closed whatever happens, so a bad file doesn't stay in memory
+      const ids = (t) => { const v = api.GetLineIDsWithType(model, t, true); return Array.from({ length: v.size() }, (_, i) => v.get(i)); };
+      const line = (id) => api.GetLine(model, id, false);
+      const val = (x) => (x === null || x === undefined ? null : typeof x === "object" && "value" in x ? x.value : x);
+      const refs = (x) => (Array.isArray(x) ? x : x ? [x] : []).map((r) => r.value);
+      const name = (id) => { try { return val(line(id).Name); } catch { return null; } };
+      const pset = (id) => {
+        const ps = line(id); const props = {};
+        for (const q of refs(ps.HasProperties)) { try { const p = line(q); props[val(p.Name)] = val(p.NominalValue); } catch {} }
+        return [val(ps.Name), props];
+      };
+      const el = new Map();
+      const rec = (id) => {
+        if (!el.has(id)) {
+          const e = line(id);
+          // web-ifc names classes in mixed case ("IfcWindow"): compare in upper case, show as given.
+          const clsName = String(api.GetNameFromTypeCode(api.GetLineType(model, id)));
+          el.set(id, { id, gid: val(e.GlobalId) ?? `#${id}`, cls: clsName.toUpperCase(), clsName, name: val(e.Name) ?? `#${id}`,
+                       width: val(e.OverallWidth) ?? null, height: val(e.OverallHeight) ?? null, predefined: val(e.PredefinedType),
+                       type: null, typeId: null, typeDesc: null, typePsets: {}, storey: null, psets: {}, material: null,
+                       pos: [], nrm: [], idx: [] });
+        }
+        return el.get(id);
+      };
+      let tris = 0;
+      api.StreamAllMeshes(model, (mesh) => {
+        const r = rec(mesh.expressID);
+        for (let g = 0; g < mesh.geometries.size(); g++) {
+          const pg = mesh.geometries.get(g);
+          const geom = api.GetGeometry(model, pg.geometryExpressID);
+          const v = api.GetVertexArray(geom.GetVertexData(), geom.GetVertexDataSize());
+          const ix = api.GetIndexArray(geom.GetIndexData(), geom.GetIndexDataSize());
+          const m = pg.flatTransformation, base = r.pos.length / 3;
+          for (let i = 0; i < v.length; i += 6) {
+            const x = v[i], y = v[i + 1], z = v[i + 2], nx = v[i + 3], ny = v[i + 4], nz = v[i + 5];
+            r.pos.push(m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]);
+            r.nrm.push(m[0] * nx + m[4] * ny + m[8] * nz, m[1] * nx + m[5] * ny + m[9] * nz, m[2] * nx + m[6] * ny + m[10] * nz);
+          }
+          for (const k of ix) r.idx.push(base + k);
+          tris += ix.length / 3;
+          geom.delete();
+        }
+      });
+      for (const id of ids(WebIFC.IFCRELDEFINESBYTYPE)) {
+        const r = line(id); const t = line(r.RelatingType.value);
+        const tps = Object.fromEntries(refs(t.HasPropertySets).map((p) => { try { return pset(p); } catch { return [null, {}]; } }));
+        for (const o of refs(r.RelatedObjects)) {
+          if (el.has(o)) Object.assign(el.get(o), { type: val(t.Name), typeId: r.RelatingType.value, typeDesc: val(t.Description), typePsets: tps });
+        }
+      }
+      // Storeys: an element's own container, or else the container of what it's part of (a
+      // stair flight in a stair, a panel in a curtain wall).
+      const container = new Map(), parent = new Map();
+      for (const id of ids(WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE)) {
+        const r = line(id), s = name(r.RelatingStructure.value);
+        for (const o of refs(r.RelatedElements)) container.set(o, s);
+      }
+      for (const id of ids(WebIFC.IFCRELAGGREGATES)) {
+        const r = line(id);
+        for (const o of refs(r.RelatedObjects)) parent.set(o, r.RelatingObject.value);
+      }
+      for (const [id, e] of el) {
+        let at = id;
+        for (let hop = 0; hop < 4 && e.storey == null && at != null; hop++) { e.storey = container.get(at) ?? null; at = parent.get(at); }
+      }
+      for (const id of ids(WebIFC.IFCRELDEFINESBYPROPERTIES)) {
+        const r = line(id);
+        let ps; try { ps = pset(r.RelatingPropertyDefinition.value); } catch { continue; }
+        for (const o of refs(r.RelatedObjects)) if (el.has(o)) el.get(o).psets[ps[0]] = ps[1];
+      }
+      // Materials, on the unit or on its type.
+      const material = new Map();
+      for (const id of ids(WebIFC.IFCRELASSOCIATESMATERIAL)) {
+        const r = line(id);
+        let m = null;
+        try { const x = line(r.RelatingMaterial.value); m = val(x.Name) ?? val(x.LayerSetName) ?? val(x.ProfileSetName) ?? "a material"; } catch {}
+        for (const o of refs(r.RelatedObjects)) material.set(o, m);
+      }
+      for (const [id, e] of el) e.material = material.get(id) ?? (e.typeId != null ? material.get(e.typeId) : null) ?? null;
+      const storeys = ids(WebIFC.IFCBUILDINGSTOREY).map((id) => ({ name: name(id) ?? `#${id}`, elevation: val(line(id).Elevation) ?? 0 }))
+        .sort((a, b) => a.elevation - b.elevation);
+      return { project: name(ids(WebIFC.IFCPROJECT)[0]), schema: api.GetModelSchema(model), storeys, unit: lengthUnit(ids, line, val),
+               elements: [...el.values()].filter((e) => e.pos.length), tris, ms: performance.now() - t0 };
+    } finally {
+      api.CloseModel(model);
+    }
+  }
+
+  // The file's length unit, as metres per unit and a name: property values (a window's overall
+  // width, say) are in it, while web-ifc scales the geometry to metres.
+  function lengthUnit(ids, line, val) {
+    const PREFIX = { EXA: 1e18, PETA: 1e15, TERA: 1e12, GIGA: 1e9, MEGA: 1e6, KILO: 1e3, HECTO: 1e2, DECA: 1e1,
+                     DECI: 1e-1, CENTI: 1e-2, MILLI: 1e-3, MICRO: 1e-6 };
+    try {
+      for (const ua of ids(WebIFC.IFCUNITASSIGNMENT)) {
+        for (const u of (line(ua).Units || []).map((r) => line(r.value))) {
+          if (val(u.UnitType) !== "LENGTHUNIT") continue;
+          if (val(u.Name) === "METRE") {
+            const p = val(u.Prefix);
+            return { scale: p ? PREFIX[p] ?? null : 1, name: `${p ? p.toLowerCase() : ""}metre` };
+          }
+          const n = String(val(u.Name) || "").toLowerCase();
+          if (n.includes("foot") || n.includes("feet")) return { scale: 0.3048, name: "foot" };
+          if (n.includes("inch")) return { scale: 0.0254, name: "inch" };
+          return { scale: null, name: n || "an unknown unit" };
+        }
+      }
+    } catch {}
+    return { scale: null, name: "an unknown unit" };
+  }
+
+  // ---- Scene ----
+  const view = $("#view"), canvas = $("#c");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 5000);
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  controls.addEventListener("change", () => { dirty = true; });
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a9099, 1.15));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+  sun.position.set(-25, 35, 18);
+  scene.add(sun);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshBasicMaterial({ color: 0xcccccc }));
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
+  const COLOR = { wall: 0xd9d3c7, party: 0xc8c1b3, slab: 0xb8b3aa, roof: 0x5e6267, glass: 0x8fbde8, door: 0x8b6a4f,
+                  other: 0xb7bcc2, safety: 0xd64545 };
+  const SELECT = new THREE.Color(0x1d5fa8);
+
+  function applyTheme() {
+    scene.background = new THREE.Color(css("--viewport"));
+    ground.material.color.set(css("--ground"));
+    edgeMat.color.set(css("--edge"));
+    SELECT.set(css("--accent"));
+    refresh();
+  }
+
+  function roleOf(e) {
+    const c = e.cls, p = e.psets.BF_Opening || {};
+    if (c.startsWith("IFCWALL")) return (e.psets.Pset_WallCommon || {}).IsExternal === false ? "party" : "wall";
+    if (c === "IFCROOF" || (c.startsWith("IFCSLAB") && (e.name === "roof" || e.predefined === "ROOF"))) return "roof";
+    if (c.startsWith("IFCSLAB")) return "slab";
+    if (c.startsWith("IFCWINDOW")) return "glass";
+    if (c.startsWith("IFCDOOR")) return p.Glazed ? "glass" : "door";
+    return "other";
+  }
+
+  function build(data) {
+    const group = new THREE.Group(), byKey = new Map();
+    const edges = data.tris < 300000;
+    for (const e of data.elements) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(e.pos, 3));
+      g.setAttribute("normal", new THREE.Float32BufferAttribute(e.nrm, 3));
+      g.setIndex(e.idx);
+      const role = roleOf(e), glassy = role === "glass";
+      const mat = new THREE.MeshStandardMaterial({ color: COLOR[role], roughness: glassy ? 0.25 : 0.85, metalness: 0,
+                                                   transparent: glassy, opacity: glassy ? 0.72 : 1, side: THREE.DoubleSide });
+      const m = new THREE.Mesh(g, mat);
+      // Keyed on the GlobalId: unique in a file, and the same unit keeps it across revisions.
+      m.userData = { e, role, key: e.gid, unit: data.unit };
+      if (edges && !glassy) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
+      group.add(m);
+      byKey.set(m.userData.key, m);
+    }
+    group.visible = false;
+    scene.add(group);
+    const box = new THREE.Box3().setFromObject(group);
+    if (box.isEmpty()) box.set(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1));  // a file with no geometry
+    return { data, group, byKey, box, centre: box.getCenter(new THREE.Vector3()),
+             radius: Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 1) };
+  }
+
+  function refresh() {
+    const cur = loaded[state.model];
+    for (const [k, r] of Object.entries(loaded)) {
+      r.group.visible = k === state.model;
+      for (const m of r.group.children) {
+        const { e, role } = m.userData;
+        let show = state.storey === "all" || e.storey === state.storey;
+        if (role === "wall" || role === "party") show = show && state.walls;
+        if (role === "slab" || role === "roof") show = show && state.slabs;
+        m.visible = show;
+        const wally = role === "wall" || role === "party";
+        const transparent = role === "glass" || (wally && state.xray);
+        if (m.material.transparent !== transparent) {
+          m.material.transparent = transparent;
+          m.material.needsUpdate = true;  // three compiles transparency into the shader
+        }
+        m.material.opacity = role === "glass" ? 0.72 : wally && state.xray ? 0.16 : 1;
+        m.material.depthWrite = !(wally && state.xray);
+        const safe = (e.psets.BF_Opening || {}).SafetyGlazingRequired;
+        m.material.color.setHex(state.safety && safe ? COLOR.safety : COLOR[role]);
+        m.material.emissive.setHex(0x000000);
+      }
+    }
+    if (cur && state.selected) {
+      state.selected = cur.byKey.get(state.selected.userData.key) || null;
+      if (state.selected) state.selected.material.emissive.copy(SELECT).multiplyScalar(0.55);
+    }
+    inspect(state.selected);
+    counts();
+    dirty = true;
+  }
+
+  // ---- The inspector ----
+  const ftin = (m) => {
+    if (m == null) return "not in the model";
+    const inches = Math.round((m / IN) * 8) / 8, ft = Math.floor(inches / 12);
+    return `${ft}'-${+(inches - ft * 12).toFixed(3)}"`;
+  };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const KIND = { window: "Window", patio_door: "Patio door", entry_door: "Entry door" };
+  const QUOTE_FIELDS = [
+    ["rough opening", "BidSet_Unit", "RoughOpeningWidth"], ["operation", "BidSet_Unit", "Operation"],
+    ["frame colours", "BidSet_Unit", "FrameColourOutside"], ["low-e coating", "Pset_DoorWindowGlazingType", "IsCoated"],
+    ["gas fill", "Pset_DoorWindowGlazingType", "FillGas"], ["tempered", "Pset_DoorWindowGlazingType", "IsTempered"],
+    ["SHGC", "Pset_DoorWindowGlazingType", "SolarHeatGainTransmittance"], ["design pressure", "*Common", "WindLoadRating"],
+    ["screen", "BidSet_Unit", "Screen"], ["hardware finish", "BidSet_Unit", "HardwareFinish"], ["install type", "BidSet_Unit", "InstallType"],
+  ];
+  const HELLO = `<p class="eyebrow">Selected</p><p class="hint">Click a window, door, wall or floor to see what the model says about it. Drag to orbit, scroll or pinch to zoom.</p>`;
+
+  function inspect(m) {
+    const box = $("#inspect");
+    if (!m) { box.innerHTML = HELLO; return; }
+    const { e } = m.userData;
+    const p = e.psets.BF_Opening;
+    const rows = [];
+    let head, extra = "";
+    if (p) {  // one of our bid set's units: what a quote needs, and what's missing
+      const tp = e.typePsets || {}, common = tp.Pset_WindowCommon || tp.Pset_DoorCommon || {};
+      head = `<div class="mark"><b>${esc(e.type || "?")}</b><span>${esc(KIND[p.Kind] || e.clsName)}</span></div>`;
+      rows.push(["Unit", e.name], ["Storey", e.storey], ["Flat", p.Flat], ["Facade", p.Face],
+                ["Size", `${ftin(e.width)} × ${ftin(e.height)}`], ["Sill above floor", ftin(p.SillHeightAboveFloor)]);
+      if (common.ThermalTransmittance != null) rows.push(["U-factor", `U-${(common.ThermalTransmittance / BTU).toFixed(2)} (${common.ThermalTransmittance.toFixed(2)} W/m²K)`]);
+      if ((tp.BidSet_Unit || {}).SafetyGlazing) rows.push(["Glass", tp.BidSet_Unit.SafetyGlazing]);
+      rows.push(["Safety glazing", { html: p.SafetyGlazingRequired
+        ? `<span class="pill safety">required</span> ${esc(p.SafetyGlazingReason || "")}`
+        : `<span class="pill ok">not required</span> by 2406.4.1-2406.4.3` }]);
+      const missing = QUOTE_FIELDS.filter(([, ps, prop]) => ((ps === "*Common" ? common : tp[ps] || {})[prop]) == null).map(([l]) => l);
+      if (e.material) rows.push(["Frame material", e.material]);
+      else missing.push("frame material");
+      extra = `<p class="missing"><b>Not in the model</b>, so a rep has to ask or guess: ${esc(missing.join(", "))}.</p>`;
+    } else {  // anything else, from any IFC: its class, type, storey and property sets
+      head = `<div class="mark"><b>${esc(e.type || e.name)}</b><span>${esc(e.clsName)}</span></div>`;
+      rows.push(["Name", e.name], ["Storey", e.storey ?? "—"]);
+      if (e.type) rows.push(["Type", e.type]);
+      if (e.width != null) {  // property values are in the file's length unit, not metres
+        const u = m.userData.unit;
+        rows.push(["Size", u.scale ? `${ftin(e.width * u.scale)} × ${ftin(e.height == null ? null : e.height * u.scale)}`
+                                   : `${e.width} × ${e.height ?? "?"} (${u.name})`]);
+      }
+      const sets = { ...Object.fromEntries(Object.entries(e.typePsets || {}).map(([k, v]) => [`${k} (type)`, v])), ...e.psets };
+      extra = `<div class="psets">${Object.entries(sets).slice(0, 12).map(([k, v]) => `<h3>${esc(k)}</h3><dl class="kv">${
+        Object.entries(v).slice(0, 20).map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`).join("")}</div>`;
+    }
+    box.innerHTML = `<p class="eyebrow">Selected</p>${head}<dl class="kv">${rows.map(([k, v]) =>
+      `<dt>${esc(k)}</dt><dd>${v && v.html ? v.html : esc(v ?? "")}</dd>`).join("")}</dl>${extra}`;
+  }
+
+  function counts() {
+    const r = loaded[state.model];
+    if (!r) return;
+    const by = new Map();
+    for (const e of r.data.elements) {
+      if (!e.cls.startsWith("IFCWINDOW") && !e.cls.startsWith("IFCDOOR")) continue;
+      const k = e.type || e.cls, p = e.psets.BF_Opening || {};
+      if (!by.has(k)) by.set(k, { n: 0, desc: (e.typeDesc || "").split(".")[0], safe: !!p.SafetyGlazingRequired,
+                                  glazed: e.cls.startsWith("IFCWINDOW") || !!p.Glazed });
+      by.get(k).n++;
+    }
+    const sw = (v) => `#${(state.safety && v.safe ? COLOR.safety : v.glazed ? COLOR.glass : COLOR.door).toString(16).padStart(6, "0")}`;
+    // Windows before doors, then by number (W1, W2, ... D1, D2), as the schedule lists them.
+    const windowsFirst = ([a], [b]) => (a[0] === "W") === (b[0] === "W") ? a.localeCompare(b, undefined, { numeric: true }) : a[0] === "W" ? -1 : 1;
+    $("#counts").innerHTML = [...by.entries()].sort(windowsFirst)
+      .map(([k, v]) => `<span class="sw" style="background:${sw(v)}"></span><span class="n">${esc(k)} ${v.n}</span><span class="d">${esc(v.desc)}${v.safe ? ", safety glazing" : ""}</span>`).join("")
+      || `<span></span><span class="n">none</span><span class="d">No windows or doors in this file.</span>`;
+    $("#counts-title").textContent = `Windows and doors by type, ${MODELS[state.model]?.label ?? "your file"}`;
+  }
+
+  function storeyButtons() {
+    const r = loaded[state.model], seg = $("#storeys");
+    const names = r ? r.data.storeys.map((s) => s.name) : [];
+    if (!names.includes(state.storey)) state.storey = "all";
+    seg.innerHTML = ["all", ...names].map((n) =>
+      `<button type="button" data-storey="${esc(n)}" aria-pressed="${n === state.storey}">${esc(n === "all" ? "All" : n.replace(/^Level\s*/i, ""))}</button>`).join("");
+    for (const b of seg.querySelectorAll("button")) b.addEventListener("click", () => { state.storey = b.dataset.storey; storeyButtons(); refresh(); });
+  }
+
+  // ---- Camera ----
+  function look(which) {
+    const r = loaded[state.model];
+    if (!r) return;
+    const dirs = { iso: [-1, 0.62, 0.55], front: [-1, 0.12, 0], back: [1, 0.12, 0], end: [0, 0.12, 1] };
+    const d = new THREE.Vector3(...dirs[which]).normalize();
+    const vfov = THREE.MathUtils.degToRad(camera.fov), hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+    camera.position.copy(r.centre).addScaledVector(d, (r.radius / Math.sin(Math.min(vfov, hfov) / 2)) * (which === "iso" ? 0.95 : 0.8));
+    camera.near = Math.max(0.05, r.radius / 500);
+    camera.far = r.radius * 50;
+    camera.updateProjectionMatrix();
+    controls.target.copy(r.centre);
+    controls.update();
+    ground.scale.setScalar(r.radius * 3);
+    ground.position.set(r.centre.x, r.box.min.y - 0.02, r.centre.z);
+    dirty = true;
+  }
+
+  function resize() {
+    const w = view.clientWidth, h = view.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    dirty = true;
+  }
+  new ResizeObserver(resize).observe(view);
+
+  // ---- Picking ----
+  const ray = new THREE.Raycaster();
+  let down = null;
+  canvas.addEventListener("pointerdown", (ev) => { down = [ev.clientX, ev.clientY]; });
+  canvas.addEventListener("pointerup", (ev) => {
+    const r = loaded[state.model];
+    if (!r || !down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 5) return;
+    const rect = canvas.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), camera);
+    const pickable = r.group.children.filter((m) => m.visible && !(state.xray && (m.userData.role === "wall" || m.userData.role === "party")));
+    const hits = ray.intersectObjects(pickable, false);
+    state.selected = hits.length ? hits[0].object : null;
+    refresh();
+  });
+
+  // ---- Switching models ----
+  const pending = {};
+  let wanted = null;  // the model last asked for: a slower load finishing later doesn't take over
+
+  async function load(key, source) {
+    const bytes = source.bytes ?? await (async () => {
+      const res = await fetch(source.file);
+      if (!res.ok) throw new Error(`the server says ${res.status} ${res.statusText || ""}`.trim());
+      return new Uint8Array(await res.arrayBuffer());
+    })();
+    const data = await parse(bytes, key === "own");
+    const r = build(data);
+    r.title = key === "own" ? data.project || source.name : "12-flat walk-up, as issued for bid";
+    r.stat = `${source.name}: ${(bytes.length / 1e3).toFixed(0)} kB, ${data.elements.length} elements, ${data.tris.toLocaleString()} triangles, parsed in ${data.ms.toFixed(0)} ms (${data.schema})`;
+    return r;
+  }
+
+  async function show(key, source) {
+    wanted = key;
+    const btn = document.querySelector(`[data-model="${key}"]`);
+    if (!loaded[key]) {
+      $("#loading").hidden = false;
+      $("#loading").textContent = `Parsing ${source.name} with web-ifc…`;
+      try {
+        pending[key] ??= load(key, source);
+        loaded[key] = await pending[key];
+      } catch (err) {
+        if (wanted === key) $("#loading").textContent = `${source.name} didn't load: ${err.message}.`;
+        return;
+      } finally {
+        delete pending[key];
+      }
+      if (wanted !== key) return;  // another model was asked for meanwhile; this one waits, loaded
+    }
+    state.model = key;
+    for (const b of $("#models").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b === btn));
+    $("#title").textContent = loaded[key].title;
+    if (!webIfcVersion) { try { webIfcVersion = String(api.GetVersion()); } catch {} }  // once the engine has started
+    const empty = loaded[key].data.elements.length === 0 ? " No element in it has geometry to draw." : "";
+    $("#sub").textContent = `${loaded[key].stat}, by That Open's web-ifc ${webIfcVersion}.${empty}`;
+    storeyButtons();
+    refresh();
+    look("iso");
+    $("#loading").hidden = true;
+  }
+  let webIfcVersion = "";
+
+  $("#models").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-model]");
+    if (!b) return;
+    const k = b.dataset.model;
+    if (k === "own") { if (loaded.own) show("own"); return; }
+    show(k, { name: MODELS[k].file.split("/").pop(), file: MODELS[k].file });
+  });
+  $("#pick").addEventListener("change", async (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    if (loaded.own) {
+      scene.remove(loaded.own.group);
+      loaded.own.group.traverse((o) => { o.geometry?.dispose(); if (o.material !== edgeMat) o.material?.dispose(); });
+      delete loaded.own;
+      if (state.model === "own") state.model = "base";
+    }
+    const own = document.querySelector('[data-model="own"]');
+    own.hidden = false;
+    own.textContent = f.name.length > 22 ? f.name.slice(0, 20) + "…" : f.name;
+    state.selected = null;
+    await show("own", { name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+    ev.target.value = "";
+  });
+  for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => look(b.dataset.view));
+  for (const [id, key] of [["#opt-walls", "walls"], ["#opt-xray", "xray"], ["#opt-slabs", "slabs"], ["#opt-safety", "safety"]]) {
+    $(id).addEventListener("change", (ev) => { state[key] = ev.target.checked; refresh(); });
+  }
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+
+  function frame() {
+    if (controls.update() || dirty) { renderer.render(scene, camera); dirty = false; }
+    requestAnimationFrame(frame);
+  }
+
+  inspect(null);
+  resize();
+  applyTheme();
+  frame();
+  try {
+    await ready;
+    $("#loading").textContent = "Parsing apartment.ifc with web-ifc…";
+    await show("base", { name: "apartment.ifc", file: MODELS.base.file });
+  } catch (err) {
+    $("#loading").textContent = `web-ifc didn't start: ${err.message}.`;
+  }
+</script>
+</body>
+</html>

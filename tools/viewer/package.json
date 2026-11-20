@@ -1,0 +1,11 @@
+{
+  "name": "brownfield-ifc-viewer",
+  "private": true,
+  "description": "Pass 3f (D27): a local 3D viewer for the bid set's IFC. That Open's web-ifc parses the IFC in the browser (WebAssembly) and three.js draws it. Served by `uv run brownfield viewer`.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "three": "0.160.0",
+    "web-ifc": "0.0.78"
+  }
+}
