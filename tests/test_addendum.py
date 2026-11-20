@@ -145,3 +145,12 @@ def test_the_schedule_moves_as_the_addendum_says(revision):
     for want in ("W2: withdrawn (24 windows)", "W1 count: 77 -> 101", "D1 width: 6'-0\" -> 5'-0\"",
                  "D1 tempered: not in the model -> True", "D1 safety_glazing: not in the model -> tempered"):
         assert want in lines, want
+
+
+def test_the_rfi_file_repeats(revision):
+    # bcf-client's random ids and the run's time are settled, so the published file repeats.
+    w = addendum.words(revision["apt0"], revision["apt1"], revision["p"])
+    one, two = revision["dir"] / "one.bcf", revision["dir"] / "two.bcf"
+    addendum.write_rfi(revision["base"], one, w)
+    addendum.write_rfi(revision["base"], two, w)
+    assert one.read_bytes() == two.read_bytes()

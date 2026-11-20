@@ -585,7 +585,7 @@ def cmd_bidset(args) -> int:
     with tempfile.TemporaryDirectory() as tmp:
         again = Path(tmp) / "apartment.ifc"
         bidset.write_ifc(apt, frame, params, again)
-        res.append(("a second export is the same file (header aside)", bidset.body_text(again) == bidset.body_text(path),
+        res.append(("a second export is byte-for-byte the same file", again.read_bytes() == path.read_bytes(),
                     f"{len(bidset.body_text(path)):,} lines"))
     print(bidset.report(res))
 
@@ -641,16 +641,25 @@ def cmd_addendum(_args) -> int:
     return 0 if all(ok for _, ok, _ in r["checks"] + r["second"]) else 1
 
 
-def cmd_pdfset(_args) -> int:
-    from . import addendum, pdfset
+def cmd_pdfset(args) -> int:
+    from . import addendum, bidset, pdfset
 
-    r = pdfset.run(load_params())
+    r = pdfset.run(load_params(), publish_to=pdfset.DOCS if args.publish else None)
     text = pdfset.report(r)
     print(text)
     out = addendum.OUT / "conventional.md"
     out.write_text(text + NL, encoding="utf-8")
     print(NL + "wrote " + ", ".join(str(p.relative_to(OUT_DIR.parent)) for p in (r["base_pdf"], r["addendum_pdf"], out)))
-    return 0
+    failed = [(c, ok, d) for c, ok, d in r["checks"] if not ok]
+    print(f"checks on both IFCs (both readers, a repeat export): {len(r['checks']) - len(failed)} of {len(r['checks'])} pass")
+    if failed:
+        print(bidset.report(failed))
+    if r["published"]:
+        print(f"published to {r['publish_to'].relative_to(OUT_DIR.parent)}: "
+              + ", ".join(str(p.relative_to(r["publish_to"])) for p in r["published"]))
+    elif args.publish:
+        print("FAIL nothing published: the checks above must all pass first")
+    return 0 if not failed else 1
 
 
 def cmd_services(_args) -> int:
@@ -842,7 +851,8 @@ def main(argv=None) -> int:
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
-    sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data (after `brownfield addendum`)")
+    ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
+    ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
     sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")
     bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")
     bs.add_argument("--setup-reader", action="store_true", help="install the second reader, web-ifc (tools/webifc, npm ci with the dev group's Node)")

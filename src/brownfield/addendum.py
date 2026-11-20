@@ -27,7 +27,7 @@ import re
 import tempfile
 import uuid
 from collections import Counter
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -135,7 +135,9 @@ def write_rfi(base_ifc: Path, path: Path, w: dict) -> list[str]:
     cam.camera_up_vector = mdl.Direction(x=float(up[0]), y=float(up[1]), z=float(up[2]))
     from xsdata.models.datatype import XmlDateTime
 
-    asked = topic.topic.creation_date
+    # Fixed dates (the question on D27's date, the answer a day later), not the time of the run.
+    asked = XmlDateTime.from_datetime(datetime.fromisoformat(bidset.HEADER_TIME).replace(tzinfo=timezone.utc))
+    topic.topic.creation_date = asked
     answered = XmlDateTime.from_datetime(asked.to_datetime() + timedelta(days=1))
     comments = topic.comments or []
     comments.append(mdl.Comment(guid=str(uuid.uuid4()), date=answered, author=AUTHORS["answered"], comment=w["answer"]))
@@ -144,7 +146,37 @@ def write_rfi(base_ifc: Path, path: Path, w: dict) -> list[str]:
     topic.topic.modified_date, topic.topic.modified_author = answered, AUTHORS["answered"]
     path.parent.mkdir(parents=True, exist_ok=True)
     bcf.save(path)
+    _settle_zip(path, "rfi-001")
     return guids
+
+
+def _settle_zip(path: Path, key: str) -> None:
+    """Make a saved BCF repeatable: bcf-client gives the topic, viewpoint and comment random UUIDs
+    and the zip entries the time of the run. Each UUID becomes a uuid5 of `key` and the order it
+    first appears in; every entry gets D27's date. IFC GlobalIds (22 characters) aren't UUIDs, so
+    they are left alone."""
+    import re
+    import zipfile
+
+    pat = re.compile(rb"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
+    with zipfile.ZipFile(path) as z:
+        items = [(i.filename, z.read(i.filename)) for i in z.infolist()]
+    order: list[bytes] = []
+    for name, data in items:
+        for m in pat.findall(name.encode()) + pat.findall(data):
+            if m.lower() not in order:
+                order.append(m.lower())
+    swap = {m: str(uuid.uuid5(bidset.NAMESPACE, f"{key}/{i}")).encode() for i, m in enumerate(order)}
+
+    def fix(b: bytes) -> bytes:
+        return pat.sub(lambda m: swap[m.group(0).lower()], b)
+
+    stamp = datetime.fromisoformat(bidset.HEADER_TIME).timetuple()[:6]
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, data in items:
+            info = zipfile.ZipInfo(fix(name.encode()).decode(), date_time=stamp)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(info, fix(data))
 
 
 # ---- The diff ----
@@ -275,7 +307,7 @@ def run(params: dict) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         again = Path(tmp) / "apartment.ifc"
         bidset.write_ifc(apt1, frame, params, again, spec=SPEC)
-        checks.append(("a second export is the same file (header aside)", bidset.body_text(again) == bidset.body_text(rev),
+        checks.append(("a second export is byte-for-byte the same file", again.read_bytes() == rev.read_bytes(),
                        f"{len(bidset.body_text(rev)):,} lines"))
     why = bidset.webifc_status()
     second = bidset.check_webifc(rev, apt1, params) if why is None else []

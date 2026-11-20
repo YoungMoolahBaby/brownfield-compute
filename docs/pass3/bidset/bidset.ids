@@ -1,0 +1,1298 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>Windows and doors in a bid set (brownfield-compute pass 3f)</title>
+        <version>0.1</version>
+        <description>What a supplier needs to price a window or door, as requirements an IFC model can be checked against. Properties named BidSet_ are ours, where IFC4 has no standard one.</description>
+        <purpose>bidding</purpose>
+        <milestone>bid set</milestone>
+    </info>
+    <specifications>
+        <specification name="type mark (window)" ifcVersion="IFC4" identifier="type/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Reference</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="type mark (door)" ifcVersion="IFC4" identifier="type/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Reference</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="storey (window)" ifcVersion="IFC4" identifier="storey/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELCONTAINEDINSPATIALSTRUCTURE" cardinality="required">
+                    <entity>
+                        <name>
+                            <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="storey (door)" ifcVersion="IFC4" identifier="storey/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELCONTAINEDINSPATIALSTRUCTURE" cardinality="required">
+                    <entity>
+                        <name>
+                            <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="exterior or not (window)" ifcVersion="IFC4" identifier="external/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="exterior or not (door)" ifcVersion="IFC4" identifier="external/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="unit width (window)" ifcVersion="IFC4" identifier="width/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>OverallWidth</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="unit width (door)" ifcVersion="IFC4" identifier="width/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>OverallWidth</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="unit height (window)" ifcVersion="IFC4" identifier="height/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>OverallHeight</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="unit height (door)" ifcVersion="IFC4" identifier="height/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>OverallHeight</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="rough opening width (window)" ifcVersion="IFC4" identifier="ro_width/IFCWINDOW" description="BidSet_ (ours: IFC's opening element is the hole in the model; this is the size to frame)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>RoughOpeningWidth</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="rough opening width (door)" ifcVersion="IFC4" identifier="ro_width/IFCDOOR" description="BidSet_ (ours: IFC's opening element is the hole in the model; this is the size to frame)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>RoughOpeningWidth</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="rough opening height (window)" ifcVersion="IFC4" identifier="ro_height/IFCWINDOW" description="BidSet_ (ours: IFC's opening element is the hole in the model; this is the size to frame)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>RoughOpeningHeight</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="rough opening height (door)" ifcVersion="IFC4" identifier="ro_height/IFCDOOR" description="BidSet_ (ours: IFC's opening element is the hole in the model; this is the size to frame)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>RoughOpeningHeight</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="operation (window)" ifcVersion="IFC4" identifier="operation/IFCWINDOW" description="BidSet_ (ours: in a supplier's words; IFC4 describes a panel's operation in IfcWindowPanelProperties, in panel terms)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Operation</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="casement" />
+                            <xs:enumeration value="awning" />
+                            <xs:enumeration value="hopper" />
+                            <xs:enumeration value="double-hung" />
+                            <xs:enumeration value="single-hung" />
+                            <xs:enumeration value="horizontal slider" />
+                            <xs:enumeration value="fixed" />
+                            <xs:enumeration value="tilt-turn" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="operation (on the door type) (doortype)" ifcVersion="IFC4" identifier="door_operation/IFCDOORTYPE" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOORTYPE</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>OperationType</simpleValue>
+                    </name>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="SINGLE_SWING_LEFT" />
+                            <xs:enumeration value="SINGLE_SWING_RIGHT" />
+                            <xs:enumeration value="DOUBLE_DOOR_SINGLE_SWING" />
+                            <xs:enumeration value="DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_LEFT" />
+                            <xs:enumeration value="DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_RIGHT" />
+                            <xs:enumeration value="DOUBLE_SWING_LEFT" />
+                            <xs:enumeration value="DOUBLE_SWING_RIGHT" />
+                            <xs:enumeration value="DOUBLE_DOOR_DOUBLE_SWING" />
+                            <xs:enumeration value="SLIDING_TO_LEFT" />
+                            <xs:enumeration value="SLIDING_TO_RIGHT" />
+                            <xs:enumeration value="DOUBLE_DOOR_SLIDING" />
+                            <xs:enumeration value="FOLDING_TO_LEFT" />
+                            <xs:enumeration value="FOLDING_TO_RIGHT" />
+                            <xs:enumeration value="DOUBLE_DOOR_FOLDING" />
+                            <xs:enumeration value="REVOLVING" />
+                            <xs:enumeration value="ROLLINGUP" />
+                            <xs:enumeration value="SWING_FIXED_LEFT" />
+                            <xs:enumeration value="SWING_FIXED_RIGHT" />
+                        </xs:restriction>
+                    </value>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="frame material (window)" ifcVersion="IFC4" identifier="material/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="frame material (door)" ifcVersion="IFC4" identifier="material/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="frame colour inside (window)" ifcVersion="IFC4" identifier="colour_in/IFCWINDOW" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FrameColourInside</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="frame colour inside (door)" ifcVersion="IFC4" identifier="colour_in/IFCDOOR" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FrameColourInside</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="frame colour outside (window)" ifcVersion="IFC4" identifier="colour_out/IFCWINDOW" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FrameColourOutside</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="frame colour outside (door)" ifcVersion="IFC4" identifier="colour_out/IFCDOOR" description="BidSet_ (ours: IFC's styles colour a drawing, not a product)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FrameColourOutside</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: low-e coating (yes or no) (window)" ifcVersion="IFC4" identifier="low_e/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsCoated</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: low-e coating (yes or no) (door)" ifcVersion="IFC4" identifier="low_e/IFCDOOR+glazed" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsCoated</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: gas fill (window)" ifcVersion="IFC4" identifier="gas/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FillGas</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: gas fill (door)" ifcVersion="IFC4" identifier="gas/IFCDOOR+glazed" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FillGas</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: tempered (yes or no) (window)" ifcVersion="IFC4" identifier="tempered/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsTempered</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: tempered (yes or no) (door)" ifcVersion="IFC4" identifier="tempered/IFCDOOR+glazed" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsTempered</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: obscure (yes or no) (window)" ifcVersion="IFC4" identifier="obscure/IFCWINDOW" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ObscureGlass</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="glass: obscure (yes or no) (door)" ifcVersion="IFC4" identifier="obscure/IFCDOOR+glazed" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ObscureGlass</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="U-factor within the code's limit (window)" ifcVersion="IFC4" identifier="u/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCTHERMALTRANSMITTANCEMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ThermalTransmittance</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:maxInclusive value="1.704" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="U-factor within the code's limit (door)" ifcVersion="IFC4" identifier="u/IFCDOOR+glazed" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCTHERMALTRANSMITTANCEMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ThermalTransmittance</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:maxInclusive value="1.704" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="SHGC (window)" ifcVersion="IFC4" identifier="shgc/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCNORMALISEDRATIOMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SolarHeatGainTransmittance</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="SHGC (door)" ifcVersion="IFC4" identifier="shgc/IFCDOOR+glazed" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCNORMALISEDRATIOMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorWindowGlazingType</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SolarHeatGainTransmittance</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="performance grade (design pressure) (window)" ifcVersion="IFC4" identifier="grade/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>WindLoadRating</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:pattern value="(R|LC|CW|AW)-PG[0-9]+.*" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="performance grade (design pressure) (door)" ifcVersion="IFC4" identifier="grade/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>WindLoadRating</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:pattern value="(R|LC|CW|AW)-PG[0-9]+.*" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="escape window (yes or no) (window)" ifcVersion="IFC4" identifier="escape/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireExit</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="escape window: clear opening area (window)" ifcVersion="IFC4" identifier="escape_area/IFCWINDOW+escape" description="BidSet_ (ours: IFC4 has no net clear opening)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireExit</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCAREAMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ClearOpeningArea</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:minInclusive value="0.5295" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="escape window: clear opening width (window)" ifcVersion="IFC4" identifier="escape_width/IFCWINDOW+escape" description="BidSet_ (ours: IFC4 has no net clear opening)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireExit</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ClearOpeningWidth</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:minInclusive value="0.508" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="escape window: clear opening height (window)" ifcVersion="IFC4" identifier="escape_height/IFCWINDOW+escape" description="BidSet_ (ours: IFC4 has no net clear opening)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireExit</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ClearOpeningHeight</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:minInclusive value="0.6096" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="escape window: bottom of the clear opening above the floor (window)" ifcVersion="IFC4" identifier="escape_sill/IFCWINDOW+escape" description="BidSet_ (ours: IFC4 has no net clear opening)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireExit</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>ClearOpeningSillHeight</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:double">
+                            <xs:maxInclusive value="1.1176" fixed="false" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="screen (yes or no) (window)" ifcVersion="IFC4" identifier="screen/IFCWINDOW" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Screen</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="screen (yes or no) (door)" ifcVersion="IFC4" identifier="screen/IFCDOOR+glazed" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Screen</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="grilles (window)" ifcVersion="IFC4" identifier="grilles/IFCWINDOW" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Grilles</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="grilles (door)" ifcVersion="IFC4" identifier="grilles/IFCDOOR+glazed" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Glazed</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Grilles</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="hardware finish (window)" ifcVersion="IFC4" identifier="hardware/IFCWINDOW" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>HardwareFinish</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="hardware finish (door)" ifcVersion="IFC4" identifier="hardware/IFCDOOR" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>HardwareFinish</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="install type (window)" ifcVersion="IFC4" identifier="install/IFCWINDOW" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>InstallType</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="install type (door)" ifcVersion="IFC4" identifier="install/IFCDOOR" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>InstallType</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="in a wall (window)" ifcVersion="IFC4" identifier="in_wall/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELVOIDSELEMENT IFCRELFILLSELEMENT" cardinality="required">
+                    <entity>
+                        <name>
+                            <simpleValue>IFCWALL</simpleValue>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="in a wall (door)" ifcVersion="IFC4" identifier="in_wall/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELVOIDSELEMENT IFCRELFILLSELEMENT" cardinality="required">
+                    <entity>
+                        <name>
+                            <simpleValue>IFCWALL</simpleValue>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="the wall's construction (on exterior walls) (wall)" ifcVersion="IFC4" identifier="wall_construction/IFCWALL+external" description="BidSet_ (ours: IFC4 has no property for it)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWALL</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>Pset_WallCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Wall</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Construction</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="MasterFormat section, level 3 (window)" ifcVersion="IFC4" identifier="masterformat/IFCWINDOW" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <classification cardinality="required">
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:pattern value="08 [0-9][1-9] [0-9]{2}" />
+                        </xs:restriction>
+                    </value>
+                    <system>
+                        <simpleValue>MasterFormat</simpleValue>
+                    </system>
+                </classification>
+            </requirements>
+        </specification>
+        <specification name="MasterFormat section, level 3 (door)" ifcVersion="IFC4" identifier="masterformat/IFCDOOR" description="IFC4 standard">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <classification cardinality="required">
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:pattern value="08 [0-9][1-9] [0-9]{2}" />
+                        </xs:restriction>
+                    </value>
+                    <system>
+                        <simpleValue>MasterFormat</simpleValue>
+                    </system>
+                </classification>
+            </requirements>
+        </specification>
+        <specification name="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it (window)" ifcVersion="IFC4" identifier="safety/IFCWINDOW+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SafetyGlazingRequired</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SafetyGlazing</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="tempered" />
+                            <xs:enumeration value="laminated" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="safety glazing where IBC 2018 2406.4.1-2406.4.3 call for it (door)" ifcVersion="IFC4" identifier="safety/IFCDOOR+hazard" description="BidSet_ (ours: IFC4 has IsTempered and IsLaminated as two yes-or-noes; this names the one that meets the code)">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+                <property dataType="IFCBOOLEAN">
+                    <propertySet>
+                        <simpleValue>BF_Opening</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SafetyGlazingRequired</simpleValue>
+                    </baseName>
+                    <value>
+                        <simpleValue>TRUE</simpleValue>
+                    </value>
+                </property>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>BidSet_Unit</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SafetyGlazing</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="tempered" />
+                            <xs:enumeration value="laminated" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

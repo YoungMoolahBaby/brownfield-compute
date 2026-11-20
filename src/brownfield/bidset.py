@@ -49,6 +49,7 @@ OUT = OUT_DIR / "pass3" / "bidset"
 # Fixed for this project, so every GlobalId is the same from one export to the next.
 NAMESPACE = uuid.UUID("dc59612f-bccb-4cb2-84de-d82f843790d2")
 IN = 0.0254
+HEADER_TIME = "2026-11-19T00:00:00"  # D27's date: the IFC header's time stamp, fixed (see write_ifc)
 
 # The order types are numbered in (W1..., then D1, D2...).
 KINDS = ("window", "patio_door", "entry_door")
@@ -230,6 +231,9 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
     specification says about each kind of unit, {kind: {property set: {property: value}}}, written
     onto every type of that kind (an addendum's answers, say); strings are written as labels."""
     f = project.create_file("IFC4")
+    # A fixed header time, so a re-export is byte-for-byte the same file and the file carries no
+    # local time or time zone (it is published).
+    f.header.file_name.time_stamp = HEADER_TIME
     revision = apt.get("revision") or ""
     proj = _make(f, "IfcProject", "project", "brownfield-compute pass 3f: the walk-up's bid set"
                  + (f" ({revision})" if revision else ""))

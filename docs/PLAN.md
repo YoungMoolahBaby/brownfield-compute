@@ -225,7 +225,8 @@ lacks. The schedule, elevations and quantities now come from the IFC alone (step
 RFI and Addendum 1 ran as a reviewed change (step 5): 36 elements changed, safety glazing fell
 from 36 openings to 12, and every check passed on the revision. As PDFs only (step 6), bidding
 means counting 114 tags by eye, and the addendum means finding 40 changed places on 3 sheets; the
-data side lists them. Next: the pass 3f report (step 7).
+data side lists them. The report is [docs/pass3/bidset.md](pass3/bidset.md) (step 7). Waiting on
+Jon: the rep test. Then the township brief's ask.
 
 ## Decisions
 
@@ -1585,6 +1586,27 @@ data side lists them. Next: the pass 3f report (step 7).
            - the narrative and the sheets could come from different runs;
            - an addendum touching no sheet would have re-issued them all.
     7. **Report** with figures (an elevation from the IFC, the diff) and what we don't know.
+       - **Done 2026-11-19:** [docs/pass3/bidset.md](pass3/bidset.md), with two figures:
+         - the front elevation from the IFC (`bidset_front.svg`);
+         - the revised A-201 sheet with its clouds (`bidset_addendum.png`).
+
+         `brownfield pdfset --publish` publishes the figures and the files to `docs/pass3/bidset/`
+         (~0.9 MB): both IFCs, the IDS and its checklist, each IFC's drawings and schedule, the
+         RFI and the addendum's diff, both PDF sets and the comparison. The README and pass 3's
+         README link the report.
+         - It publishes only after both readers' checks pass on both IFCs, 46 in all, with a
+           byte-for-byte repeat export. Otherwise it exits 1 and publishes nothing.
+         - The published files repeat byte for byte, and carry no local time or time zone:
+           - the IFC header's time is fixed (`bidset.HEADER_TIME`);
+           - the PDFs have no creation date;
+           - the BCF's random ids and dates are settled.
+         - 4 more tests (`tests/test_addendum.py` 11, `tests/test_pdfset.py` 13). All 238 pass.
+         - Code review (before the commit): 11 findings, all fixed. The important one: it
+           published IFCs nothing had checked.
+         - The report states what a town could ask for: the model as IFC, checked against an
+           IDS like this one, and addenda as revised models with a diff. That goes into the
+           township brief once the rep test is in.
+         - Still open from Jon: the rep test.
   - **Checks (known cases):**
     - read back from the IFC: 114 openings, 101 / 12 / 1 by type, sizes exact, positions within
       1 mm of forge's;

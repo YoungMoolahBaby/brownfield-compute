@@ -26,7 +26,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import bidset
+from . import OUT_DIR, bidset
 
 SHEET_W, SHEET_H = 36.0, 24.0  # in, ARCH D
 BORDER, TITLE_W = 0.5, 4.0  # in: the border, and the title block's strip on the right
@@ -240,10 +240,69 @@ def _draw_schedule(ax, rows: list[dict], clouded: set, removed_rows: list[str], 
     ax.plot([xs[0], xs[-1]], [y + 0.1, y + 0.1], color="black", lw=0.8)
 
 
+def _draw_sheet(ax, rb: dict, number: str, revision: str, changes: dict) -> None:
+    """One sheet, its title block and drawing, `changes` (from `compare`) clouded."""
+    delta = revision.split("-")[-1] if revision else ""
+
+    def keys(sheet, kinds):
+        return {k for kind in kinds for k, *_ in changes.get(sheet, {}).get(kind, [])}
+
+    if number == SCHEDULE:
+        _title_block(ax, number, "WINDOW AND DOOR SCHEDULE", revision)
+        removed_rows = [k[0] for k in keys(SCHEDULE, ["removed"]) if k[1] == "row"]
+        _draw_schedule(ax, bidset.schedule_rows(rb), keys(SCHEDULE, ["changed", "added"]), sorted(removed_rows), delta)
+        return
+    title, faces = ELEVATIONS[number]
+    _title_block(ax, number, title, revision)
+    cl = keys(number, ["changed", "added"])
+    gone = [a for _, a, _ in changes.get(number, {}).get("removed", [])]
+    x, y = 1.5, SHEET_H - 9.5
+    for face in faces:
+        el = bidset.elevation(rb, face)
+        if x + el["width"] * SCALE_IN_PER_M + 2.0 > _usable_right():
+            raise ValueError(f"{number}: the {face} elevation runs into the title block at 1/4\" = 1'-0\"")
+        _draw_elevation(ax, el, x, y, f"{face.upper()} ELEVATION", cl, [p for p in gone if p.key[0] == face], delta)
+        x += el["width"] * SCALE_IN_PER_M + 3.0
+
+
+def sheet_png(rb: dict, number: str, path: Path, revision: str = "", changes: dict | None = None,
+              crop: tuple | None = None, dpi: int = 70) -> None:
+    """One sheet as a PNG, optionally cropped to (x0, x1, y0, y1) in sheet inches, for a report."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = _figure()
+    try:
+        _draw_sheet(ax, rb, number, revision, changes or {})
+        if crop:
+            x0, x1, y0, y1 = crop
+            ax.set_xlim(x0, x1)
+            ax.set_ylim(y0, y1)
+            fig.set_size_inches(x1 - x0, y1 - y0)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=dpi, facecolor="white")
+    finally:
+        plt.close(fig)
+
+
+def elevation_crop(rb: dict, face: str) -> tuple:
+    """The part of an elevation sheet one facade's drawing takes, with its labels and deltas (as
+    `_draw_sheet` places the first facade on a sheet), for `sheet_png`."""
+    el = bidset.elevation(rb, face)
+    s = SCALE_IN_PER_M
+    x0, y0 = 1.5, SHEET_H - 9.5
+    top = max([el["z1"]] + [r[3] for r in el["roofs"]])
+    return (x0 - 0.5, min(x0 + el["width"] * s + 3.0, SHEET_W - BORDER - TITLE_W),
+            y0 - 1.3, min(y0 + (top - el["z0"]) * s + 0.6, SHEET_H - BORDER))
+
+
 def write_set(rb: dict, path: Path, revision: str = "", changes: dict | None = None, narrative: list[str] | None = None,
               sheets: list[str] | None = None) -> list[str]:
     """The set as a PDF: an optional narrative page (an addendum), then the sheets (all if `sheets`
-    is None, else those named), with `changes` (from `compare`) clouded. Returns the page names."""
+    is None, else those named), with `changes` (from `compare`) clouded. Returns the page names.
+    No creation date, so the file carries no local time and repeats."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -253,55 +312,90 @@ def write_set(rb: dict, path: Path, revision: str = "", changes: dict | None = N
     changes = changes or {}
     order = [*ELEVATIONS, SCHEDULE] if sheets is None else list(sheets)
     path.parent.mkdir(parents=True, exist_ok=True)
-    delta = revision.split("-")[-1] if revision else ""
 
-    def keys(sheet, kinds):
-        return {k for kind in kinds for k, *_ in changes.get(sheet, {}).get(kind, [])}
+    def page(pdf, draw):
+        fig, ax = _figure()
+        try:
+            draw(ax)
+            pdf.savefig(fig)
+        finally:
+            plt.close(fig)
+
+    def narrative_page(ax):
+        _title_block(ax, "ADD-1", "ADDENDUM", revision)
+        y = SHEET_H - 2.0
+        for line in narrative:
+            ax.text(1.5, y, line, fontsize=11 if line.isupper() else 10, va="top", wrap=True,
+                    weight="bold" if line.isupper() else "normal")
+            y -= 0.42
 
     # TrueType text, so the PDF's text stays text, as a bidder's tools read it; only for these pages.
     with matplotlib.rc_context({"pdf.fonttype": 42}), PdfPages(
             path, metadata={"Title": f"walk-up bid set{(' ' + revision) if revision else ''}",
-                            "Creator": "brownfield-compute pass 3f"}) as pdf:
+                            "Creator": "brownfield-compute pass 3f", "CreationDate": None}) as pdf:
         if narrative is not None:
-            fig, ax = _figure()
-            _title_block(ax, "ADD-1", "ADDENDUM", revision)
-            y = SHEET_H - 2.0
-            for line in narrative:
-                ax.text(1.5, y, line, fontsize=11 if line.isupper() else 10, va="top", wrap=True,
-                        weight="bold" if line.isupper() else "normal")
-                y -= 0.42
-            pdf.savefig(fig)
-            plt.close(fig)
+            page(pdf, narrative_page)
         for number in order:
-            fig, ax = _figure()
-            if number == SCHEDULE:
-                _title_block(ax, number, "WINDOW AND DOOR SCHEDULE", revision)
-                removed_rows = [k[0] for k in keys(SCHEDULE, ["removed"]) if k[1] == "row"]
-                _draw_schedule(ax, bidset.schedule_rows(rb), keys(SCHEDULE, ["changed", "added"]), sorted(removed_rows), delta)
-            else:
-                title, faces = ELEVATIONS[number]
-                _title_block(ax, number, title, revision)
-                cl = keys(number, ["changed", "added"])
-                gone = [a for _, a, _ in changes.get(number, {}).get("removed", [])]
-                x, y = 1.5, SHEET_H - 9.5
-                for face in faces:
-                    el = bidset.elevation(rb, face)
-                    if x + el["width"] * SCALE_IN_PER_M + 2.0 > _usable_right():
-                        raise ValueError(f"{number}: the {face} elevation runs into the title block at 1/4\" = 1'-0\"")
-                    _draw_elevation(ax, el, x, y, f"{face.upper()} ELEVATION", cl,
-                                    [p for p in gone if p.key[0] == face], delta)
-                    x += el["width"] * SCALE_IN_PER_M + 3.0
-            pdf.savefig(fig)
-            plt.close(fig)
+            page(pdf, lambda ax, n=number: _draw_sheet(ax, rb, n, revision, changes))
     return (["ADD-1"] if narrative is not None else []) + order
 
 
 # ---- The comparison ----
 
-def run(params: dict) -> dict:
+DOCS = OUT_DIR.parent / "docs" / "pass3"
+
+
+def publish(base: Path, rev: Path, rb0: dict, rb1: dict, r: dict, w: dict, narrative: list[str], params: dict,
+            to: Path) -> list[Path]:
+    """The pass report's figures and the bid set's files, for anyone to open without running
+    anything, into `to` (docs/pass3), from the IFCs this run built and checked (`run` publishes
+    only when every check passed):
+    - the figures bidset_front.svg and bidset_addendum.png;
+    - in bidset/: the IFC and its Addendum 1 revision, the IDS and its checklist on the model, the
+      drawings and schedule of each, the RFI, the two PDF sets, the addendum's diff, and what the
+      PDFs cost a bidder against the data."""
+    import shutil
+
+    from . import addendum
+
+    pub = to / "bidset"
+    pub.mkdir(parents=True, exist_ok=True)
+    out = [pub / "apartment.ifc", pub / f"apartment-{addendum.REVISION}.ifc"]
+    shutil.copyfile(base, out[0])
+    shutil.copyfile(rev, out[1])
+    doc = bidset.write_ids(params, pub / "bidset.ids")
+    se = r["single_exit"]  # so the escape rows say how many are needed, as the report's table does
+    (pub / "checklist.md").write_text(
+        bidset.ids_report(bidset.run_ids(doc, base), (se["escape_needed_upper"], se["escape_needed_ground"])) + "\n",
+        encoding="utf-8")
+    d0 = bidset.write_drawings(base, pub / "drawings")
+    d1 = bidset.write_drawings(rev, pub / f"drawings-{addendum.REVISION}")
+    addendum.write_rfi(base, pub / "rfi-001.bcf", w)
+    write_set(rb0, pub / "bidset.pdf")
+    write_set(rb1, pub / f"{addendum.REVISION}.pdf", revision=addendum.REVISION, changes=r["diff"], narrative=narrative,
+              sheets=r["revised_sheets"])
+    diff_text = "\n".join(["What Addendum 1 changed, element by element (by GlobalId):",
+                           *(f"  {x}" for x in addendum.diff_summary(r["data_diff"])), "",
+                           "The schedule, where it moved:", *(f"  {x}" for x in r["schedule_changes"])])
+    (pub / f"{addendum.REVISION}-diff.md").write_text(diff_text + "\n", encoding="utf-8")
+    (pub / "conventional.md").write_text(report(r) + "\n", encoding="utf-8")
+    shutil.copyfile(pub / "drawings" / "elevation_front.svg", to / "bidset_front.svg")
+    sheet_png(rb1, "A-201", to / "bidset_addendum.png", revision=addendum.REVISION, changes=r["diff"],
+              crop=elevation_crop(rb1, "front"))
+    return [*out, pub / "bidset.ids", pub / "checklist.md", *d0["written"], *d1["written"], pub / "rfi-001.bcf",
+            pub / "bidset.pdf", pub / f"{addendum.REVISION}.pdf", pub / f"{addendum.REVISION}-diff.md",
+            pub / "conventional.md", to / "bidset_front.svg", to / "bidset_addendum.png"]
+
+
+def run(params: dict, publish_to: Path | None = None) -> dict:
     """The bid set and Addendum 1 as PDFs, and what each costs a bidder with only the PDFs,
-    against the data side. The IFCs are rebuilt from forge's current model (base and revision,
-    the revision checked to be the base plus the addendum), so everything comes from one run."""
+    against the data side.
+    - The IFCs are rebuilt from forge's current model, and the revision is checked to be the base
+      plus the addendum, so everything comes from one run.
+    - Both IFCs are checked by both readers (`bidset.check`, `bidset.check_webifc`) and for a
+      byte-for-byte repeat export.
+    - With `publish_to` (docs/pass3 from the command line), the report's figures and files go
+      there, but only if every check passed and the second reader ran."""
     from . import addendum
 
     apt0, frame = bidset.load()
@@ -311,32 +405,47 @@ def run(params: dict) -> dict:
         w_in = params["bidset.addendum_1.patio_door_width_in"].value
         raise SystemExit(f"out/pass3/apartment-{addendum.REVISION}.json isn't the base model with Addendum 1 ("
                          + "; ".join(errs) + f"): rerun forge `apartment-json` and `apartment-json {addendum.REVISION} {w_in:g}`")
+    w = addendum.words(apt0, apt1, params)
+    why = bidset.webifc_status()
     with tempfile.TemporaryDirectory() as tmp:
         base, rev = Path(tmp) / "base.ifc", Path(tmp) / "rev.ifc"
         bidset.write_ifc(apt0, frame, params, base)
         bidset.write_ifc(apt1, frame, params, rev, spec=addendum.SPEC)
+        checks = []
+        for label, path, apt, spec in (("base", base, apt0, None), ("Addendum 1", rev, apt1, addendum.SPEC)):
+            again = Path(tmp) / f"again-{label[0]}.ifc"
+            bidset.write_ifc(apt, frame, params, again, spec=spec)
+            found = bidset.check(path, apt, params) + (bidset.check_webifc(path, apt, params) if why is None else [])
+            found.append(("a second export is byte-for-byte the same file", again.read_bytes() == path.read_bytes(), ""))
+            checks += [(f"{label}: {c}", ok, detail) for c, ok, detail in found]
+        if why is not None:
+            checks.append(("the second reader (web-ifc) ran", False, why))
         rb0, rb1 = bidset.read_back(base), bidset.read_back(rev)
         data = addendum.element_diff(base, rev)
-    p0, p1 = places(rb0), places(rb1)
-    diff = compare(p0, p1)
-    revised = list(diff)
-    w = addendum.words(apt0, apt1, params)
-    narrative = ["ADDENDUM 1", "", *w["items"], "", f"In answer to {w['title'].split(':')[0]}.",
-                 (f"Revised sheets, attached, changes clouded: {', '.join(revised)}." if revised
-                  else "No sheets are revised by this addendum."),
-                 "Bidders shall acknowledge receipt of this addendum on the bid form."]
-    out_base = bidset.OUT / "pdf" / "bidset.pdf"
-    out_add = addendum.OUT / "pdf" / "addendum-1.pdf"
-    write_set(rb0, out_base)
-    write_set(rb1, out_add, revision=addendum.REVISION, changes=diff, narrative=narrative, sheets=revised)
-    on_elev = [p for p in p0 if p.sheet in ELEVATIONS]
-    tags = {s: sum(1 for p in on_elev if p.sheet == s) for s in ELEVATIONS}
-    marks = sorted({p.mark for p in on_elev}, key=bidset._mark_key)
-    by_mark = {m: sum(1 for p in on_elev if p.mark == m) for m in marks}
-    sched = addendum.schedule_changes(bidset.schedule_rows(rb0), bidset.schedule_rows(rb1))
-    return {"base_pdf": out_base, "addendum_pdf": out_add, "tags_by_sheet": tags, "tags_by_mark": by_mark,
-            "schedule_rows": len(bidset.schedule_rows(rb0)), "diff": diff, "places_changed": count(diff),
-            "revised_sheets": revised, "data_diff": data, "schedule_changes": sched}
+        p0, p1 = places(rb0), places(rb1)
+        diff = compare(p0, p1)
+        revised = list(diff)
+        narrative = ["ADDENDUM 1", "", *w["items"], "", f"In answer to {w['title'].split(':')[0]}.",
+                     (f"Revised sheets, attached, changes clouded: {', '.join(revised)}." if revised
+                      else "No sheets are revised by this addendum."),
+                     "Bidders shall acknowledge receipt of this addendum on the bid form."]
+        out_base = bidset.OUT / "pdf" / "bidset.pdf"
+        out_add = addendum.OUT / "pdf" / "addendum-1.pdf"
+        write_set(rb0, out_base)
+        write_set(rb1, out_add, revision=addendum.REVISION, changes=diff, narrative=narrative, sheets=revised)
+        on_elev = [p for p in p0 if p.sheet in ELEVATIONS]
+        marks = sorted({p.mark for p in on_elev}, key=bidset._mark_key)
+        r = {"base_pdf": out_base, "addendum_pdf": out_add,
+             "tags_by_sheet": {s: sum(1 for p in on_elev if p.sheet == s) for s in ELEVATIONS},
+             "tags_by_mark": {m: sum(1 for p in on_elev if p.mark == m) for m in marks},
+             "schedule_rows": len(bidset.schedule_rows(rb0)), "diff": diff, "places_changed": count(diff),
+             "revised_sheets": revised, "data_diff": data,
+             "schedule_changes": addendum.schedule_changes(bidset.schedule_rows(rb0), bidset.schedule_rows(rb1)),
+             "checks": checks, "publish_to": publish_to, "published": [],
+             "single_exit": bidset.single_exit(apt0, params)}
+        if publish_to is not None and all(ok for _, ok, _ in checks):
+            r["published"] = publish(base, rev, rb0, rb1, r, w, narrative, params, publish_to)
+    return r
 
 
 def report(r: dict) -> str:

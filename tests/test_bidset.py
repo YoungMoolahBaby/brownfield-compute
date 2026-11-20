@@ -107,7 +107,9 @@ def test_the_ifc_is_the_same_every_export(ifc, tmp_path):
     apt, frame, p, path = ifc
     again = tmp_path / "again.ifc"
     bidset.write_ifc(apt, frame, p, again)
-    assert bidset.body_text(again) == bidset.body_text(path)
+    # Byte for byte, header included: its time stamp is fixed, so no local time is published.
+    assert again.read_bytes() == path.read_bytes()
+    assert f"'{bidset.HEADER_TIME}'" in path.read_text(encoding="utf-8").splitlines()[3]
 
 
 def test_the_check_catches_a_window_moved_or_resized(ifc):

@@ -230,6 +230,17 @@ yet.
       inputs' ranges.
   - [What a real application needs](docs/pass3/checklist.md): Pennsylvania's and Indiana County's
     lists, item by item, against this plan.
+  - [The bid set as data](docs/pass3/bidset.md) (pass 3f, D27): the walk-up issued as an open
+    model (IFC) with a machine-checked list of what a quote needs, against the same building as
+    PDFs only.
+    - The design model carries 8 of the 32 fields a window or door quote needs, and nothing
+      about the product itself.
+    - The code calls for safety glazing in 24 windows nothing had flagged.
+    - The one stair is allowed only with sprinklers and an escape window in every bedroom, and
+      the windows' operation, which the model leaves out, decides whether they qualify.
+    - From PDFs, a bidder counts 114 tags by eye to bid and finds 40 changed places for one
+      addendum. The data lists them, and a change runs through the model like a reviewed pull
+      request.
   - [The real land](docs/pass3/land.md) (D17): AWS's six sites mapped on public data, fitted from
     the county's posted master plan.
     - Half the ground round the plant is clear to build on. Old coal mines lie under the other half

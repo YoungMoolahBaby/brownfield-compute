@@ -22,6 +22,9 @@ cheaper per dwelling over 20 years (at most ~$0.9 thousand, ~4%). Against a heat
 all-electric neighbourhood), 500 within 1 km or 1,000 within 1.5 km, by up to ~$2.7 thousand
 (~12%). Detached houses on the loop never pay; townhouses only break even.
 
+The same walk-up issued as a bid set, an open model (IFC) with its drawings and a checklist of
+what a quote needs, against the same set as PDFs only: [pass 3f, the bid set as data](bidset.md).
+
 ## 1. The first house, in CortenForge
 
 The 24 x 40 ft example from D1: one storey, 8 ft walls of 2x6 framing (~178 mm), a 6:12 gable

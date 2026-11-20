@@ -118,3 +118,33 @@ def test_a_row_that_comes_or_goes_counts_once():
     new = [P("A-601", ("W1", c), "W1", "x") for c in pdfset.COLUMNS] + [P("A-601", ("W3", c), "W3", "z") for c in pdfset.COLUMNS]
     diff = pdfset.compare(old, new)
     assert (len(diff["A-601"]["removed"]), len(diff["A-601"]["added"]), len(diff["A-601"]["changed"])) == (1, 1, 0)
+
+
+def test_the_pdfs_carry_no_creation_date(sets, tmp_path):
+    pdfset.write_set(sets["rb0"], tmp_path / "set.pdf", sheets=["A-203"])
+    assert "/CreationDate" not in (PdfReader(str(tmp_path / "set.pdf")).metadata or {})
+
+
+def test_figures_are_closed_when_a_drawing_doesnt_fit(sets, tmp_path):
+    import copy
+
+    import matplotlib.pyplot as plt
+
+    long = copy.deepcopy(sets["rb0"])
+    long["hi"][1] = long["lo"][1] + 40.0
+    before = len(plt.get_fignums())
+    for draw in (lambda: pdfset.write_set(long, tmp_path / "long.pdf", sheets=["A-201"]),
+                 lambda: pdfset.sheet_png(long, "A-201", tmp_path / "long.png")):
+        with pytest.raises(ValueError):
+            draw()
+    assert len(plt.get_fignums()) == before
+
+
+def test_the_report_figure_crop_holds_the_drawing(sets):
+    # The crop takes the front elevation's width at 1/4" = 1'-0", its height and roof, and room
+    # for its labels, inside the sheet's border and clear of the title block.
+    x0, x1, y0, y1 = pdfset.elevation_crop(sets["rb1"], "front")
+    el = bidset.elevation(sets["rb1"], "front")
+    assert x1 - x0 >= el["width"] * pdfset.SCALE_IN_PER_M + 2.0
+    assert y1 - y0 >= (max(r[3] for r in el["roofs"]) - el["z0"]) * pdfset.SCALE_IN_PER_M + 1.3
+    assert x1 <= pdfset.SHEET_W - pdfset.BORDER - pdfset.TITLE_W and y1 <= pdfset.SHEET_H - pdfset.BORDER
