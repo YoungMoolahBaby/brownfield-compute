@@ -208,6 +208,13 @@ mills, CLR 0.704, $600/sq ft taxable), $68M of it school tax (~3x Homer-Center's
 housing; corrected by D26: $92M, the school tax split $33M Homer-Center and $33M River Valley); the gap for every newcomer and every burdened household ~$55M. Steer: 100-250 mixed flats
 at the campus edge, funded in the community benefits agreement.
 
+**Pass 3f SCOPED (2026-11-19), the bid set as data (D27).** The walk-up goes out to bid as an
+open model (IFC4) with a machine-checked list of what a bid set must carry (buildingSMART's IDS).
+Its window schedule and elevations are generated from that model, and a made-up addendum is run as
+a reviewed change: an element-level diff, the checks rerun, the drawings regenerated. All of it is
+set against the same building issued as PDFs only. It is not an exchange and not construction
+documents. Waiting on Jon: what a window rep needs on a schedule to quote.
+
 ## Decisions
 
 - **D1** (2026-11-15) Jon asked for "a repo modeling and building a house in cortenforge". He
@@ -1091,6 +1098,88 @@ at the campus edge, funded in the community benefits agreement.
     - the aid formula's dollars;
     - capacity;
     - ambulance response times.
+
+- **D27** (2026-11-19) The bid set as data (pass 3f, scoped; `brownfield bidset`, report
+  `docs/pass3/bidset.md`).
+  - **The question:** bid sets reach subcontractors as PDFs, so every bidder, and every supplier's
+    rep, redraws the same building (the window elevations, say) before pricing it. Jon likened
+    RFIs, addenda and submittals to pull requests, and asked whether we should build a
+    construction exchange.
+  - **The steer:** not an exchange.
+    - An exchange sits downstream of the problem: it posts what the architect sends, and the
+      architect sends PDFs.
+    - It can't start without jobs and bidders, and the incumbents (Dodge, ConstructConnect,
+      Autodesk's BuildingConnected) hold both.
+    - AI takeoff from PDFs is already sold (Togal.AI is one), and the incumbents will add it.
+    - The lever is the owner's contract. The formats mostly exist: IFC (the model), BCF (issues
+      tied to model elements, i.e. RFIs), IDS (a machine-checkable list of what a model must
+      carry, v1.0 in 2024). What's missing is a definition of what a bid set must carry, and
+      addenda as diffs.
+    - So: write that definition as an IDS and show it working on a building of ours. A town can
+      ask for it for the buildings it pays for (D23's "a standard developers can be held to"),
+      and it lets small local subs bid them cheaply.
+  - Jon: "this is good. let's scope it".
+  - **The building:** pass 3b's walk-up, 114 openings by its layout: 101 windows (3'-0" x 4'-0",
+    sill 3'-0"), 12 patio doors (6'-0" x 6'-8") and 1 entry door (3'-6" x 6'-8").
+  - **Steps:**
+    0. **Spike first.** Pin IfcOpenShell 0.9.0.post1, ifctester 0.9.0 and ifcdiff 0.9.0 (PyPI,
+       2026-09/10; wheels of 43 MB and 25 MB, the rest small). One wall and one window to IFC4;
+       export it twice and get an empty diff; check it against a one-line IDS. If any of that
+       fails, stop
+       and report.
+    1. **Forge writes the whole model** to `out/pass3/apartment.json`: every opening with a
+       stable id (storey, flat, face, index) and its size and position; walls, slabs and the roof.
+       Today the file carries only the opening widths.
+    2. **The IFC** (`src/brownfield/bidset.py`): site, building, three storeys; walls, slabs and
+       roof; windows and doors with their types (W1, D1, D2) and voids.
+       - GlobalIds derived from the stable ids, so a re-export changes nothing.
+       - Thermal transmittance from `params/pass3.yaml` `window_u` (the number the heat model
+         used); a MasterFormat classification per type (our choice, marked judgement).
+    3. **The IDS**, generated from `params/bidset.yaml` so its numbers live in params: type,
+       storey, overall width and height, external or not, U-factor, MasterFormat section,
+       operation (casement, slider...), safety glazing where IBC 2406 requires it, escape size
+       where IBC 1031 requires it.
+       - It is expected to fail at first: the model has no operation type or clear opening.
+         Finding what a design model leaves out is the point.
+       - The list is checked against what a window quote needs: from Jon, and from the published
+         rating fields (NFRC U-factor and SHGC; NAFS performance grade, edition to confirm).
+    4. **From the IFC alone** (not from forge, to show the file is enough): the window and door
+       schedule (CSV), the four elevations with tags (SVG), and quantities (glazed area per flat,
+       net wall area).
+    5. **The addendum as a reviewed change:** an RFI as a BCF topic on the patio door type (the
+       schedule doesn't say its glass) answered by an addendum with one data change (D1 tempered)
+       and one size change (W1's height, the escape question). Re-export, `ifcdiff`, the IDS
+       rerun and the drawings regenerated. That is the CI step.
+    6. **The conventional side:** the same building issued as a PDF set (elevations and the
+       schedule sheet, generated). For each change in the addendum, count the places a bidder
+       must find by eye on the sheets against the rows in the diff. Our sheets are cleaner than a
+       real set, so the count is a lower bound.
+    7. **Report** with figures (an elevation from the IFC, the diff) and what we don't know.
+  - **Checks (known cases):**
+    - read back from the IFC: 114 openings, 101 / 12 / 1 by type, sizes exact, positions within
+      1 mm of forge's;
+    - the file passes IfcOpenShell's schema validation and opens in a second, independent viewer;
+    - the IDS passes a good model and fails a broken one (a window without width, a type
+      without a section) with exactly those failures;
+    - re-exporting the unchanged model gives an empty diff; the addendum's diff lists exactly
+      the elements it changed;
+    - glazed area per flat equals pass 3b's `flat_envelope`; the elevations put every opening
+      where forge's drawing does.
+  - **From Jon:**
+    - what his rep needs on a schedule to quote a window;
+    - the rep test: hand the schedule, the IFC and the PDFs to a rep and ask whether the quoting
+      software takes it, what's missing, and the time against working from PDFs. One data point,
+      reported as one, with no names.
+  - **Out of scope:** an exchange or any hosting; construction documents (they need a licensed
+    architect's or engineer's seal); the data halls, whose operators keep designs confidential
+    for security; framing members and MEP (framing is a later step, its board feet against
+    `brownfield frame`'s); costs.
+  - **What we expect not to know:** liability wording (untested here); what producing it costs
+    an architect; whether quoting software imports it; real takeoff error rates (no source yet);
+    Pennsylvania's public-bidding rules for town-owned buildings (the Separations Act among them).
+  - **If it holds:** an ask in the township brief that the buildings the benefits agreement pays
+    for go out to bid with their model as data, and a line in D23's standard. CortenForge gets an
+    entry: no IFC export and no stable part ids.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 
