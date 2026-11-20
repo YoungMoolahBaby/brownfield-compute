@@ -216,7 +216,8 @@ set against the same building issued as PDFs only. It is not an exchange and not
 documents. Jon: a window quote needs every field on the list in D27. The spike passed (D27 step
 0), and forge now writes the whole walk-up with a stable id on every opening (step 1).
 `brownfield bidset` writes it as IFC4 and holds the file to forge's model on every check (step 2).
-Next: a second, independent reader (That Open's web-ifc, Jon's choice), then the IDS (step 3).
+A second reader, That Open's web-ifc, reads the same building on every export. Next: the IDS
+(step 3).
 
 ## Decisions
 
@@ -1222,10 +1223,48 @@ Next: a second, independent reader (That Open's web-ifc, Jon's choice), then the
        - **Code review** (2026-11-19, before the commit): 14 findings, all fixed. The 2 important
          ones were the stair walls marked non-bearing and the check never confirming that every
          part was in the file.
-       - **Not yet:** a second, independent reader. Jon chose That Open's web-ifc: a scripted check
-         that reruns every export, with Node from the `nodejs-wheel-binaries` wheel (pinned in the
-         project) and web-ifc 0.0.78. Its browser viewer, built on the same parser, serves for
-         looking.
+       - **A second, independent reader** (Jon chose That Open's web-ifc), done 2026-11-19.
+         - **What it is:** web-ifc is That Open's parser and geometry kernel (MPL-2.0), separate
+           from IfcOpenShell. `brownfield bidset` now runs it on every export, and fails, saying
+           why, if it can't (no Node, not installed, or a version other than the lock's).
+         - **The parts:**
+           - Node 24.19.0 comes from the `nodejs-wheel-binaries` wheel, so there is no system
+             install. It is pinned in its own `webifc` group, which is installed by default;
+             `uv sync --no-group webifc` leaves it out where no wheel fits the platform.
+           - web-ifc 0.0.78 (2026-09-21) is pinned by its sha512 in `tools/webifc/package-lock.json`.
+           - Install it once with `uv run brownfield bidset --setup-reader` (`npm ci`, install
+             scripts off).
+           - `tools/webifc/check.mjs` writes what web-ifc finds to a report file (web-ifc logs on
+             stdout, which is passed on), and `bidset.check_webifc` compares that with forge's
+             model. Each class is read with its subclasses, as IfcOpenShell's `by_type` reads
+             them.
+         - **What it confirms:**
+           - it is the web-ifc the lock pins;
+           - every element of forge's model once, by class, and nothing else: 24 walls, 6 slabs,
+             114 openings, 101 windows, 13 doors;
+           - 101 / 12 / 1 by type, and every size exact;
+           - every element in its storey, and every opening voiding its own wall and holding its
+             own unit;
+           - every unit's id, kind, flat, face, index and sill height;
+           - each type's U-factor is its params value;
+           - glazing per flat equals pass 3b's;
+           - web-ifc's own geometry puts every wall, slab, window and door where forge has it,
+             worst 0.0003 mm (its vertices are 32-bit floats). Its meshes are y-up, so the file's
+             (x, y, z) is web-ifc's (x, -z, y).
+         - **Tests:** 3 more in `tests/test_bidset.py` (17 now):
+           - the check catches a window moved 5 mm and a wrong sill;
+           - a mesh with no vertices, or a unit with no width, fails the check rather than
+             passing or crashing.
+
+           They skip, saying why, if the reader isn't ready. All 198 tests pass.
+         - **Code review** (2026-11-19, before the commit): 12 findings, all fixed. The 4
+           important ones:
+           - an empty mesh passed, because its box became NaN and `max` dropped it;
+           - web-ifc's own messages on stdout would have broken the JSON report;
+           - a unit with no size crashed the check;
+           - the main command needed a dev-only module.
+         - **For looking:** That Open's browser viewer, built on the same parser, reads the file
+           locally.
     3. **The IDS**, generated from `params/bidset.yaml` so its numbers live in params: type,
        storey, overall width and height, external or not, U-factor, MasterFormat section,
        operation (casement, slider...), safety glazing where IBC 2406 requires it, escape size

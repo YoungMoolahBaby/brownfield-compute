@@ -174,3 +174,50 @@ def test_an_addendum_changes_only_what_it_changes(ifc, tmp_path):
     removed = sorted(f"{g0[g].is_a()}" for g in set(g0) - g1)
     assert removed == sorted(["IfcWindow", "IfcOpeningElement", "IfcPropertySet", "IfcRelDefinesByProperties",
                               "IfcRelVoidsElement", "IfcRelFillsElement"]), (gone, removed)
+
+
+# ---- The second reader, web-ifc ----
+
+webifc = pytest.mark.skipif(not bidset.webifc_ready(), reason=f"second reader not ready: {bidset.webifc_status()}")
+
+
+@webifc
+def test_web_ifc_reads_the_same_building(ifc):
+    apt, _, p, path = ifc
+    res = bidset.check_webifc(path, apt, p)
+    assert all(ok for _, ok, _ in res), bidset.report(res)
+
+
+@webifc
+def test_web_ifc_check_catches_a_moved_window_and_a_wrong_sill(ifc):
+    apt, _, p, path = ifc
+    moved = copy.deepcopy(apt)
+    o = moved["openings"][7]
+    o["panel_lo_m"][2] += 0.005
+    o["panel_hi_m"][2] += 0.005
+    o["sill_above_floor_m"] += 0.005
+    res = {label.split(" (")[0]: ok for label, ok, _ in bidset.check_webifc(path, moved, p)}
+    assert res["web-ifc's own geometry: every wall, slab, window and door where forge has it"] is False
+    assert res["web-ifc: every unit's id, kind, flat, face, index and sill height"] is False
+
+
+@webifc
+def test_web_ifc_check_fails_on_an_empty_mesh_or_a_missing_size(ifc, monkeypatch):
+    # The review's cases: a mesh with no vertices (JSON null, so NaN) and a unit with no width
+    # must fail their checks, not pass or crash.
+    apt, _, p, path = ifc
+    real = bidset.read_webifc
+
+    def broken(pth):
+        w = real(pth)
+        wall = next(e for e in w["elements"] if e["cls"] == "IFCWALL")
+        wall["bbox"] = [[None, None, None], [None, None, None]]
+        unit = next(e for e in w["elements"] if e["cls"] == "IFCWINDOW")
+        unit["width"] = None
+        return w
+
+    monkeypatch.setattr(bidset, "read_webifc", broken)
+    res = {label.split(" (")[0]: ok for label, ok, _ in bidset.check_webifc(path, apt, p)}
+    assert res["web-ifc's own geometry: every wall, slab, window and door where forge has it"] is False
+    assert res["web-ifc: sizes exact"] is False
+    assert res["web-ifc: glazing per flat equals pass 3b's flat_envelope"] is False

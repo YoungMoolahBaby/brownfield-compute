@@ -568,12 +568,14 @@ def cmd_scorecard(_args) -> int:
     return 0
 
 
-def cmd_bidset(_args) -> int:
+def cmd_bidset(args) -> int:
     from . import bidset
 
     import tempfile
     from pathlib import Path
 
+    if args.setup_reader:
+        return bidset.setup_webifc()
     apt, frame = bidset.load()
     params = load_params()
     path = bidset.OUT / "apartment.ifc"
@@ -586,7 +588,14 @@ def cmd_bidset(_args) -> int:
         res.append(("a second export is the same file (header aside)", bidset.body_text(again) == bidset.body_text(path),
                     f"{len(bidset.body_text(path)):,} lines"))
     print(bidset.report(res))
-    return 0 if all(ok for _, ok, _ in res) else 1
+    why = bidset.webifc_status()
+    if why:
+        # Two readers are the check; with one, say so and fail, so nobody takes it for both.
+        print(f"FAIL the second reader (web-ifc) didn't run: {why}")
+        return 1
+    second = bidset.check_webifc(path, apt, params)
+    print(bidset.report(second))
+    return 0 if all(ok for _, ok, _ in res + second) else 1
 
 
 def cmd_services(_args) -> int:
@@ -778,7 +787,8 @@ def main(argv=None) -> int:
     sub.add_parser("workforce", help="pass 4: the construction workforce 2026-2036, beds for crews from away, the shift on US 119")
     sub.add_parser("conference", help="D17-D18: the conference of communities on the real land, each town's new homes laid out, and forge's drawing data")
     sub.add_parser("village", help="pass 3e: the neighbourhood at the campus edge: townhouses, heat by month, noise, walks, money, growth")
-    sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it")
+    bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")
+    bs.add_argument("--setup-reader", action="store_true", help="install the second reader, web-ifc (tools/webifc, npm ci with the dev group's Node)")
     sub.add_parser("food", help="pass 3d: winter food houses on the data center's warm water, and the arboretum")
     sub.add_parser("garden", help="pass 3c: the winter garden's heat, its cantilever, the rooftop coolers' noise (after forge `garden`)")
     sub.add_parser("creek", help="pass 2e: the gas plant blowdown against Blacklick Creek temperature criteria")

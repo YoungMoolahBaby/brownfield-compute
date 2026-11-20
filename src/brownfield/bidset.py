@@ -444,3 +444,191 @@ def check(path: Path, apt: dict) -> list[tuple[str, bool, str]]:
 
 def report(res: list[tuple[str, bool, str]]) -> str:
     return "\n".join(f"{'ok  ' if ok else 'FAIL'} {label}: {detail}" for label, ok, detail in res)
+
+
+# ---- A second, independent reader: That Open's web-ifc (tools/webifc) ----
+
+WEBIFC = Path(__file__).resolve().parents[2] / "tools" / "webifc"
+NODE_TIMEOUT_S = 300  # the reader takes a few seconds; a hang shouldn't block a run for ever
+
+
+def _node_wheel():
+    """The `nodejs_wheel` module from the `webifc` dependency group, or None without it."""
+    import importlib.util
+
+    if importlib.util.find_spec("nodejs_wheel") is None:
+        return None
+    import nodejs_wheel
+
+    return nodejs_wheel
+
+
+def webifc_locked() -> str | None:
+    """The web-ifc version tools/webifc/package-lock.json pins."""
+    lock = WEBIFC / "package-lock.json"
+    if not lock.exists():
+        return None
+    return json.loads(lock.read_text(encoding="utf-8"))["packages"].get("node_modules/web-ifc", {}).get("version")
+
+
+def webifc_installed() -> str | None:
+    pkg = WEBIFC / "node_modules" / "web-ifc" / "package.json"
+    return json.loads(pkg.read_text(encoding="utf-8"))["version"] if pkg.exists() else None
+
+
+def webifc_status() -> str | None:
+    """None when the second reader can run; otherwise why it can't, and what to do."""
+    if _node_wheel() is None:
+        return "no Node: the `webifc` dependency group isn't installed (`uv sync --group webifc`)"
+    have, want = webifc_installed(), webifc_locked()
+    if have is None:
+        return "web-ifc isn't installed: run `uv run brownfield bidset --setup-reader` once"
+    if have != want:
+        return f"web-ifc {have} is installed but the lock pins {want}: rerun `uv run brownfield bidset --setup-reader`"
+    return None
+
+
+def webifc_ready() -> bool:
+    return webifc_status() is None
+
+
+def setup_webifc() -> int:
+    """Install web-ifc from tools/webifc's lock file (npm ci, install scripts off), with the Node
+    the `webifc` dependency group brings."""
+    node = _node_wheel()
+    if node is None:
+        print("no Node: install the `webifc` dependency group first (`uv sync --group webifc`)")
+        return 1
+    return node.npm(["ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=str(WEBIFC))
+
+
+def read_webifc(path: Path) -> dict:
+    """What web-ifc finds in the file (tools/webifc/check.mjs), as it reports it. The report comes
+    back through a file; whatever web-ifc logs on its own (stdout, stderr) is passed on, and is in
+    the error if the reader fails."""
+    import subprocess
+    import tempfile
+
+    node = _node_wheel()
+    with tempfile.TemporaryDirectory() as tmp:
+        report = Path(tmp) / "webifc.json"
+        try:
+            run = node.node([str(WEBIFC / "check.mjs"), str(path), str(report)], return_completed_process=True,
+                            capture_output=True, text=True, encoding="utf-8", timeout=NODE_TIMEOUT_S)
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"web-ifc reader timed out after {NODE_TIMEOUT_S} s") from e
+        logged = (run.stdout + run.stderr).strip()
+        if run.returncode != 0 or not report.exists():
+            raise RuntimeError(f"web-ifc reader failed ({run.returncode}): {logged[-2000:]}")
+        if logged:
+            print(f"web-ifc said: {logged[-2000:]}")
+        out = json.loads(report.read_text(encoding="utf-8"))
+    out["logged"] = logged
+    return out
+
+
+def _ifc_axes(b) -> tuple[np.ndarray, np.ndarray]:
+    """web-ifc's y-up box back to the file's z-up axes: (x, y, z) = (wx, -wz, wy)."""
+    lo, hi = np.asarray(b[0], float), np.asarray(b[1], float)
+    return np.array([lo[0], -hi[2], lo[1]]), np.array([hi[0], -lo[2], hi[1]])
+
+
+def _num(x) -> float:
+    """A number web-ifc reported, or NaN for a missing one (so any comparison with it fails)."""
+    return float("nan") if x is None else float(x)
+
+
+def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, str]]:
+    """Hold what web-ifc reads to forge's model, as `check` does with IfcOpenShell: its version is
+    the one the lock pins; every element once by class (with subclasses) and name; types, sizes,
+    storeys, voids and fillings; every BF_Opening property; the types' U-factors; every box from
+    web-ifc's own geometry (to 1 mm); and glazing per flat. A mismatch is a failure, not raised."""
+    w = read_webifc(path)
+    locked = webifc_locked()
+    res = [("web-ifc reads it, at the version the lock pins",
+            w.get("schema") == "IFC4" and w.get("reader") == f"web-ifc {locked}",
+            f"{w.get('reader')} (lock: {locked}), {w.get('schema')}")]
+    ops = {o["id"]: o for o in apt["openings"]}
+    parts = {pt["id"]: pt for pt in apt["parts"]}
+    marks = types(apt)
+    by = defaultdict(list)
+    for e in w["elements"]:
+        if e["name"] is None:
+            e["name"] = f"<unnamed {e['globalId']}>"
+        by[e["cls"]].append(e)
+    want = {"IFCWALL": {n for n, pt in parts.items() if pt["kind"].endswith("_wall")},
+            "IFCSLAB": {n for n, pt in parts.items() if not pt["kind"].endswith("_wall")},
+            "IFCOPENINGELEMENT": set(ops),
+            "IFCWINDOW": {n for n, o in ops.items() if o["kind"] == "window"},
+            "IFCDOOR": {n for n, o in ops.items() if o["kind"] != "window"}}
+    bad = {c: sorted(set(e["name"] for e in by[c]) ^ want[c]) for c in want}
+    twice = [c for c in want if len(by[c]) != len({e["name"] for e in by[c]})]
+    res.append(("web-ifc: every element of forge's model, once, by class, and nothing else",
+                not any(bad.values()) and not twice,
+                ", ".join(f"{c} {len(by[c])}" for c in want) + "".join(f"; {c} off: {v[:2]}" for c, v in bad.items() if v)))
+
+    units = [e for c in ("IFCWINDOW", "IFCDOOR") for e in by[c] if e["name"] in ops]
+    got = Counter(e["type"] for e in units)
+    res.append(("web-ifc: windows and doors by type", got == Counter(mark_of(o, marks) for o in ops.values()),
+                ", ".join(f"{k} {v}" for k, v in sorted(got.items(), key=str))))
+    wrong = [e["name"] for e in units if not (abs(_num(e["width"]) - ops[e["name"]]["width_m"]) <= 1e-9
+                                              and abs(_num(e["height"]) - ops[e["name"]]["height_m"]) <= 1e-9)]
+    res.append(("web-ifc: sizes exact", not wrong, f"{len(units) - len(wrong)} of {len(units)}"))
+    storey = [e["name"] for e in units if e["storey"] != f"Level {ops[e['name']]['storey']}"]
+    storey += [e["name"] for c in ("IFCWALL", "IFCSLAB") for e in by[c]
+               if e["name"] in parts and e["storey"] != f"Level {parts[e['name']]['storey']}"]
+    res.append(("web-ifc: every element in its storey", not storey, f"{len(storey)} wrong"))
+    hosts = [e["name"] for e in by["IFCOPENINGELEMENT"] if e["name"] in ops and e["voids"] != ops[e["name"]]["wall"]]
+    hosts += [e["name"] for e in units if e["fills"] != e["name"]]
+    res.append(("web-ifc: every opening voids its own wall and holds its own unit", not hosts, f"{len(hosts)} wrong"))
+
+    def props_match(got: dict | None, o: dict) -> bool:
+        if not got:
+            return False
+        exact = {"Id": o["id"], "Kind": o["kind"], "Glazed": o["glazed"], "Flat": o["flat"] or f"{o['storey']}-stair",
+                 "Face": o["face"], "Index": o["index"]}
+        return (all(got.get(k) == v for k, v in exact.items())
+                and abs(_num(got.get("SillHeightAboveFloor")) - o["sill_above_floor_m"]) <= 1e-9)
+
+    props = [e["name"] for e in units if not props_match(e["psets"].get("BF_Opening"), ops[e["name"]])]
+    res.append(("web-ifc: every unit's id, kind, flat, face, index and sill height", not props, f"{len(props)} differ"))
+    tps = {t["name"]: t["psets"] for t in w["types"]}
+    u_off = []
+    for (kind, *_), mark in marks.items():
+        ps = tps.get(mark, {}).get("Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon", {})
+        if not abs(_num(ps.get("ThermalTransmittance")) - params[U_PARAM[kind]].value * BTU_FT2) <= 1e-9:
+            u_off.append(mark)
+    res.append(("web-ifc: each type's U-factor is its params value", not u_off, f"{len(marks) - len(u_off)} of {len(marks)}"))
+
+    tol, worst, missing = 1e-3, 0.0, []
+    for c in ("IFCWALL", "IFCSLAB", "IFCWINDOW", "IFCDOOR"):
+        for e in by[c]:
+            if e["name"] not in (parts if c in ("IFCWALL", "IFCSLAB") else ops):
+                continue
+            box = None if e["bbox"] is None else _ifc_axes(e["bbox"])
+            if box is None or not (np.isfinite(box[0]).all() and np.isfinite(box[1]).all()):
+                missing.append(e["name"])  # no mesh, or an empty one
+                continue
+            src = parts[e["name"]] if c in ("IFCWALL", "IFCSLAB") else ops[e["name"]]
+            want_lo, want_hi = ((src["lo_m"], src["hi_m"]) if c in ("IFCWALL", "IFCSLAB")
+                                else (src["panel_lo_m"], src["panel_hi_m"]))
+            worst = max(worst, float(np.abs(box[0] - want_lo).max()), float(np.abs(box[1] - want_hi).max()))
+    res.append((f"web-ifc's own geometry: every wall, slab, window and door where forge has it (to {tol * 1e3:g} mm)",
+                worst < tol and not missing,
+                f"worst {worst * 1e3:.4f} mm" + (f"; {len(missing)} without a mesh, first {missing[0]}" if missing else "")))
+
+    glazed, unsized = defaultdict(float), 0
+    for e in units:
+        p = e["psets"].get("BF_Opening") or {}
+        if p.get("Glazed") and not str(p.get("Flat", "")).endswith("stair"):
+            if e["width"] is None or e["height"] is None:
+                unsized += 1
+                continue
+            glazed[p["Flat"]] += e["width"] * e["height"]
+    flats = {fl["name"]: fl["glazed_m2"] for fl in apt["flats"]}
+    off = max((abs(glazed.get(n, 0.0) - g) for n, g in flats.items()), default=0.0)
+    res.append(("web-ifc: glazing per flat equals pass 3b's flat_envelope",
+                off < 1e-9 and set(glazed) == set(flats) and not unsized,
+                f"{len(glazed)} flats glazed of {len(flats)}, worst {off:.2e} m2"
+                + (f"; {unsized} glazed units without a size" if unsized else "")))
+    return res

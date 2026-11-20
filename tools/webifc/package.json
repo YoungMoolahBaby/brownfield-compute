@@ -1,0 +1,10 @@
+{
+  "name": "brownfield-webifc-check",
+  "private": true,
+  "description": "Pass 3f (D27): read the walk-up's IFC with That Open's web-ifc, a parser independent of IfcOpenShell, and report what it finds for brownfield bidset to compare with forge's model",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "web-ifc": "0.0.78"
+  }
+}
