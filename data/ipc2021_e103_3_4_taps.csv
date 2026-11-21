@@ -1,0 +1,15 @@
+# IPC 2021 Appendix E, Table E103.3(4) Loss of pressure through taps and tees (psi), from Michigan's 2021 IPC on UpCodes
+# (Pennsylvania doesn't adopt Appendix E; it is the approved sizing method under 604.1), as a research agent saved it
+# (2026-11-21). Columns: the tap or tee's size (in.); blank = not tabulated.
+gpm,t0.625,t0.75,t1,t1.25,t1.5,t2,t3
+10,1.35,0.64,0.18,0.08,,,
+20,5.38,2.54,0.77,0.31,0.14,,
+30,12.10,5.72,1.62,0.69,0.33,0.10,
+40,,10.20,3.07,1.23,0.58,0.18,
+50,,15.90,4.49,1.92,0.91,0.28,
+60,,,6.46,2.76,1.31,0.40,
+70,,,8.79,3.76,1.78,0.55,0.10
+80,,,11.50,4.90,2.32,0.72,0.13
+90,,,14.50,6.21,2.94,0.91,0.16
+100,,,17.94,7.67,3.63,1.12,0.21
+120,,,25.80,11.00,5.23,1.61,0.30

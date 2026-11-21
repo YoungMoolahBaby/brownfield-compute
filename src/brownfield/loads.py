@@ -488,17 +488,21 @@ def hot_water(apt: dict, p: dict) -> dict:
     """The design day for the central heat-pump water heater, by Ecotope's Ecosizer method: people
     x the 98th-percentile day's gallons per person at 120 F, its busiest hour's share (the
     Ecosizer engine's multifamily load shape), the heat to raise it from the cold inlet, and the
-    recirculation loop's loss per flat. Sizing the plant (storage, compressor hours) is step 4."""
+    recirculation loop's loss per flat. The cold inlet is the mains' coldest day by Burch and
+    Christensen's correlation (`plumbing.mains_f`). Sizing the plant is step 4 (`plumbing.design`)."""
+    from .plumbing import mains_f
+
     h = "systems.hot_water."
     n = len(apt["flats"])
     people = n * p[h + "occupants_per_flat"]
     day_gal = people * p[h + "gpd_per_person"]
     peak_gal = day_gal * p[h + "peak_hour_fraction"]
-    dT_f = p[h + "supply_f"] - p[h + "inlet_f"]
+    inlet_f = mains_f(p)["design_f"]
+    dT_f = p[h + "supply_f"] - inlet_f
     btu_per_gal = 8.34 * dT_f  # lb per gallon x F
     return {"flats": n, "people": people, "day_gal": day_gal, "peak_hour_gal": peak_gal,
             "day_kwh": day_gal * btu_per_gal / 3412.142, "peak_hour_kw": peak_gal * btu_per_gal / 3412.142,
-            "recirc_kw": n * p[h + "recirc_w_per_flat"] / 1e3}
+            "recirc_kw": n * p[h + "recirc_w_per_flat"] / 1e3, "inlet_f": inlet_f}
 
 
 # ---- 2f, electrical: NEC 2020 Article 220 ----

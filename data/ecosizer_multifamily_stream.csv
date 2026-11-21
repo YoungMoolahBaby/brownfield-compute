@@ -1,0 +1,28 @@
+# Ecotope's EcosizerEngine, src/ecoengine/data/load_shapes/multi_family.json, 'loadshapes' 'Stream': the
+# multifamily design day's hot-water draw by hour, as fractions of the day (GitHub EcotopeResearch/EcosizerEngine,
+# commit 7586430; the engine sizes on this 'peak_load_shape', Building.py). Re-fetched copy: data/raw/ecosizer/.
+hour,fraction
+0,0.015197568
+1,0.006079027
+2,0.003039514
+3,0.003039514
+4,0.003039514
+5,0.009118541
+6,0.075987842
+7,0.151975684
+8,0.100303951
+9,0.082066869
+10,0.021276596
+11,0.024316109
+12,0.021276596
+13,0.024316109
+14,0.012158055
+15,0.006079027
+16,0.009118541
+17,0.036474164
+18,0.054711246
+19,0.072948328
+20,0.088145897
+21,0.09118541
+22,0.063829787
+23,0.024316109

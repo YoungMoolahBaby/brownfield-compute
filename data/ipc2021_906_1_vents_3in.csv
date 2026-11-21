@@ -1,0 +1,10 @@
+# IPC 2021 Table 906.1 Size and developed length of stack vents and vent stacks, the rows for a 3 in. soil or waste
+# stack, from UpCodes' Pennsylvania IPC 2021 chapter 9 page as a research agent saved it (2026-11-21). The page's text
+# runs each group of rows together; read here as: 3 in. stack, 10 / 21 / 53 / 102 dfu; maximum developed length of
+# vent (ft) by vent diameter (in.); blank = not allowed. "In no case shall the diameter be less than one-half the
+# diameter of the drain served or less than 1-1/4 inches" (906.1).
+dfu,v1.25,v1.5,v2,v2.5,v3
+10,,42,150,360,1040
+21,,32,110,270,810
+53,,27,94,230,680
+102,,25,86,210,620

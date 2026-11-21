@@ -27,7 +27,10 @@ heat pump), and the ERV's air reaches the bedrooms at 6.8 C on the coldest hour.
 recommendations and ENERGY STAR: Addendum 4 specifies the glass at ENERGY STAR's Northern zone (U
 0.22) with SHGC 0.17-0.25 (published in the plan room), so a 12k mini-split serves each flat, and
 an electric preheater ahead of each ERV keeps it from defrosting and brings its air to 16.5 C.
-Next: step 4, plumbing.
+Step 4 designed: a central hot-water plant that takes 75% of its heat from the data
+center's return, a recirculating loop held at WHO's temperatures, every pipe sized by the code's
+pressure method, cast-iron stacks for quiet. It needs at least 49.5 psi at the street main, which
+the water authority doesn't publish: a hydrant test to ask for. Next: step 5, electrical.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2358,8 +2361,9 @@ test. Then the township brief's ask.
            dfu against 48). The building drain is 4 in. (108 dfu; 3 in. takes 42 at 1/4 in./ft).
          - **Hot water, the design day** (Ecosizer: 25 gal a person, 3 a flat):
            - 900 gal at 120 F;
-           - the busiest hour (07:00-08:00) 137 gal, 23.4 kW of heat;
-           - 154 kWh a day from a 50 F inlet (a placeholder);
+           - the busiest hour (07:00-08:00) 137 gal, 24.7 kW of heat;
+           - 163 kWh a day from a 46.0 F inlet (step 4's mains correlation; 154 kWh from the
+             50 F placeholder it replaced);
            - recirculation 1.2 kW.
          - **Electrical:**
            - **Known case:** Holt's 12-unit example reproduced exactly (460,800 VA, 188,928
@@ -2379,7 +2383,7 @@ test. Then the township brief's ask.
            - the windows' SHGC (a placeholder; the ERV's recoveries were placeholders until
              step 3);
            - the appliance nameplates;
-           - the cold inlet's temperature;
+           - the cold inlet's temperature (step 4 computes it);
            - Hunter against IAPMO's Water Demand Calculator (free, by email form: Jon to fetch
              if wanted). Hunter is known to read apartments high;
            - cooling's thermal mass;
@@ -2550,6 +2554,122 @@ test. Then the township brief's ask.
          - the hall's dropped ceiling for the indoor unit against IBC 1208.2's 7 ft.
     4. **Plumbing:** cold and hot water and recirculation, the hot-water plant (central or per
        flat, to choose), drains and vents, plumbing noise.
+       - **Step 4 designed 2026-11-21** (`uv run brownfield plumbing`, on Addendum 4; writes
+         `out/pass3/plumbing.json`). Code: `src/brownfield/plumbing.py`. Data:
+         `data/ecosizer_multifamily_stream.csv`, `data/ipc2021_e103_3_4_taps.csv`,
+         `data/ipc2021_906_1_vents_3in.csv`. Parameters: `params/systems.yaml` `plumbing`,
+         `hot_water`, `noise`. Tests: `tests/test_walkup_plumbing.py`, 9; all 12 checks pass.
+         - **Sources:**
+           - the IPC 2021's chapters 6, 7 and 9, and its Appendix E (Michigan's copy);
+           - Ecotope's Ecosizer manual (2025) and its engine's source (EcosizerEngine, commit
+             7586430), read, not run;
+           - WHO's Legionella guide (2007) and CDC's Legionella toolkit;
+           - the CDA Copper Tube Handbook (2026) and REHAU's PEX plumbing guide (855.739);
+           - EnergyPlus 26.1 and NREL's Building America protocols (the mains correlation);
+           - NAIMA's pipe heat-loss table and ASHRAE 90.1-2019 Addendum aq (insulation);
+           - Watts', Neptune's, Badger's and Leonard's data sheets;
+           - CMHC Research Highlights 99-112 and 02-117, and Warnock and Morin (NRC, 1990);
+           - the EPA's water-system record for the Central Indiana County Water Authority.
+
+           A research agent read the device curves, the codes' pages and the guides; I read
+           Ecosizer's code, the CMHC and NRC papers and Appendix E myself.
+       - **Known cases:**
+         - **Ecosizer against its engine's own regression results, to a millionth:** 100
+           people at 25 gal a day give 84.84 kBtu/h and 567.72 gal. A 5 gpm loop returning at
+           110 F gives a 187.5 gal loop tank and 43.86 kBtu/h.
+           - Its manual's worked example (270 gal running) doesn't reproduce from the engine's
+             load shape (321 gal): the shape changed after the manual.
+         - **Appendix E's sample problem:** 9.36 psi left for friction, exactly.
+         - **Pipe heat loss against NAIMA's table:** within 1-4% at every insulation thickness,
+           never under. Bare pipe within 0.03%.
+       - **4a, the cold water's temperature:** EnergyPlus's mains correlation (Burch and
+         Christensen) on the site's ERA5 air, 2005-2023: 50.1 F a year, monthly means 43.9 F
+         apart. The mains run 46.0 F on the coldest day and 56.1 F on average. That replaces step
+         2's 50 F placeholder.
+       - **4a, the hot-water plant** (one, in the annex's mechanical room, Jon's decision):
+         - **The temperatures:**
+           - stored and leaving the heater at 140 F (WHO: "not less than 60 C"; CDC: "above
+             140 F");
+           - sent out at 125 F through an ASSE 1017 master mixing valve;
+           - back at 122 F or more (WHO: the return "not less than 50 C"; CDC's floor for
+             circulating water is 120 F).
+         - **Sized by Ecosizer:** the design day's 900 gal at 120 F is 843 gal at 125 F. That
+           takes 34.8 kBtu/h (10.2 kW) over 16 hours and 229 gal of storage at 140 F (135 gal
+           running, against a floor of 64).
+         - **The heat comes from the data center.** A plate exchanger off its 50 C return
+           preheats the heater's own circuit to 116.6 F, with no lukewarm water stored. That is
+           75% of the heat: 7.7 kW, 122 kWh on the design day.
+           - A water-to-water heat pump on the same water lifts the rest to 140 F: 2.5 kW.
+           - **Its COP is overstated.** Pass 2's Carnot-share model (0.55, measured at a much
+             bigger lift) gives 9.3 here, so 4.4 kWh on the design day. At these small lifts
+             real units do worse; to source with a unit.
+         - **The loop:**
+           - 998 W lost, 83 W a flat, within Ecosizer's 66-175 W spread of measured
+             buildings;
+           - 2.27 gpm holds 125 F out and 122 F back;
+           - ½ in. returns, mains and risers, at most 2.0 ft/s (REHAU's limit for returns).
+           - **Its loop tank** (Ecosizer's parallel loop): 25 gal, 6.0 kBtu/h, a second small
+             heat pump (COP 11.4 by the same overstated model; 2.1 kWh a day).
+         - **The hot pipes:** insulated 1 in., and 1½ in. from 1½ in. pipe up (ASHRAE 90.1
+           Addendum aq, past the IECC's R-3). No hot pipe is more than 31 ft from the loop to a
+           fixture, against IPC 607.2's 50.
+       - **4b, cold and hot water** (IPC Appendix E, from the building's pressure-reducing valve
+         to the top floor's shower, the highest outlet needing 20 psi):
+         - **The water side:**
+           - a reducing valve set to 60 psi static, for quiet: Warnock and Morin found noise
+             rises 5 dB from 40 to 100 psi;
+           - PEX throughout, at CDA's velocities for quiet (8 ft/s cold, 5 hot), stricter than
+             REHAU's 10 and 8 for its own pipe;
+           - a 2 in. double check valve assembly; the authority may ask for a
+             reduced-pressure zone assembly instead, at 8.5 psi more at the peak.
+         - **Sizes:** cold 1½ in. mains, 1¼ in. risers, 1 in. to each flat; hot 2 in., 1½ in.,
+           1 in.
+         - **Pressure to spare at the top floor's shower:** 11.2 psi cold, 8.9 hot (the master
+           mixing valve takes 7.0).
+         - **The street must give 49.5 psi at the peak.** That's the hot path's needs plus the
+           meter (0.6), the tap (0.2), the backflow assembly (6.0) and the main's depth (2.2).
+           - The Central Indiana County Water Authority (EPA PWSID PA5320040) publishes no
+             pressures or hydrant tests, and has no website.
+           - **To do:** ask for a hydrant flow test (NFPA 291). Under 49.5 psi the building
+             needs a booster.
+       - **4c, drains and vents:**
+         - four 3 in. stacks, one per column of flats (27 dfu each);
+         - stack vents through the roof, 1½ in. at least (Table 906.1 at 11 ft developed);
+         - no vent stack (904.2 asks one at five branch intervals; three here) and no frost
+           closure (903.2: the site's design air is above 0 F);
+         - a 4 in. building drain below the slab (108 dfu).
+       - **4d, plumbing noise** (no DIN 4109; CMHC's 33 dBA for a neighbour's plumbing):
+         - **Cast-iron stacks and branches above the slab.**
+           - Each stack runs down through the plumbing walls of the flats below, so their
+             rooms hear a neighbour's flush through drywall. CMHC measured that case: cast iron
+             25 dBA, 8 dB under the limit; PVC 33, none to spare.
+           - The caveats: the measurements are trade-sponsored (by the cast-iron makers'
+             association) and in a reverberation chamber, not a furnished room.
+           - PVC below the slab.
+         - **The stacks face only wet rooms:** every plumbing wall bounds a bath, a utility
+           closet and a kitchen, checked from the model on every floor.
+         - **Supply pipes:**
+           - plastic, in closed-cell sleeves at every support, at 60 psi: 26 dB under copper
+             clamped rigidly at 80 psi, on Warnock and Morin's relative scale;
+           - batts in the plumbing walls.
+       - **Submetering:** each flat gets a cold and a hot water meter (Badger E-Series ¾ in.,
+         1.0 psi at design flow).
+         - The hot meter's stated accuracy ends at 122 F, and the loop runs 122-125 F: a meter
+           rated for hot water to confirm.
+         - **Pennsylvania:** the PUC has held a landlord who bills tenants for water isn't a
+           public utility (Glazier v. Energy Management Systems, 2005, after Peter Daniels
+           Realty, Pa. Super. 2003). 66 Pa.C.S. § 1313 caps a reseller's bill at the utility's
+           residential rate. Whether that reaches a municipal authority's water is for counsel.
+       - **Not yet:**
+         - the street pressure (the hydrant test);
+         - the heat pumps' COP from a real unit;
+         - the routes (step 7), which replace every length taken square, and with them the
+           mains' and risers' lengths;
+         - the hot meter's rating;
+         - the stack vents' height above the roof (IPC 903.1.1 leaves it to the adopting
+           jurisdiction; Pennsylvania's not found);
+         - the building drain's route to the sewer, and the sewer's depth;
+         - the inspection tests (step 9).
     5. **Electrical:** the service, meter room, feeders, panels and circuits, and space for EV
        chargers and solar.
     6. **Sprinklers and alarms:** NFPA 13R with a hydraulic calculation; the single stair

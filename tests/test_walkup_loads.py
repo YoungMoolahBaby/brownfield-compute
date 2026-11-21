@@ -203,8 +203,9 @@ def test_hot_water_design_day(apt3, P):
     hw = loads.hot_water(apt3, P)
     assert hw["people"] == 36 and hw["day_gal"] == 900
     assert hw["peak_hour_gal"] == pytest.approx(900 * 0.151975684)
-    # 8.34 lb a gallon, 70 F rise: 900 gallons is about 154 kWh.
-    assert hw["day_kwh"] == pytest.approx(900 * 8.34 * 70 / 3412.142)
+    # 8.34 lb a gallon from the mains' coldest day (step 4's correlation, about 46 F) to 120 F.
+    assert 44 < hw["inlet_f"] < 48
+    assert hw["day_kwh"] == pytest.approx(900 * 8.34 * (120 - hw["inlet_f"]) / 3412.142)
 
 
 def test_electrical(apt3, P):

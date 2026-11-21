@@ -324,6 +324,108 @@ plumbing:
     unit: dfu, a clothes washer
     conf: high
     source: "IPC 2021 Table 709.1: 'Automatic clothes washers, residential | 2 | 2'"
+  vent_above_roof_in:
+    value: 12
+    low: 6
+    high: 24
+    unit: in, the stack vents' extension above the roof
+    conf: placeholder
+    source: "IPC 2021 903.1.1: 'Open vent pipes that extend through a roof shall be terminated not less than [NUMBER] inches (mm) above the roof' - the adopting jurisdiction's number; Pennsylvania's not found (UpCodes' PA chapter 9 page leaves it blank)"
+  max_static_psi:
+    value: 60
+    low: 50
+    high: 80
+    unit: psi, the most static pressure in the building's piping (a pressure-reducing valve where the street gives more)
+    conf: medium
+    source: "a design choice for quiet: IPC 2021 604.8 asks a reducing valve above 80 psi; Warnock and Morin (NRC, NRCC-35548, 1990): 'A-weighted noise levels were found to increase linearly with pressure by about 5 dB when supply pressure was increased from 40 to 100 psi ... a correction term (p - 70)/12 dB'"
+  fixture_psi:
+    value: 20
+    unit: psi, the flow pressure the tub's and shower's balanced-pressure valves need, the building's highest
+    conf: high
+    source: "IPC 2021 Table 604.3: 'Shower, balanced-pressure, thermostatic or combination balanced-pressure/thermostatic mixing valve | 2.5 | 20'; the bathtub's the same 20 psi; the sinks 8"
+  cold_fps:
+    value: 8
+    low: 8
+    high: 10
+    unit: ft/s, the most in cold-water pipe, for quiet
+    conf: high
+    source: "a design choice for quiet, though the pipe is PEX: CDA Copper Tube Handbook A4015-26/24 (2026) p. 15: 'To avoid excessive system noise and the possibility of erosion-corrosion, the designer should not exceed flow velocities of 8 feet per second for cold water and 5 feet per second in hot water up to approximately 140 F'. REHAU's limit for its PEX is 10 (855.739 Table 5.1: 'REHAU recommends a maximum design velocity of 10 ft/sec')"
+  hot_fps:
+    value: 5
+    low: 5
+    high: 8
+    unit: ft/s, the most in hot-water pipe, for quiet
+    conf: high
+    source: "a design choice for quiet: CDA Copper Tube Handbook A4015-26/24 (2026) p. 15: 'To avoid excessive system noise and the possibility of erosion-corrosion, the designer should not exceed flow velocities of 8 feet per second for cold water and 5 feet per second in hot water up to approximately 140 F'. REHAU's limit for its PEX is 8 (855.739 Table 5.1)"
+  return_fps:
+    value: 2
+    unit: ft/s, the most in the recirculating return
+    conf: high
+    source: "REHAU PEXa Plumbing Design and Installation Guide 855.739 (09.2023), 5.1.3 Table 5.1, p. 17 (a research agent's reading, 2026-11-21): 'Hot-Water Recirculation Return Piping - Maximum velocity of 2 ft/sec - Maximum operating temperature of 140 F'"
+  fittings_factor:
+    value: 1.5
+    unit: the developed length's multiple for its fittings and valves
+    conf: medium
+    source: "IPC 2021 Appendix E, E103.3.1 (Michigan's copy): 'A general rule that has been used is to add 50 percent of the developed length to allow for fittings and valves'"
+  valve_height_in:
+    value: 48
+    unit: in, the top floor's shower valve above its floor (the highest outlet needing 20 psi)
+    conf: low
+    source: "judgement: a usual shower valve rough-in"
+  main_depth_ft:
+    value: 5
+    low: 4
+    high: 6
+    unit: ft, the street main below grade
+    conf: placeholder
+    source: "placeholder: below western Pennsylvania's frost line; the water authority's to give"
+  street_psi:
+    value: 55
+    low: 40
+    high: 80
+    unit: psi, the least static pressure at the street main
+    conf: placeholder
+    source: "placeholder: the Central Indiana County Water Authority (PWSID PA5320040, EPA SDWIS) publishes no pressures or hydrant tests; the design states the least it needs, and a hydrant flow test (NFPA 291) is to request"
+  tap_in:
+    value: 2
+    unit: in, the service's tap on the main
+    conf: medium
+    source: "a design choice matching the 2 in. service devices"
+  meter_psi_40:
+    value: 0.56
+    unit: psi through the 2 in. main meter at 40 gpm
+    conf: medium
+    source: "Neptune MACH 10 Intermediate (2 in. x 17 in.) spec sheet 25-016218 PS MACH10 INTERMEDIATE 07.25 p. 2, read off its pressure-loss curve by a research agent (2026-11-21); normal range 1.5-160 gpm; the authority's meter, to confirm"
+  dcva_psi_40:
+    value: 5.5
+    unit: psi through a 2 in. double check valve assembly at 40 gpm
+    conf: medium
+    source: "Watts spec sheet ES-LF007S 2623 (Watts LF007, 2 in.), p. 4, its flow curve read by a research agent; the authority decides between it and a reduced-pressure zone assembly (Watts LF009 2 in., 13.2 psi at 40 gpm, ES-LF009 2611 p. 5)"
+  prv_falloff_psi_40:
+    value: 9.7
+    unit: psi, a 2 in. pressure-reducing valve's falloff at 40 gpm
+    conf: medium
+    source: "Watts spec sheet ES-LFN45B-L 2142 (Watts LFN45B, 2 in.), p. 2, its curve read by a research agent; adjustable 25-75 psi"
+  submeter_psi_13:
+    value: 2.2
+    unit: psi through each flat's 3/4 in. water meter at 13 gpm
+    conf: medium
+    source: "Badger Meter E-Series Ultrasonic Plus 3/4 in., ESM-DS-02022-EN-08 (June 2025), its curve read by a research agent (1.2 psi at 10 gpm; the table: '2.8 psi at 15 gpm'); measured fluid 34-140 F, accuracy stated 45-122 F"
+  submeter_psi_10:
+    value: 1.2
+    unit: psi through the same at 10 gpm
+    conf: medium
+    source: "Badger ESM-DS-02022-EN-08 (above)"
+  tmv_psi_26:
+    value: 5
+    unit: psi through the master mixing valve at 26 gpm
+    conf: high
+    source: "Leonard TM-186-820B-LF (ASSE 1017) submittal S-1233F-LF (Aug 2018), its flow table: '26 gpm at 5 psi; 40 gpm at 10 psi'; 1.0 gpm least; 'will maintain temperature with 0.5GPM flow from the domestic hot water loop'"
+  tmv_psi_40:
+    value: 10
+    unit: psi through the same at 40 gpm
+    conf: high
+    source: "Leonard S-1233F-LF (above)"
 hot_water:
   gpd_per_person:
     value: 25
@@ -356,13 +458,73 @@ hot_water:
     unit: F, the hot water's temperature at the tap, as the demand figures are stated
     conf: high
     source: "Ecosizer manual p. 6: demand 'at 120 F'"
-  inlet_f:
-    value: 50
-    low: 45
-    high: 55
-    unit: F, the cold water's temperature into the heater on the design day
-    conf: placeholder
-    source: "placeholder: western Pennsylvania mains in winter; to source (the water authority's records)"
+  storage_f:
+    value: 140
+    unit: F, the hot water stored and leaving the heater
+    conf: high
+    source: "WHO, Legionella and the prevention of legionellosis (2007), p. 66: 'the temperature of the water leaving the heater should be not less than 60 C'; CDC, Controlling Legionella in Potable Water Systems (Toolkit, CS321985-H), p. A2: 'Store hot water at temperatures above 140 F (60 C)'"
+  distribution_f:
+    value: 125
+    unit: F, the hot water sent to the flats, mixed down at the plant (an ASSE 1017 master mixing valve)
+    conf: medium
+    source: "a design choice above CDC's floor for circulating hot water (Toolkit p. A3: 'maintain circulating hot water above 120 F (49 C)') and the return's 122 F; the flats' shower valves limit the outlets (IPC 2021 412.3)"
+  return_min_f:
+    value: 122
+    unit: F, the least the recirculating loop returns at
+    conf: high
+    source: "WHO (2007) p. 66: 'the temperature of the return should be not less than 50 C'"
+  run_hr:
+    value: 16
+    unit: h, the most the primary heater runs on the design day
+    conf: high
+    source: "Ecosizer manual (2025) p. 10: 'maximum daily runtime for the HPWH compressor ... recommended and defaulted to 16 hours'; EcosizerEngine `max_daily_run_hr = 16.0`"
+  aquastat_fract:
+    value: 0.5
+    unit: the primary tank's height at which its heater comes on, as a fraction
+    conf: medium
+    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'aquastat_fract: float = 0.5', the engine's default; firing at the supply temperature ('on_trigger_t_f ... Defaults to supply_temp_f')"
+  strat_slope_f_pct:
+    value: 2.8
+    unit: F per percent of tank height, the stratified tank's gradient above its aquastat
+    conf: medium
+    source: "EcosizerEngine (commit 7586430) DHWSystem.size: 'strat_slope: float = 2.8'"
+  tm_off_above_f:
+    value: 8
+    unit: F, how far above the supply temperature the loop tank's heater switches off
+    conf: medium
+    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'tm_off_temp_f ... supply_temp_f + 8.0'"
+  tm_off_hr:
+    value: 0.5
+    unit: h, the loop tank's least off-time
+    conf: medium
+    source: "EcosizerEngine (commit 7586430): 'tm_off_time_hr: float = 0.5'"
+  tm_safety:
+    value: 1.75
+    unit: the loop tank heater's capacity over the loop's loss
+    conf: medium
+    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'tm_safety_factor: float = 1.75'"
+  insulation_k:
+    value: 0.28
+    low: 0.22
+    high: 0.28
+    unit: Btu in/h ft2 F, the hot-water pipes' insulation
+    conf: high
+    source: "ASHRAE 90.1-2019 Table 6.8.3-1 as Addendum aq (approved 2022-07-29, free) shows it: 105-140 F fluids, conductivity '0.22 to 0.28' at a 100 F mean; the upper end, the worse"
+  insulation_in_small:
+    value: 1.0
+    unit: in, the insulation on hot-water pipe under 1-1/2 in.
+    conf: high
+    source: "ASHRAE 90.1-2019 Addendum aq, Table 7.4 (service water heating, 105-140 F, not in partitions): 1.0 in. for '<1' and '1 to <1-1/2' in. pipe; past the IECC's R-3 (R403.5.2)"
+  insulation_in_large:
+    value: 1.5
+    unit: in, the insulation on hot-water pipe of 1-1/2 in. and over
+    conf: high
+    source: "ASHRAE 90.1-2019 Addendum aq, Table 7.4: 1.5 in. for '1-1/2 to <4' in."
+  surface_h:
+    value: 1.99
+    unit: Btu/h ft2 F, a pipe's outer surface to still room air (convection and radiation)
+    conf: medium
+    source: "from NAIMA Insulation Facts #85 (CI226, 7/13) Table 3, a calculation to ASTM C680: bare 3/4 in. Type M copper at 140 F in 75 F air loses 29.64 Btuh/ft; over its surface (0.875 in. OD) and 65 F, 1.99. NAIMA is the insulation makers' association"
 electrical:
   # NEC 2020 Article 220 as Mike Holt works it (EC&M, 'Multifamily Dwelling Unit Service and Feeder
   # Calculations', 2009-12-01, free): the optional multifamily calculation, 220.84.
@@ -843,3 +1005,40 @@ addendum_4:
     unit: the most solar heat gain coefficient of the windows and patio doors (NFRC 200, the whole unit)
     conf: high
     source: "the design (pass 3g step 3c): at the placeholder 0.35 no 1-ton unit covers a flat's cooling (Fujitsu's 12k gives 2.77 kW sensible on the ground floor's line set against 3.37 kW); at 0.25 the worst flat needs 2.62 kW and the 12k serves. The winter sun it gives up is heat the data center supplies. Such units are sold, NFRC-certified (makers' tables, a research agent's reading and mine, 2026-11-21): Pella 250 Series vinyl casement, 3/4 in. SunDefense Low-E, argon, PEL-A-287-00157-00001, U 0.26, SHGC 0.18; its fixed unit PEL-A-289-00122-00001, U 0.26, SHGC 0.22 (Pella 2026 Architectural Design Manual); its Standard sliding patio door, 3/4 in. SunDefense Low-E, 5 mm glass, argon, WDI-A-33-02494-00001, U 0.27, SHGC 0.21 (Pella 2025 ADM, 250-SPD); Pella Impervia fiberglass casement PEL-N-277-00243-00001, U 0.28, SHGC 0.20. Not ENERGY STAR v7 in its Northern zone (all of western Pennsylvania), which asks U at most 0.22 with SHGC at least 0.17"
+
+# Pass 3g step 4d (D28): plumbing noise, engineered from free sources (no DIN 4109).
+noise:
+  limit_dba:
+    value: 33
+    unit: dBA Leq, the most a neighbour's plumbing may be heard in a dwelling
+    conf: high
+    source: "CMHC Research Highlight, Technical Series 99-112, 'Qualification of the degree of acoustic comfort in multi-family buildings' (MJM for CMHC), Table 1 Sound insulation objectives: 'Leq(A) plumbing <=33'"
+  stack_enclosed_cast_iron_dba:
+    value: 25
+    low: 24
+    high: 26
+    unit: dBA, a 3 in. cast-iron stack enclosed in 1/2 in. drywall during a 6 L (1.6 gal) flush, the average of the four cast-iron pipes
+    conf: medium
+    source: "CMHC Research Highlight, Technical Series 02-117 (2003), 'Research Project on the Noise Produced by DWV Pipes Made of Cast Iron, PVC and ABS', Figure 1, Enclosed pipes: 'Average cast iron 41 25 40 36' (XH 24, No-Hub long 25, No-Hub short 24, SV 26). Measured by MJM for the Cast Iron Soil Pipe Association: trade-sponsored. In a 90 m3 reverberation chamber, not a furnished room"
+  stack_enclosed_pvc_dba:
+    value: 33
+    low: 32
+    high: 34
+    unit: dBA, the same for PVC (solid and cellular core)
+    conf: medium
+    source: "CMHC RH 02-117 (above), Figure 1, Enclosed pipes: 'Average PVC 49 33 43 48' (System 15 32, PVC 7300 33, PVC 4300 34); ABS 3300 39"
+  supply_copper_rigid_db:
+    value: 73.4
+    unit: dB (A-weighted, relative), a 13 mm copper supply pipe clamped rigidly to wood studs, ISO noise source, single 13 mm drywall
+    conf: high
+    source: "Warnock and Morin, 'An evaluation of some procedures to control plumbing noise in lightweight construction', NRCC-35548 (1990), Table 5: 'Cu 3 clamps 73.4' (13 mm); levels averaged over 40-100 psi, i.e. at about 70 psi; the ISO source is 'designed to be noisy', so only differences carry to a building"
+  supply_plastic_sleeved_db:
+    value: 49.1
+    unit: dB (A-weighted, relative), a 13 mm plastic supply pipe in 13 mm closed-cell elastomeric sleeves (Armaflex), the same wall and source
+    conf: high
+    source: "Warnock and Morin NRCC-35548 (1990), Table 5: 'Plastic Armaflex 49.1' (13 mm); plastic clamped rigidly 62.3"
+  usual_pressure_psi:
+    value: 80
+    unit: psi, the usual building's static pressure for the comparison (the code's most without a reducing valve)
+    conf: medium
+    source: "IPC 2021 604.8: a pressure-reducing valve 'Where water pressure within a building exceeds 80 psi (552 kPa) static'"

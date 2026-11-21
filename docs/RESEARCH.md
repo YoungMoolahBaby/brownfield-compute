@@ -1058,3 +1058,72 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
         WDI-A-33-02762-00001, 0.19 / 0.23 (2025 ADM).
 
       Its dual-pane doors stop at 0.26.
+- **Step 4, plumbing (2026-11-21).** A research agent read the device curves, the guides and the
+  codes' pages; I read Ecosizer's code, CMHC's and NRC's papers and Appendix E myself.
+  - **IPC 2021,** UpCodes' Pennsylvania pages:
+    - Table 604.3: a balanced-pressure shower or tub valve needs 20 psi; sinks 8;
+    - 604.8: a reducing valve above 80 psi static;
+    - 607.2: hot water within 50 ft of its source or the loop;
+    - 904.2: a vent stack at five branch intervals;
+    - Table 906.1: its rows run together in the page's text, read for a 3 in. stack;
+    - 903.2: frost closure at a 97.5% design of 0 F or less;
+    - 903.1.1: the vent's height above the roof left as [NUMBER].
+  - **Appendix E** (Michigan's copy): the segmented loss method, its sample problem (55 psi at
+    the main leaves 9.36 for friction), Table E103.3(4) (taps).
+    - **Its friction charts sit above Darcy-Weisbach:** for Type L copper the sample's readings
+      are 5-17% higher than a smooth pipe's. One row (104.5 gpm in 2½ in. at 1.9 psi/100 ft)
+      contradicts its neighbour (108 gpm at 3.2), so it can't serve as a known case.
+  - **Ecosizer:**
+    - **The manual (2025):** the method, 25 gal a person a day, 16 h of running, the
+      recirculation loss's spread (median ~100 W a flat, 25th percentile ~66, 75th ~175).
+    - **Its engine (EcosizerEngine, GitHub, commit 7586430), read and not run:**
+      - the sizing as coded (DHWSystem.py, ParallelLoopSystem.py) and the defaults: aquastat
+        at half height, 2.8 F per percent, the loop tank off 8 F above the supply, half an
+        hour, 1.75;
+      - its regression tests' expected results, which this step reproduces to 1e-6.
+    - **The manual's worked example** (270 gal running for 2,000 gal a day) doesn't follow from
+      the engine's current load shape (321 gal): the shape has changed since.
+    - **Its climate data maps only California ZIP codes to inlet temperatures.**
+  - **Legionella:**
+    - **WHO (2007):** p. 66, "the temperature of the water leaving the heater should be not less
+      than 60 C and the temperature of the return should be not less than 50 C"; p. 48, avoid
+      25-45 C.
+    - **CDC's Legionella toolkit (potable water module):** "Store hot water at temperatures above
+      140 F (60 C) and ensure hot water in circulation does not fall below 120 F (49 C)".
+  - **Velocities:**
+    - **CDA Copper Tube Handbook (2026) p. 15:** "To avoid excessive system noise ... 8 feet per
+      second for cold water and 5 feet per second in hot water up to approximately 140 F".
+    - **REHAU 855.739 Table 5.1:** 10 cold, 8 hot, 2 for the recirculating return.
+    - **Uponor and PPI/PPFA:** the same or close.
+  - **The mains' temperature:** EnergyPlus 26.1's Engineering Reference and its source
+    (WeatherManager.cc), and NREL/TP-550-49426 Eq. 26-27. Burch and Christensen (2007) itself
+    has no free full text.
+  - **Pipe heat loss and insulation:**
+    - **NAIMA CI226 Table 3:** calculated to ASTM C680, by the insulation makers' association.
+    - **ASHRAE 90.1-2019 Addendum aq (free):** k 0.22-0.28 at 105-140 F; 1.0 in. under 1½ in.
+      pipe, 1.5 in. from 1½ in.
+    - **The CDA handbook has no heat-loss table.**
+  - **Devices**, makers' curves read by the agent:
+    - Watts LF007 2 in. DCVA 5.5 psi at 40 gpm; LF009 2 in. RPZ 13.2; LFN45B 2 in. reducing
+      valve falloff 9.7;
+    - Neptune MACH 10 2 in. 0.56 psi, rated to 122 F;
+    - Badger E-Series Ultrasonic Plus ¾ in. 1.2 psi at 10 gpm and 2.2 at 13, 34-140 F, accuracy
+      stated to 122 F;
+    - Leonard TM-186 master mixing valve, 26 gpm at 5 psi and 40 at 10 (its table).
+  - **The water supplier:** the Central Indiana County Water Authority (EPA SDWIS PA5320040, 4,920
+    people). No published pressures or hydrant tests, no website.
+  - **Submetering in Pennsylvania:**
+    - **The PUC on a landlord billing tenants:** Glazier v. Energy Management Systems
+      (C-20042710, 2005), after Peter Daniels Realty (Pa. Super. 2003): not a public utility.
+    - **66 Pa.C.S. § 1313:** caps a reseller's residential bill at the utility's tariff.
+    - **HB 2255 (2023-24):** died in committee.
+
+    A reading, not legal advice.
+  - **Noise:**
+    - **CMHC RH 99-112:** "Leq(A) plumbing <=33".
+    - **CMHC RH 02-117 (MJM for CISPI, trade-sponsored):** 3 in. stacks enclosed in 1/2 in.
+      drywall, cast iron 24-26 dBA, PVC 32-34, ABS 39.
+    - **Warnock and Morin, NRCC-35548 (1990):** relative levels, with an ISO noise source:
+      - (p - 70)/12 dB for pressure;
+      - copper clamped rigidly 73.4 against plastic in Armaflex 49.1 (13 mm);
+      - the wall's batts and resilient channels.
