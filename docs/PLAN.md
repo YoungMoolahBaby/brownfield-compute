@@ -15,7 +15,12 @@ I-codes, and the bid set was checked to IBC 2018. Decided: one central water hea
 rooms (electrical; mechanical and plumbing) in an annex behind the stair. Step 0 (sources) done;
 step 1 (rooms and annex) built in forge as Addendum 2, checked against IBC 2021 (14 checks; the
 escape windows must be casements) and run through the bid set's IFC as a reviewed change against
-Addendum 1 (34 checks pass). Next: step 2, the loads room by room.
+Addendum 1 (34 checks pass). Step 2 under way: heat and ventilation room by room built. Found:
+the walls didn't meet Pennsylvania's 2021 energy code, so Addendum 3 brings the envelope to code
+(continuous insulation, the heated slab's). The plan room now reads as an exchange's project page
+(D29): an addenda dropdown, the documents in folders, the viewer with rooms, framing and each
+addendum's changes. Built and checked, not pushed. Next: the rest of step 2 (cooling, water,
+drainage, electrical).
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2214,6 +2219,96 @@ test. Then the township brief's ask.
        - **To do:** publish Addendum 2 in the plan room (the website) if Jon wants it.
     2. **Loads, room by room:** heat (the existing model split by room), cooling, ventilation,
        water demand, drainage and electrical load.
+       - **Sources, read verbatim 2026-11-21** (a research agent, then checked against its saved
+         pages; `params/systems.yaml`):
+         - **IMC 2021:** 403.3.2.1 Equation 4-9, Q = 0.01 A_floor + 7.5(N_br + 1); Table 403.3.2.3,
+           kitchen 25 cfm and bath 20 continuous.
+         - **Phius 2024 Guidebook:**
+           - 15 cfm per occupant supplied (18 recommended), outdoor air to every bedroom;
+           - occupants are bedrooms + 1;
+           - supply and exhaust within 10%;
+           - 0.06 cfm50 per ft2 of gross enclosure.
+         - **2025 ASHRAE Handbook, Indiana County Airport** (climate.onebuilding.org's .stat):
+           heating 99.6% -16.3 C; cooling 0.4% 30.9 C dry bulb / 22.6 C wet bulb. ERA5 at the
+           site, 2005-2023: the 0.4% hour 30.1 C.
+         - **PA's 2021 IECC, zone 5:** frame walls U-0.051 (R-23, 13 + 7.5 or 20 + 3.8);
+           ceiling U-0.026; windows U-0.30; a heated slab needs R-5 under its full area besides
+           its edge insulation (Table R402.1.3 footnote d).
+         - **For later steps:**
+           - IPC 2021 Tables 604.3, 604.4, 709.1, 710.1(1), 710.1(2) and 906.1;
+           - Appendix E (Hunter), read from Michigan's 2021 IPC, since Pennsylvania doesn't
+             adopt it;
+           - Mike Holt's 12-unit NEC 220.84 example (0.41);
+           - Ecotope's Ecosizer manual (25 gal per person per day at 120 F; peak hour 15.2% of
+             the day; recirculation ~100 W a flat).
+       - **Found: the walls as drawn don't meet the code now in force.** The bid set carries pass
+         3's U-0.060 (R-20, IECC 2018). Pennsylvania's 2021 code asks U-0.051, so the walls need
+         continuous insulation (R-20 + 3.8 or R-13 + 7.5). The ground floor's heated slab needs
+         R-5 under it.
+       - **Addendum 3, the envelope to code, 2026-11-21.** Jon: "yes addendum 3 - and it should
+         bring the envelope to code".
+         - **Forge:** `apartment-json addendum-3 60 1`; `Building::addendum_3`, the insulation
+           thickness from `params/systems.yaml` `addendum_3.ci_in`.
+         - **Item 1, walls:** the exterior walls and the annex's take R-3.8 continuous
+           insulation (1 in.) over the R-20 cavities, U-0.051 (Table R402.1.3's 20 + 3.8). They
+           thicken inward from 7 to 8 in.: the building stays 100 x 40 ft outside, the rooms
+           along the outside walls lose an inch (a flat 836 -> 831 ft2), and the stair, set
+           against the back wall, moves an inch with it.
+         - **Item 2, slabs:** the heated ground slab sits on R-5 under its full area, with R-10
+           at the edge to 4 ft; the annex's slab takes the same edge.
+         - **Unchanged:** windows (U-0.30) and roof (R-49) already meet the 2021 code.
+         - **Checks:**
+           - Addendum 3's own: walls thicker by exactly the insulation, the outside and every
+             opening unchanged;
+           - the 14 room checks;
+           - the 17 stair checks;
+           - the IFC's (both readers).
+
+           All pass.
+         - **RFI 002 (BCF)** asks which code the walls meet and points at the 15 exterior walls.
+           Addendum 3 answers it.
+         - **The diff against Addendum 2:**
+           - nothing added or deleted;
+           - the 15 walls changed type and properties, every wall and unit moved with the
+             thickness;
+           - 50 rooms resized, 2 slabs gained their insulation;
+           - no window or door changed type or size.
+         - **Fixed on the way:** the element diff couldn't take a resized room (an IfcSpace)
+           and crashed; it reports spaces on their own now.
+         - **The loads** take the walls' U-factor from the model (U-0.051 in Addendum 3).
+         - **Unchanged:** the base, Addendum 1 and Addendum 2 regenerate byte for byte (models
+           and IFC), and so does RFI 001.
+       - **2a, heat room by room, built 2026-11-21** (`src/brownfield/loads.py`). Each flat's
+         envelope is shared among its rooms by what each touches: walls and slab edge by length
+         along the outside walls, windows its own, roof by area, leakage by exterior area,
+         ventilation where the air is supplied.
+         - **The check:** in pass 3b's case every flat's rooms sum to `house.ua`, part by part,
+           within 4e-15 W/K.
+         - **The radiant floor** is sized per room on its heated area (less the kitchen's
+           cabinets and the tub). The flat's manifold supplies its hardest room's water.
+         - **Found:** pass 3b's whole-flat average said ~29-31 C water. Room by room, the ground
+           floor's corner bedroom (two outside walls and the slab edge) needs 38.3 C at 92 W/m2,
+           the floor at 28.4 C against the 29 C limit.
+       - **2b, ventilation, built 2026-11-21.**
+         - **Each flat:** 45 cfm balanced, the Phius supply and the IMC's exhaust governing
+           alike; the IMC's own floor is 30.9.
+         - **Supply** to the bedrooms by occupant (30 and 15); exhaust from the kitchen (25)
+           and the bath (20). The air passes through the hall and the living room between.
+         - **Checks:** 5, all pass.
+       - **The engineered design's heat** (`design_case`):
+         - **Inputs:** that ventilation with an ERV (sensible recovery 0.75, a placeholder
+           until step 3), Phius's airtightness on each flat's share of the enclosure, and
+           ASHRAE 2025's -16.3 C.
+         - **Result:** design loads 31-41% under pass 3b's case. The ground floor's corner
+           bedroom still sets the water at 36.8 C (36.3 C with the walls at code).
+       - **Cooling groundwork:**
+         - NOAA's sun position against PVGIS's sun height: within 0.24 degrees.
+         - The beam on each vertical wall by geometry against PVGIS's: within 1.5% a year.
+         - The isotropic diffuse model reads the south and west walls' peak hours more than 5% low
+           (a test holds it), so cooling uses PVGIS's own sun-on-wall series, 2005-2023, cached.
+       - **Tests:** `tests/test_walkup_loads.py`, 9.
+       - **To do:** cooling room by room; water demand, drainage and hot water; electrical (NEC
+         220.84).
     3. **Heating, cooling and ventilation:** radiant floor loops on the loop's ~30 C water, a
        manifold and a heat meter in each flat, every loop balanced; heat-recovery ventilation in
        each flat; cooling sized to the real load (a radiant floor can't cool); ducts sized.
@@ -2236,6 +2331,112 @@ test. Then the township brief's ask.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building
     (the fee needs a source); installers' real comments until Jon's round; plumbing noise in
     the walk-up's own walls, which only a test in a built one would show.
+
+- **D29** (2026-11-21) The plan room grows with the design, as a builders exchange's project page
+  does.
+  - **Jon:** "as we build this we should be making the plan room site page look more and more like
+    a legit builders exchange. a dropdown tab for "addenda {number of addendas/latest date/time of
+    latest addendum}" bid docs organized by hierarchy of folders. advancing the 3d viewer."
+  - **The steer:** take an exchange's conventions, which are generic: a project page, a document
+    tree, addenda with their issue dates, a viewer. Keep D27's lines:
+    - no real exchange's name, logo or look;
+    - the notice that the building is made up;
+    - no plan holders, owner or bid date presented as real.
+  - **The addenda's dates** are the days we issued them (Addendum 1 2026-11-19, Addendum 2 when
+    published), recorded with each addendum, not made up.
+  - **To build:**
+    - an "Addenda (N, latest <date time>)" dropdown, each addendum with its items, files and
+      what changed;
+    - the bid documents in folders (drawings, model, schedules, specifications, addenda, RFIs);
+    - Addendum 2 published into it;
+    - the viewer: click an element for its properties, one storey at a time, rooms on and off,
+      and an addendum's changes highlighted.
+  - **Layers** (Jon: "it would be nice if the viewer had a toggle to show the framing too", then
+    "framing, plumbing, conduit, ducts, etc. cf has routing"): a toggle a system.
+    - **Framing first:** forge `framing`'s 3,027 members, built for the latest revision's
+      building, as their own IFC (studs and plates as members, joists and headers as beams).
+    - **Plumbing, ducts and conduit** join as D28 sizes them (steps 3-6) and routes them
+      (step 7). Routing before sizing would draw pipes that mean nothing.
+    - **What CortenForge 0.9 has for routing** (read from the published crates, 2026-11-21):
+      - `Solid::pipe` and `pipe_spline`, a pipe solid along a path;
+      - cf-design's tendon routing, a route of waypoints through named parts that carves its
+        channel through each, which is drilling the joists and plates;
+      - cf-spatial's voxel grid with overlap and ray queries, for clashes.
+    - **What it lacks:** a path search. cf-spatial's docs name "A* and other algorithms on
+      voxelized space" as a use case but ship none. We write the search on its grid and log the
+      gap (CORTENFORGE.md).
+  - **Built 2026-11-21** (not yet pushed, so the live site is as before):
+    - **Publishing** (`uv run brownfield systems --ifc --publish`, only if every check passes).
+      Into `docs/pass3/bidset/`:
+      - Addenda 2 and 3: their IFCs, drawings and reports, and RFI 002;
+      - `changes-addendum-{1,2,3}.json`, what each changed by GlobalId, with the rooms added or
+        resized by name;
+      - the framing model;
+      - `addenda.json`, each addendum's number, title, issue time, items, files, model and
+        changes.
+
+      The issue times:
+      - Addendum 1, 2026-11-19 23:29 (UTC-8), when first published (git 8a9d200);
+      - Addendum 2, 2026-11-21 08:43, when produced and checked (2f6623f);
+      - Addendum 3, 2026-11-21 09:15, when published. RFI 002 was asked at 08:45, when the
+        walls' shortfall was confirmed.
+
+      Nothing already published changed.
+    - **The framing model** (`src/brownfield/framingifc.py`; forge `framing-json addendum-3 60
+      1`):
+      - pass 3b's frame built on Addendum 3's building, 3,418 members with no overlaps (the
+        base's has 3,432);
+      - IFC4, 4.4 MB: studs and plates as IfcMember, joists and headers as IfcBeam, footings
+        and stem walls as IfcFooting;
+      - checked: every member once, each where forge has it to 1 mm, schema valid.
+
+      Not in it yet: the flats' partitions and plumbing walls, and the annex.
+    - **The plan room** (`tools/viewer/planroom.html`, `build_site.py`, read from the
+      manifest):
+      - a project header with the "made up" tag, where and what, the bid documents' issue date,
+        and section links;
+      - an "Addenda (3), latest Nov 21, 2026, 9:15 AM (UTC-8)" dropdown, newest first, each
+        with its items, files and a link to its changes in 3D;
+      - the documents in folders: 01 Bid documents (Drawings, Model, Schedules, Requirements),
+        02 Addenda (one folder each), 03 RFIs, 04 Framing model. Each file has its type,
+        issue date and size, and keeps its published path, so old links still work;
+      - counts as of the latest addendum.
+
+      The site is 64 files, 22.3 MB.
+    - **The viewer** (`tools/viewer/index.html`):
+      - **models:** the bid set and Addenda 1-3 from the manifest, opening at the latest;
+        `#addendum-N` and `#addendum-N-changes` links; `#addendum` still opens Addendum 1;
+      - **rooms:** web-ifc's default stream leaves spaces out (checked in Node: 0 of 122), so
+        they're streamed by type. They're coloured by use, placed on their storey through
+        their aggregate, and a click shows use, flat, floor area (its quantity set read),
+        openings and escape window;
+      - **framing:** an overlay layer, with a member's kind and size on click;
+      - **changes:** an addendum's marked, added green and changed amber, with what was
+        removed listed;
+      - **coming:** plumbing, ducts and conduit shown, greyed, until designed;
+      - **URL options:** `?rooms`, `?frame`, `?xray`, `?storey=N`, `?view=back`.
+    - **Seen working in headless Chrome** (swiftshader) on the built site: Addendum 3 loaded
+      (392 elements); rooms on the second floor; the framing layer; Addendum 2's changes (the
+      annex green, 92 added, 114 changed, the stair window removed); the plan room page.
+      - Found and fixed there: `#addendum-2-changes` opened Addendum 3, since the link pattern
+        didn't allow the suffix; and added rooms weren't named in the changes, so they couldn't
+        show green.
+    - **Tests:**
+      - `test_website.py` holds the page to the manifest: the addenda's count, latest date,
+        items and files, the folders and the in-page links;
+      - the counts are now Addendum 3's;
+      - the frame's published model is forge's (`test_walkup_systems.py`).
+
+      The suite: 306 pass.
+    - **CORTENFORGE.md:** cf-spatial's missing path search, logged with a suggestion.
+    - **Review before commit fixed:**
+      - Addendum 3's wall type named its insulation's thickness from params, not the model;
+        it reads the model now (the published IFC is unchanged, byte for byte);
+      - the plan sheet, now drawn from Addendum 3, still said "in Addendum 2";
+      - `--publish` without `--ifc` did nothing and said nothing; it says so now;
+      - the isotropic-sky functions in `climate.py`, which nothing used, are gone, and a test
+        now reproduces the finding they served (peaks more than 5% low on the south and west
+        walls).
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

@@ -91,6 +91,9 @@
   .psets h3 { margin: 0; font: 600 12px var(--font-mono); }
   .chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .chk input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+  .chk.off { opacity: 0.55; cursor: default; }
+  .changes { display: grid; grid-template-columns: 14px 1fr; gap: 4px 8px; align-items: center; margin-top: 6px; font-size: 12px; }
+  .changes .sw { width: 12px; height: 12px; border-radius: 3px; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .counts { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
   .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--edge); }
@@ -120,7 +123,6 @@
     <div class="tools">
       <div class="seg" role="group" aria-label="Model" id="models">
         <button type="button" data-model="base" aria-pressed="true">Bid set</button>
-        <button type="button" data-model="add" aria-pressed="false">Addendum 1</button>
         <button type="button" data-model="own" aria-pressed="false" hidden>Your file</button>
       </div>
       <label class="file">Open an IFC file&hellip;<input type="file" id="pick" accept=".ifc"></label>
@@ -150,6 +152,16 @@
         <div class="row"><span class="hint">Storey</span><div class="seg" role="group" aria-label="Storey" id="storeys"></div></div>
       </section>
       <section class="sec">
+        <p class="eyebrow">Layers</p>
+        <label class="chk"><input type="checkbox" id="opt-rooms"> Rooms, by use (Addendum 2 on)</label>
+        <label class="chk"><input type="checkbox" id="opt-frame"> Framing <span class="hint" id="frame-note"></span></label>
+        <label class="chk off"><input type="checkbox" disabled> Plumbing <span class="hint">as it's designed (pass 3g)</span></label>
+        <label class="chk off"><input type="checkbox" disabled> Ducts <span class="hint">as they're designed</span></label>
+        <label class="chk off"><input type="checkbox" disabled> Conduit <span class="hint">as it's designed</span></label>
+        <label class="chk" id="changes-row" hidden><input type="checkbox" id="opt-changes"> <span id="changes-label">Mark what this addendum changed</span></label>
+        <div class="changes" id="changes" hidden></div>
+      </section>
+      <section class="sec">
         <p class="eyebrow" id="counts-title">Windows and doors, by type</p>
         <div class="counts" id="counts"></div>
       </section>
@@ -168,9 +180,44 @@
   const IN = 0.0254, BTU = 5.678263;
   // Paths relative to the page, so it works served at a site's root (brownfield viewer) or under a
   // prefix (GitHub Pages, /brownfield-compute/).
-  const MODELS = { base: { file: "./models/apartment.ifc", label: "Bid set" },
-                   add: { file: "./models/apartment-addendum-1.ifc", label: "Addendum 1" } };
-  const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null };
+  // The bid set and its addenda, from the plan room's manifest (models/addenda.json); without it,
+  // the bid set and Addendum 1, as before.
+  const MODELS = { base: { file: "./models/apartment.ifc", label: "Bid set" } };
+  let MANIFEST = null;
+  async function readManifest() {
+    try {
+      const res = await fetch("./models/addenda.json");
+      if (!res.ok) throw new Error(String(res.status));
+      MANIFEST = await res.json();
+    } catch {
+      MANIFEST = { addenda: [{ number: 1, model: "apartment-addendum-1.ifc", changes: null, title: "Addendum 1" }] };
+    }
+    for (const a of MANIFEST.addenda) {
+      MODELS[`a${a.number}`] = { file: `./models/${a.model}`, label: `Addendum ${a.number}`, short: `Add. ${a.number}`,
+                                 changes: a.changes ? `./models/${a.changes}` : null, number: a.number, title: a.title };
+    }
+    const own = document.querySelector('[data-model="own"]');
+    for (const [k, m] of Object.entries(MODELS)) {
+      if (k === "base") continue;
+      const b = document.createElement("button");
+      Object.assign(b, { type: "button", textContent: m.short });
+      b.dataset.model = k;
+      b.title = `${m.label}: ${m.title || ""}`;
+      b.setAttribute("aria-pressed", "false");
+      own.before(b);
+    }
+    const f = MANIFEST.framing;
+    if (f) {
+      MODELS.frame = { file: `./models/${f.model}`, label: "Framing" };
+      $("#frame-note").textContent = `(as of Addendum ${f.revision.replace(/\D+/g, "")}; ${f.members.toLocaleString()} members)`;
+    } else {
+      $("#opt-frame").disabled = true;
+      $("#frame-note").textContent = "(not published)";
+    }
+  }
+  const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null,
+                  rooms: false, frame: false, changes: false };
+  const changeSets = {};  // model key: what that addendum changed (models/changes-addendum-N.json)
   const loaded = {};
   let dirty = true;
 
@@ -193,6 +240,10 @@
       const pset = (id) => {
         const ps = line(id); const props = {};
         for (const q of refs(ps.HasProperties)) { try { const p = line(q); props[val(p.Name)] = val(p.NominalValue); } catch {} }
+        // A quantity set (a room's floor area): its values under their names.
+        for (const q of refs(ps.Quantities)) {
+          try { const p = line(q); props[val(p.Name)] = val(p.AreaValue) ?? val(p.LengthValue) ?? val(p.VolumeValue) ?? val(p.CountValue); } catch {}
+        }
         return [val(ps.Name), props];
       };
       const el = new Map();
@@ -209,7 +260,7 @@
         return el.get(id);
       };
       let tris = 0;
-      api.StreamAllMeshes(model, (mesh) => {
+      const onMesh = (mesh) => {
         const r = rec(mesh.expressID);
         for (let g = 0; g < mesh.geometries.size(); g++) {
           const pg = mesh.geometries.get(g);
@@ -226,7 +277,10 @@
           tris += ix.length / 3;
           geom.delete();
         }
-      });
+      };
+      api.StreamAllMeshes(model, onMesh);
+      // web-ifc leaves spaces (rooms) out of its default stream: ask for them by type.
+      api.StreamAllMeshesWithTypes(model, [WebIFC.IFCSPACE], onMesh);
       for (const id of ids(WebIFC.IFCRELDEFINESBYTYPE)) {
         const r = line(id); const t = line(r.RelatingType.value);
         const tps = Object.fromEntries(refs(t.HasPropertySets).map((p) => { try { return pset(p); } catch { return [null, {}]; } }));
@@ -245,9 +299,14 @@
         const r = line(id);
         for (const o of refs(r.RelatedObjects)) parent.set(o, r.RelatingObject.value);
       }
+      // A room is part of its storey (aggregated, not contained): its parent is the storey.
+      const storeyIds = new Map(ids(WebIFC.IFCBUILDINGSTOREY).map((id) => [id, name(id)]));
       for (const [id, e] of el) {
         let at = id;
-        for (let hop = 0; hop < 4 && e.storey == null && at != null; hop++) { e.storey = container.get(at) ?? null; at = parent.get(at); }
+        for (let hop = 0; hop < 4 && e.storey == null && at != null; hop++) {
+          e.storey = container.get(at) ?? (at !== id && storeyIds.has(at) ? storeyIds.get(at) : null);
+          at = parent.get(at);
+        }
       }
       for (const id of ids(WebIFC.IFCRELDEFINESBYPROPERTIES)) {
         const r = line(id);
@@ -326,8 +385,12 @@
   scene.add(ground);
   const edgeMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
   const COLOR = { wall: 0xd9d3c7, party: 0xc8c1b3, slab: 0xb8b3aa, roof: 0x5e6267, glass: 0x8fbde8, door: 0x8b6a4f,
-                  stair: 0xa98c6a, rail: 0x2f3a45,
+                  stair: 0xa98c6a, rail: 0x2f3a45, room: 0xb9c3cf, frame: 0xc9a66b, joist: 0xa27c49, footing: 0x9b9b98,
                   other: 0xb7bcc2, safety: 0xd64545 };
+  // Rooms by use (BF_Room.Use), as the plan sheet colours them; an addendum's changes.
+  const ROOM_COLOR = { bedroom: 0x6f9fd8, living: 0xe0c27e, study: 0xe0c27e, kitchen: 0x67b98b, bath: 0x67b98b, utility: 0x67b98b,
+                       hall: 0xaab2bb, entry: 0xaab2bb, mechanical: 0xe58f6f, electrical: 0xe2c84e };
+  const CHANGE = { added: 0x2e9e5b, changed: 0xe8a33b, same: 0xc4c7cb };
   const SELECT = new THREE.Color(0x1d5fa8);
 
   function applyTheme() {
@@ -340,6 +403,10 @@
 
   function roleOf(e) {
     const c = e.cls, p = e.psets.BF_Opening || {};
+    if (c === "IFCSPACE") return "room";
+    if (c.startsWith("IFCMEMBER")) return "frame";
+    if (c.startsWith("IFCBEAM")) return "joist";
+    if (c.startsWith("IFCFOOTING")) return "footing";
     if (c.startsWith("IFCWALL")) return (e.psets.Pset_WallCommon || {}).IsExternal === false ? "party" : "wall";
     if (c.startsWith("IFCSTAIRFLIGHT") || (c.startsWith("IFCSLAB") && e.predefined === "LANDING")) return "stair";
     if (c.startsWith("IFCRAILING")) return "rail";
@@ -358,13 +425,14 @@
       g.setAttribute("position", new THREE.Float32BufferAttribute(e.pos, 3));
       g.setAttribute("normal", new THREE.Float32BufferAttribute(e.nrm, 3));
       g.setIndex(e.idx);
-      const role = roleOf(e), glassy = role === "glass";
+      const role = roleOf(e), glassy = role === "glass" || role === "room";
       const mat = new THREE.MeshStandardMaterial({ color: COLOR[role], roughness: glassy ? 0.25 : 0.85, metalness: 0,
-                                                   transparent: glassy, opacity: glassy ? 0.72 : 1, side: THREE.DoubleSide });
+                                                   transparent: glassy, opacity: role === "room" ? 0.38 : glassy ? 0.72 : 1,
+                                                   depthWrite: role !== "room", side: THREE.DoubleSide });
       const m = new THREE.Mesh(g, mat);
       // Keyed on the GlobalId: unique in a file, and the same unit keeps it across revisions.
       m.userData = { e, role, key: e.gid, unit: data.unit };
-      if (edges && !glassy && role !== "rail") m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
+      if (edges && !glassy && role !== "rail" && !(role === "frame" || role === "joist")) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
       group.add(m);
       byKey.set(m.userData.key, m);
     }
@@ -378,29 +446,38 @@
 
   function refresh() {
     const cur = loaded[state.model];
+    const chg = state.changes ? changeSets[state.model] : null;
     for (const [k, r] of Object.entries(loaded)) {
-      r.group.visible = k === state.model;
+      r.group.visible = k === state.model || (k === "frame" && state.frame);
       for (const m of r.group.children) {
         const { e, role } = m.userData;
         let show = state.storey === "all" || e.storey === state.storey;
         if (role === "wall" || role === "party") show = show && state.walls;
-        if (role === "slab" || role === "roof") show = show && state.slabs;
+        if (role === "slab" || role === "roof") show = show && (k === "frame" ? state.frame : state.slabs);
+        if (role === "room") show = show && state.rooms;
         m.visible = show;
         const wally = role === "wall" || role === "party";
-        const transparent = role === "glass" || (wally && state.xray);
+        const transparent = role === "glass" || role === "room" || (wally && state.xray);
         if (m.material.transparent !== transparent) {
           m.material.transparent = transparent;
           m.material.needsUpdate = true;  // three compiles transparency into the shader
         }
-        m.material.opacity = role === "glass" ? 0.72 : wally && state.xray ? 0.16 : 1;
-        m.material.depthWrite = !(wally && state.xray);
+        m.material.opacity = role === "room" ? 0.38 : role === "glass" ? 0.72 : wally && state.xray ? 0.16 : 1;
+        m.material.depthWrite = !(wally && state.xray) && role !== "room";
         const safe = (e.psets.BF_Opening || {}).SafetyGlazingRequired;
-        m.material.color.setHex(state.safety && safe ? COLOR.safety : COLOR[role]);
+        let colour = state.safety && safe ? COLOR.safety : COLOR[role];
+        if (role === "room") colour = ROOM_COLOR[(e.psets.BF_Room || {}).Use] ?? COLOR.room;
+        if (chg && k === state.model) {
+          colour = chg.added.has(e.gid) || (role === "room" && chg.roomsAdded.has(e.name)) ? CHANGE.added
+            : chg.changed.has(e.gid) || (role === "room" && chg.rooms.has(e.name)) ? CHANGE.changed : CHANGE.same;
+        }
+        m.material.color.setHex(colour);
         m.material.emissive.setHex(0x000000);
       }
     }
     if (cur && state.selected) {
-      state.selected = cur.byKey.get(state.selected.userData.key) || null;
+      const key = state.selected.userData.key;
+      state.selected = cur.byKey.get(key) || (state.frame && loaded.frame ? loaded.frame.byKey.get(key) : null) || null;
       if (state.selected) state.selected.material.emissive.copy(SELECT).multiplyScalar(0.55);
     }
     inspect(state.selected);
@@ -435,7 +512,18 @@
     const p = e.psets.BF_Opening;
     const rows = [];
     let head, extra = "";
-    if (p) {  // one of our bid set's units: what a quote needs, and what's missing
+    const room = e.psets.BF_Room, member = e.psets.BF_Member;
+    if (room) {  // a room (Addendum 2 on): its use, flat, floor area, openings and escape window
+      const area = (e.psets.Qto_SpaceBaseQuantities || {}).NetFloorArea;
+      head = `<div class="mark"><b>${esc(room.Use)}</b><span>Room</span></div>`;
+      rows.push(["Room", e.name], ["Flat", room.Flat], ["Storey", e.storey ?? "—"],
+                ["Floor area", area == null ? "—" : `${(area / 0.09290304).toFixed(1)} ft² (${area.toFixed(2)} m²)`],
+                ["Openings", room.Openings]);
+      if (room.EscapeWindow) rows.push(["Escape window", room.EscapeWindow]);
+    } else if (member) {  // a member of the wood frame
+      head = `<div class="mark"><b>${esc(member.Kind)}</b><span>${esc(e.clsName)}</span></div>`;
+      rows.push(["Member", e.name], ["Size", member.Nominal ?? "engineered or concrete"], ["Storey", e.storey ?? "—"]);
+    } else if (p) {  // one of our bid set's units: what a quote needs, and what's missing
       const tp = e.typePsets || {}, common = tp.Pset_WindowCommon || tp.Pset_DoorCommon || {};
       head = `<div class="mark"><b>${esc(e.type || "?")}</b><span>${esc(KIND[p.Kind] || e.clsName)}</span></div>`;
       rows.push(["Unit", e.name], ["Storey", e.storey], ["Flat", p.Flat], ["Facade", p.Face],
@@ -534,7 +622,8 @@
     if (!r || !down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 5) return;
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), camera);
-    const pickable = r.group.children.filter((m) => m.visible && !(state.xray && (m.userData.role === "wall" || m.userData.role === "party")));
+    const groups = [r.group, ...(state.frame && loaded.frame ? [loaded.frame.group] : [])];
+    const pickable = groups.flatMap((g) => g.children).filter((m) => m.visible && !(state.xray && (m.userData.role === "wall" || m.userData.role === "party")));
     const hits = ray.intersectObjects(pickable, false);
     state.selected = hits.length ? hits[0].object : null;
     refresh();
@@ -558,7 +647,8 @@
     })();
     const data = await parse(bytes, key === "own");
     const r = build(data);
-    r.title = key === "own" ? data.project || source.name : "12-flat walk-up, as issued for bid";
+    r.title = key === "own" ? data.project || source.name
+      : MODELS[key]?.number ? `12-flat walk-up, Addendum ${MODELS[key].number}: ${MODELS[key].title}` : "12-flat walk-up, as issued for bid";
     r.stat = `${source.name}: ${(bytes.length / 1e3).toFixed(0)} kB, ${data.elements.length} elements, ${data.tris.toLocaleString()} triangles, parsed in ${data.ms.toFixed(0)} ms (${data.schema})`;
     return r;
   }
@@ -593,8 +683,47 @@
     refresh();
     look("iso");
     $("#loading").hidden = true;
+    showChanges();
   }
   let webIfcVersion = "";
+
+  async function showChanges() {
+    const m = MODELS[state.model], row = $("#changes-row"), box = $("#changes");
+    row.hidden = !(m && m.changes);
+    if (!m || !m.changes) { box.hidden = true; return; }
+    $("#changes-label").textContent = `Mark what ${m.label} changed`;
+    if (!changeSets[state.model]) {
+      try {
+        const c = await (await fetch(m.changes)).json();
+        changeSets[state.model] = { added: new Set(c.added), changed: new Set(c.changed), rooms: new Set(c.rooms_resized || []),
+                                    roomsAdded: new Set(c.rooms_added_names || []), raw: c };
+      } catch { row.hidden = true; return; }
+    }
+    const c = changeSets[state.model].raw;
+    box.hidden = !state.changes;
+    box.innerHTML = `<span class="sw" style="background:#2e9e5b"></span><span>${c.added.length} added${c.rooms_added ? `, ${c.rooms_added} rooms` : ""}</span>
+      <span class="sw" style="background:#e8a33b"></span><span>${c.changed.length} changed${c.rooms_resized.length ? `, ${c.rooms_resized.length} rooms resized` : ""}</span>
+      <span></span><span>${c.deleted.length ? `Removed: ${c.deleted.map((d) => esc(d.name)).join(", ")}` : "Nothing removed"}</span>`;
+    refresh();
+  }
+
+  async function setFrame(on) {
+    state.frame = on;
+    if (on && !loaded.frame) {
+      $("#loading").hidden = false;
+      $("#loading").textContent = "Parsing the framing model with web-ifc…";
+      try {
+        loaded.frame = await load("frame", { name: MODELS.frame.file.split("/").pop(), file: MODELS.frame.file });
+      } catch (err) {
+        $("#loading").textContent = `The framing model didn't load: ${err.message}.`;
+        state.frame = false;
+        $("#opt-frame").checked = false;
+        return;
+      }
+      $("#loading").hidden = true;
+    }
+    refresh();
+  }
 
   $("#models").addEventListener("click", (ev) => {
     const b = ev.target.closest("button[data-model]");
@@ -621,9 +750,12 @@
     ev.target.value = "";
   });
   for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => look(b.dataset.view));
-  for (const [id, key] of [["#opt-walls", "walls"], ["#opt-xray", "xray"], ["#opt-slabs", "slabs"], ["#opt-safety", "safety"]]) {
+  for (const [id, key] of [["#opt-walls", "walls"], ["#opt-xray", "xray"], ["#opt-slabs", "slabs"], ["#opt-safety", "safety"],
+                           ["#opt-rooms", "rooms"]]) {
     $(id).addEventListener("change", (ev) => { state[key] = ev.target.checked; refresh(); });
   }
+  $("#opt-frame").addEventListener("change", (ev) => setFrame(ev.target.checked));
+  $("#opt-changes").addEventListener("change", (ev) => { state.changes = ev.target.checked; showChanges(); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 
   function frame() {
@@ -640,10 +772,21 @@
   if (/\/model(\.html)?$/.test(location.pathname)) $("#back").hidden = false;
   try {
     await ready;
-    // `#addendum` opens Addendum 1 straight away; otherwise the bid set.
-    const first = location.hash === "#addendum" ? "add" : "base";
+    await readManifest();
+    // `#addendum-N` opens Addendum N, `#addendum` Addendum 1 (older links), `#bidset` the bid set;
+    // otherwise the latest addendum, the documents as they stand.
+    const nums = Object.values(MODELS).map((m) => m.number).filter(Boolean);
+    const hash = location.hash.match(/^#addendum(?:-(\d+))?(?:-changes)?$/);
+    const first = location.hash === "#bidset" ? "base" : hash ? `a${hash[1] || 1}` : nums.length ? `a${Math.max(...nums)}` : "base";
+    if (location.hash.includes("changes") || /[?&]changes/.test(location.search)) { state.changes = true; $("#opt-changes").checked = true; }
+    // Links can open a view: ?rooms, ?frame, ?xray, ?storey=2, ?view=back (the plan room uses them).
+    const q = new URLSearchParams(location.search);
+    for (const [key, id] of [["rooms", "#opt-rooms"], ["xray", "#opt-xray"]]) if (q.has(key)) { state[key] = true; $(id).checked = true; }
+    if (q.has("frame") && MODELS.frame) { $("#opt-frame").checked = true; setFrame(true); }
     $("#loading").textContent = `Parsing ${MODELS[first].file.split("/").pop()} with web-ifc…`;
     await show(first, { name: MODELS[first].file.split("/").pop(), file: MODELS[first].file });
+    if (q.get("storey")) { state.storey = `Level ${q.get("storey")}`; storeyButtons(); refresh(); }
+    if (["iso", "front", "back", "end"].includes(q.get("view"))) look(q.get("view"));
   } catch (err) {
     $("#loading").textContent = `web-ifc didn't start: ${err.message}.`;
   }

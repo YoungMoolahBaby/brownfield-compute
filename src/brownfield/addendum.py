@@ -121,17 +121,20 @@ def words(apt0: dict, apt1: dict, params: dict) -> dict:
 
 # ---- The RFI as BCF ----
 
-def write_rfi(base_ifc: Path, path: Path, w: dict) -> list[str]:
-    """The RFI as a BCF 3.0 topic: the question; a viewpoint selecting every patio door by
-    GlobalId, the camera in front of the building looking at it; and the answer as a comment a
-    day later, the topic closed. Returns the GlobalIds it points at."""
+def write_rfi(base_ifc: Path, path: Path, w: dict, guids: list[str] | None = None, asked: str | None = None,
+              answered_after: timedelta = timedelta(days=1), key: str = "rfi-001") -> list[str]:
+    """The RFI as a BCF 3.0 topic: the question; a viewpoint selecting the elements it is about by
+    GlobalId (`guids`; by default every patio door, RFI 001), the camera in front of the building
+    looking at it; and the answer as a comment `answered_after` the question (asked at `asked`,
+    ISO, by default D27's date), the topic closed. Returns the GlobalIds it points at."""
     from bcf.v3 import model as mdl
     from bcf.v3.bcfxml import BcfXml
 
     f = ifcopenshell.open(str(base_ifc))
-    doors = [d for d in f.by_type("IfcDoor")
-             if (ifcopenshell.util.element.get_pset(d, "BF_Opening") or {}).get("Kind") == "patio_door"]
-    guids = sorted(d.GlobalId for d in doors)
+    if guids is None:
+        doors = [d for d in f.by_type("IfcDoor")
+                 if (ifcopenshell.util.element.get_pset(d, "BF_Opening") or {}).get("Kind") == "patio_door"]
+        guids = sorted(d.GlobalId for d in doors)
     ext = mdl.Extensions(topic_types=mdl.ExtensionsTopicTypes(topic_type=["Request for information"]),
                          topic_statuses=mdl.ExtensionsTopicStatuses(topic_status=["Open", "Closed"]),
                          users=mdl.ExtensionsUsers(user=sorted(AUTHORS.values())))
@@ -152,9 +155,9 @@ def write_rfi(base_ifc: Path, path: Path, w: dict) -> list[str]:
     from xsdata.models.datatype import XmlDateTime
 
     # Fixed dates (the question on D27's date, the answer a day later), not the time of the run.
-    asked = XmlDateTime.from_datetime(datetime.fromisoformat(bidset.HEADER_TIME).replace(tzinfo=timezone.utc))
+    asked = XmlDateTime.from_datetime(datetime.fromisoformat(asked or bidset.HEADER_TIME).replace(tzinfo=timezone.utc))
     topic.topic.creation_date = asked
-    answered = XmlDateTime.from_datetime(asked.to_datetime() + timedelta(days=1))
+    answered = XmlDateTime.from_datetime(asked.to_datetime() + answered_after)
     comments = topic.comments or []
     comments.append(mdl.Comment(guid=str(uuid.uuid4()), date=answered, author=AUTHORS["answered"], comment=w["answer"]))
     topic.comments = comments
@@ -162,7 +165,7 @@ def write_rfi(base_ifc: Path, path: Path, w: dict) -> list[str]:
     topic.topic.modified_date, topic.topic.modified_author = answered, AUTHORS["answered"]
     path.parent.mkdir(parents=True, exist_ok=True)
     bcf.save(path)
-    _settle_zip(path, "rfi-001")
+    _settle_zip(path, key)
     return guids
 
 
@@ -210,6 +213,8 @@ def element_diff(old: Path, new: Path) -> dict:
       of attributes, geometry (ifcdiff), type, storey and properties (compared here: ifcdiff stops
       at the first relationship that differs, and its properties carry entity numbers);
     - **openings** (the holes in the walls): those whose box in the world moved or resized;
+    - **spaces** (the rooms, Addendum 2 on): added, deleted, and those resized or moved, or whose
+      properties changed;
     - **types**: added, deleted, and changed in name, description or properties.
     Also how many elements ifcdiff alone flags."""
     from ifcdiff import IfcDiff
@@ -219,7 +224,9 @@ def element_diff(old: Path, new: Path) -> dict:
     raw = IfcDiff(f0, f1, relationships=["attributes", "geometry", "type", "container", "property"], is_shallow=False)
     d.diff()
     raw.diff()
-    changed = {g: {k.removesuffix("_changed") for k in v} for g, v in d.change_register.items()}
+    elements = {e.GlobalId for f in (f0, f1) for e in f.by_type("IfcElement") if not e.is_a("IfcFeatureElement")}
+    # Elements only: ifcdiff also flags spaces, which are reported on their own (below).
+    changed = {g: {k.removesuffix("_changed") for k in v} for g, v in d.change_register.items() if g in elements}
 
     def gid(x):
         return x.GlobalId if x is not None else None
@@ -243,6 +250,17 @@ def element_diff(old: Path, new: Path) -> dict:
     moved = [voids0[g].Name for g in common
              if max(np.abs(b0[g][0] - b1[g][0]).max(), np.abs(b0[g][1] - b1[g][1]).max()) > 1e-6]
 
+    sp0 = {v.GlobalId: v for v in f0.by_type("IfcSpace")}
+    sp1 = {v.GlobalId: v for v in f1.by_type("IfcSpace")}
+    both = sorted(sp0.keys() & sp1.keys())
+    s0, s1 = bidset._world_boxes(f0, [sp0[g] for g in both]), bidset._world_boxes(f1, [sp1[g] for g in both])
+    spaces = {"added": len(sp1.keys() - sp0.keys()), "deleted": len(sp0.keys() - sp1.keys()),
+              "added_names": sorted(sp1[g].Name for g in sp1.keys() - sp0.keys()),
+              "resized": sorted(sp0[g].Name for g in both
+                                if max(np.abs(s0[g][0] - s1[g][0]).max(), np.abs(s0[g][1] - s1[g][1]).max()) > 1e-6),
+              "properties": sorted(sp0[g].Name for g in both if _strip_ids(ifcopenshell.util.element.get_psets(sp0[g]))
+                                   != _strip_ids(ifcopenshell.util.element.get_psets(sp1[g])))}
+
     def tdesc(t):
         return {"name": t.Name, "description": t.Description,
                 "op": getattr(t, "OperationType", None), "psets": _strip_ids(ifcopenshell.util.element.get_psets(t))}
@@ -263,7 +281,7 @@ def element_diff(old: Path, new: Path) -> dict:
     return {"added": sorted(elems1.keys() - elems0.keys()), "deleted": sorted(elems0.keys() - elems1.keys()),
             "changed": {g: {"name": elems0[g].Name, "cls": elems0[g].is_a(), "changes": sorted(v)}
                         for g, v in sorted(changed.items(), key=lambda kv: elems0[kv[0]].Name or kv[0])},
-            "openings_resized": sorted(moved), "types": types, "ifcdiff_flagged": len(raw.change_register)}
+            "openings_resized": sorted(moved), "spaces": spaces, "types": types, "ifcdiff_flagged": len(raw.change_register)}
 
 
 def diff_summary(diff: dict) -> list[str]:
@@ -271,6 +289,10 @@ def diff_summary(diff: dict) -> list[str]:
     groups = Counter((v["cls"], ", ".join(v["changes"])) for v in diff["changed"].values())
     lines = [f"{_plural(n, cls.removeprefix('Ifc').lower())}: {how}" for (cls, how), n in sorted(groups.items())]
     lines.append(f"{_plural(len(diff['openings_resized']), 'opening')} in the walls resized or moved")
+    sp = diff.get("spaces") or {}
+    if any(sp.get(k) for k in ("added", "deleted", "resized", "properties")):
+        lines.append(f"rooms (spaces): {sp['added']} added, {sp['deleted']} deleted, {len(sp['resized'])} resized or moved, "
+                     f"{len(sp['properties'])} with changed properties")
     t = diff["types"]
     lines += [f"type withdrawn: {x}" for x in t["deleted"]] + [f"type new: {x}" for x in t["added"]]
     lines += [f"type changed: {x}" for x in t["changed"]]

@@ -1,0 +1,109 @@
+{
+ "note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
+ "framing": {
+  "model": "framing-addendum-3.ifc",
+  "revision": "addendum-3",
+  "members": 3418,
+  "note": "pass 3b's wood frame on Addendum 3's building; the flats' partitions and plumbing walls and the service annex aren't framed yet (D28 step 7)"
+ },
+ "addenda": [
+  {
+   "number": 1,
+   "title": "The patio doors: their glass and their width",
+   "issued": "2026-11-19T23:29:07-08:00",
+   "items": [
+    "Item 1 (data): the patio doors (D1) are glazed with tempered glass (IBC 2018 2406.4.1).",
+    "Item 2 (size): the patio doors narrow from 6'-0\" to 5'-0\" wide, centred where they were."
+   ],
+   "model": "apartment-addendum-1.ifc",
+   "changes": "changes-addendum-1.json",
+   "rfi": "rfi-001.bcf",
+   "files": [
+    {
+     "path": "addendum-1.pdf",
+     "label": "The addendum: its narrative and the revised sheets, changes clouded"
+    },
+    {
+     "path": "addendum-1-diff.md",
+     "label": "What changed, element by element"
+    },
+    {
+     "path": "apartment-addendum-1.ifc",
+     "label": "The revised model, IFC4"
+    },
+    {
+     "path": "drawings-addendum-1/schedule.csv",
+     "label": "The revised window and door schedule"
+    },
+    {
+     "path": "rfi-001.bcf",
+     "label": "RFI 001, the question it answers (BCF 3.0)"
+    }
+   ]
+  },
+  {
+   "number": 2,
+   "title": "The rooms, the plumbing walls and the service annex",
+   "issued": "2026-11-21T08:43:25-08:00",
+   "items": [
+    "1. Every room as a space (IfcSpace), 122 in all: its use, the openings in its walls and its net floor area, from forge `rooms` (pass 3g step 1).",
+    "2. The flats' walls: 72 partitions and 12 plumbing walls (IFC's PLUMBINGWALL), each plumbing wall 1/2 in. clear of the party wall.",
+    "3. The service annex behind the stair: its walls, slab and roof; a mechanical and plumbing room (door D5) and an electrical room (door D4), each with its own outside door.",
+    "4. The ground floor's back stair window removed (1-stair/back/0 was safety glazed): the annex covers it. Safety glazing goes 14 -> 13 openings.",
+    "5. Each bedroom's escape window named (24): its own type (W3), side-hinged (a casement), since hung or sliding a window of their size can't clear IBC 2021 1031; every window now says whether it is one (Pset_WindowCommon.FireExit)."
+   ],
+   "model": "apartment-addendum-2.ifc",
+   "changes": "changes-addendum-2.json",
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-2.md",
+     "label": "The addendum: its items, what changed and the checks"
+    },
+    {
+     "path": "apartment-addendum-2.ifc",
+     "label": "The revised model, IFC4, with the rooms"
+    },
+    {
+     "path": "drawings-addendum-2/schedule.csv",
+     "label": "The revised window and door schedule"
+    },
+    {
+     "path": "drawings-addendum-2/openings.csv",
+     "label": "Every window and door"
+    }
+   ]
+  },
+  {
+   "number": 3,
+   "title": "The envelope to Pennsylvania's 2021 energy code",
+   "issued": "2026-11-21T09:15:00-08:00",
+   "items": [
+    "Item 1 (walls): the exterior walls, and the service annex's, take R-3.8 continuous insulation (1 in. of board outboard of the sheathing) over the R-20 cavities: U-0.051, the 2021 IECC's (Table R402.1.3, 20 + 3.8). The walls thicken inward from 7 to 8 in.; the building's outside stays 100 x 40 ft, so the rooms along the outside walls lose 1 in. and the stair, set against the back wall, moves with it.",
+    "Item 2 (slabs): the ground floor's heated slab sits on R-5 under its full area, with R-10 at its edge to 4 ft; the annex's slab takes the same edge insulation (Table R402.1.3 and its footnote d).",
+    "The windows (U-0.30) and the roof (R-49) already meet the 2021 code: no change."
+   ],
+   "model": "apartment-addendum-3.ifc",
+   "changes": "changes-addendum-3.json",
+   "rfi": "rfi-002.bcf",
+   "files": [
+    {
+     "path": "addendum-3.md",
+     "label": "The addendum: its items, what changed and the checks"
+    },
+    {
+     "path": "apartment-addendum-3.ifc",
+     "label": "The revised model, IFC4"
+    },
+    {
+     "path": "drawings-addendum-3/schedule.csv",
+     "label": "The window and door schedule (unchanged)"
+    },
+    {
+     "path": "rfi-002.bcf",
+     "label": "RFI 002, the question it answers (BCF 3.0)"
+    }
+   ]
+  }
+ ]
+}

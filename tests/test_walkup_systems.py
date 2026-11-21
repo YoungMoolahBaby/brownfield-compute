@@ -223,3 +223,69 @@ def test_wet_areas_are_assessed_with_rooms(apt, base):
     bad = copy.deepcopy(apt)
     _room(bad, "2-front-left/bath")["openings"] = ["2-front-left/front/2"]
     assert "2406.4.5" in bidset.safety_glazing(bad, p)["2-front-left/front/2"]
+
+
+# ---- Addendum 3: the envelope to Pennsylvania's 2021 energy code ----
+
+@pytest.fixture(scope="module")
+def run3():
+    return systems.ifc_run(load_params(), "addendum-3")
+
+
+@pytest.fixture(scope="module")
+def apt3():
+    return systems.load(systems.OUT_DIR / "pass3" / "apartment-addendum-3.json")
+
+
+def test_addendum_3_model_checks_pass(apt3, apt, P):
+    res = systems.check(apt3, apt, P)
+    assert [label for label, ok, _ in res if not ok] == []
+    assert res[0][0].startswith("Addendum 3 thickens the exterior walls")
+
+
+def test_addendum_3_catches_a_moved_opening(apt3, apt, P):
+    bad = copy.deepcopy(apt3)
+    bad["openings"][5]["along_m"] += 0.01
+    assert not systems.check(bad, apt, P)[0][1]
+
+
+def test_addendum_3_ifc(run3):
+    import ifcopenshell
+    import ifcopenshell.util.element as ue
+
+    assert [label for label, ok, _ in run3["checks"] + run3["second"] if not ok] == []
+    d = run3["diff"]
+    assert d["added"] == [] and d["deleted"] == []
+    assert d["spaces"]["added"] == 0 and len(d["spaces"]["resized"]) == 50  # the rooms along outside walls
+    assert len(run3["rfi_guids"]) == 15 and run3["stair"][0] == run3["stair"][1]
+    assert run3["schedule_changes"] == []  # no window or door changes type or size
+    f = ifcopenshell.open(str(run3["written"][2]))
+    ext = [w for w in f.by_type("IfcWall") if (ue.get_pset(w, "Pset_WallCommon") or {}).get("IsExternal")]
+    p = load_params()
+    u = p["systems.addendum_3.wall_u"].value * 5.678263
+    assert len(ext) == 15 and all(abs(ue.get_pset(w, "Pset_WallCommon")["ThermalTransmittance"] - u) < 1e-9 for w in ext)
+    slab = next(s for s in f.by_type("IfcSlab") if s.Name == "slab-ground")
+    assert "R-5 under the full area" in ue.get_pset(slab, "BidSet_Slab")["Construction"]
+    assert (run3["written"][3]).name == "rfi-002.bcf" and run3["written"][3].exists()
+
+
+def test_addendum_3_walls_lower_the_heat(apt3, apt, P):
+    from brownfield import loads
+
+    h2 = loads.room_heat(apt, P, loads.design_case(apt, P))
+    h3 = loads.room_heat(apt3, P, loads.design_case(apt3, P))
+    assert all(h3[n]["design_w"] < h2[n]["design_w"] for n in h2)
+
+
+def test_the_published_frame_is_forges():
+    # The framing model on the plan room (D29): every member of forge's frame on Addendum 3's
+    # building once, each where forge has it, schema valid; and the manifest says so.
+    import json
+
+    from brownfield import framingifc
+
+    frame = framingifc.load("addendum-3")
+    path = systems.PUBLISHED / "framing-addendum-3.ifc"
+    assert [label for label, ok, _ in framingifc.check(path, frame) if not ok] == []
+    m = json.loads((systems.PUBLISHED / "addenda.json").read_text(encoding="utf-8"))
+    assert m["framing"]["members"] == len(frame["members"]) and m["framing"]["model"] == path.name

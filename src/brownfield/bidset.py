@@ -104,11 +104,33 @@ ROOM_WALLS = {
     "plumbing_wall": ("plumbing wall, 2x6 wood studs, 1/2 in. gypsum on the room side, 1/2 in. clear of the party wall",
                       "PLUMBINGWALL", "behind each flat's bath, utility closet and kitchen: the pipes run in it, so none "
                                       "touch or pierce the party wall (forge rooms, pass 3g step 1)"),
-    "annex_wall": ("annex exterior wall, 7 in. as the building's, framing to be sized", "STANDARD",
+    "annex_wall": ("annex exterior wall, {ext_in:g} in. as the building's, framing to be sized", "STANDARD",
                    "the service annex's walls, one storey (forge rooms, pass 3g step 1; not yet in brownfield frame)"),
     "annex_partition": ("annex partition, 2x4 wood studs, 1/2 in. gypsum each side", "PARTITIONING",
                         "between the annex's mechanical and plumbing room and its electrical room (forge rooms, pass 3g)"),
 }
+
+
+def room_walls(apt: dict) -> dict:
+    """ROOM_WALLS for this model: the annex wall type named by the model's exterior wall thickness."""
+    ext_in = round(apt["ext_t_m"] / IN, 6)
+    return {k: (name.format(ext_in=ext_in), enum, desc) for k, (name, enum, desc) in ROOM_WALLS.items()}
+
+
+def envelope_to_code(apt: dict) -> bool:
+    """Whether the model carries Addendum 3's envelope (PA's 2021 IECC): continuous insulation on
+    the exterior walls, forge's `continuous_insulation_m`."""
+    return apt.get("continuous_insulation_m", 0.0) > 0.0
+
+
+def ci_note(params: dict, apt: dict) -> str:
+    """How Addendum 3's walls are insulated, for their type names: the R-values the spec asks
+    (params systems.addendum_3), the thickness the model has (forge's `continuous_insulation_m`)."""
+    a = "systems.addendum_3."
+    return (f", R-{params[a + 'cavity_r'].value:g} cavity + R-{params[a + 'ci_r'].value:g} continuous "
+            f"({round(apt['continuous_insulation_m'] / IN, 3):g} in.)")
+
+
 SLAB_TYPES = {"ground_slab": "BASESLAB", "floor": "FLOOR", "roof": "ROOF", "landing": "LANDING",
               "annex_slab": "BASESLAB", "annex_roof": "ROOF"}
 
@@ -212,7 +234,7 @@ def _inches(mm: float) -> str:
     return f"{mm / 25.4:g}"
 
 
-def wall_types(frame: dict) -> dict[str, dict]:
+def wall_types(frame: dict, ci: str = "") -> dict[str, dict]:
     """The wall types (one per distinct framing) and which walls take them: {part id prefix and
     storey: type}. From the stud schedule `brownfield frame` sized (pass 3b): facades and end walls
     one row of exterior studs; the spine two rows (a double-stud party wall); the stair walls two
@@ -225,7 +247,7 @@ def wall_types(frame: dict) -> dict[str, dict]:
             "spine": ("party", spine["size"], spine["spacing_mm"], 2),
             "stair": ("stair", frame.get("stair_stud", "2x4"), frame["spacing_mm"], 2),  # forge's default too
         }.items():
-            name = f"{kind} wall, {'double ' if rows == 2 else ''}{size} wood studs at {_inches(spacing)} in."
+            name = f"{kind} wall, {'double ' if rows == 2 else ''}{size} wood studs at {_inches(spacing)} in." + (ci if kind == "exterior" else "")
             kinds.setdefault(name, {"name": name, "kind": kind, "size": size, "spacing_mm": spacing, "rows": rows})
             by_wall[(prefix, int(storey))] = name
     return {"types": kinds, "by_wall": by_wall}
@@ -395,7 +417,9 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
     mf.Edition, mf.Source = "2020", "Construction Specifications Institute"
 
     # Wall types, then walls, slabs and the roof.
-    wt = wall_types(frame)
+    to_code = envelope_to_code(apt)
+    wt = wall_types(frame, ci_note(params, apt) if to_code else "")
+    rwalls = room_walls(apt)
     wall_type = {}
     for name, t in wt["types"].items():
         e = _make(f, "IfcWallType", f"walltype/{name}", name, PredefinedType="STANDARD",
@@ -412,7 +436,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
         ps = pset.add_pset(f, product=e, name="BidSet_Wall")
         pset.edit_pset(f, pset=ps, properties={"Construction": PARTITION})
         wall_type[PARTITION] = e
-    for kind, (name, enum, desc) in ROOM_WALLS.items():  # Addendum 2 on (pass 3g)
+    for kind, (name, enum, desc) in rwalls.items():  # Addendum 2 on (pass 3g)
         if any(pt["kind"] == kind for pt in apt["parts"]):
             e = _make(f, "IfcWallType", f"walltype/{name}", name, PredefinedType=enum, Description=desc)
             ps = pset.add_pset(f, product=e, name="BidSet_Wall")
@@ -427,8 +451,8 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
             pset.edit_pset(f, pset=ps, properties={"IsExternal": False, "LoadBearing": False})
             walls[part["id"]] = e
-        elif part["kind"] in ROOM_WALLS:
-            name, enum, _ = ROOM_WALLS[part["kind"]]
+        elif part["kind"] in rwalls:
+            name, enum, _ = rwalls[part["kind"]]
             e = _make(f, "IfcWall", f"part/{part['id']}", part["id"], PredefinedType=enum)
             itype.assign_type(f, related_objects=[e], relating_type=wall_type[name], should_map_representations=False)
             # The annex's side walls bear its roof, whose joists span across it; its end wall and the
@@ -436,6 +460,10 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
             pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] == "annex_wall",
                                                    "LoadBearing": part["id"] in ("annex-left", "annex-right")})
+            if to_code and part["kind"] == "annex_wall":  # inside the envelope, so to code (Addendum 3)
+                u = params["systems.addendum_3.wall_u"]
+                pset.edit_pset(f, pset=ps, properties={"ThermalTransmittance": u.value * BTU_FT2})
+                _note_source(ps, "ThermalTransmittance", u)
             walls[part["id"]] = e
         elif part["kind"] in WALL_KINDS:
             prefix = part["id"].split("-")[0]
@@ -451,16 +479,29 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             props = {"IsExternal": external, "LoadBearing": bearing}
             if prefix == "stair":  # the exit's enclosure: a fire barrier (IBC 2018 1023.2)
                 props["FireRating"] = _hours(params[ENCLOSURE])
+            if to_code and external:  # Addendum 3: the U-factor the code asks, and the heat model uses
+                props["ThermalTransmittance"] = params["systems.addendum_3.wall_u"].value * BTU_FT2
             ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
             pset.edit_pset(f, pset=ps, properties=props)
             if prefix == "stair":
                 _note_source(ps, "FireRating", params[ENCLOSURE])
+            if to_code and external:
+                _note_source(ps, "ThermalTransmittance", params["systems.addendum_3.wall_u"])
             walls[part["id"]] = e
         else:
             e = _make(f, "IfcSlab", f"part/{part['id']}", part["id"], PredefinedType=SLAB_TYPES[part["kind"]])
             ps = pset.add_pset(f, product=e, name="Pset_SlabCommon")
             pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] in ("ground_slab", "roof", "annex_slab", "annex_roof"),
                                                    "LoadBearing": True})
+            if to_code and part["kind"] in ("ground_slab", "annex_slab"):  # Addendum 3: the slab's insulation
+                a = "systems.addendum_3."
+                edge = (f"R-{params[a + 'slab_edge_r'].value:g} slab-edge insulation to "
+                        f"{params[a + 'slab_edge_depth_ft'].value:g} ft")
+                text = (f"heated slab (the radiant floor's tubing): R-{params[a + 'slab_under_r'].value:g} under the full "
+                        f"area and {edge} (PA 2021 IECC Table R402.1.3, footnote d)" if part["kind"] == "ground_slab"
+                        else f"slab inside the envelope: {edge} (PA 2021 IECC Table R402.1.3)")
+                more = pset.add_pset(f, product=e, name="BidSet_Slab")
+                pset.edit_pset(f, pset=more, properties={"Construction": text})
             if part["kind"] == "landing":  # part of its storey's IfcStair (below), placed there
                 landings[part["id"]] = e
                 continue

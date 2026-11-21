@@ -44,8 +44,9 @@ WET = ("bath", "utility", "kitchen")
 
 def load(path: Path = PATH) -> dict:
     if not path.exists():
-        raise SystemExit(f"no {path.relative_to(OUT_DIR.parent)}: run `cargo run --release -- apartment-json "
-                         f"{REVISION} 60` in forge/ first")
+        raise SystemExit(f"no {path.relative_to(OUT_DIR.parent)}: run forge's `apartment-json "
+                         f"{path.stem.removeprefix('apartment-')} ...` first (60 for Addendum 1's patio doors; Addendum 3 "
+                         "also takes params/systems.yaml's addendum_3.ci_in)")
     apt = json.loads(path.read_text(encoding="utf-8"))
     if "rooms" not in apt:
         raise SystemExit(f"{path.name} has no rooms: it isn't Addendum 2")
@@ -118,14 +119,16 @@ def _covered(rooms: list[dict], walls: list[dict]) -> float:
 
 
 def check(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
+    """The rooms against the code, after the revision's own check: Addendum 2 against Addendum 1
+    (`base`), or (`apt`'s revision addendum-3) Addendum 3 against Addendum 2."""
+    head = check_addendum_3(apt, base, P) if apt.get("revision") == "addendum-3" else check_addendum_2(apt, base)
+    return head + room_checks(apt, P)
+
+
+def check_addendum_2(apt: dict, base: dict) -> list[tuple[str, bool, str]]:
+    """Addendum 2 is Addendum 1 (`base`) plus the rooms and the annex, less the one stair window."""
     res = []
     add = lambda label, ok, detail: res.append((label, bool(ok), detail))
-    c = "systems.code."
-    R = apt["rooms"]
-    rooms, walls = R["rooms"], R["walls"]
-    flats = by_flat(apt)
-
-    # Addendum 2 is Addendum 1 plus the rooms and the annex, less the one stair window.
     gone = sorted({o["id"] for o in base["openings"]} - {o["id"] for o in apt["openings"]})
     added = sorted({o["id"] for o in apt["openings"]} - {o["id"] for o in base["openings"]})
     same = [o for o in apt["openings"] if o["id"] in {b["id"] for b in base["openings"]}]
@@ -134,6 +137,39 @@ def check(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
         apt.get("revision") == REVISION and gone == ["1-stair/back/0"] and not added and unchanged
         and apt["parts"] == base["parts"] and apt["stair"] == base["stair"],
         f"removed {gone or 'none'}, added {added or 'none'}; parts and stair {'unchanged' if apt['parts'] == base['parts'] and apt['stair'] == base['stair'] else 'CHANGED'}")
+    return res
+
+
+def check_addendum_3(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
+    """Addendum 3 is Addendum 2 (`base`) with the exterior walls (the annex's with them) thickened
+    inward by their continuous insulation and nothing else: the building's outside, every opening
+    (where it is along its wall, its size, its sill) and the rooms' plan unchanged but where they
+    meet an outside wall."""
+    res = []
+    add = lambda label, ok, detail: res.append((label, bool(ok), detail))  # noqa: E731
+    ci = P["systems.addendum_3.ci_in"] * IN
+    grown = apt["ext_t_m"] - base["ext_t_m"]
+    keys = ("id", "kind", "storey", "flat", "face", "index", "width_m", "height_m", "sill_m", "along_m")
+    same_openings = [{k: o[k] for k in keys} for o in apt["openings"]] == [{k: o[k] for k in keys} for o in base["openings"]]
+    outer = all(abs(a[k][i] - b[k][i]) < EPS for a, b in zip(apt["parts"], base["parts"]) if a["kind"] == "exterior_wall"
+                for k, i in (("lo_m", 0), ("lo_m", 1), ("hi_m", 0), ("hi_m", 1)) if
+                (k == "lo_m" and abs(b[k][i]) < EPS) or (k == "hi_m" and abs(b[k][i] - (apt["depth_m"] if i == 0 else apt["length_m"])) < EPS))
+    add("Addendum 3 thickens the exterior walls by their continuous insulation, inward, and changes no opening",
+        apt.get("revision") == "addendum-3" and abs(grown - ci) < EPS and abs(apt.get("continuous_insulation_m", 0) - ci) < EPS
+        and same_openings and outer and (apt["depth_m"], apt["length_m"]) == (base["depth_m"], base["length_m"]),
+        f"walls {base['ext_t_m'] / IN:g} -> {apt['ext_t_m'] / IN:g} in (continuous insulation {ci / IN:g} in); "
+        f"outside {apt['length_m'] / FT:g} x {apt['depth_m'] / FT:g} ft unchanged; openings {'unchanged' if same_openings else 'CHANGED'}")
+    return res
+
+
+def room_checks(apt: dict, P: dict) -> list[tuple[str, bool, str]]:
+    """The rooms against IBC 2021 and the layout's own promises (see the module's docstring)."""
+    res = []
+    add = lambda label, ok, detail: res.append((label, bool(ok), detail))  # noqa: E731
+    c = "systems.code."
+    R = apt["rooms"]
+    rooms, walls = R["rooms"], R["walls"]
+    flats = by_flat(apt)
 
     ids = [r["id"] for r in rooms] + [w["id"] for w in walls]
     add("every room and wall has its own id", len(ids) == len(set(ids)), f"{len(rooms)} rooms, {len(walls)} walls")
@@ -303,7 +339,8 @@ def plan_figure(apt: dict, P: dict, path: Path, storey: int = 1) -> None:
     ax.tick_params(colors=MUTED, labelsize=7, length=0)
     ax.set_xlabel("ft along the building", fontsize=7.5, color=MUTED)
     ax.set_ylabel("ft from the front", fontsize=7.5, color=MUTED)
-    ax.set_title("The walk-up's ground floor in Addendum 2: rooms, plumbing walls (green) and the service annex",
+    rev = (apt.get("revision") or "").replace("addendum-", "Addendum ")
+    ax.set_title(f"The walk-up's ground floor in {rev}: rooms, plumbing walls (green) and the service annex",
                  fontsize=9.5, color=INK, loc="left")
     fig.text(0.01, 0.015, "Blue: windows; red: each bedroom's escape window (a casement); orange: patio doors; brown: doors. "
              "Blue rooms sleep, cream live, green are wet (bath, utility, kitchen) and stack on every floor; the annex's mechanical "
@@ -315,31 +352,93 @@ def plan_figure(apt: dict, P: dict, path: Path, storey: int = 1) -> None:
     plt.close(fig)
 
 
-# ---- Addendum 2 in the bid set: the IFC, checked and diffed against Addendum 1 ----
+# ---- Addenda 2 and 3 in the bid set: the IFC, checked and diffed against the addendum before ----
 
+# {revision: (the model before it, its own model)}, under out/pass3/.
+REVISIONS = {"addendum-2": ("apartment-addendum-1.json", "apartment-addendum-2.json"),
+             "addendum-3": ("apartment-addendum-2.json", "apartment-addendum-3.json")}
 IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
+# RFI 002 (made up), which Addendum 3 answers: asked when the walls' shortfall was confirmed
+# (08:45 Pacific, D28), answered when Addendum 3 went out (ISSUED[3]). UTC, as BCF keeps it.
+RFI_002_ASKED = "2026-11-21T16:45:00"
+RFI_002_ANSWER_AFTER_MIN = 30
+# When each addendum went out (D29): Addendum 1 when it was first published (git 8a9d200), Addendum
+# 2 when it was produced and checked (git 2f6623f), Addendum 3 when it was published.
+ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00"}
+TITLES = {1: "The patio doors: their glass and their width",
+          2: "The rooms, the plumbing walls and the service annex",
+          3: "The envelope to Pennsylvania's 2021 energy code"}
+PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
-def ifc_run(params: dict) -> dict:
-    """Addendum 2 as a reviewed change, as `brownfield addendum` ran Addendum 1: the rooms checked
-    first (`check`); then Addendum 1 and Addendum 2 written as IFC (Addendum 1's tempered patio
-    doors carried on), the element diff between them, both readers and the IDS on the revision, a
-    second export compared byte for byte, and the schedule, elevations and quantities regenerated,
-    with what changed in each. Written to `IFC_OUT`; the published bid set is left alone."""
+def ifc_out(revision: str) -> Path:
+    return OUT_DIR / "pass3" / "bidset" / revision
+
+
+def rfi_002_words(apt_before: dict, params: dict) -> dict:
+    """RFI 002 and Addendum 3's items, from the params (the code's numbers, the insulation chosen)."""
+    v = lambda k: params[k].value  # noqa: E731
+    e, a = "systems.code.envelope.", "systems.addendum_3."
+    drawn = v("pass3.envelope.wall_u")
+    question = (f"The exterior wall type is 2x6 studs with R-{v(a + 'cavity_r'):g} in the cavities, U-{drawn:.3f}: the 2018 IECC's "
+                f"zone 5 wall. Pennsylvania's UCC took up the 2021 IECC on 2026-01-01 (55 Pa.B. 7701). Its zone 5 frame wall "
+                f"is U-{v(e + 'wall_u_max'):.3f} (R-23, 13 + 7.5 or 20 + 3.8), and a heated slab needs R-{v(e + 'heated_slab_under_r'):g} "
+                "under its full area besides its edge insulation. The ground floor's slab carries the radiant tubing. Which "
+                "code do we price to?")
+    items = [
+        f"Item 1 (walls): the exterior walls, and the service annex's, take R-{v(a + 'ci_r'):g} continuous insulation "
+        f"({v(a + 'ci_in'):g} in. of board outboard of the sheathing) over the R-{v(a + 'cavity_r'):g} cavities: U-{v(a + 'wall_u'):.3f}, "
+        f"the 2021 IECC's (Table R402.1.3, 20 + 3.8). The walls thicken inward from "
+        f"{apt_before['ext_t_m'] / IN:g} to {apt_before['ext_t_m'] / IN + v(a + 'ci_in'):g} in.; the building's outside stays "
+        f"{apt_before['length_m'] / FT:g} x {apt_before['depth_m'] / FT:g} ft, so the rooms along the outside walls lose "
+        f"{v(a + 'ci_in'):g} in. and the stair, set against the back wall, moves with it.",
+        f"Item 2 (slabs): the ground floor's heated slab sits on R-{v(a + 'slab_under_r'):g} under its full area, with "
+        f"R-{v(a + 'slab_edge_r'):g} at its edge to {v(a + 'slab_edge_depth_ft'):g} ft; the annex's slab takes the same edge "
+        "insulation (Table R402.1.3 and its footnote d).",
+        "The windows (U-0.30) and the roof (R-49) already meet the 2021 code: no change.",
+    ]
+    return {"title": "RFI 002: which energy code do the exterior walls meet?", "question": question,
+            "answer": "Answered by Addendum 3: the 2021 IECC, as Pennsylvania adopts it. " + " ".join(items[:2]),
+            "items": items}
+
+
+def ifc_run(params: dict, revision: str = REVISION) -> dict:
+    """An addendum as a reviewed change, as `brownfield addendum` ran Addendum 1: its model checked
+    first (`check`: the revision itself, then the rooms); then the model before it and the addendum
+    written as IFC (Addendum 1's tempered patio doors carried on), the element diff between them,
+    both readers and the IDS on the addendum, a second export compared byte for byte, and the
+    schedule, elevations and quantities regenerated, with what changed in each. Addendum 3 also
+    writes RFI 002 (BCF), which it answers. Written to `ifc_out(revision)`; the published bid set
+    is left alone."""
     import tempfile
 
-    from . import addendum, bidset
+    from . import addendum, bidset, stair
     from .params import values
 
-    raw2, raw1 = load(), json.loads(BASE.read_text(encoding="utf-8"))
+    before, mine = REVISIONS[revision]
+    raw1 = json.loads((OUT_DIR / "pass3" / before).read_text(encoding="utf-8"))
+    raw2 = load(OUT_DIR / "pass3" / mine)
     failing = [label for label, ok, _ in check(raw2, raw1, values(params)) if not ok]
     if failing:
-        raise SystemExit("Addendum 2's rooms fail their checks (run `brownfield systems`): " + "; ".join(failing))
-    apt1, frame = bidset.load("apartment-addendum-1.json")
-    apt2, _ = bidset.load(f"apartment-{REVISION}.json")
-    base, rev = IFC_OUT / "base.ifc", IFC_OUT / "apartment.ifc"
+        raise SystemExit(f"{revision}'s model fails its checks (run `brownfield systems`): " + "; ".join(failing))
+    apt1, frame = bidset.load(before)
+    apt2, _ = bidset.load(mine)
+    out = ifc_out(revision)
+    base, rev = out / "base.ifc", out / "apartment.ifc"
     bidset.write_ifc(apt1, frame, params, base, spec=addendum.SPEC)
     bidset.write_ifc(apt2, frame, params, rev, spec=addendum.SPEC)
+    words, rfi = None, []
+    if revision == "addendum-3":
+        import ifcopenshell
+        import ifcopenshell.util.element
+        from datetime import timedelta
+
+        words = rfi_002_words(raw1, params)
+        f0 = ifcopenshell.open(str(base))
+        walls = sorted(w.GlobalId for w in f0.by_type("IfcWall")
+                       if (ifcopenshell.util.element.get_pset(w, "Pset_WallCommon") or {}).get("IsExternal"))
+        rfi = addendum.write_rfi(base, out / "rfi-002.bcf", words, guids=walls, asked=RFI_002_ASKED,
+                                 answered_after=timedelta(minutes=RFI_002_ANSWER_AFTER_MIN), key="rfi-002")
     diff = addendum.element_diff(base, rev)
     checks = bidset.check(rev, apt2, params)
     with tempfile.TemporaryDirectory() as tmp:
@@ -349,58 +448,172 @@ def ifc_run(params: dict) -> dict:
                        f"{len(bidset.body_text(rev)):,} lines"))
     why = bidset.webifc_status()
     second = bidset.check_webifc(rev, apt2, params) if why is None else []
-    doc = bidset.write_ids(params, IFC_OUT / "bidset.ids")
+    doc = bidset.write_ids(params, out / "bidset.ids")
     ids1, ids2 = bidset.run_ids(doc, base), bidset.run_ids(doc, rev)
     ids_changes = [f"{b['name']}: {a['passed']} of {a['applicable']} -> {b['passed']} of {b['applicable']}"
                    for a, b in zip(ids1, ids2) if (a["passed"], a["applicable"]) != (b["passed"], b["applicable"])]
     with tempfile.TemporaryDirectory() as tmp:
         d1 = bidset.write_drawings(base, Path(tmp))
-    d2 = bidset.write_drawings(rev, IFC_OUT / "drawings")
+    d2 = bidset.write_drawings(rev, out / "drawings")
     h1, h2 = bidset.safety_glazing(apt1, params), bidset.safety_glazing(apt2, params)
+    st = stair.check(apt2, params)
     R = raw2["rooms"]
     return {
+        "revision": revision, "words": words, "rfi_guids": rfi,
         "diff": diff, "checks": checks, "second": second, "second_status": why, "ids_changes": ids_changes,
         "schedule_changes": addendum.schedule_changes(d1["schedule"], d2["schedule"]),
         "hazards": (len(h1), len(h2)), "removed": sorted(set(h1) - set(h2)),
         "quantities": (d1["quantities"]["total"], d2["quantities"]["total"]),
+        "stair": (sum(ok for _, ok, _ in st), len(st)),
         "rooms": len(R["rooms"]), "partitions": sum(w["kind"] == "partition" for w in R["walls"]),
         "plumbing_walls": sum(w["kind"] == "plumbing_wall" for w in R["walls"]),
         "annex_marks": {u["name"]: u["mark"] for u in d2["read"]["units"] if u["face"] == "annex"},
         "escapes": len(bidset.escape_windows(raw2, params)),
         "escape_marks": sorted({u["mark"] for u in d2["read"]["units"]
                                 if (u["psets"].get("Pset_WindowCommon") or {}).get("FireExit") is True}),
-        "written": [IFC_OUT / "bidset.ids", base, rev, *d2["written"]],
+        "written": [out / "bidset.ids", base, rev, *([out / "rfi-002.bcf"] if rfi else []), *d2["written"]],
     }
 
 
 def ifc_report(r: dict) -> str:
-    """Addendum 2 as a reviewed change, in plain text."""
+    """An addendum as a reviewed change, in plain text."""
     from . import addendum, bidset
 
     (q1, q2), (h1, h2) = r["quantities"], r["hazards"]
-    am = r["annex_marks"]
     second = (r["second"] if r["second_status"] is None else
               [("the second reader (web-ifc) ran", False, f"it didn't: {r['second_status']}")])
-    mech, elec = am.get("annex-mechanical/left/0", "(missing)"), am.get("annex-electrical/back/0", "(missing)")
-    items = [
-        f"1. Every room as a space (IfcSpace), {r['rooms']} in all: its use, the openings in its walls and its net "
-        "floor area, from forge `rooms` (pass 3g step 1).",
-        f"2. The flats' walls: {r['partitions']} partitions and {r['plumbing_walls']} plumbing walls (IFC's PLUMBINGWALL), "
-        "each plumbing wall 1/2 in. clear of the party wall.",
-        f"3. The service annex behind the stair: its walls, slab and roof; a mechanical and plumbing room (door {mech}) "
-        f"and an electrical room (door {elec}), each with its own outside door.",
-        f"4. The ground floor's back stair window removed ({', '.join(r['removed']) or 'none'} was safety glazed): the "
-        f"annex covers it. Safety glazing goes {h1} -> {h2} openings.",
-        f"5. Each bedroom's escape window named ({r['escapes']}): its own type ({', '.join(r['escape_marks'])}), side-hinged "
-        "(a casement), since hung or sliding a window of their size can't clear IBC 2021 1031; every window now says "
-        "whether it is one (Pset_WindowCommon.FireExit).",
-    ]
-    lines = ["Addendum 2 (made up, pass 3g step 1, D28): the rooms, the plumbing walls and the service annex", "",
-             *(f"  {x}" for x in items), "",
-             "What changed (against Addendum 1):", *(f"  {x}" for x in addendum.diff_summary(r["diff"])), "",
+    if r["revision"] == "addendum-3":
+        w = r["words"]
+        head = [w["title"], f"  asked: {w['question']}", f"  points at {len(r['rfi_guids'])} exterior walls by GlobalId",
+                f"  answered: {w['answer']}", "",
+                "Addendum 3 (made up, pass 3g, D28): the envelope to Pennsylvania's 2021 energy code", "",
+                *(f"  {x}" for x in w["items"]),
+                f"  The stair's checks after the move: {r['stair'][0]} of {r['stair'][1]} pass."]
+        before = "Addendum 2"
+    else:
+        head = ["Addendum 2 (made up, pass 3g step 1, D28): the rooms, the plumbing walls and the service annex", "",
+                *(f"  {x}" for x in addendum_2_items(r))]
+        before = "Addendum 1"
+    lines = [*head, "",
+             f"What changed (against {before}):", *(f"  {x}" for x in addendum.diff_summary(r["diff"])), "",
              "Checks on the revision:", *(f"  {x}" for x in bidset.report(r["checks"] + second).splitlines()), "",
-             "The checklist (IDS), where it moved:", *(f"  {x}" for x in r["ids_changes"]), "",
-             "The schedule, where it moved:", *(f"  {x}" for x in r["schedule_changes"]), "",
+             "The checklist (IDS), where it moved:", *(f"  {x}" for x in r["ids_changes"] or ["(nowhere)"]), "",
+             "The schedule, where it moved:", *(f"  {x}" for x in r["schedule_changes"] or ["(nowhere)"]), "",
              f"Openings in the exterior walls (the annex's doors aside): {q1['openings_m2']:.1f} -> {q2['openings_m2']:.1f} m2 "
              f"({q1['openings_m2'] / bidset.FT2:,.0f} -> {q2['openings_m2'] / bidset.FT2:,.0f} ft2)."]
     return "\n".join(lines)
+
+
+def addendum_2_items(r: dict) -> list[str]:
+    """Addendum 2's items, from its run (`ifc_run`)."""
+    (h1, h2) = r["hazards"]
+    am = r["annex_marks"]
+    mech, elec = am.get("annex-mechanical/left/0", "(missing)"), am.get("annex-electrical/back/0", "(missing)")
+    return [
+            f"1. Every room as a space (IfcSpace), {r['rooms']} in all: its use, the openings in its walls and its net "
+            "floor area, from forge `rooms` (pass 3g step 1).",
+            f"2. The flats' walls: {r['partitions']} partitions and {r['plumbing_walls']} plumbing walls (IFC's PLUMBINGWALL), "
+            "each plumbing wall 1/2 in. clear of the party wall.",
+            f"3. The service annex behind the stair: its walls, slab and roof; a mechanical and plumbing room (door {mech}) "
+            f"and an electrical room (door {elec}), each with its own outside door.",
+            f"4. The ground floor's back stair window removed ({', '.join(r['removed']) or 'none'} was safety glazed): the "
+            f"annex covers it. Safety glazing goes {h1} -> {h2} openings.",
+            f"5. Each bedroom's escape window named ({r['escapes']}): its own type ({', '.join(r['escape_marks'])}), side-hinged "
+            "(a casement), since hung or sliding a window of their size can't clear IBC 2021 1031; every window now says "
+            "whether it is one (Pset_WindowCommon.FireExit).",
+    ]
+
+
+# ---- Publishing the addenda (D29): the plan room's files ----
+
+def changes(old: Path, new: Path) -> dict:
+    """What an addendum changed, for the viewer to mark: the elements added and changed by
+    GlobalId, those deleted with their names, and the rooms resized, by name (`element_diff`)."""
+    import ifcopenshell
+
+    from . import addendum
+
+    d = addendum.element_diff(old, new)
+    f0 = ifcopenshell.open(str(old))
+    gone = [{"gid": g, "name": f0.by_guid(g).Name, "cls": f0.by_guid(g).is_a()} for g in d["deleted"]]
+    return {"added": d["added"], "changed": sorted(d["changed"]), "deleted": gone,
+            "rooms_resized": d["spaces"]["resized"], "rooms_added": d["spaces"]["added"],
+            "rooms_added_names": d["spaces"]["added_names"],
+            "openings_resized": d["openings_resized"]}
+
+
+def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[Path]:
+    """Addenda 2 and 3 into the published bid set, with the manifest the plan room and the viewer
+    read (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
+    included. Only from runs whose every check passed (both readers'), and only Addenda 2 and 3's
+    own files are written; the bid set and Addendum 1's files are left as they are."""
+    import shutil
+
+    from . import addendum, bidset
+
+    for rev in ("addendum-2", "addendum-3"):
+        r = runs.get(rev)
+        if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
+            raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
+    written = []
+    for n in (2, 3):
+        rev, out = f"addendum-{n}", ifc_out(f"addendum-{n}")
+        for src, dst in ((out / "apartment.ifc", to / f"apartment-{rev}.ifc"), (out / f"{rev}.md", to / f"{rev}.md")):
+            shutil.copyfile(src, dst)
+            written.append(dst)
+        if (to / f"drawings-{rev}").exists():
+            shutil.rmtree(to / f"drawings-{rev}")
+        shutil.copytree(out / "drawings", to / f"drawings-{rev}")
+        written.append(to / f"drawings-{rev}")
+    shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
+    written.append(to / "rfi-002.bcf")
+    models = {0: "apartment.ifc", 1: "apartment-addendum-1.ifc", 2: "apartment-addendum-2.ifc", 3: "apartment-addendum-3.ifc"}
+    for n in (1, 2, 3):
+        path = to / f"changes-addendum-{n}.json"
+        path.write_text(json.dumps(changes(to / models[n - 1], to / models[n]), indent=1) + "\n", encoding="utf-8")
+        written.append(path)
+    # The frame of the latest addendum's building (forge `framing-json addendum-3 ...`), checked.
+    from . import framingifc
+
+    frame = framingifc.load("addendum-3")
+    fpath = ifc_out("addendum-3") / "framing.ifc"
+    framingifc.write(frame, fpath)
+    bad = [label for label, ok, _ in framingifc.check(fpath, frame) if not ok]
+    if bad:
+        raise SystemExit(f"won't publish the frame: {bad}")
+    shutil.copyfile(fpath, to / "framing-addendum-3.ifc")
+    written.append(to / "framing-addendum-3.ifc")
+    apt0, _ = bidset.load()
+    apt1, _ = bidset.load("apartment-addendum-1.json")
+    items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
+             3: runs["addendum-3"]["words"]["items"]}
+    files = {
+        1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
+            ("addendum-1-diff.md", "What changed, element by element"),
+            ("apartment-addendum-1.ifc", "The revised model, IFC4"),
+            ("drawings-addendum-1/schedule.csv", "The revised window and door schedule"),
+            ("rfi-001.bcf", "RFI 001, the question it answers (BCF 3.0)")],
+        2: [("addendum-2.md", "The addendum: its items, what changed and the checks"),
+            ("apartment-addendum-2.ifc", "The revised model, IFC4, with the rooms"),
+            ("drawings-addendum-2/schedule.csv", "The revised window and door schedule"),
+            ("drawings-addendum-2/openings.csv", "Every window and door")],
+        3: [("addendum-3.md", "The addendum: its items, what changed and the checks"),
+            ("apartment-addendum-3.ifc", "The revised model, IFC4"),
+            ("drawings-addendum-3/schedule.csv", "The window and door schedule (unchanged)"),
+            ("rfi-002.bcf", "RFI 002, the question it answers (BCF 3.0)")],
+    }
+    manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
+                "framing": {"model": "framing-addendum-3.ifc", "revision": "addendum-3", "members": len(frame["members"]),
+                            "note": "pass 3b's wood frame on Addendum 3's building; the flats' partitions and plumbing "
+                                    "walls and the service annex aren't framed yet (D28 step 7)"},
+                "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
+                             "model": models[n], "changes": f"changes-addendum-{n}.json",
+                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf"}[n],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3)]}
+    path = to / "addenda.json"
+    path.write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
+    written.append(path)
+    missing = [f["path"] for a in manifest["addenda"] for f in a["files"] if not (to / f["path"]).exists()]
+    if missing:
+        raise SystemExit(f"addenda.json names files that aren't published: {missing}")
+    return written

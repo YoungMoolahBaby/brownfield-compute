@@ -138,6 +138,60 @@ fn schedule_path(system: &str) -> (&'static str, &'static str) {
     if system == "steel" { ("out/pass3/steel.json", "_steel") } else { ("out/pass3/frame.json", "") }
 }
 
+/// The wood frame of a revision's building, every member as boxes (mm to m), for the bid set's
+/// framing model and the viewer's framing layer (D29): `framing-json addendum-3 <patio in> <ci in>`
+/// (or `base`). Built from pass 3b's sized schedule (out/pass3/frame.json) on that revision's
+/// building, and refused if any two members overlap.
+fn framing_json_mode(root: &Path) -> std::io::Result<()> {
+    let arg = |i: usize| std::env::args().nth(i);
+    let num = |i: usize| arg(i).and_then(|s| s.parse::<f64>().ok());
+    let mut b = apartment::Building::example();
+    let rev = arg(2).unwrap_or_else(|| "base".into());
+    match rev.as_str() {
+        "base" => {}
+        "addendum-3" => match (num(3), num(4)) {
+            (Some(w), Some(ci)) => {
+                b.addendum_1(w * 25.4);
+                b.addendum_2();
+                b.addendum_3(ci * 25.4);
+            }
+            _ => return Err(std::io::Error::other("framing-json addendum-3 <patio door width, in> <continuous insulation, in>")),
+        },
+        other => return Err(std::io::Error::other(format!("framing-json: unknown revision {other}: try base or addendum-3"))),
+    }
+    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
+    let s = framing::Schedule::from_json(&v);
+    let (members, _) = framing::build(&b, &s);
+    let mut overlaps = 0;
+    let boxes: Vec<(usize, Vector3<f64>, Vector3<f64>)> = members.iter().enumerate()
+        .flat_map(|(i, m)| m.boxes.iter().map(move |(lo, hi)| (i, *lo, *hi))).collect();
+    for a in 0..boxes.len() {
+        for c in a + 1..boxes.len() {
+            let ((i, lo1, hi1), (j, lo2, hi2)) = (boxes[a], boxes[c]);
+            let o = (hi1.inf(&hi2) - lo1.sup(&lo2)).map(|d| d - 0.1);
+            if i != j && o.x > 0.0 && o.y > 0.0 && o.z > 0.0 {
+                overlaps += 1;
+            }
+        }
+    }
+    if overlaps > 0 {
+        return Err(std::io::Error::other(format!("{overlaps} overlapping member boxes in {rev}'s frame: not written")));
+    }
+    let r6 = |mm: f64| (mm * 1e3).round() / 1e6;
+    let m = |v: Vector3<f64>| [r6(v.x), r6(v.y), r6(v.z)];
+    let out: Vec<_> = members.iter().enumerate().map(|(i, mb)| json!({
+        "id": format!("{}/{}/{}", mb.storey, mb.kind.name().replace(' ', "-"), i), "kind": mb.kind.name(), "storey": mb.storey,
+        "nominal": mb.nominal, "boxes": mb.boxes.iter().map(|(lo, hi)| [m(*lo), m(*hi)]).collect::<Vec<_>>(),
+    })).collect();
+    let path = root.join(format!("out/pass3/framing-members-{rev}.json"));
+    std::fs::write(&path, serde_json::to_string(&json!({
+        "source": format!("forge `framing-json` (CortenForge 0.9): the walk-up's wood frame on the {rev} building, from out/pass3/frame.json"),
+        "revision": rev, "floor_joist": s.floor_joist.name, "roof_joist": s.roof_joist.name, "members": out,
+    }))?)?;
+    println!("{} members of {rev}'s frame, no overlaps: {}", members.len(), path.display());
+    Ok(())
+}
+
 fn framing_mode(root: &Path, system: &str) -> std::io::Result<()> {
     let (sched, sfx) = schedule_path(system);
     use framing::Kind;
@@ -408,6 +462,9 @@ fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revi
     if let Some(lay) = layout {
         env["rooms"] = lay.json(b, &r6);
     }
+    if b.ci > 0.0 {
+        env["continuous_insulation_m"] = json!(r6(b.ci));
+    }
     let path = root.join(rel);
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
@@ -629,6 +686,12 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        "framing-json" => {
+            if let Err(e) = framing_json_mode(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
         "apartment-json" => {
             // The JSON alone, without meshing and drawing (~3 min). `apartment-json addendum-1 <in>`
             // writes the walk-up with pass 3f's made-up Addendum 1 (the patio doors at <in> inches
@@ -656,7 +719,22 @@ fn main() {
                     None => Err(std::io::Error::other(
                         "apartment-json addendum-2 <patio door width, in>: Addendum 1's width, params/bidset.yaml's addendum_1.patio_door_width_in")),
                 },
-                Some(other) => Err(std::io::Error::other(format!("unknown revision {other}: try addendum-1 or addendum-2"))),
+                // Addendum 3 (pass 3g, D28) follows Addendum 2: the exterior walls thickened by their
+                // continuous insulation (<ci> inches, params/systems.yaml's addendum_3.ci_in).
+                Some("addendum-3") => match (std::env::args().nth(3).and_then(|s| s.parse::<f64>().ok()),
+                                             std::env::args().nth(4).and_then(|s| s.parse::<f64>().ok())) {
+                    (Some(width_in), Some(ci_in)) => {
+                        let mut b = apartment::Building::example();
+                        b.addendum_1(width_in * 25.4);
+                        b.addendum_2();
+                        b.addendum_3(ci_in * 25.4);
+                        write_apartment_json_to(root, &b, "out/pass3/apartment-addendum-3.json", "addendum-3",
+                                                Some(&rooms::Layout::example()))
+                    }
+                    _ => Err(std::io::Error::other(
+                        "apartment-json addendum-3 <patio door width, in> <continuous insulation, in>: params/bidset.yaml's addendum_1.patio_door_width_in and params/systems.yaml's addendum_3.ci_in")),
+                },
+                Some(other) => Err(std::io::Error::other(format!("unknown revision {other}: try addendum-1, addendum-2 or addendum-3"))),
                 None => write_apartment_json(root, &apartment::Building::example()),
             };
             if let Err(e) = res {

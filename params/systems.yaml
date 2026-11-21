@@ -70,8 +70,108 @@ code:
       unit: in above the floor, the highest the bottom of an escape opening's clear opening may be
       conf: high
       source: "IBC 2021 1031.3.3 Maximum height from floor: 'not greater than 44 inches (1118 mm) measured from the floor.' 1031.2: R-2 in stories with one exit, and 'sleeping rooms below the fourth story above grade plane shall have not fewer than one emergency escape and rescue opening'"
+  # IMC 2021 chapter 4 (Pennsylvania adopts it without amendment), read from UpCodes' page as a
+  # research agent saved it (2026-11-21); Equation 4-9 is an image on that page, read by eye.
+  vent:
+    area_cfm_per_ft2:
+      value: 0.01
+      unit: cfm of outdoor air per ft2 of dwelling unit floor, Equation 4-9's first term
+      conf: high
+      source: "IMC 2021 403.3.2.1, Equation 4-9: 'Q_OA = 0.01 A_floor + 7.5(N_br + 1)', Q_OA in cfm, A_floor floor area in ft2, N_br 'number of bedrooms; not to be less than one'. (Pass 3b used ASHRAE 62.2-2016's 0.03 per ft2.)"
+    per_occupant_cfm:
+      value: 7.5
+      unit: cfm per (bedrooms + 1), Equation 4-9's second term
+      conf: high
+      source: "IMC 2021 403.3.2.1, Equation 4-9 (above)"
+    kitchen_cfm:
+      value: 25
+      unit: cfm continuous kitchen exhaust (100 intermittent)
+      conf: high
+      source: "IMC 2021 Table 403.3.2.3 Minimum required local exhaust rates for one- and two-family dwellings: 'Kitchens | 100 cfm intermittent or 25 cfm continuous'"
+    bath_cfm:
+      value: 20
+      unit: cfm continuous bathroom exhaust (50 intermittent)
+      conf: high
+      source: "IMC 2021 Table 403.3.2.3: 'Bathrooms and toilet rooms | 50 cfm intermittent or 20 cfm continuous'"
+  # Pennsylvania's 2021 IECC, residential, climate zone 5 (UpCodes' page as a research agent saved
+  # it, 2026-11-21; UpCodes marks the zone 5 wall and ceiling cells as Pennsylvania's).
+  envelope:
+    wall_u_max:
+      value: 0.051
+      unit: Btu/h ft2 F, the highest U-factor a wood frame wall may have (zone 5)
+      conf: high
+      source: "PA 2021 IECC Table R402.1.2, row '5 and Marine 4': frame wall U 0.051; Table R402.1.3: R-23, or 13 + 7.5 (cavity + continuous), or 20 + 3.8. Pass 3 carries 2018's U-0.060 (pass3.envelope.wall_u)"
+    ceiling_u_max:
+      value: 0.026
+      unit: Btu/h ft2 F, the highest U-factor of a ceiling (zone 5)
+      conf: high
+      source: "PA 2021 IECC Table R402.1.2, zone 5: ceiling U 0.026 (R-49, Table R402.1.3); the same as 2018's"
+    fenestration_u_max:
+      value: 0.30
+      unit: Btu/h ft2 F, the highest U-factor of a window or glazed door (zone 5)
+      conf: high
+      source: "PA 2021 IECC Table R402.1.2, zone 5: fenestration U 0.30, SHGC NR (no requirement)"
+    heated_slab_under_r:
+      value: 5
+      unit: h ft2 F/Btu under the full area of a heated slab, besides its edge insulation (R-10 to 4 ft or R-15 to 3 ft)
+      conf: high
+      source: "PA 2021 IECC Table R402.1.3 footnote d: 'R-5 insulation shall be provided under the full slab area of a heated slab in addition to the required slab edge insulation R-value'; zone 5 slab '10, 4 ft or 15, 3ft'"
+
+# Phius 2024 Certification Guidebook v26.1.2 (Oct 2026), free from phius.org, as a research agent
+# saved it (2026-11-21).
+phius:
+  supply_cfm_per_person:
+    value: 15
+    low: 15
+    high: 18
+    unit: cfm of outdoor air per occupant, supplied
+    conf: high
+    source: "Phius 2024 Guidebook 1.3.4.2 (p. 40): 'A minimum of 15 cfm per person must be provided and dedicated outdoor air supply to all bedrooms is required'; footnote 6: '18 cfm per occupant is recommended' (the high end)"
+  extra_occupants:
+    value: 1
+    unit: occupants a dwelling has beyond its bedrooms
+    conf: high
+    source: "Phius 2024 Guidebook 1.4.4.8 (p. 97): 'Multifamily (including duplexes and townhouses): Calculate the occupant quantity as the number of bedrooms + 1 per dwelling unit.' Rates are 'the larger of either the supply air or exhaust air requirements' (p. 40)"
+  balance:
+    value: 0.10
+    unit: the largest difference allowed between measured supply and exhaust, as a fraction
+    conf: high
+    source: "Phius 2024 Guidebook 1.3.4.2 (p. 39): 'Option 1: Total measured supply and exhaust airflows are within 10% of each other.'"
+  airtight_cfm50_ft2:
+    value: 0.06
+    unit: cfm at 50 Pa per ft2 of gross enclosure, whole building
+    conf: high
+    source: "Phius 2024 Guidebook Table 1.3.3.2.0 Performance Path Airtightness Limits: 'All other buildings 0.06 CFM50/ft2'; gross enclosure 'measured at the exterior of the thermal boundary and includes surfaces in contact with the ground'"
 
 design:
+  heating_c:
+    value: -16.3
+    unit: C, the heating design dry bulb (99.6%)
+    conf: high
+    source: "2025 ASHRAE Handbook - Fundamentals ch. 14, Indiana County Airport - Stewart Field (WMO 725175), period 2005-23, as printed in climate.onebuilding.org's TMYx .stat file: 'Heating 1 -16.3 -13.4'. Pass 3 used Pittsburgh's -16.8 (pass3.loads.design_c)"
+  cooling_db_c:
+    value: 30.9
+    unit: C, the cooling design dry bulb (0.4%)
+    conf: high
+    source: "2025 ASHRAE Handbook, Indiana County Airport (as above): 'Cooling 7 10.5 30.9 22.6 29.5 22.0': 0.4% dry bulb 30.9 C, mean coincident wet bulb 22.6 C; 1% 29.5 / 22.0. ERA5 at the site, 2005-2023 (PVGIS): 0.4% hour 30.1 C"
+  cooling_wb_c:
+    value: 22.6
+    unit: C, the mean coincident wet bulb at the 0.4% cooling dry bulb
+    conf: high
+    source: "2025 ASHRAE Handbook, Indiana County Airport (as above)"
+  erv_sensible_eff:
+    value: 0.75
+    low: 0.65
+    high: 0.85
+    unit: sensible recovery of the flats' ventilation units, as a fraction
+    conf: placeholder
+    source: "placeholder until step 3 picks a unit; low end the IECC's 65% at 32 F where it requires recovery (zones 7-8, R403.6.1)"
+  bed_1_occupants:
+    value: 2
+    unit: occupants of the larger bedroom; the other bedroom has 1, so a flat has bedrooms + 1 (Phius)
+    conf: medium
+    source: "judgement on Phius's count (bedrooms + 1): two in the primary bedroom, one in the second"
+
   counter_depth_in:
     value: 25
     low: 24
@@ -79,8 +179,57 @@ design:
     unit: in, a kitchen counter's depth with its overhang, along the plumbing wall
     conf: low
     source: "judgement: the usual US base cabinet (24 in) with a countertop overhang; no source fetched yet"
+  tub_length_in:
+    value: 60
+    unit: in, a bathtub's length across the bath, the floor it covers taking no tubing
+    conf: low
+    source: "judgement: the usual US alcove tub (60 x 30 in); the bath's 5.35 ft clear width fits it (pass 3g step 1)"
+  tub_width_in:
+    value: 30
+    unit: in, a bathtub's depth from the wall
+    conf: low
+    source: "judgement: the usual US alcove tub (60 x 30 in)"
   finished_floor_upper_in:
     value: 1.5
     unit: in, the radiant floor's gypsum topping on the upper floors, which comes off the ceiling height below it
     conf: medium
     source: "pass 3b's radiant topping (docs/pass3/README.md, 1.5 in. at 115 lb/ft3); the ground floor's tubing is in the slab"
+
+# Addendum 3 (pass 3g, D28; Jon: "yes addendum 3 - and it should bring the envelope to code"): the
+# walk-up's envelope to Pennsylvania's 2021 IECC, zone 5 (code.envelope above).
+addendum_3:
+  ci_in:
+    value: 1.0
+    unit: in of continuous insulation board outboard of the wall sheathing (forge `apartment-json addendum-3 60 <ci_in>`)
+    conf: medium
+    source: "judgement: 1 in of any common board (XPS about R-5, polyiso about R-6, mineral wool about R-4.2 an inch, makers' figures not fetched) gives the R-3.8 the code asks; the product is the bidder's"
+  ci_r:
+    value: 3.8
+    unit: h ft2 F/Btu, the least continuous insulation the walls take
+    conf: high
+    source: "PA 2021 IECC Table R402.1.3, zone 5 wood frame wall: '20 + 3.8' (cavity + continuous; footnote h: 'The first value is cavity insulation, the second value is continuous insulation')"
+  cavity_r:
+    value: 20
+    unit: h ft2 F/Btu, the 2x6 stud cavities' insulation (as pass 3 had it)
+    conf: high
+    source: "PA 2021 IECC Table R402.1.3, zone 5: '20 + 3.8'; pass 3's R-20 cavity (pass3.envelope.wall_u)"
+  wall_u:
+    value: 0.051
+    unit: Btu/h ft2 F, the walls' U-factor with the continuous insulation
+    conf: high
+    source: "PA 2021 IECC: Table R402.1.3's 20 + 3.8 is the prescriptive equal of Table R402.1.2's frame wall U-0.051 (code.envelope.wall_u_max), the U the heat model uses"
+  slab_under_r:
+    value: 5
+    unit: h ft2 F/Btu under the full area of the ground floor's heated (radiant) slab
+    conf: high
+    source: "PA 2021 IECC Table R402.1.3 footnote d (code.envelope.heated_slab_under_r)"
+  slab_edge_r:
+    value: 10
+    unit: h ft2 F/Btu at the slab edge, to slab_edge_depth_ft
+    conf: high
+    source: "PA 2021 IECC Table R402.1.3, zone 5 slab: '10, 4 ft or 15, 3ft'"
+  slab_edge_depth_ft:
+    value: 4
+    unit: ft, how far the slab-edge insulation reaches
+    conf: high
+    source: "PA 2021 IECC Table R402.1.3, zone 5 slab: '10, 4 ft'; footnote d: for heated slabs it 'shall not be required to extend below the slab'"

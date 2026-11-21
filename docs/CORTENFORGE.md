@@ -129,6 +129,16 @@ the end collects the features this project wanted, with what we built instead.
   - roads as ribbons draped on the ground;
   - existing buildings extruded from footprints, ear-clipping their flat roofs.
 
+## cf-spatial
+
+- **missing / docs** (2026-11-21, pass 3g, routing the walk-up's pipes, ducts and conduit, D28 step
+  7): the crate's docs (cortenforge-spatial-0.9.0/src/lib.rs:3, :30) name "pathfinding" and "A* and
+  other algorithms on voxelized space" as its use, but it ships the grid (`VoxelGrid`, occupancy,
+  raycast, AABB and sphere overlap) and no search. Routing needs one: a shortest path through free
+  voxels with a cost for bends and for crossing framing. Instead: we write A* on its `VoxelGrid`
+  (step 7). cf-design's tendon routing (`TendonDef`, mechanism/tendon.rs) and `Solid::pipe` do the
+  rest: a route's solid, and its channel carved through the parts it crosses. See Suggestions.
+
 ## Expected gaps (scoping, not yet hit in code)
 
 Listed so they can be confirmed or struck once code meets them:
@@ -225,3 +235,7 @@ Nice-to-haves for CortenForge, with what this project built instead.
   with the walls. Instead: `forge/src/rooms.rs` lays rooms out as boxes and mirrors one flat's
   plan to the rest. It checks in plain Rust that rooms, partitions and the building's parts don't
   overlap, and that each flat is covered exactly.
+- **A path search in cf-spatial** (2026-11-21, pass 3g): A* (or Dijkstra) over `VoxelGrid` with a
+  per-voxel cost and a turn penalty, returning a polyline `Solid::pipe` and tendon routing can take.
+  With it, routing services through a framed building would be one call. Instead: our own A* on its
+  grid (D28 step 7).

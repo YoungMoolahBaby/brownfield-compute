@@ -130,6 +130,8 @@ pub struct Building {
     pub storey: f64,
     pub storeys: usize,
     pub ext_t: f64,
+    /// Continuous insulation the exterior walls carry (mm), counted in `ext_t` (Addendum 3 on).
+    pub ci: f64,
     pub party_t: f64,
     pub floor_t: f64,
     pub roof_t: f64,
@@ -149,6 +151,7 @@ impl Building {
             storey: h,
             storeys: 3,
             ext_t: 7.0 * IN,
+            ci: 0.0,
             party_t: 10.0 * IN, // a double-stud fire and sound wall
             floor_t: 12.0 * IN,
             roof_t: 14.0 * IN,
@@ -422,6 +425,15 @@ impl Building {
     pub fn addendum_2(&mut self) {
         let (mid, storey) = (self.length / 2.0, self.storey);
         self.openings.retain(|o| !(o.face == Face::Back && (o.along - mid).abs() < 1.0 && o.sill < storey));
+    }
+
+    /// Addendum 3 (pass 3g, D28): the envelope to Pennsylvania's 2021 energy code. The exterior
+    /// walls take `ci` (mm) of continuous insulation, so they thicken by it; the building's outside
+    /// stays 100 x 40 ft and the walls grow inward, so the rooms along them lose `ci`. The
+    /// insulation's R-value, and the slab's, are params (`systems.addendum_3`), not geometry.
+    pub fn addendum_3(&mut self, ci: f64) {
+        self.ext_t += ci;
+        self.ci += ci;
     }
 
     /// The flat an opening belongs to, from where its centre is (None in the stair core). Found
