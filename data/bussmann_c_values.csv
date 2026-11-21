@@ -1,0 +1,26 @@
+# Eaton Bussmann's C values for the point-to-point method: three single conductors, 600 V, in steel or nonmagnetic (PVC)
+# conduit, ft per ohm. Source: Cooper Bussmann, Selecting Protective Devices handbook, 'Short Circuit Current Calculations',
+# Table 4 (c)2005 (eaton.com, via web.archive.org), identical in every row to Bulletin EPR-1 (2002) on mikeholt.com; a
+# maker's source, from IEEE Std 241 and 242 R and X.
+size,cu_steel,cu_pvc,al_steel,al_pvc
+14,389,389,237,237
+12,617,617,376,376
+10,981,982,599,599
+8,1557,1559,951,952
+6,2425,2430,1481,1482
+4,3806,3826,2346,2350
+3,4774,4811,2952,2961
+2,5907,6044,3713,3730
+1,7293,7493,4645,4678
+1/0,8925,9317,5777,5838
+2/0,10755,11424,7187,7301
+3/0,12844,13923,8826,9110
+4/0,15082,16673,10741,11174
+250,16483,18594,12122,12862
+300,18177,20868,13910,14923
+350,19704,22737,15484,16813
+400,20566,24297,16671,18506
+500,22185,26706,18756,21391
+600,22965,28033,20093,23451
+750,24137,29735,21766,25976
+1000,25278,31491,23478,28779

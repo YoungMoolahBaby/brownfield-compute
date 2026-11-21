@@ -2,10 +2,12 @@
 
 **4a, hot water.** The cold water's temperature from the site's air (`mains_f`). One central
 plant in the annex's mechanical room (Jon's decision), sized by Ecotope's Ecosizer method as its
-engine computes it (EcosizerEngine, commit 7586430: `ecosizer_primary`, `ecosizer_parallel_tm`),
-held to the engine's own regression results; its heat from the data center's return through a
-preheating exchanger and a water-to-water heat pump. The recirculating loop's loss from its pipes
-(`pipe_loss_btuh_ft`, held to NAIMA's table) and its flow at WHO's temperatures.
+engine computes it (EcosizerEngine, commit 7586430: `ecosizer_primary`, and `ecosizer_swing` for the
+plant as built, a swing tank on the loop), held to the engine's own regression results; its heat
+from the data center's return through a preheating exchanger, and a water-to-water heat pump
+drawing on the same water after it (ClimateMaster's rating; step 5's revision). The recirculating
+loop's loss from its pipes (`pipe_loss_btuh_ft`, held to NAIMA's table) and its flow at WHO's
+temperatures.
 
 **4b, cold and hot water.** IPC Appendix E's segmented loss method (`pressure_budget`, held to its
 sample problem) from the building's reducing valve to the top floor's shower, every pipe the
@@ -76,12 +78,100 @@ def ecosizer_primary(day_gal: float, shape: np.ndarray, supply_f: float, storage
             "minimum_gal": float(shape.max()) * day_gal / 2.0}
 
 
-def ecosizer_parallel_tm(loss_btuh: float, on_f: float, off_f: float, off_hr: float = 0.5,
-                         safety: float = 1.75) -> dict:
-    """A parallel loop tank for temperature maintenance: the volume (gal) that cools from `off_f`
-    to `on_f` in `off_hr` at the loop's loss, and its heater at `safety` x the loss (kBtu/h). The
-    engine's defaults: on at the supply temperature, off 8 F above, half an hour, 1.75."""
-    return {"volume_gal": loss_btuh / RHO_CP * off_hr / (off_f - on_f), "capacity_kbtuh": safety * loss_btuh / 1000}
+# Ecosizer's swing tank (EcosizerEngine SwingSystem.py, commit 7586430): its volume the smallest of
+# these at least the loop's loss at 100 W a gallon and a minute's peak draw; its element turns on at
+# the supply temperature and off 8 F above.
+SWING_TABLE_GAL = (40, 50, 80, 100, 120, 160, 175, 240, 350, 400, 500, 600, 800, 1000, 1250)
+SWING_W_PER_GAL = 100.0
+SWING_DEADBAND_F = 8.0
+
+
+def swing_sim(hw_min: np.ndarray, supply_f: float, storage_f: float, inlet_f: float, loss_btuh: float,
+              tm_gal: float, tm_kbtuh: float, t0_f: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The swing tank alone, minute by minute (the engine's `_sim_just_swing` and
+    `_run_one_swing_step`): the primary feeds it at the storage temperature as hot water is drawn
+    (gallons at the supply temperature, `hw_min`, restated at the tank's temperature); the loop's
+    loss cools it; its element warms it, on at the supply temperature and off 8 F above. Returns
+    the tank's temperature, the element's running fraction and the draw on the primary, each
+    minute."""
+    n = len(hw_min)
+    temps, run, primary = np.full(n, supply_f), np.zeros(n), np.zeros(n)
+    temps[0], primary[0] = t0_f, hw_min[0]
+    heating = False
+    loss_dt = loss_btuh / 60.0 / (RHO_CP * tm_gal)
+    elem_dt = tm_kbtuh * 1000.0 / 60.0 / (RHO_CP * tm_gal)
+    for i in range(1, n):
+        t = temps[i - 1]
+        primary[i] = hw_min[i] * (supply_f - inlet_f) / (t - inlet_f) if t > inlet_f else hw_min[i]
+        if primary[i] > 0:
+            if tm_gal - primary[i] <= 0:
+                raise ValueError(f"swing tank of {tm_gal:.0f} gal undersized for a minute's draw")
+            t = (primary[i] * storage_f + t * (tm_gal - primary[i])) / tm_gal
+        t -= loss_dt
+        if heating:
+            t += elem_dt
+            run[i] = 1.0
+            if t > supply_f + SWING_DEADBAND_F:
+                over = min((t - (supply_f + SWING_DEADBAND_F)) / elem_dt, 1.0)
+                t -= elem_dt * over
+                run[i] = 1.0 - over
+                heating = False
+        elif t <= supply_f:
+            missed = min((supply_f - t) / elem_dt, 1.0)
+            t += elem_dt * missed
+            run[i] = missed
+            heating = True
+        if t < supply_f:
+            raise ValueError("the swing tank fell below the supply temperature: undersized")
+        temps[i] = t
+    return temps, run, primary
+
+
+def ecosizer_swing(day_gal: float, shape: np.ndarray, supply_f: float, storage_f: float, inlet_f: float,
+                   loss_btuh: float, run_hr: float = 16.0, aquastat: float = 0.5, slope: float = 2.8,
+                   safety: float = 1.75, defrost: float = 1.0) -> dict:
+    """A primary plant with a swing tank in series (Ecosizer's 'swing tank', as EcosizerEngine's
+    SwingSystem sizes it): every draw passes through the swing tank, which the loop returns to; its
+    element covers the loop's loss when no hot water is flowing through it.
+    - The swing tank: the table's least volume over both the loop's loss at 100 W a gallon and the
+      peak minute's draw; its element `safety` x the loss.
+    - The running volume: for each peak start (and the hour after), the swing tank simulated over
+      24 h; the primary's draw is what the swing tank can't give from its own heat; the worst
+      cumulative deficit of the primary's generation (scaled to that draw) against it, restated at
+      the supply temperature.
+    - The capacity: the day's draw x that peak's share / `run_hr`, heated from the inlet to the
+      storage temperature (the swing tank is fed at storage temperature)."""
+    loss_need = loss_btuh / (SWING_W_PER_GAL * 3.412142)
+    peak_min = day_gal * float(shape.max()) / 60.0
+    tm_gal = float(min(v for v in SWING_TABLE_GAL if v >= max(loss_need, peak_min)))
+    tm_kbtuh = safety * loss_btuh / 1000.0
+    gen_norm = np.ones(24) / run_hr
+    starts = _peak_starts(gen_norm - shape)
+    running, eff = 0.0, 1.0
+    for i in sorted(set(starts + [j + 1 for j in starts if j + 1 < 24])):
+        hw = np.repeat(np.tile(shape, 2)[i:i + 24], 60) / 60.0 * day_gal
+        _, _, primary = swing_sim(hw, supply_f, storage_f, inlet_f, loss_btuh, tm_gal, tm_kbtuh, supply_f + 0.1)
+        mix = float(primary.sum()) / day_gal
+        gen = np.repeat(np.tile(gen_norm, 2)[i:i + 24], 60) / 60.0 * day_gal * mix
+        cum = np.cumsum(gen - primary)
+        if (cum < 0).any() and -cum.min() > running:
+            running, eff = float(-cum[cum < 0].min()), mix
+    running *= (storage_f - inlet_f) / (supply_f - inlet_f)
+    f = strat_factor(supply_f, storage_f, inlet_f, aquastat, supply_f, slope)
+    return {"capacity_kbtuh": day_gal * eff / run_hr * RHO_CP * (storage_f - inlet_f) / defrost / 1000, "eff_mix": eff,
+            "running_gal": running, "strat_factor": f, "storage_gal": running / f,
+            "minimum_gal": float(shape.max()) * day_gal / 2.0, "tm_volume_gal": tm_gal, "tm_capacity_kbtuh": tm_kbtuh}
+
+
+def swing_day(day_gal: float, shape: np.ndarray, supply_f: float, storage_f: float, inlet_f: float,
+              loss_btuh: float, tm_gal: float, tm_kbtuh: float) -> dict:
+    """The swing tank over the design day from midnight: how long its element runs and the heat it
+    gives (kBtu), against the loop's loss over the day; the rest of the loss rides in on the
+    primary's water, heated by the plant."""
+    hw = np.repeat(shape, 60) / 60.0 * day_gal
+    _, run, _ = swing_sim(hw, supply_f, storage_f, inlet_f, loss_btuh, tm_gal, tm_kbtuh, supply_f + 0.1)
+    element = float(run.sum()) / 60.0 * tm_kbtuh
+    return {"element_hr": float(run.sum()) / 60.0, "element_kbtu": element, "loss_kbtu": loss_btuh * 24 / 1000.0}
 
 
 def recirc_loss_btuh(gpm: float, supply_f: float, return_f: float) -> float:
@@ -308,7 +398,6 @@ def _sides(apt: dict, rs: dict) -> dict[str, list[str]]:
 def design(apt: dict, p: dict) -> dict:
     """Step 4's water: the plant, the recirculating loop, and every pipe from the street to the
     highest shower, with what each part costs in pressure."""
-    from . import module
     from .hvac import FT
     from .loads import hot_water, water
     from .systems import by_flat
@@ -320,18 +409,9 @@ def design(apt: dict, p: dict) -> dict:
     hw = hot_water(apt, p)
     demand = w["demand_gpm"]
 
-    # -- the plant: Ecosizer on the design day, its gallons restated at the distribution temperature
+    # The design day's gallons restated at the distribution temperature.
     supply, storage, ret_f = p[h + "distribution_f"], p[h + "storage_f"], p[h + "return_min_f"]
     day_gal = hw["day_gal"] * (p[h + "supply_f"] - t_in) / (supply - t_in)
-    prim = ecosizer_primary(day_gal, load_shape(), supply, storage, t_in, p[h + "run_hr"], p[h + "aquastat_fract"],
-                            None, p[h + "strat_slope_f_pct"])
-    # A plate exchanger off the data center's return preheats on the heater's own circuit (no
-    # lukewarm water stored); a water-to-water heat pump on the same circuit lifts it to storage.
-    loop_c = p[g + "liquid_supply_c"] + p[g + "liquid_rise_k"]
-    pre_f = (loop_c - p["systems.substation.approach_k"]) * 1.8 + 32
-    share_pre = (pre_f - t_in) / (storage - t_in)
-    cop = module.heat_pump_cop(loop_c, (storage - 32) / 1.8, p[g + "hp_approach_k"], p[g + "hp_carnot_eff"])
-    day_kbtu = day_gal * RHO_CP * (supply - t_in) / 1000
 
     # -- the loop: supply mains below the slab to each side, risers up each stack, returns alongside
     mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
@@ -365,9 +445,25 @@ def design(apt: dict, p: dict) -> dict:
             break
         ret_main, ret_rise = sized[0][0], sized[1][0]
     ret_fps = max(sized[0][1], sized[1][1])
-    tm_off = supply + p[h + "tm_off_above_f"]
-    tm = ecosizer_parallel_tm(loss, supply, tm_off, p[h + "tm_off_hr"], p[h + "tm_safety"])
-    tm_cop = module.heat_pump_cop(loop_c, (tm_off - 32) / 1.8, p[g + "hp_approach_k"], p[g + "hp_carnot_eff"])
+
+    # -- the plant: Ecosizer's swing tank on the design day (Jon, 2026-11-21). The loop returns to the
+    # swing tank, whose element covers its loss only when no hot water is passing through.
+    prim = ecosizer_swing(day_gal, load_shape(), supply, storage, t_in, loss, p[h + "run_hr"], p[h + "aquastat_fract"],
+                          p[h + "strat_slope_f_pct"], p[h + "tm_safety"])
+    sday = swing_day(day_gal, load_shape(), supply, storage, t_in, loss, prim["tm_volume_gal"], prim["tm_capacity_kbtuh"])
+    # A plate exchanger off the data center's return preheats on the heater's own circuit (no
+    # lukewarm water stored); a water-to-water heat pump on the same circuit lifts it to storage.
+    # The heat pump's heat comes from the same data center water after the exchanger, its flow
+    # throttled so it leaves at the heat pump's source temperature (Jon, 2026-11-21): no unit is
+    # rated on 122 F water.
+    loop_c = p[g + "liquid_supply_c"] + p[g + "liquid_rise_k"]
+    pre_f = (loop_c - p["systems.substation.approach_k"]) * 1.8 + 32
+    share_pre = (pre_f - t_in) / (storage - t_in)
+    cop, src_f = p[h + "hp_cop"], p[h + "hp_source_f"]
+    dc_in_f = loop_c * 1.8 + 32
+    # The plant's heat on the design day: the draw from the inlet to the supply temperature, and
+    # the loop's loss less what the swing tank's element gives.
+    day_kbtu = day_gal * RHO_CP * (supply - t_in) / 1000 + sday["loss_kbtu"] - sday["element_kbtu"]
 
     # -- the pressure: Appendix E's lines from the building's reducing valve to the top floor's shower
     top_ft = apt["storey_m"] * (apt["storeys"] - 1) / FT + p[pl + "valve_height_in"] / 12
@@ -423,13 +519,20 @@ def design(apt: dict, p: dict) -> dict:
     return {"mains": m, "inlet_f": t_in, "day_gal": day_gal, "primary": prim,
             "heater": {"preheat_f": pre_f, "preheat_share": share_pre, "hp_cop": cop, "day_kbtu": day_kbtu,
                        "hp_kwh_day": day_kbtu * (1 - share_pre) / 3.412142 / cop,
+                       "hp_heat_kwh_day": day_kbtu * (1 - share_pre) / 3.412142,
                        "loop_kwh_day": day_kbtu * share_pre / 3.412142,
                        "hp_kw": prim["capacity_kbtuh"] * (1 - share_pre) / 3.412142,
-                       "preheat_kw": prim["capacity_kbtuh"] * share_pre / 3.412142},
+                       "preheat_kw": prim["capacity_kbtuh"] * share_pre / 3.412142,
+                       "source_f": src_f, "dc_in_f": dc_in_f,
+                       # the data center's flow per the heater circuit's, to leave the exchanger at src_f
+                       "dc_per_circuit": (pre_f - t_in) / (dc_in_f - src_f) if dc_in_f > src_f else float("inf"),
+                       "cold_end_k": (src_f - t_in) / 1.8,
+                       "hp_capacity_ok": p[h + "hp_capacity_btuh"] / 1000 >= prim["capacity_kbtuh"] * (1 - share_pre)},
             "loop": {"loss_btuh": loss, "w_per_flat": loss / 3.412142 / len(apt["flats"]), "gpm": loop_gpm,
                      "return_main_in": ret_main, "return_riser_in": ret_rise, "return_fps": ret_fps,
                      "sides": rows, "rise_ft": rise_ft},
-            "tm": {**tm, "cop": tm_cop, "kwh_day": loss * 24 / 3412.142 / tm_cop},
+            "tm": {"volume_gal": prim["tm_volume_gal"], "capacity_kbtuh": prim["tm_capacity_kbtuh"], **sday,
+                   "kwh_day": sday["element_kbtu"] / 3.412142, "plant_share": 1 - sday["element_kbtu"] / sday["loss_kbtu"]},
             "paths": paths, "falloff_psi": falloff, "street_need_psi": street_need, "upstream": upstream,
             "street_ok": p[pl + "street_psi"] >= street_need, "longest_hot_ft": longest, "risers": rs}
 
@@ -445,10 +548,11 @@ def summary(apt: dict, p: dict) -> dict:
 
     h, pl = "systems.hot_water.", "systems.plumbing."
     d = design(apt, p)
+    ht = d["heater"]
     dv = drains_and_vents(apt, p)
     nz = noise(apt, p)
     eco = ecosizer_primary(100 * 25, load_shape(), 120.0, 150.0, 55.0)
-    tm_k = ecosizer_parallel_tm(recirc_loss_btuh(5.0, 120.0, 110.0), 120.0, 128.0)
+    sw = ecosizer_swing(100 * 25, load_shape(), 120.0, 150.0, 55.0, recirc_loss_btuh(5.0, 120.0, 110.0))
     naima = max(abs(pipe_loss_btuh_ft(0.875, t, 140, 75, p) / v - 1) for t, v in NAIMA_3_4_TYPE_M.items())
     sample = pressure_budget(55.0, {"B": 15.0, "C": 11.0, "D": tap_loss_psi(120, 2), "E": 21 * 0.43, "F": 9.0})
     segs = [s for path in d["paths"].values() for s in path["segments"]]
@@ -459,10 +563,12 @@ def summary(apt: dict, p: dict) -> dict:
         "revision": apt.get("revision"),
         "checks": [
             ("Ecosizer against its engine's regression (100 people, 25 gpdpp, 120/150/55 F): 84.84 kBtu/h, 567.72 gal; "
-             "a 5 gpm loop at 110 F: 187.5 gal, 43.86 kBtu/h",
+             "with a swing tank on a 5 gpm loop at 110 F: 106.71 kBtu/h, 624.06 gal, an 80 gal tank, 43.86 kBtu/h",
              abs(eco["capacity_kbtuh"] / 84.84058984375 - 1) < 1e-6 and abs(eco["storage_gal"] / 567.7208360311284 - 1) < 1e-6
-             and abs(tm_k["volume_gal"] - 187.5) < 1e-6 and abs(tm_k["capacity_kbtuh"] - 43.85605875) < 1e-6,
-             f"{eco['capacity_kbtuh']:.4f} kBtu/h, {eco['storage_gal']:.2f} gal; {tm_k['volume_gal']:.1f} gal, {tm_k['capacity_kbtuh']:.4f}"),
+             and abs(sw["capacity_kbtuh"] / 106.70997942167497 - 1) < 1e-6 and abs(sw["storage_gal"] / 624.0605694309057 - 1) < 1e-6
+             and sw["tm_volume_gal"] == 80 and abs(sw["tm_capacity_kbtuh"] - 43.85605875) < 1e-6,
+             f"{eco['capacity_kbtuh']:.4f} kBtu/h, {eco['storage_gal']:.2f} gal; {sw['capacity_kbtuh']:.4f} kBtu/h, "
+             f"{sw['storage_gal']:.2f} gal, {sw['tm_volume_gal']:.0f} gal, {sw['tm_capacity_kbtuh']:.4f}"),
             ("Appendix E's sample problem (E103.3.1): 9.36 psi left for friction", abs(sample["friction_psi"] - 9.36) < 1e-9,
              f"{sample['friction_psi']:.2f} psi"),
             ("pipe heat loss against NAIMA's table (3/4 in. copper, 140 F in 75 F, k 0.28): within 5%, never under",
@@ -482,6 +588,11 @@ def summary(apt: dict, p: dict) -> dict:
              f"longest {d['longest_hot_ft']:.0f} ft"),
             ("the primary storage at least Ecosizer's floor (half the peak hour)", d["primary"]["storage_gal"] >= d["primary"]["minimum_gal"],
              f"{d['primary']['storage_gal']:.0f} gal against {d['primary']['minimum_gal']:.0f}"),
+            ("the heat pump inside its maker's table: its source at most 80 F, which the preheat exchanger can cool the data "
+             "center's water to; its rated output over its share of the plant",
+             ht["source_f"] <= p[h + "hp_source_max_f"] and ht["cold_end_k"] >= p["systems.substation.approach_k"] and ht["hp_capacity_ok"],
+             f"source {ht['source_f']:g} F ({ht['cold_end_k']:.1f} K over the inlet); {p[h + 'hp_capacity_btuh'] / 1000:.1f} "
+             f"against {ht['hp_kw'] * 3.412142:.1f} kBtu/h"),
             ("stack vents per Table 906.1; no vent stack (three branch intervals); no frost closure (903.2)",
              dv["stack_vent_min_in"] <= dv["stack_in"] and not dv["vent_stack_required"] and not dv["frost_closure"],
              f"{dv['stack_vent_min_in']:g} in. over {dv['vent_developed_ft']:.0f} ft"),
@@ -507,12 +618,14 @@ def report(s: dict) -> str:
              f"volume {pr['running_gal']:.0f} gal).",
              f"  The data center's return preheats to {ht['preheat_f']:.1f} F: {ht['preheat_share']:.0%} of the heat, "
              f"{ht['preheat_kw']:.1f} kW, {ht['loop_kwh_day']:.0f} kWh on the design day. A water-to-water heat pump lifts the "
-             f"rest: {ht['hp_kw']:.1f} kW, COP {ht['hp_cop']:.1f} (the Carnot-share model), {ht['hp_kwh_day']:.1f} kWh.",
+             f"rest: {ht['hp_kw']:.1f} kW of heat, from the same water leaving the exchanger at {ht['source_f']:g} F "
+             f"({ht['dc_per_circuit']:.2f} x the heater circuit's flow); COP {ht['hp_cop']:g} (ClimateMaster SW036's rating), "
+             f"{ht['hp_heat_kwh_day']:.0f} kWh of heat for {ht['hp_kwh_day']:.1f} kWh.",
              f"  The loop: {lp['loss_btuh'] / 3.412142:.0f} W ({lp['w_per_flat']:.0f} a flat), {lp['gpm']:.2f} gpm to hold 125 F "
              f"out and 122 F back; returns {lp['return_main_in']:g} in. mains, {lp['return_riser_in']:g} in. risers (at most "
-             f"{lp['return_fps']:.2f} ft/s). Its tank {tm['volume_gal']:.0f} gal "
-             f"and heater {tm['capacity_kbtuh']:.1f} kBtu/h (Ecosizer's parallel loop), a heat pump at COP {tm['cop']:.1f}, "
-             f"{tm['kwh_day']:.1f} kWh a day."]
+             f"{lp['return_fps']:.2f} ft/s). It returns to a {tm['volume_gal']:.0f} gal swing tank (Ecosizer) with a "
+             f"{tm['capacity_kbtuh'] / 3.412142:.2f} kW element, which runs {tm['element_hr']:.1f} h on the design day: "
+             f"{tm['kwh_day']:.1f} kWh, the plant carrying {tm['plant_share']:.0%} of the loop's {tm['loss_kbtu'] / 3.412142:.0f} kWh."]
     for side in lp["sides"]:
         lines.append(f"  {side['side']}: {side['main_ft']:.0f} ft of main, hot {side['hot_main_in']:g} in.; risers {side['hot_riser_in']:g} in. "
                      f"in stacks {', '.join(side['stacks'])}")

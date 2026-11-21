@@ -13,11 +13,13 @@ def test_ecosizer_reproduces_its_engines_regression():
     r = plumbing.ecosizer_primary(100 * 25, plumbing.load_shape(), 120.0, 150.0, 55.0)
     assert r["capacity_kbtuh"] == pytest.approx(84.84058984375, rel=1e-6)
     assert r["storage_gal"] == pytest.approx(567.7208360311284, rel=1e-6)
-    # 'parallel_loop': a 5 gpm loop returning at 110 F; expected 187.5 gal and 43.85605875 kBtu/h.
+    # 'swing_tank': the same with a 5 gpm loop returning at 110 F into a swing tank; expected
+    # 106.70997942167497 kBtu/h, 624.0605694309057 gal, an 80 gal tank, 43.85605875 kBtu/h.
     loss = plumbing.recirc_loss_btuh(5.0, 120.0, 110.0)
-    tm = plumbing.ecosizer_parallel_tm(loss, 120.0, 128.0)
-    assert tm["volume_gal"] == pytest.approx(187.5, rel=1e-6)
-    assert tm["capacity_kbtuh"] == pytest.approx(43.85605875, rel=1e-6)
+    sw = plumbing.ecosizer_swing(100 * 25, plumbing.load_shape(), 120.0, 150.0, 55.0, loss)
+    assert sw["capacity_kbtuh"] == pytest.approx(106.70997942167497, rel=1e-6)
+    assert sw["storage_gal"] == pytest.approx(624.0605694309057, rel=1e-6)
+    assert sw["tm_volume_gal"] == 80 and sw["tm_capacity_kbtuh"] == pytest.approx(43.85605875, rel=1e-6)
 
 
 def test_the_load_shape_is_a_day():
@@ -81,3 +83,16 @@ def test_vent_table():
     assert plumbing.stack_vent_in(27, 11.0) == 1.5
     assert plumbing.stack_vent_in(27, 40.0) == 2.0  # past 1-1/2 in.'s 27 ft at 53 dfu
     assert plumbing.stack_vent_in(27, 500.0) == 3.0
+
+
+def test_the_swing_tank_shifts_the_loop_onto_the_plant(apt, P):
+    # Its element runs only part of the design day; the rest of the loop's loss comes in on the
+    # plant's water, three quarters of it the data center's preheat.
+    tm = plumbing.design(apt, P)["tm"]
+    assert 0 < tm["element_hr"] < 24 and 0.3 < tm["plant_share"] < 1.0
+    assert tm["element_kbtu"] == pytest.approx(tm["element_hr"] * tm["capacity_kbtuh"])
+
+
+def test_the_heat_pump_stays_inside_its_makers_table(apt, P):
+    s = plumbing.summary(apt, dict(P, **{"systems.hot_water.hp_source_f": 122.0}))
+    assert any("maker's table" in label for label, ok, _ in s["checks"] if not ok)

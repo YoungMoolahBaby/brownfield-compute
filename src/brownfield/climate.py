@@ -143,6 +143,30 @@ def pvgis_vertical(lat: float, lon: float, year: int, aspect: float, angle: floa
     return pd.DataFrame(json.loads(path.read_text()))
 
 
+PVGIS_PV = "https://re.jrc.ec.europa.eu/api/v5_3/PVcalc"
+
+
+def pvgis_pv(lat: float, lon: float, kwp: float, angle: float, aspect: float, loss_pct: float) -> dict:
+    """PVGIS's grid-connected PV estimate (PVcalc) for `kwp` of crystalline silicon on
+    free-standing racks at `angle` degrees from horizontal facing `aspect` (0 south), with
+    `loss_pct` system losses: its yearly yield (kWh) and the months'. ERA5 radiation, the only database PVGIS 5.3 has for the
+    Americas (pass 3g step 5f). Cached."""
+    lat, lon = round(lat, 3), round(lon, 3)
+    path = CACHE_DIR / f"{lat:.3f}_{lon:.3f}_pvfree_{kwp:g}_{angle:g}_{aspect:g}_{loss_pct:g}.json"
+    if not path.exists():
+        resp = requests.get(PVGIS_PV, params={"lat": lat, "lon": lon, "peakpower": kwp, "loss": loss_pct, "angle": angle,
+                                              "aspect": aspect, "mountingplace": "free", "pvtechchoice": "crystSi",
+                                              "raddatabase": "PVGIS-ERA5", "outputformat": "json"},
+                            headers={"User-Agent": USER_AGENT}, timeout=120)
+        resp.raise_for_status()
+        out = resp.json()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"inputs": out["inputs"], "totals": out["outputs"]["totals"]["fixed"],
+                                    "monthly": out["outputs"]["monthly"]["fixed"]}))
+    d = json.loads(path.read_text())
+    return {"kwh_year": d["totals"]["E_y"], "kwh_month": [m["E_m"] for m in d["monthly"]], "inputs": d["inputs"]}
+
+
 # PVGIS's aspects for walls facing south, west, north and east (its convention: 0 south, 90 west).
 WALL_ASPECTS = {"S": 0, "W": 90, "N": 180, "E": -90}
 

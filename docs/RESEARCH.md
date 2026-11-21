@@ -1127,3 +1127,60 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       - (p - 70)/12 dB for pressure;
       - copper clamped rigidly 73.4 against plastic in Armaflex 49.1 (13 mm);
       - the wall's batts and resilient channels.
+- **Step 5, electrical (2026-11-21).** Three research agents (the utility, the code, the
+  equipment); I checked every number the model uses against their saved text and read the
+  ampacity table's 600-1000 kcmil rows off the scan myself.
+  - **The NEC 2020** isn't free to read without a login, so it's read through sources that
+    quote it:
+    - **NFPA's own records:** TIA 20-13 (210.8(F) delayed for mini-splits to 2023-01-01), TIA
+      20-19 (an exception for listed HVAC equipment, expiring 2026-09-01), proposed TIA 1924 (to
+      extend it to 2028: rejected, the panel split 10-10, appealed by ACCA and AHRI; no decision
+      found); the 2020-cycle Second Revision 7651 (Table 310.16) and the Panel 10 ballots;
+    - **ElectricalLicenseRenewal.com** (a trade course printing 2017 and 2020 text side by
+      side): 210.8(A) (125-250 V receptacles; kitchens still "where the receptacles are
+      installed to serve the countertop surfaces"), 210.8(D), 210.63 (210.64 merged into it),
+      220.53, 310.12 (it reaches 120/208 V flat feeders), 625.42, 705.11, 705.12(B)(3)(2),
+      Tables 250.66 and 250.122;
+    - **Leviton's Q-1285A:** 230.67, verbatim;
+    - **Holt** in EC&M: 220.82's 1,500 ft2 worked case (2020); 240.24(B), 424.4(B) and 210.11(C)
+      paraphrased;
+    - **Public.Resource.Org's scan of the 2017 edition:** Tables 310.16, 8 and 9, 240.4(D),
+      334.80, 110.14(C), where 2020 made no change found;
+    - **not in the 2020 code:** 220.57 (the EVSE load) is new in 2023.
+  - **Pennsylvania** amended nothing in NFPA 70: 55 Pa.B. 7701's only electrical changes are to
+    IRC sections, and the RAC's reports take no action on NFPA 70.
+  - **FirstEnergy, Customer Guide for Electric Service - PA (September 2021),** still current
+    on its site:
+    - 7.2: "Outdoor meter locations are required for all meters except where the Company gives
+      written approval otherwise";
+    - 7.5, gangable sockets: the top socket's centre at most 72 in., the bottom's at least 30
+      outdoors, 8 in. apart, a fifth jaw for 120/208 V;
+    - Exhibit 16: at most four positions high, a main past six meters;
+    - 7.3: a meter room "readily accessible to all tenants";
+    - 3.4: parallel runs to a meter centre need its approval;
+    - 6.4: a three-phase pad takes cable to 1000 kcmil;
+    - 3.7: fault current on request; no table published, nor transformer impedances, in any of
+      its state guides;
+    - its interconnection guide (three phase, 2024) 6.6: a lockable, visible disconnect by the
+      meter.
+  - **Eaton Bussmann, "Short Circuit Current Calculations"** (SPD handbook, (c)2005; the same in
+    Bulletin EPR-1): the point-to-point method, its C values and its two worked examples, which
+    the model reproduces.
+  - **Equipment** (makers' sheets):
+    - Square D EZ Meter-Pak (the Digest, 2019): branch units, mains and their lugs, tenant
+      breakers' ratings;
+    - Square D QO load centres (1100CT0501, 2026): spaces, box sizes, 75 C lugs;
+    - Frigidaire, Bosch, Whirlpool and GE appliance sheets;
+    - Ouellet ODHR duct heaters, Grundfos ALPHA2 circulators, Lithonia TSL9;
+    - ClimateMaster Tranquility SW (RP3006, 2026): ratings to an 80 F source; Trane's
+      DHWHP source range 35-120 F. No water-to-water heat pump rated at a 122 F source was
+      found.
+  - **IFC 2021 1205.3** (rooftop PV pathways) and **IMC 2021 306.5** (permanent roof access
+    above 16 ft), from UpCodes' Virginia and Connecticut copies of the 2021 codes.
+  - **The swing tank** (step 4 revised, Jon's decision): EcosizerEngine's SwingSystem.py at the
+    same commit (7586430), read and ported: the tank from its table (40-1,250 gal) at 100 W a
+    gallon of loop loss or a minute's peak draw; its element at 1.75 x the loss, on at the supply
+    temperature and off 8 F above; the running volume from a minute-by-minute simulation of the
+    swing tank at each peak; the heater sized to the storage temperature. Its regression case (100
+    people, a 5 gpm loop at 110 F: 106.70997942 kBtu/h, 624.06056943 gal, 80 gal, 43.85605875
+    kBtu/h) is reproduced to 1e-15.

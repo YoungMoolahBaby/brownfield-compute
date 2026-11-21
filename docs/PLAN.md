@@ -30,7 +30,13 @@ an electric preheater ahead of each ERV keeps it from defrosting and brings its 
 Step 4 designed: a central hot-water plant that takes 75% of its heat from the data
 center's return, a recirculating loop held at WHO's temperatures, every pipe sized by the code's
 pressure method, cast-iron stacks for quiet. It needs at least 49.5 psi at the street main, which
-the water authority doesn't publish: a hydrant test to ask for. Next: step 5, electrical.
+the water authority doesn't publish: a hydrant test to ask for. Step 5 designed: a 208Y/120 V
+service with the meters outdoors (FirstEnergy's rule), each flat's circuits, feeder and panel held to
+the code's tables and a 5% voltage drop, a 600 A main (the code's load needs more than 400 A). Found on the way: step 4's hot-water heat pump had
+no real unit at its 122 F source. Jon took the fix: it takes its heat from the data center's water
+after the preheat (a rated unit, COP 4.4), and the loop returns to a swing tank, so the data center
+gives about 89% of the hot water's heat. No chargers at the walk-up: D14 puts them at the mobility
+hub. Next: step 6, sprinklers and alarms.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2375,6 +2381,9 @@ test. Then the township brief's ask.
              120/240 V or 350 A at 208Y/120 V, before house loads (287.3 kVA, 491 A with the
              placeholder). The ERV preheaters (482 W each) aren't in it yet: step 5.
            - **Placeholders:** the appliance nameplates, until chosen.
+           - **Restated by step 5** with the appliances chosen, at 208 V: a flat's feeder 19.1
+             kVA; the 12 flats 339.1 kVA connected x 0.41 = 139.0 kVA, 386 A at 208Y/120 V before
+             the house.
          - **Tests:** `tests/test_walkup_loads.py`, 17, the known cases among them.
          - **Review before commit fixed:** `weather()` carried the site's coordinates as numbers
            in the code; it takes them from `land.PLANT` (EIA-860), as the test now does. An unused
@@ -2549,7 +2558,8 @@ test. Then the township brief's ask.
          - the ground slab's own chart (taken as the pour);
          - the slab edge's F-factor (pass 3's 0.6, judgement), which drives the ground floor;
          - the mini-split's back-up heat and the stair's heat;
-         - the preheater's circuit in each flat's panel (step 5);
+         - the preheater's circuit in each flat's panel (step 5: done, and the preheater grew
+           to 1 kW so it covers the design hour at the voltage it gets);
          - a bath floor warmed for comfort;
          - the hall's dropped ceiling for the indoor unit against IBC 1208.2's 7 ft.
     4. **Plumbing:** cold and hot water and recirculation, the hot-water plant (central or per
@@ -2575,8 +2585,9 @@ test. Then the township brief's ask.
            Ecosizer's code, the CMHC and NRC papers and Appendix E myself.
        - **Known cases:**
          - **Ecosizer against its engine's own regression results, to a millionth:** 100
-           people at 25 gal a day give 84.84 kBtu/h and 567.72 gal. A 5 gpm loop returning at
-           110 F gives a 187.5 gal loop tank and 43.86 kBtu/h.
+           people at 25 gal a day give 84.84 kBtu/h and 567.72 gal. With a swing tank on a 5 gpm
+           loop returning at 110 F: 106.71 kBtu/h, 624.06 gal, an 80 gal swing tank and 43.86
+           kBtu/h (the parallel loop tank's case, 187.5 gal, was held until step 5 replaced it).
            - Its manual's worked example (270 gal running) doesn't reproduce from the engine's
              load shape (321 gal): the shape changed after the manual.
          - **Appendix E's sample problem:** 9.36 psi left for friction, exactly.
@@ -2593,23 +2604,44 @@ test. Then the township brief's ask.
            - sent out at 125 F through an ASSE 1017 master mixing valve;
            - back at 122 F or more (WHO: the return "not less than 50 C"; CDC's floor for
              circulating water is 120 F).
-         - **Sized by Ecosizer:** the design day's 900 gal at 120 F is 843 gal at 125 F. That
-           takes 34.8 kBtu/h (10.2 kW) over 16 hours and 229 gal of storage at 140 F (135 gal
-           running, against a floor of 64).
+         - **Sized by Ecosizer,** with a swing tank (revised in step 5, Jon's decision): the
+           design day's 900 gal at 120 F is 843 gal at 125 F. That takes 38.0 kBtu/h (11.1 kW)
+           over 16 hours and 239 gal of storage at 140 F (141 gal running, against a floor of 64).
+           Ecosizer sizes a swing-tank plant's heater from the inlet to the storage temperature,
+           so it's larger than the first sizing's 34.8.
          - **The heat comes from the data center.** A plate exchanger off its 50 C return
            preheats the heater's own circuit to 116.6 F, with no lukewarm water stored. That is
-           75% of the heat: 7.7 kW, 122 kWh on the design day.
-           - A water-to-water heat pump on the same water lifts the rest to 140 F: 2.5 kW.
-           - **Its COP is overstated.** Pass 2's Carnot-share model (0.55, measured at a much
-             bigger lift) gives 9.3 here, so 4.4 kWh on the design day. At these small lifts
-             real units do worse; to source with a unit.
+           75% of the plant's heat: 8.4 kW, 133 kWh on the design day.
+           - **A water-to-water heat pump** on the same circuit lifts the rest to 140 F: 2.8 kW
+             of heat. Its own heat comes from the same data center water after the exchanger,
+             whose flow (1.68 times the heater circuit's) is throttled so it leaves at 80 F.
+           - **Why:** first drawn on the data center's 122 F water, it had no real unit: none in
+             the US is rated there (step 5).
+           - **Basis of design:** ClimateMaster Tranquility SW036. Its published rating is source
+             80 F, load in 120 F, 141 F out, COP 4.4. That gives 44 kWh of heat for 10.0 kWh on
+             the design day.
+           - The 4.4 replaces pass 2's Carnot-share model's 9.3, which was flagged as
+             overstated.
+           - The unit gives 34.6 kBtu/h against the 9.5 it's asked for: the smallest made,
+             cycling against the storage.
          - **The loop:**
            - 998 W lost, 83 W a flat, within Ecosizer's 66-175 W spread of measured
              buildings;
            - 2.27 gpm holds 125 F out and 122 F back;
            - ½ in. returns, mains and risers, at most 2.0 ft/s (REHAU's limit for returns).
-           - **Its loop tank** (Ecosizer's parallel loop): 25 gal, 6.0 kBtu/h, a second small
-             heat pump (COP 11.4 by the same overstated model; 2.1 kWh a day).
+           - **It returns to a swing tank** (Ecosizer's, revised in step 5; Jon: "go with your
+             recommendations"). A 40 gal tank in series between the storage and the building,
+             with a 1.75 kW element.
+             - Every draw passes through it, fed by the plant's 140 F water, so the plant's heat
+               (three quarters of it the data center's) covers the loop's loss while hot water
+               is used.
+             - The element runs only in the quiet hours: 5.6 h on the design day, 9.8 kWh.
+             - The plant carries 59% of the loop's 24 kWh.
+             - No water-to-water heat pump is made small enough for a separate loop tank; an
+               element alone would take all 24 kWh at COP 1.
+         - **The whole design day:** about 89% of the hot water's heat comes from the data
+           center (the preheat, and what the heat pump draws from its water); 20 kWh of
+           electricity (the heat pump and the swing tank's element).
          - **The hot pipes:** insulated 1 in., and 1½ in. from 1½ in. pipe up (ASHRAE 90.1
            Addendum aq, past the IECC's R-3). No hot pipe is more than 31 ft from the loop to a
            fixture, against IPC 607.2's 50.
@@ -2662,7 +2694,8 @@ test. Then the township brief's ask.
            residential rate. Whether that reaches a municipal authority's water is for counsel.
        - **Not yet:**
          - the street pressure (the hydrant test);
-         - the heat pumps' COP from a real unit;
+         - the plant's control sequence: the data center's flow through the exchanger held so
+           its water leaves at 80 F while the heat pump runs (step 9);
          - the routes (step 7), which replace every length taken square, and with them the
            mains' and risers' lengths;
          - the hot meter's rating;
@@ -2672,6 +2705,182 @@ test. Then the township brief's ask.
          - the inspection tests (step 9).
     5. **Electrical:** the service, meter room, feeders, panels and circuits, and space for EV
        chargers and solar.
+       - **Step 5 designed 2026-11-21** (`uv run brownfield electrical`, on Addendum 4; writes
+         `out/pass3/electrical.json`). Code: `src/brownfield/electrical.py`, and
+         `climate.pvgis_pv` (PVGIS's PV estimate). Data: `data/nec2020_table_310_16.csv`,
+         `nec2020_ch9_table_8.csv`, `nec2020_ch9_table_9.csv`, `nec2020_240_6_a.csv`,
+         `nec2020_table_250_66.csv`, `nec2020_table_250_122.csv`, `bussmann_c_values.csv`.
+         Parameters: `params/systems.yaml` `electrical` (the appliances), `wiring`,
+         `flat_panel`, `meter_stack`, `electrical_room`, `house_panel`, `service`, `pv`, `ev`,
+         `house`. Tests: `tests/test_walkup_electrical.py`, 10; all 19 checks pass.
+         - **Sources:**
+           - the 2020 NEC (what the 2021 IBC references) through free sources that quote it:
+             NFPA's own TIAs and development records, Holt, EC&M, IAEI, ElectricalLicenseRenewal,
+             and Public.Resource.Org's scan of the 2017 edition for sections 2020 didn't change;
+           - FirstEnergy's Customer Guide for Electric Service, Pennsylvania (September 2021),
+             its tariff and its interconnection guides;
+           - Eaton Bussmann's "Short Circuit Current Calculations" (its point-to-point method);
+           - the makers' sheets for every piece of equipment chosen;
+           - the IFC 2021 (rooftop PV pathways) and IMC 2021 (roof access) through UpCodes'
+             state copies; PVGIS.
+
+           Three research agents read them; I checked each number used against its saved text,
+           and read the ampacity table's 600-1000 kcmil rows off the scan myself.
+       - **Known cases:**
+         - **NEC 220.84:** Holt's 12-unit example, exactly (step 2's check, kept).
+         - **NEC 220.82:** Holt's 1,500 ft2 house (EC&M, 2020): 28,600 VA connected, 28,710 VA,
+           120 A at 240 V, exactly.
+         - **Fault current:** Bussmann's two worked examples, within 0.1% (its own rounding):
+           300 kVA at 208 V gives 46,273, then 39,425, then 18,687 A; 75 kVA single-phase gives
+           22,322, then 18,453 A line to line.
+         - **Voltage drop:** the phasor calculation gives 2 K I L / CM exactly (12 AWG, 16 A, 100
+           ft: 6.336 V).
+         - **The tables agree:** Table 9's AC resistance within 3.4% of Table 8's DC, copper 14
+           AWG to 250 kcmil.
+       - **5a, each flat's panel and circuits:**
+         - **The panel:** a 30-space Square D QO load centre (125 A main lugs), flush in the
+           hall's wall behind the bath. The hall's 37.5 in. gives the 36 in. of working space
+           110.26(A) asks. 23 of 30 spaces used; the legs within 1%.
+         - **The circuits:** 19 a flat.
+           - Lights on two 15 A circuits of their own, the sleeping side and the living side, so
+             a tripped receptacle never darkens a room; the smoke alarms on the sleeping side's.
+           - Receptacles on four 20 A circuits (each bedroom, the living room, the study and
+             halls); the ground floor's living-room circuit takes the patio's outdoor receptacle
+             (210.52(E)(2)).
+           - The code's required circuits: two kitchen small-appliance, the laundry closet's
+             receptacle, the bathroom's (210.11(C)).
+           - One for each appliance at its maker's breaker:
+             - the induction range (Frigidaire GCRI306TBF, 11.3 kW at 208 V, 40 A);
+             - the dishwasher (Bosch SHX53DM5N);
+             - the refrigerator (Whirlpool WRF540CWH, its own current a placeholder);
+             - the over-the-range microwave, which is also the recirculating hood (GE
+               JVM3160RF);
+             - the washer and the heat-pump dryer (Bosch 500 Series, both 208 V; no 24 in.
+               heat-pump dryer runs on 120 V);
+             - the ERV with the manifold's controls;
+             - the ERV's preheater;
+             - the mini-split's outdoor unit on the roof (15 A, Fujitsu's maximum).
+         - **Protection:**
+           - AFCI on every 120 V circuit in a room 210.12(A) lists (everywhere but the bath);
+           - GFCI where 210.8 reaches: the bath, the countertop and laundry receptacles, the
+             dishwasher (210.8(D)), the washer's and dryer's 240 V receptacles in the laundry
+             area (210.8(A) covers 125-250 V in 2020);
+           - the mini-split's outdoor unit (210.8(F)). Pennsylvania didn't amend 210.8(F), and
+             the 2020 TIA's exception for listed HVAC equipment expired 2026-09-01; the panel
+             vote to extend it split 10-10 and is under appeal. Inverter mini-splits are known
+             to trip ordinary GFCIs: the set asks for one Schneider says is made for them
+             (QO 2-pole "HF-rated", no catalogue number published): a question for the
+             installers' round.
+         - **Conductors:** copper NM at its 60 C ampacity (334.80), the smallest its breaker
+           protects (240.4(D)), then larger until the circuit drops at most 3% at its design
+           load. That's its maker's nameplate, or for a receptacle circuit 1,500 VA at the
+           farthest outlet. The living room's lights and receptacles went to 12 AWG for it.
+       - **5b, the feeders:**
+         - **The meters go outdoors,** on the annex's long wall that has no door:
+           - FirstEnergy wants meters outdoors without its written approval otherwise;
+           - each tenant must reach the breaker on their own feeder (240.24(B): a feeder
+             breaker serving one flat isn't one "supplying more than one occupancy"), so a
+             locked meter room wouldn't do;
+           - so each flat's breaker sits with its meter.
+         - **The stack:** Square D EZ Meter-Pak, 208Y/120 V in, each flat 120/208 V on 5-jaw
+           sockets (FirstEnergy asks the fifth jaw for 120/208 V). Four columns of four (its
+           most is four high), sockets 33-60 in. up (its limits 30 and 72), 9 in. apart (its
+           least 8). Twelve flats, the house and three spares, a main ahead (FirstEnergy past six
+           meters). 68 in. wide, 85 of the wall's 240 in. with the PV disconnect and the surge
+           protector.
+         - **Each feeder:** from its meter under the slab to a riser in the hall's wall and up,
+           79-130 ft taken square. 19.1 kVA by 220.82, 88 A a leg; a 100 A breaker.
+         - **Its copper:** at least 83% of the breaker (310.12(B) reaches a 120/208 V flat's
+           feeder), so 3 AWG; then larger until it drops at most 2% at that load, so 3, 2 or
+           1 AWG by length. Copper in PVC, EGC 8 AWG.
+           - The drop is computed by phasors on two phases and the neutral. On 120/208 V the
+             neutral carries current even when the legs are balanced, and the 120 V loads lose
+             more than VA / 208 suggests.
+           - Feeder and branch together: at most 4.72% at any outlet, inside the
+             informational notes' 5% (not enforceable; no energy code reaches a 3-storey R-2).
+       - **5c, the house loads** (one 45 A position on the stack, 120/208 V like a flat):
+         9.7 kVA calculated.
+         - the plant's heat pump (ClimateMaster SW036, MCA 22.3 A, on a 25 A breaker);
+         - the swing tank's 1.75 kW element (step 4's plant);
+         - the two circulators (Grundfos ALPHA2, 45 W);
+         - five stair luminaires (Lithonia TSL9, 27.8 W, with sensor and 90-minute battery),
+           one at each landing;
+         - the annex's and the doors' lights, four receptacles (the roof's service receptacle,
+           210.63; one at the meter wall, 210.63(B)(1)), the fire alarm and telecom
+           (placeholders).
+       - **5d, the service** (208Y/120 V three-phase, offered by FirstEnergy):
+         - **The calculation:** the flats 339.1 kVA x 0.41 = 139.0 kVA (220.84), the house 9.7;
+           148.7 kVA, 413 A.
+           - **The preheater counts as space heating** (a duct heater, Article 424), so under
+             220.84(C)(5) and 220.82(C) only the larger of it and the air conditioning counts.
+         - **The main:**
+           - the meter stack offers 400 and 600 A mains, none between;
+           - 413 A takes the 600 A main;
+           - its lugs take cable to 500 kcmil, so two sets of 250 kcmil copper (510 A).
+           FirstEnergy asks for approval of parallel sets to a meter stack: a question for it.
+         - **The calculation is the code's, not the building's.** No 12 all-electric flats on a
+           warm-water loop will draw 149 kVA together, but the code sizes the service.
+         - **Fault current, with placeholder inputs** (a 150 kVA transformer at 1.5% Z, 40 ft
+           of lateral; FirstEnergy gives the real ones on request):
+           - 24.2 kA at the meter stack, so QOH tenant breakers (42 kA);
+           - at most 4.9 kA at a flat's panel, under its QO breakers' 10 kA.
+         - **The rest:**
+           - a surge protector at the main (230.67, every service supplying dwelling units);
+           - the grounding electrode is the footing's rebar (4 AWG to it); 1/0 AWG by Table
+             250.66 to any other.
+       - **5e, the electrical room** (70 ft2): the house panel and space for a later panel
+         and PV inverters on its long wall (46 of 114 in.); the fire alarm and the telecom
+         backboard on its side wall; 36 in. of working space before each.
+       - **5f, room for solar, and none for chargers:**
+         - **Solar:**
+           - the flat roof holds 31 kWp (72 modules) inside IFC 1205.3.1's 4 ft perimeter, less
+             the 12 outdoor units, the four stack vents and a roof hatch;
+           - 37.1 MWh a year (PVGIS, ERA5, 10 degrees south, 1,197 kWh/kWp);
+           - the house panel takes 16.6 kW AC of it under the 120% rule (705.12(B)(3)(2)); the
+             rest needs FirstEnergy's interconnection, its own meter position (three spares) and
+             its lockable disconnect by the meters.
+         - **No chargers at the walk-up.** D14 made cars optional and put EV charging at the
+           site's mobility hub (Jon: "ev chargin would work, given the people even have cars").
+           - If that ever changes, the 600 A main (which the code's load needs anyway) leaves
+             67 kVA. That's 7 chargers at 7.2 kW unmanaged (continuous, 625.42; the 2023 NEC's
+             7.2 kW least), or 4.5 kW each for one a flat under an energy management system
+             (625.42).
+       - **Found:**
+         - **The plant's heat pump, as step 4 drew it, isn't sold.**
+           - Step 4 fed it the data center's 122 F water. No US water-to-water unit is rated
+             there: Trane's range ends at 120 F; ClimateMaster's heating tables end at an 80 F source
+             and allow no extrapolation.
+           - The fix, taken: feed it the same water after it has preheated the hot water, held
+             at 80 F (the data center's flow through the exchanger sets it). ClimateMaster's
+             SW036 is rated there: source 80 F, load in 120 F, 141 F out, 34,605 Btu/h for 2,313
+             W, COP 4.4 (step 4, revised).
+           - No water-to-water unit is small enough for the loop tank's 1.75 kW, so the loop
+             returns to a swing tank instead (step 4, revised).
+         - **The roof has no way up.** IMC 2021 306.5 asks a permanent means of access where
+           servicing equipment means climbing more than 16 ft, and the 12 outdoor units sit 30
+           ft up. A roof hatch with a fixed ladder: an addendum item. Where it goes is for step 6,
+           since an exit stair's enclosure limits what may open into it.
+         - **The 500 W preheater would fall short:** 470 W at a 3% drop against the design
+           hour's 482 W. Ouellet's 1 kW unit gives 940 W at the voltage it gets. It takes a 5
+           in. duct, so the outdoor-air duct goes from 4 to 5 in. (less friction), with the
+           heater 24 in. from the ERV (Ouellet's distance, past Broan's 12).
+       - **Decided** (Jon, 2026-11-21: "go with your recommendations"):
+         1. The plant's heat pump takes its heat from the data center's water after the
+            preheat; ClimateMaster's SW036 the basis of design (step 4 revised).
+         2. The loop returns to Ecosizer's swing tank, its element 1.75 kW: 9.8 kWh on the
+            design day against 24 for a loop tank's element alone (step 4 revised).
+         3. No chargers at the walk-up (D14's mobility hub has them).
+       - **Not yet:**
+         - the routes (step 7), which replace every length taken square;
+         - the transformer and the fault current from FirstEnergy, and its approval of the
+           parallel sets and the meter stack;
+         - the luminaires, the controls, the fire alarm (step 6) and the telecom, now
+           placeholders;
+         - the refrigerator's own current;
+         - the PV modules and inverters, and FirstEnergy's interconnection;
+         - Fujitsu's roof clearances for the outdoor units;
+         - the roof hatch in the model (an addendum);
+         - step 3's outdoor-air duct at 5 in. for the heater (its model still sizes it 4 in.).
     6. **Sprinklers and alarms:** NFPA 13R with a hydraulic calculation; the single stair
        depends on it.
     7. **In the model and the IFC:** every pipe, duct, riser and piece of equipment; routes

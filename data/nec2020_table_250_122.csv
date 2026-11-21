@@ -1,0 +1,16 @@
+# NEC Table 250.122: least equipment grounding conductor by the overcurrent device's rating (A, not exceeding). Source:
+# ElectricalLicenseRenewal.com's 2020 table image (sectionID=1017) to 400 A, and Holt, 'Understanding 2020 NEC Requirements
+# for Bonding and Grounding' (20_BG_250.122) for copper above it; trade sources.
+ocpd_a,cu,al
+15,14,12
+20,12,10
+60,10,8
+100,8,6
+200,6,4
+300,4,2
+400,3,1
+500,2,1/0
+600,1,2/0
+800,1/0,3/0
+1000,2/0,4/0
+1200,3/0,250

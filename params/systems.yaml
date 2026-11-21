@@ -488,21 +488,31 @@ hot_water:
     unit: F per percent of tank height, the stratified tank's gradient above its aquastat
     conf: medium
     source: "EcosizerEngine (commit 7586430) DHWSystem.size: 'strat_slope: float = 2.8'"
-  tm_off_above_f:
-    value: 8
-    unit: F, how far above the supply temperature the loop tank's heater switches off
-    conf: medium
-    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'tm_off_temp_f ... supply_temp_f + 8.0'"
-  tm_off_hr:
-    value: 0.5
-    unit: h, the loop tank's least off-time
-    conf: medium
-    source: "EcosizerEngine (commit 7586430): 'tm_off_time_hr: float = 0.5'"
   tm_safety:
     value: 1.75
-    unit: the loop tank heater's capacity over the loop's loss
+    unit: the swing tank's element over the loop's loss
     conf: medium
-    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'tm_safety_factor: float = 1.75'"
+    source: "EcosizerEngine (commit 7586430) EcosizerEngine.py: 'tm_safety_factor: float = 1.75', its regression's swing tank (43.86 kBtu/h on a 25.06 kBtu/h loop)"
+  hp_cop:
+    value: 4.4
+    unit: the plant's heat pump's COP (ClimateMaster Tranquility SW036), source 80 F, load in 120 F, 141 F out
+    conf: high
+    source: "ClimateMaster Tranquility SW catalogue RP3006 (revised 2026-09-23), SW036 Part Load Heating, source EWT 80 F at 6.5 gpm, load EWT 120 F at 3.3 gpm: '34,605 [Btuh] 2,313 [W] 26,713 [heat of extraction] 141 [LWT F] 4.4 [COP]'; the catalogue: 'interpolation is permissible; extrapolation is not'. The plant's water enters it at 116.6 F, under the row's 120: the safe side"
+  hp_capacity_btuh:
+    value: 34605
+    unit: Btu/h, its heating output at that rating
+    conf: high
+    source: "ClimateMaster RP3006 (above)"
+  hp_source_f:
+    value: 80
+    unit: F, the data center's water as it leaves the preheat exchanger and enters the heat pump
+    conf: medium
+    source: "the design (Jon, 2026-11-21: the heat pump takes its heat from the data center's water after the preheat): its flow through the exchanger throttled to leave at the heat pump's rated source temperature"
+  hp_source_max_f:
+    value: 80
+    unit: F, the warmest source ClimateMaster's SW036 heating table goes to
+    conf: high
+    source: "ClimateMaster RP3006, SW036 heating tables: source EWT 30-80 F; 'extrapolation is not' permitted. Trane's water-to-water DHW heat pumps: 'Source water operating range 35-120 F' (DHWHP-PRC001A-EN, July 2025); no US unit found rated at the data center's 122 F"
   insulation_k:
     value: 0.28
     low: 0.22
@@ -548,42 +558,159 @@ electrical:
     unit: Table 220.84's demand factor for 12 dwelling units
     conf: high
     source: "Holt (EC&M, 2009), the 12-unit example: '460,800VA x 0.41 [Table 220.84]'; the same in a 2020 NEC study guide's table (open-exam-prep.com, '12-13 | 41')"
+  # Each flat's appliances and equipment, basis of design (pass 3g step 5, D28), at 208 V where they
+  # run across two phases: the flats are 120/208 V. Makers' sheets as a research agent saved them
+  # (2026-11-21); I checked each number against its saved text.
   range_va:
-    value: 11500
-    low: 9600
-    high: 14400
-    unit: VA, an induction range's nameplate (no gas in the building)
-    conf: placeholder
-    source: "placeholder until the range is chosen; Holt's example range 14.4 kVA (the high end)"
-  dishwasher_va:
-    value: 1500
-    unit: VA, nameplate
-    conf: placeholder
-    source: "placeholder: Holt's example dishwasher, 1.5 kVA"
-  washer_va:
-    value: 1200
-    unit: VA, nameplate
-    conf: placeholder
-    source: "placeholder: Holt's example washing machine, 1.2 kVA"
-  dryer_va:
-    value: 2000
-    low: 1000
-    high: 4500
-    unit: VA, a ventless heat-pump dryer's nameplate (no dryer duct through the envelope)
-    conf: placeholder
-    source: "placeholder until the dryer is chosen; Holt's example (resistance) dryer 4.5 kVA (the high end)"
-  cooling_va:
-    value: 3408
-    low: 2954
-    high: 3552
-    unit: VA, the flat's mini-split outdoor unit (Fujitsu AOUH12KUBS1, step 3c under Addendum 4's glass), its minimum circuit ampacity at 240 V
+    value: 11300
+    low: 10300
+    high: 11300
+    unit: VA, the induction range's nameplate at 208 V (Frigidaire Gallery GCRI306TBF, 30 in.)
     conf: high
-    source: "Fujitsu submittal 12KUBS1R v20260707A: MCA 14.2 A, 208/230 V, maximum circuit breaker 15 A; 14.2 x 240 = 3,408 VA. Low: the same at 208 V, 2,954 VA; high: the 18k (submittal 18KUAS1R, MCA 14.8 A) at 240 V, 3,552 VA, which the placeholder glass would need"
-  fixed_va:
-    value: 250
-    unit: VA, the flat's ERV and its radiant floor's circulator together
+    source: "Frigidaire GCRI306TB specification sheet (version 09/26): 'Connected Load @ 208V 11.3 kW', '@ 240V 15 kW', 'Minimum Circuit Required 40 Amps'. Low: GE Profile PHB920SJSS (specification revised 6/18): '240V 12.4 / 208V 10.3' kW, 40 A"
+  range_v:
+    value: 208
+    unit: V, line to line
+    conf: high
+    source: "the flats' supply, 120/208 V (step 5); Frigidaire's wiring '120 / 240 or 120 / 208 Volt' (FGIF3061N sheet)"
+  range_breaker_a:
+    value: 40
+    unit: A, the range's circuit
+    conf: high
+    source: "Frigidaire GCRI306TB: 'Minimum Circuit Required 40 Amps'; FGIF3061N: 'Recommended Circuit Breaker - 40 Amps'"
+  dishwasher_va:
+    value: 1440
+    unit: VA, the dishwasher's nameplate (Bosch 300 Series SHX53DM5N)
+    conf: high
+    source: "Bosch SHX53DM5N specification sheet (9/26): '1440 W', '12 Amps', '120 V'"
+  dishwasher_v:
+    value: 120
+    unit: V
+    conf: high
+    source: "Bosch SHX53DM5N (above)"
+  dishwasher_breaker_a:
+    value: 20
+    unit: A, its own circuit
+    conf: high
+    source: "Bosch dishwasher installation manual 9001597253: a 'dishwasher-dedicated' circuit of '15 or 20 amps'; 20 A taken"
+  refrigerator_va:
+    value: 720
+    low: 400
+    high: 1200
+    unit: VA, the refrigerator's running nameplate (Whirlpool WRF540CWH, 20 ft3 counter-depth)
     conf: placeholder
-    source: "placeholder until step 3 picks them"
+    source: "placeholder: Whirlpool's sheet D200052XXC gives only the circuit it asks ('Amps 20, Volts 115'), not the unit's own current; 6 A at 120 V until the nameplate is read"
+  refrigerator_v:
+    value: 120
+    unit: V
+    conf: high
+    source: "Whirlpool WRF540CWH (D200052XXC): 'Volts 115'"
+  refrigerator_breaker_a:
+    value: 20
+    unit: A, its own circuit
+    conf: high
+    source: "Whirlpool WRF540CWH (D200052XXC): 'Amps 20'"
+  microwave_va:
+    value: 1700
+    unit: VA, the over-the-range microwave (GE JVM3160RF), which is the kitchen's recirculating hood
+    conf: high
+    source: "GE JVM3160 installation instructions 49-40675-4 (08-18): '120 volts AC, 60 Hertz, 15 amps, and 1.70 kilowatts ... a separate 15 to 20 ampere branch circuit'"
+  microwave_v:
+    value: 120
+    unit: V
+    conf: high
+    source: "GE 49-40675-4 (above)"
+  microwave_breaker_a:
+    value: 20
+    unit: A, its own circuit
+    conf: high
+    source: "GE 49-40675-4: 'a separate 15 to 20 ampere branch circuit'; 20 A taken"
+  washer_va:
+    value: 2000
+    unit: VA, the compact washer's nameplate (Bosch 500 Series WGB24600UC, 24 in.)
+    conf: high
+    source: "Bosch WGB24600UC specification sheet (5/26): 'Watts 2,000 W', 'Circuit breaker 15 A*', 'Volts 208/220-240 V', 'Current 10.5 A'; '* ... an individual 240/208V, 15A minimum branch circuit'"
+  washer_v:
+    value: 208
+    unit: V, line to line
+    conf: high
+    source: "Bosch WGB24600UC (above)"
+  washer_breaker_a:
+    value: 15
+    unit: A, its own 2-pole circuit
+    conf: high
+    source: "Bosch WGB24600UC: 'Circuit breaker 15 A*'"
+  dryer_va:
+    value: 1000
+    low: 900
+    high: 1000
+    unit: VA, the ventless heat-pump dryer's nameplate (Bosch 500 Series WQB245B0UC, 24 in.; no dryer duct through the envelope)
+    conf: high
+    source: "Bosch WQB245B0UC installation manual 9002071813: 'Power rating 1000 W'; its specification sheet (9/26): 'Watts 900 W', 'Circuit breaker 15 A*', 'Volts 208/220-240 V', 'Current 4 A', 'NEMA 6-15'. No 24 in. heat-pump dryer found on 120 V"
+  dryer_v:
+    value: 208
+    unit: V, line to line
+    conf: high
+    source: "Bosch WQB245B0UC (above)"
+  dryer_breaker_a:
+    value: 15
+    unit: A, its own 2-pole circuit
+    conf: high
+    source: "Bosch WQB245B0UC: 'Circuit breaker 15 A*'"
+  erv_va:
+    value: 111
+    unit: VA, the ERV (Broan BLP120E80NS-HW) at the most power HVI measured it draw
+    conf: medium
+    source: "HVI Certified Products Directory, Section III energy ratings (generated 2026-11-18), HVI 2005431: 'COOLING 35 95 52 110 111' (110 cfm, 111 W), its highest; 28 W at the design's 49 cfm. Broan's manual: a cord to 'a mating 3-prong grounding receptacle'; its nameplate current not read"
+  erv_v:
+    value: 120
+    unit: V
+    conf: high
+    source: "Broan EDGE manual 1115155WEB-A: a 120 V cord and plug"
+  erv_breaker_a:
+    value: 15
+    unit: A, its circuit, with the manifold's controls
+    conf: medium
+    source: "a design choice: a 15 A receptacle circuit for a cord-and-plug unit of about 1 A"
+  manifold_controls_va:
+    value: 40
+    low: 20
+    high: 75
+    unit: VA, the radiant manifold's zone actuators and their 24 V transformer, on the ERV's circuit
+    conf: placeholder
+    source: "placeholder until the actuators and controls are chosen (step 3's manifold has up to six loops)"
+  preheater_va:
+    value: 1000
+    unit: VA, the ERV's electric preheater (Ouellet ODHR0501002, 5 in. round, SCR-modulated)
+    conf: high
+    source: "Ouellet ODHR fact sheet FC_ODHR_US_0726: 'ODHR0501002 1000 120' (W, V), '5 in. Duct', 'Minimum flow* 50 cfm/kW', 'SCR-modulated elements', 'Double thermal protection', 'Built-in temperature limit sensor', 'Electronic air-flow sensor (sensor P). Optional kit available: KIT-SEN-005' (ordered with it: Broan asks 'an integrated airflow sensor and an over temperature sensor'), listed by UL for the US and Canada; installation manual INS-xDHX_0626: 'Minimum of 24 in. (61 cm)' to the coil (Broan asks 12 in.). The 500 W ODHR0500502 would give 470 W at a 3% drop against the design hour's 482 W"
+  preheater_v:
+    value: 120
+    unit: V
+    conf: high
+    source: "Ouellet FC_ODHR_US_0726 (above)"
+  preheater_breaker_a:
+    value: 15
+    unit: A, its own circuit (125% of its 8.3 A, 424.4(B))
+    conf: high
+    source: "NEC 2020 424.4(B) (424.3(B) in 2017): fixed electric space-heating branch circuits at not less than 125% of the load (Holt's paraphrase); 1,000 W / 120 V = 8.3 A, x 1.25 = 10.4 A"
+  cooling_va:
+    value: 2954
+    low: 2954
+    high: 3078
+    unit: VA, the flat's mini-split outdoor unit (Fujitsu AOUH12KUBS1, step 3c under Addendum 4's glass), its minimum circuit ampacity at the flats' 208 V
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A: MCA 14.2 A, 208/230 V, maximum circuit breaker 15 A; 14.2 x 208 = 2,954 VA (3,408 at 240 V, step 2's figure before step 5 set the flats at 208 V). High: the 18k (submittal 18KUAS1R, MCA 14.8 A) at 208 V"
+  heat_demand_220_82:
+    value: 0.65
+    unit: of electric space heat's nameplate, its load in a dwelling's 220.82(C)
+    conf: high
+    source: "Holt, EC&M 2020-04-17 ('Based on the 2020 NEC'), 220.82(C) in his worked case: 'supplemental 7,000 x 65% = 4,550 VA'"
+  minisplit_breaker_a:
+    value: 15
+    unit: A, the mini-split's circuit
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A: 'maximum circuit breaker 15 A'"
 
 # Pass 3g step 3a (D28): the radiant floors. REHAU's Radiant Heating Systems Design Guide (855.601,
 # 09.2017) and PEXa Pressure Loss Tables (855.681, 03.2015), free, as a research agent saved them
@@ -1042,3 +1169,441 @@ noise:
     unit: psi, the usual building's static pressure for the comparison (the code's most without a reducing valve)
     conf: medium
     source: "IPC 2021 604.8: a pressure-reducing valve 'Where water pressure within a building exceeds 80 psi (552 kPa) static'"
+
+# Pass 3g step 5 (D28): electrical. The code is NFPA 70-2020 (the 2021 IBC's reference, in force in
+# Pennsylvania from 2026-01-01); it is read through free sources that quote it (Holt, EC&M, IAEI,
+# ElectricalLicenseRenewal.com, NFPA's own TIAs and development records, Public.Resource.Org's scan
+# of the 2017 edition where a section didn't change), as a research agent saved them (2026-11-21).
+# The tables live in data/ (nec2020_*.csv, bussmann_c_values.csv).
+wiring:
+  route_slack:
+    value: 1.15
+    low: 1.05
+    high: 1.3
+    unit: times a route taken square, for its offsets, bends and the box at each end
+    conf: low
+    source: "judgement until step 7 routes every feeder and circuit"
+  branch_vertical_ft:
+    value: 12
+    low: 8
+    high: 16
+    unit: ft, a branch circuit's rise from the panel into the joists and its drop to the outlet
+    conf: low
+    source: "judgement: the panel's middle at 54 in. to a 9 ft ceiling (4.5 ft), and down to a receptacle at 16 in. (7.7 ft)"
+  under_slab_m:
+    value: 0.3
+    low: 0.2
+    high: 0.6
+    unit: m, the feeders' conduits below the top of the ground slab
+    conf: low
+    source: "judgement: below the 4 in. slab and its insulation; NEC Table 300.5 asks no cover for a raceway under a building (not read here)"
+  panel_mid_in:
+    value: 54
+    unit: in., the middle of a flat's load centre above its floor
+    conf: low
+    source: "judgement: a 30-space QO box is 29.86 in. tall, so its top handle stays under 6 ft 7 in. (240.24(A), not read here)"
+  pf:
+    value: 0.9
+    low: 0.8
+    high: 1.0
+    unit: power factor of the loads, lagging, for voltage drop
+    conf: low
+    source: "judgement: resistive heat and cooking near 1, motors and inverters lower"
+  vd_feeder_max:
+    value: 0.02
+    low: 0.02
+    high: 0.03
+    unit: the most a feeder may drop at its calculated load, a fraction of its voltage
+    conf: medium
+    source: "a design choice under the NEC's informational notes (215.2(A)(1) Informational Notes 2 and 3; 210.19(A) Informational Note 4): 3% for a feeder or a branch circuit and 5% for both together, 'for reasonable efficiency of operation' (IAEI, 2019, paraphrased; the notes aren't enforceable, 90.5(C)). The feeder held to 2% leaves the branch its 3% within the 5%. Not a code limit for this building: the IECC's 5% (C405, commercial) doesn't reach a 3-storey R-2"
+  vd_branch_max:
+    value: 0.03
+    unit: the most a branch circuit may drop at its design load
+    conf: medium
+    source: "NEC 2020 210.19(A) Informational Note 4 (above): 3%"
+  vd_total_max:
+    value: 0.05
+    unit: the most a feeder and a branch circuit may drop together
+    conf: medium
+    source: "NEC 2020 215.2(A)(1) Informational Note 3 (above): 5%"
+  working_depth_in:
+    value: 36
+    unit: in., the working space in front of equipment at 150 V or less to ground (110.26(A)(1), every condition)
+    conf: high
+    source: "NEC 2020 Table 110.26(A)(1), '0-150' V to ground: 3 ft in Conditions 1, 2 and 3 (SLAC's Electrical Requirements for Equipment Space, a reproduction)"
+  working_width_in:
+    value: 30
+    unit: in., the working space's width, or the equipment's if wider (110.26(A)(2))
+    conf: high
+    source: "NEC 2020 110.26(A)(2), as IAEI (Wages, July-August 2020) quotes it: 'the width of the equipment or 762 mm (30 in.), whichever is greater'"
+  feeder_min_a:
+    value: 100
+    unit: A, the least feeder to a flat
+    conf: medium
+    source: "step 2's decision: NEC 220.82(A)'s optional method is for a dwelling unit's feeder of 100 A or more, and the flats are calculated by it"
+  feeder_83_fraction:
+    value: 0.83
+    unit: of the feeder's rating, the least ampacity of a flat's feeder carrying its entire load, 100-400 A (310.12(B))
+    conf: high
+    source: "NEC 2020 310.12, verbatim (ElectricalLicenseRenewal.com, 2020 code language): 'For one-family dwellings and the individual dwelling units of two-family and multifamily dwellings, single-phase feeder conductors consisting of two ungrounded conductors and the neutral conductor from a 208Y/120 volt system shall be permitted to be sized in accordance with 310.12(A) through (C).' (B): 'For a feeder rated 100 amperes through 400 amperes, the feeder conductors supplying the entire load ... shall be permitted to have an ampacity not less than 83 percent of the feeder rating.'"
+  max_ocpd_cu_14:
+    value: 15
+    unit: A, the most overcurrent protection for 14 AWG copper (240.4(D)(3))
+    conf: high
+    source: "NEC 2017 240.4(D)(3) '14 AWG Copper. 15 amperes' (Public.Resource.Org's scan); no 2020 revision to 240.4 in the 2020-cycle Panel 10 Second Draft ballot"
+  max_ocpd_cu_12:
+    value: 20
+    unit: A, the same for 12 AWG copper (240.4(D)(5))
+    conf: high
+    source: "NEC 2017 240.4(D)(5) '12 AWG Copper. 20 amperes' (as above)"
+  max_ocpd_cu_10:
+    value: 30
+    unit: A, the same for 10 AWG copper (240.4(D)(7))
+    conf: high
+    source: "NEC 2017 240.4(D)(7) '10 AWG Copper. 30 amperes' (as above)"
+
+flat_panel:
+  lighting_w_ft2:
+    value: 0.6
+    low: 0.4
+    high: 0.8
+    unit: W per ft2 of LED lighting in a flat
+    conf: placeholder
+    source: "placeholder until the luminaires are chosen (the IECC sets no lighting power for a dwelling unit)"
+  lighting_a:
+    value: 15
+    unit: A, a lighting circuit
+    conf: medium
+    source: "a design choice: lights on their own 15 A circuits, two a flat"
+  receptacle_a:
+    value: 20
+    unit: A, a general-purpose receptacle circuit
+    conf: medium
+    source: "a design choice: 20 A on 12 AWG, one a room or group of rooms"
+  branch_vd_va:
+    value: 1500
+    unit: VA at the farthest outlet of a general-purpose circuit, for its voltage drop
+    conf: low
+    source: "judgement: a 1,500 W plug-in heater or appliance, the largest common cord-and-plug load on a 15 or 20 A receptacle"
+  spare_fraction:
+    value: 0.25
+    unit: spare spaces in each load centre, of the poles used
+    conf: low
+    source: "a design choice: room for a charger's or a heat pump's circuit later"
+  breaker_kaic:
+    value: 10
+    unit: kA, the interrupting rating of the load centre's QO branch breakers
+    conf: high
+    source: "Square D catalogue 1100CT0501 (06/2026): QO '10,000 AIR', QO-VH '22,000 AIR'; the load centre's short-circuit rating is its breakers' (QO130L125PG, 125 A main lugs, 30 spaces, box 14.25 x 29.86 x 3.75 in.; 'All lugs suitable for 75 C copper or aluminum wires')"
+
+meter_stack:
+  positions_per_column:
+    value: 4
+    unit: meter positions, the most in a column
+    conf: high
+    source: "FirstEnergy, Customer Guide for Electric Service - PA (September 2021), Exhibit 16, note 4: 'Height shall not exceed 4-meter positions.' Square D EZMH314125 (4 sockets, 125 A, 208Y/120 V 3-phase in, 120/208 V 1-phase 3-wire out, 5-jaw, ringless with horn bypass)"
+  spare_positions:
+    value: 3
+    unit: positions past the 12 flats and the house, filling the fourth column
+    conf: low
+    source: "a design choice: four columns of four; the spares for an EV-charging meter or a separately metered PV system"
+  column_width_in:
+    value: 12.25
+    unit: in., a column (EZMH314125)
+    conf: high
+    source: "Square D Digest, Metering Equipment (2019, catalogue 4100CT0701), Table 2.38: EZMH314125 H 48.12 / W 12.25 / D 7.09 in."
+  column_height_in:
+    value: 48.12
+    unit: in., a column's height
+    conf: high
+    source: "Square D Digest Table 2.38 (above)"
+  top_offset_in:
+    value: 9.93
+    unit: in., from a column's top to its top socket's centre
+    conf: high
+    source: "Square D Digest Table 2.38: EZMH314125 'T' 9.93"
+  bottom_offset_in:
+    value: 11.19
+    unit: in., from a column's bottom to its bottom socket's centre
+    conf: high
+    source: "Square D Digest Table 2.38: EZMH314125 'B' 11.19"
+  main_width_in:
+    value: 18.66
+    unit: in., the 400 A main circuit breaker module (EZM3400CB)
+    conf: high
+    source: "Square D Digest (above): EZM3400CB, width 18.66 in., H 53.97 / D 11.50 in., 65 kA"
+  main_kaic:
+    value: 65
+    unit: kA, the main breaker's interrupting rating
+    conf: high
+    source: "Square D Digest (above): EZM3400CB 65 kA"
+  depth_in:
+    value: 11.5
+    unit: in., the stack's deepest part (the main)
+    conf: high
+    source: "Square D Digest (above): EZM3400CB D 11.50 in."
+  bottom_socket_mid_in:
+    value: 33
+    unit: in., the bottom socket's centre above grade
+    conf: medium
+    source: "a design choice above FirstEnergy's least: Customer Guide PA (September 2021) 7.5, Gangable Sockets: 'Minimum height to center of bottom socket 24 inches (indoor) or 30 inches (outdoor)'"
+  fe_top_max_in:
+    value: 72
+    unit: in., the most to the top socket's centre
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 7.5: 'Maximum height to center of top socket 72 inches'"
+  fe_bottom_min_in:
+    value: 30
+    unit: in., the least to the bottom socket's centre outdoors
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 7.5 (above)"
+  fe_spacing_min_in:
+    value: 8
+    unit: in., the least between meters
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 7.5: 'Minimum spacing between meters eight (8) inches'"
+
+electrical_room:
+  house_panel_width_in:
+    value: 14.25
+    unit: in., the house load centre (Square D QO130L125PG, box 9)
+    conf: high
+    source: "Square D catalogue 1100CT0501 (06/2026): box 9, 14.25 x 29.86 x 3.75 in."
+  spare_panel_width_in:
+    value: 14.25
+    unit: in., wall space kept for a later panel
+    conf: low
+    source: "judgement: the same box as the house's"
+  pv_inverter_width_in:
+    value: 18
+    low: 15
+    high: 30
+    unit: in., the PV inverters' wall space, reserved
+    conf: placeholder
+    source: "placeholder until the PV system is designed"
+  facu_width_in:
+    value: 16
+    unit: in., the fire alarm control unit
+    conf: placeholder
+    source: "placeholder until step 6 chooses the alarm"
+  telecom_width_in:
+    value: 48
+    unit: in., the telecom backboard
+    conf: low
+    source: "judgement: a 4 x 8 ft fire-retardant plywood sheet on edge, as telecom rooms have"
+  deepest_in:
+    value: 8
+    unit: in., the deepest piece inside the room (a PV inverter)
+    conf: placeholder
+    source: "placeholder until the PV system is designed; the load centres are 3.75 in."
+  spd_width_in:
+    value: 8
+    unit: in., the surge protector at the main (230.67)
+    conf: placeholder
+    source: "placeholder until the SPD is chosen"
+  pv_disconnect_width_in:
+    value: 9
+    unit: in., the PV system's lockable disconnect by the meters
+    conf: placeholder
+    source: "placeholder until the PV system is designed; FirstEnergy's Customer Interconnection Guide, Three Phase (Jan 2024) 6.6 asks a 'manual, visible open, lockable, load break disconnect switch ... outdoors in the immediate vicinity of the electric meter'"
+
+house_panel:
+  bus_a:
+    value: 125
+    unit: A, the house load centre's bus
+    conf: high
+    source: "Square D catalogue 1100CT0501: QO130L125PG, 125 A main lugs"
+
+service:
+  self_contained_max_a:
+    value: 400
+    unit: A, the most FirstEnergy meters self-contained, and its limit for one set of service cables to a meter stack
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 7.8: 'All services requiring 400 amperes and less shall utilize self-contained metering'; 3.4: 'Parallel runs of service cable extending from Company-owned equipment to multi-position meter centers should be avoided and require prior Company approval'"
+  pad_max_kcmil:
+    value: 1000
+    unit: kcmil, the largest service cable FirstEnergy's three-phase pad-mounted transformer takes
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 6.4: cable at a three-phase pad-mount 'limited to 1000 kcmil (maximum 8 conductors per phase) or 750 kcmil (maximum 16 conductors per phase)'"
+  pad_max_sets:
+    value: 8
+    unit: conductors a phase the three-phase pad takes at 1000 kcmil
+    conf: high
+    source: "FirstEnergy Customer Guide PA (September 2021) 6.4: 'limited to 1000 kcmil (maximum 8 conductors per phase)'"
+  transformer_kva:
+    value: 150
+    low: 112.5
+    high: 225
+    unit: kVA, the utility's pad-mounted three-phase transformer
+    conf: placeholder
+    source: "placeholder: FirstEnergy sizes it; its Exhibit 25 gives one pad, J1, for 45-150 kVA three-phase (Customer Guide PA, September 2021)"
+  transformer_z_pct:
+    value: 1.5
+    low: 1.2
+    high: 3.0
+    unit: percent impedance of the transformer
+    conf: placeholder
+    source: "placeholder: FirstEnergy publishes no impedances or fault currents and gives them on request (Customer Guide PA 3.7: 'the customer shall contact the Company to determine the estimated available fault current'); low, to err high on the fault"
+  z_tolerance:
+    value: 0.9
+    unit: times the nameplate impedance, for the worst case
+    conf: high
+    source: "Cooper Bussmann, Selecting Protective Devices, 'Short Circuit Current Calculations' (c)2005: the transformer impedance taken at 90% of nameplate, its tolerance, as its 3-phase example does (multiplier 100 / (0.9 x 2) = 55.55)"
+  lateral_ft:
+    value: 40
+    low: 20
+    high: 100
+    unit: ft, the service cable from the transformer to the meter stack
+    conf: placeholder
+    source: "placeholder until the site plan places the pad, at least 10 ft from the wood walls and doorways (FirstEnergy Customer Guide PA, Exhibit 22)"
+
+pv:
+  perimeter_ft:
+    value: 4
+    unit: ft, the clear path around the roof's edge
+    conf: high
+    source: "IFC 2021 1205.3.1, as UpCodes shows Virginia's SFPC 2021 (the IFC 2021 with Virginia's amendments; none marked on it): 'There shall be a minimum 6-foot-wide (1829 mm) clear perimeter around the edges of the roof.' Exception: 'Where either axis of the building is 250 feet (76 200 mm) or less, the clear perimeter ... shall be permitted to be reduced to a minimum width of 4 feet (1219 mm).' IBC 2021 3111 points to the IFC for PV"
+  unit_zone_ft2:
+    value: 30
+    low: 20
+    high: 45
+    unit: ft2 of roof each mini-split outdoor unit takes with its service space
+    conf: placeholder
+    source: "placeholder until the roof plan; Fujitsu's clearances not read"
+  vent_zone_ft2:
+    value: 16
+    unit: ft2 kept clear around each stack vent
+    conf: low
+    source: "judgement: a 4 ft square"
+  hatch_zone_ft2:
+    value: 116
+    unit: ft2 for the roof hatch and the 4 ft path around it
+    conf: low
+    source: "IFC 2021 1205.3.2(3), as above: 'A pathway not less than 4 feet (1219 mm) wide around roof access hatches'; a 30 x 36 in. hatch (judgement): (2.5 + 8) x (3 + 8) ft"
+  gcr:
+    value: 0.6
+    low: 0.5
+    high: 0.7
+    unit: modules' area per roof area under the racks (ground coverage ratio)
+    conf: low
+    source: "judgement: rows at 10 degrees spaced for little winter shading"
+  module_w:
+    value: 430
+    unit: W, a module's rating
+    conf: placeholder
+    source: "placeholder until a module is chosen: a 108-cell module of about 1.72 x 1.13 m"
+  module_ft2:
+    value: 20.9
+    unit: ft2, a module's area
+    conf: placeholder
+    source: "placeholder: 1.72 x 1.13 m"
+  tilt_deg:
+    value: 10
+    unit: degrees, the racks' tilt, facing south
+    conf: low
+    source: "judgement: low racks on a flat roof, ballasted"
+  loss_pct:
+    value: 14
+    unit: percent system losses
+    conf: medium
+    source: "PVGIS's default system loss (PVcalc 'loss', its suggested 14%)"
+  busbar_factor:
+    value: 1.2
+    unit: times a busbar's ampacity, the most its breaker and 125% of the inverters' current may sum to
+    conf: high
+    source: "NEC 2020 705.12(B)(3)(2), verbatim (ElectricalLicenseRenewal.com, 2020 code language): 'the sum of 125 percent of the power-source(s) output circuit current and the rating of the overcurrent device protecting the busbar shall not exceed 120 percent of the ampacity of the busbar'"
+  source_factor:
+    value: 1.25
+    unit: times the inverters' output current in that sum
+    conf: high
+    source: "NEC 2020 705.12(B)(3)(2) (above)"
+  dc_ac:
+    value: 1.2
+    low: 1.1
+    high: 1.3
+    unit: modules' DC rating over the inverters' AC
+    conf: low
+    source: "judgement: the usual inverter loading"
+
+ev:
+  evse_va:
+    value: 7200
+    unit: VA a charger
+    conf: medium
+    source: "the 2023 NEC's 220.57 (not in the 2020 code Pennsylvania enforces, which sets no figure): 'The EVSE load shall be calculated at either 7200 watts (volt-amperes) or the nameplate rating of the equipment, whichever is larger' (ExpertCE: 'In the 2020 NEC Section 220.57 did not exist'); at 125% as a continuous load, NEC 2020 625.42: 'Electric vehicle charging loads shall be considered to be continuous loads'"
+  chargers:
+    value: 12
+    unit: chargers, one a flat, for the comparison only
+    conf: low
+    source: "none are built at the walk-up: D14 puts EV charging at the site's mobility hub (Jon, 2026-11-21: 'ev chargin would work, given the people even have cars'); one a flat shows what the service would hold"
+
+# Pass 3g step 5 (D28): the basis-of-design equipment's electrical data, as a research agent read
+# the makers' sheets (2026-11-21) and I checked the numbers against its saved text.
+house:
+  dhw_heat_pump_va:
+    value: 4638
+    unit: VA, the hot-water plant's water-to-water heat pump (ClimateMaster Tranquility SW036, no internal pumps), its minimum circuit ampacity at 208 V
+    conf: high
+    source: "ClimateMaster Tranquility SW catalogue RP3006 (revised 2026-09-23), electrical data: 'SW036 208/230-1-60 ... 14.6 [RLA] 76.0 [LRA] ... 18.6 [FLA] 22.3 [MCA] 35 [MOCP]'; 22.3 A x 208 V. Its part-load heating table, source 80 F at 6.5 gpm, load in 120 F at 3.3 gpm: '34,605 [Btuh] 2,313 [W] ... 141 [LWT F] 4.4 [COP]'. Its source is the data center's water after the preheat, at 80 F (hot_water.hp_source_f): no US water-to-water unit is rated on 122 F"
+  largest_motor_extra:
+    value: 0.25
+    unit: of the largest motor's load, added for a feeder (125% of it in all)
+    conf: medium
+    source: "NEC 430.24 and 220.50 (a feeder carries 125% of its largest motor's current and the others at 100%), the rule as every load-calculation guide states it; its 2020 text not read here"
+  continuous_factor:
+    value: 1.25
+    unit: times a continuous load (3 hours or more) for a feeder's conductors and breaker
+    conf: medium
+    source: "NEC 215.2(A)(1) and 215.3 (feeders: 125% of continuous loads), the rule as every load-calculation guide states it; its 2020 text not read here. 625.42 (quoted under ev) makes EV charging continuous"
+  dhw_heat_pump_mocp_a:
+    value: 35
+    unit: A, its maximum overcurrent device
+    conf: high
+    source: "ClimateMaster RP3006 (above): 'MOCP 35'"
+  loop_pump_va:
+    value: 75
+    unit: VA, the building heating loop's pump (Grundfos ALPHA2 15-55F), its most current at 115 V
+    conf: high
+    source: "Grundfos ALPHA2 15-55F submittal, product 99163906 (60 Hz): 'P1 max: 5 .. 45 W; Rated voltage: 115 V'; 'Maximum current consumption: 0.1 .. 0.65 A'; 0.65 x 115 = 75 VA. Its CP2 curve holds about 8.9 ft at step 3's 6.0 gpm against the 8.1 ft the loop needs (read off the curve by a research agent)"
+  recirc_pump_va:
+    value: 75
+    unit: VA, the hot-water recirculation pump (Grundfos ALPHA2 15-55SF, stainless), its most current at 115 V
+    conf: high
+    source: "Grundfos ALPHA2 15-55SF, product 99163937: 'Pump housing: Stainless steel'; 'Approvals: ETL, FCC, NSF'; 'P1 max.: 45 W'; 'Rated voltage: 1 x 115 V'; 'Maximum current consumption: 0.65 A'"
+  controls_va:
+    value: 200
+    low: 100
+    high: 400
+    unit: VA, the substation's and the plant's controllers, the heat and water meters' reader
+    conf: placeholder
+    source: "placeholder until the controls are chosen"
+  stair_luminaire_w:
+    value: 27.8
+    unit: W, a stair luminaire with its occupancy sensor and battery (Lithonia Stair Lighter TSL9 24IN 25W ... FAM7 EMB310), full output
+    conf: high
+    source: "Lithonia (Acuity) TSL9 specification sheet, rev. 04/17/26: 'TSL9 24IN 25W 27.8 [W] ... 3216 [lm]'; 'EMB310 Self contained, 90 minute emergency battery pack ... 1200 lumens'; 'Ultrasonic zoneless ... 15 minute time out'; FAM7 dims to 50/35/20/10%. 120 V, wall or ceiling, UL wet location. Its UL 924 listing is not stated (step 6 checks egress lighting)"
+  annex_lights_va:
+    value: 100
+    unit: VA, the annex's two rooms' lights
+    conf: placeholder
+    source: "placeholder until the luminaires are chosen: two LED strips a room"
+  exterior_lights_va:
+    value: 60
+    unit: VA, lights at the building's entry, the annex's doors and the meter wall
+    conf: placeholder
+    source: "placeholder until the luminaires are chosen"
+  receptacles_va:
+    value: 720
+    unit: VA, four receptacles at 180 VA each (220.14(I)), one in each annex room, the roof's service receptacle (210.63) and one at the meter wall
+    conf: medium
+    source: "NEC 2020 220.14(I), 180 VA a receptacle outlet (Holt and every NEC study guide); the count is the design's"
+  fire_alarm_va:
+    value: 240
+    unit: VA, the fire alarm control unit's branch circuit
+    conf: placeholder
+    source: "placeholder until step 6 chooses the alarm"
+  telecom_va:
+    value: 300
+    unit: VA, the telecom backboard's equipment (the network's terminal, a switch)
+    conf: placeholder
+    source: "placeholder until the telecom design (step 7)"

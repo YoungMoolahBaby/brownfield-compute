@@ -1,0 +1,11 @@
+# NEC Table 250.66: grounding electrode conductor by the largest ungrounded service conductor (up to and including max_cu or
+# max_al). Source: ElectricalLicenseRenewal.com's 2020 table image (sectionID=1001), the same in Tucson Electric Power SR-453; trade
+# and utility sources. The table's 1100 kcmil Cu and 1750 kcmil Al rows are capped at 1000 here, the largest size the model knows.
+# 250.66(B): to a concrete-encased electrode, not required larger than 4 AWG copper (Holt's paraphrase).
+max_cu,max_al,gec_cu,gec_al
+2,1/0,8,6
+1/0,3/0,6,4
+3/0,250,4,2
+350,500,2,1/0
+600,900,1/0,3/0
+1000,1000,2/0,4/0

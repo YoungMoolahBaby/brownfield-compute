@@ -542,13 +542,15 @@ def holt_example(p: dict) -> dict:
 def electrical(apt: dict, p: dict) -> dict:
     """The flats' load: each flat's feeder (220.82), and the flats together for the service (220.84).
     The flats have no electric space heat (the radiant floors run on the warm loop) and a heat pump
-    for cooling; no water heater (the plant is central, a house load). House loads (the plant, the
-    pumps, the stair and annex lights) come in steps 4-5."""
+    for cooling; no water heater (the plant is central, a house load). The appliances are step 5's
+    (`electrical.APPLIANCES`, at their 208 V nameplates); step 5 adds the house loads."""
+    from .electrical import APPLIANCES, appliance_va, hvac_va
+
     e = "systems.electrical."
     ft2 = apt["flats"][0]["floor_m2"] / FT2
-    appliances = [p[e + "range_va"], p[e + "dishwasher_va"], p[e + "dryer_va"], p[e + "fixed_va"]]
-    return {"flat_ft2": ft2, "flat_feeder": nec_220_82(ft2, appliances, p[e + "cooling_va"], p),
-            "flats_220_84": nec_220_84(len(apt["flats"]), ft2, appliances, 0.0, p[e + "cooling_va"], p)}
+    appliances = [appliance_va(p, k) for k in APPLIANCES]
+    return {"flat_ft2": ft2, "flat_feeder": nec_220_82(ft2, appliances, hvac_va(p, 0.65), p),
+            "flats_220_84": nec_220_84(len(apt["flats"]), ft2, appliances, appliance_va(p, "preheater"), p[e + "cooling_va"], p)}
 
 
 # ---- The step's summary ----
@@ -614,8 +616,8 @@ def report(s: dict) -> str:
               f"{hw['peak_hour_gal']:.0f} gal ({hw['peak_hour_kw']:.1f} kW of heat); {hw['day_kwh']:.0f} kWh a day; recirculation "
               f"{hw['recirc_kw']:.1f} kW", ""]
     f, b = el["flat_feeder"], el["flats_220_84"]
-    lines += [f"Electrical (NEC 2020 Article 220; appliance nameplates are placeholders): a flat's feeder (220.82) {f['calculated_va']:,.0f} VA, "
-              f"{f['amps_240']:.0f} A; the 12 flats (220.84) {b['connected_va']:,.0f} VA connected x {b['factor']:g} = "
+    lines += [f"Electrical (NEC 2020 Article 220; step 5's appliances): a flat's feeder (220.82) {f['calculated_va']:,.0f} VA, "
+              f"{f['amps_240']:.0f} A at 240 V; the 12 flats (220.84) {b['connected_va']:,.0f} VA connected x {b['factor']:g} = "
               f"{b['calculated_va']:,.0f} VA, {b['amps_240_1ph']:.0f} A at 120/240 V or {b['amps_208_3ph']:.0f} A at 208Y/120 V, "
-              "before house loads (steps 4-5)."]
+              "before house loads (step 5: `brownfield electrical`)."]
     return "\n".join(lines)
