@@ -62,6 +62,11 @@ the end collects the features this project wanted, with what we built instead.
   `apartment-json` writes them out, and IfcOpenShell (Python) is to write the IFC. See
   Suggestions.
 
+- **missing** (2026-11-21, pass 3g, the walk-up's rooms): cf-design has solids and nothing for
+  the spaces between them, so no room with a use, an area or the openings in its walls. Instead:
+  `forge/src/rooms.rs` (boxes, mirrored from one flat's plan, with its own overlap and coverage
+  checks). See Suggestions, "Spaces".
+
 ## sim-therm-env, sim-thermostat
 
 - **gap** (2026-11-15, scoping): neither is building heat transfer. sim-therm-env is "a typed
@@ -214,3 +219,9 @@ Nice-to-haves for CortenForge, with what this project built instead.
   exporter to IFC4, so a model can leave as building data and not only as meshes. Instead: named
   boxes beside the solids in `forge/src/apartment.rs`, written to JSON, with the IFC from
   IfcOpenShell in Python.
+- **Spaces: rooms as part of the model** (2026-11-21, pass 3g): a space type beside solids, a
+  named volume with a use, bounded by walls, with an exact area and the openings in its walls.
+  A model's rooms could then be checked (sizes, a window per bedroom) and exported as IfcSpace
+  with the walls. Instead: `forge/src/rooms.rs` lays rooms out as boxes and mirrors one flat's
+  plan to the rest. It checks in plain Rust that rooms, partitions and the building's parts don't
+  overlap, and that each flat is covered exactly.

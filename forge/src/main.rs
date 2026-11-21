@@ -21,6 +21,7 @@ mod house;
 mod masonry;
 mod masonry_build;
 mod render;
+mod rooms;
 mod stair;
 mod scene;
 mod sequence;
@@ -85,6 +86,17 @@ fn check() -> bool {
         println!("       {e}");
     }
     ok &= serrs.is_empty();
+    let mut b2 = apartment::Building::example();
+    b2.addendum_2();
+    let lay = rooms::Layout::example();
+    let rerrs = lay.errors(&b2, &st.parts(&b2));
+    println!("{} rooms, plumbing walls and annex (pass 3g step 1, Addendum 2): {} rooms, {} walls, {} annex parts, {} errors",
+             if rerrs.is_empty() { "ok  " } else { "FAIL" }, lay.rooms(&b2).len(), lay.walls(&b2).len(),
+             lay.annex_parts(&b2).len(), rerrs.len());
+    for e in &rerrs {
+        println!("       {e}");
+    }
+    ok &= rerrs.is_empty();
     ok
 }
 
@@ -335,14 +347,19 @@ fn masonry_mode(root: &Path) -> std::io::Result<()> {
 /// systems and the roof, in metres: `../out/pass3/apartment.json`. Refuses to write a model that
 /// fails its own checks (`Building::model_errors`).
 fn write_apartment_json(root: &Path, b: &apartment::Building) -> std::io::Result<serde_json::Value> {
-    write_apartment_json_to(root, b, "out/pass3/apartment.json", "")
+    write_apartment_json_to(root, b, "out/pass3/apartment.json", "", None)
 }
 
-/// The same, to `rel` (under the repo root), with `revision` noted in the file ("" for the base).
-fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revision: &str) -> std::io::Result<serde_json::Value> {
+/// The same, to `rel` (under the repo root), with `revision` noted in the file ("" for the base),
+/// and from Addendum 2 on (pass 3g, D28) the rooms, plumbing walls and service annex.
+fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revision: &str,
+                           layout: Option<&rooms::Layout>) -> std::io::Result<serde_json::Value> {
     let st = stair::Stair::example();
     let mut errs = b.model_errors();
     errs.extend(st.errors(b));
+    if let Some(lay) = layout {
+        errs.extend(lay.errors(b, &st.parts(b)));
+    }
     if !errs.is_empty() {
         return Err(std::io::Error::other(format!("the walk-up fails its model checks:\n  {}", errs.join("\n  "))));
     }
@@ -374,7 +391,7 @@ fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revi
         .map(|o| (o.width / 1e3 * 1e4).round() / 1e4).collect();
     facade_widths.sort_by(f64::total_cmp);
     facade_widths.dedup();
-    let env = json!({
+    let mut env = json!({
         "source": "forge `apartment` (CortenForge 0.9): 3-storey walk-up, 100 x 40 ft, 12 flats",
         "depth_m": b.depth / 1e3, "length_m": b.length / 1e3, "storeys": b.storeys, "storey_m": b.storey / 1e3,
         "ext_t_m": b.ext_t / 1e3, "party_t_m": b.party_t / 1e3, "flat_len_m": b.flat_len / 1e3,
@@ -388,6 +405,9 @@ fn write_apartment_json_to(root: &Path, b: &apartment::Building, rel: &str, revi
         "stair": st.json(b, &r6),
         "revision": revision,
     });
+    if let Some(lay) = layout {
+        env["rooms"] = lay.json(b, &r6);
+    }
     let path = root.join(rel);
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
@@ -618,12 +638,25 @@ fn main() {
                     Some(width_in) => {
                         let mut b = apartment::Building::example();
                         b.addendum_1(width_in * 25.4);
-                        write_apartment_json_to(root, &b, "out/pass3/apartment-addendum-1.json", "addendum-1")
+                        write_apartment_json_to(root, &b, "out/pass3/apartment-addendum-1.json", "addendum-1", None)
                     }
                     None => Err(std::io::Error::other(
                         "apartment-json addendum-1 <patio door width, in>: the width is params/bidset.yaml's addendum_1.patio_door_width_in")),
                 },
-                Some(other) => Err(std::io::Error::other(format!("unknown revision {other}: try addendum-1"))),
+                // Addendum 2 (pass 3g, D28) follows Addendum 1: the rooms, the plumbing walls and the
+                // service annex, and the stair window the annex covers removed.
+                Some("addendum-2") => match std::env::args().nth(3).and_then(|s| s.parse::<f64>().ok()) {
+                    Some(width_in) => {
+                        let mut b = apartment::Building::example();
+                        b.addendum_1(width_in * 25.4);
+                        b.addendum_2();
+                        write_apartment_json_to(root, &b, "out/pass3/apartment-addendum-2.json", "addendum-2",
+                                                Some(&rooms::Layout::example()))
+                    }
+                    None => Err(std::io::Error::other(
+                        "apartment-json addendum-2 <patio door width, in>: Addendum 1's width, params/bidset.yaml's addendum_1.patio_door_width_in")),
+                },
+                Some(other) => Err(std::io::Error::other(format!("unknown revision {other}: try addendum-1 or addendum-2"))),
                 None => write_apartment_json(root, &apartment::Building::example()),
             };
             if let Err(e) = res {

@@ -913,3 +913,62 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
 - **CSI MasterFormat 2020, Division 08 Openings.** The level-2 titles used are 08 10 00 Doors and
   Frames, 08 50 00 Windows, and the division 08 00 00 Openings. The level-3 sections named as
   examples are 08 32 00 Sliding Glass Doors and 08 51-08 54 by frame material.
+
+## The walk-up's systems (pass 3g, D28, 2026-11-21)
+
+- **Pennsylvania's code edition.** 55 Pa.B. 7701 (2025-11-08), Doc. No. 25-1513, read on the
+  Pennsylvania Bulletin
+  (pacodeandbulletin.gov/Display/pabull?file=/secure/pabulletin/data/vol55/55-45/1513.html):
+  - "These regulations will be effective January 1, 2026."
+  - 34 Pa. Code 403.21(a) adopts the 2021 IBC, IMC, IPC (accessibility excepted) and IECC.
+  - 403.21(c): "Appendices to a code or standard listed in subsection (a) are not adopted",
+    except the IEBC's and those in (a)(12)-(13).
+  - Doc. No. 25-1602, which York City's UCC page links, is a different rule.
+- **IBC 2021 1208, 1020.3 and 1031.** Read from UpCodes' "Pennsylvania Building Code 2021"
+  chapter 10 and 12 pages as Jon saved them (2026-11-21; `data/raw/upcodes/`, gitignored). No
+  Pennsylvania amendment note shows under these sections. Used in `params/systems.yaml`
+  (`code.room`, `code.corridor`, `code.escape`).
+  - **1208.1:** habitable spaces other than kitchens at least 7 ft in any plan dimension.
+    Kitchens need a clear passage of 3 ft between counter fronts and appliances or walls.
+  - **1208.2:**
+    - habitable spaces and corridors: ceilings of 7 ft 6 in;
+    - bathrooms, kitchens, storage and laundry rooms: 7 ft;
+    - corridors within a dwelling unit: 7 ft (exception);
+    - furred ceilings (1208.2.1): the minimum over two-thirds of the area, never under 7 ft.
+  - **1208.3:** one room of at least 120 ft2 net in every dwelling unit, other habitable rooms
+    70 ft2, kitchens exempt.
+  - **Table 1020.3** (Table 1020.2 in 2018; 2021's 1020.2 is the corridor fire-rating table):
+    within a dwelling unit 36 in; access to mechanical, plumbing or electrical equipment 24 in.
+  - **1031** (1030 in 2018, with the same values). 1031.2: R-2 in stories with one exit, and
+    sleeping rooms below the fourth story, need an emergency escape and rescue opening.
+    - 1031.3.1: net clear opening 5.7 ft2 (5 at grade floor).
+    - 1031.3.2: 24 in high and 20 in wide, "the result of normal operation of the opening".
+    - 1031.3.3: bottom of the clear opening no more than 44 in above the floor.
+- **IBC 2021 1023.5, penetrations of an interior exit stairway.** Read on the same chapter 10
+  page. Prohibited except:
+  - equipment and ductwork for the stair's own ventilation or pressurization;
+  - fire protection systems, security systems and two-way communication systems;
+  - electrical raceway for fire department communication, or serving the stair and ending at a
+    16 in2 steel box;
+  - structural elements supporting the stair.
+
+  Membrane penetrations are allowed on the outside of the enclosure (714.4.2). So the flats'
+  water, heat and power can't cross the stair: the walk-up's services run under the slab.
+- **Climate zone.** PNNL-33270, *Guide to Determining Climate Zones by County* (2022): Indiana
+  County, PA is 5A. Found by a research agent and not reopened.
+- **Free sources found for later steps (D28 step 0; to read in full when used):**
+  - **Phius 2024 Certification Guidebook v26.1.2:** airtightness 0.06 cfm50/ft2; ventilation
+    balanced within 10%, outdoor air to every bedroom.
+  - **Electrical known case:** Mike Holt, "Multifamily Dwelling Unit Service and Feeder
+    Calculations" (EC&M, 2009), the NEC 220.84 example: 12 units, x 0.41.
+  - **Water Demand Calculator:** IAPMO's free calculator and its Concise User Guide (2026).
+  - **Radiant floor:** REHAU's *Radiant Heating Systems Design Guide* 855.601 and *PEXa
+    Pressure Loss Tables* 855.681.
+  - **I-joist holes:** APA Z725E (2012) Table 5.
+  - **Plumbing noise:**
+    - CMHC Research Highlights 99-112 (criteria: plumbing at most 33 dBA Leq) and 02-117
+      (pipe noise; paid for by CISPI, so trade-sponsored);
+    - Warnock and Morin, NRCC-35548 (1990);
+    - MJM's 1990 summary for CMHC.
+  - **Fees:** Washington OFM, *A/E Fee Guidelines* (2027-29), Schedule B.
+  - **Baseline:** US Census, *Characteristics of New Housing 2025*, the multifamily tables.

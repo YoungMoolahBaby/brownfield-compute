@@ -6,6 +6,16 @@ data center on the same site.
 
 ## Status (2026-11-15)
 
+**Pass 3g SCOPED (2026-11-21), the walk-up's systems designed up front (D28).** Plumbing,
+heating, cooling, ventilation, electrical and sprinklers, designed in full before bidding, to US
+code as Pennsylvania enforces it plus PHIUS, with no DIN standards. Then a round of installers'
+feedback, and the inspection plan. Only the engineered design is drawn; the usual walk-up is
+priced from sources as the baseline. Found while scoping: Pennsylvania now enforces the 2021
+I-codes, and the bid set was checked to IBC 2018. Decided: one central water heater; two service
+rooms (electrical; mechanical and plumbing) in an annex behind the stair. Step 0 (sources) done;
+step 1 (rooms and annex) built in forge as Addendum 2 and checked against IBC 2021 (14 checks
+pass; the escape windows must be casements); the IFC and Addendum 2's diff to do.
+
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
 - **The site:** https://youngmoolahbaby.github.io/brownfield-compute/
@@ -1954,6 +1964,228 @@ test. Then the township brief's ask.
   - **If it holds:** an ask in the township brief that the buildings the benefits agreement pays
     for go out to bid with their model as data, and a line in D23's standard. CortenForge gets an
     entry: no IFC export and no stable part ids.
+
+- **D28** (2026-11-21) The walk-up's systems, designed before anyone bids (pass 3g, scoped;
+  report to be `docs/pass3/systems.md`).
+  - **Jon's direction:** "making it essentially a complete spec/plan. like plumbing, electrical,
+    hvac. something highly engineered, like a german building", then "system designed upfront
+    imo. letting the ones making a profit from implementing the system should not be designing
+    it", then "instead of buying the plumbing noise code we can engineer it/look into it from free
+    us resources", and "design, open to feedback from the installers/contractors, then inspect."
+  - **The question:** can the walk-up's plumbing, heating, cooling, ventilation, electrical and
+    sprinklers be designed in full before bidding, so the trades price a design rather than
+    design what they price? What does that design cost, and what does it buy?
+  - **Jon asked whether Americans won't pay for that engineering up front.** The steer: mostly
+    true for this building type, but not for that reason.
+    - **What's true:** on a small wood walk-up the architect usually draws the building and each
+      trade designs its own system as part of its bid, often only to what the permit needs. In
+      Germany a building-services engineer designs the systems before bidding, and the trades bid
+      on a priced list of every item.
+    - **Why the US does it that way:** where the owner keeps the bills (hospitals, labs, data
+      centers, this campus) US buildings are engineered in full. A rental walk-up's developer
+      usually sells or refinances, and the tenant pays the power bill: who pays later, not
+      thrift.
+    - **Pennsylvania already pays for it:** PHFA has given tax-credit points for Passive House
+      since its 2015 plan, with a certified Passive House consultant on the team (PHFA's 2019
+      presentation to DEP's Climate Change Advisory Committee; NCSHA 2018). Pass 4 found the
+      walk-up pencils only with tax credits.
+    - **Germany doesn't choose it either:** most of it is law (energy, sound, a ventilation plan,
+      balanced heating), and Germany is drafting "Gebäudetyp E" to let builders depart from the
+      standards because they made housing too costly. A draft still in 2026, as far as found
+      (Bundestag lobby register, RV0026538).
+  - **Only the engineered design is drawn** (Jon: "only B"). The usual US walk-up is priced
+    from sources (what contractors install in walk-ups, and its cost), not designed: the
+    project's rule needs a conventional baseline, and B alone can't show it's worth the money.
+  - **The rules it's designed to:**
+    - US code as Pennsylvania enforces it: the 2021 I-codes from 2026-01-01 (55 Pa.B. 7701, Doc.
+      No. 25-1513; step 0), with the 2020 NEC and 2019 NFPA 13R and 72. The codes are free to read
+      on ICC's and NFPA's sites, as is ASHRAE 62.2.
+    - PHIUS where it goes further (ventilation, airtightness). The envelope stays as built; the
+      report says what PHIUS would ask of it.
+    - **No DIN standards.** They are sold one at a time (DIN 1946-6 from EUR 229.30, DIN EN
+      12831-1 from EUR 209.50, DIN 1988-300 ~EUR 133 from a reseller), mostly in German, and
+      aren't Pennsylvania's code.
+    - **Plumbing noise is engineered from free sources.** US code limits sound through walls and
+      floors between flats (IBC 1206) but not the noise of a neighbour's drain; DIN 4109 does,
+      and isn't bought. Found so far: a CMHC research project on drain noise in cast iron, PVC
+      and ABS (publications.gc.ca), a Quebec plumbing-noise study (mjm.qc.ca), CIB W062 papers,
+      and the pipe makers' own data (CISPI, Charlotte Pipe: trade sources, to be marked so).
+  - **The process:** design, then a round of feedback from installers, then inspection.
+    - The designer keeps the design. Each installer's comment is logged like an RFI and is
+      either taken (as an addendum) or answered.
+    - Inspection can't happen on paper, so the set carries the inspection and commissioning plan:
+      the pressure tests, the balancing report, the ventilation flows, a blower door.
+  - **Decided (2026-11-21):**
+    - **Hot water: one central plant for the building.** Jon: "yeah probably 1 water heater for
+      the apartment building. maybe for condos id say individual per unit." Each flat gets its
+      own hot-water meter and heat meter so it pays for what it uses. Whether Pennsylvania lets a
+      landlord bill by submeter is to check.
+    - **Rooms in the flats:** the draft layout stands unless Jon changes it. Two bedrooms at the
+      end-wall corner; the bath, a utility closet and the kitchen in a line on the spine, back to
+      back across it and stacked floor over floor; the rooms sum to the flat's 836 sq ft.
+    - **Service rooms** (Jon: "there will probably need to be an electrical room, plumbing room,
+      maybe even heating/hvac room etc."). Proposed: two rooms, a dry electrical room and a wet
+      mechanical and plumbing room, in a one-storey annex behind the stair core, each with its
+      own outside door. No HVAC room, since ventilation and cooling are per flat. Jon: "ok go
+      with two rooms in the annex". The annex changes the published bid set (its walls, and the
+      ground-floor stair window behind it), so it goes out as a revision with its diff.
+  - **Steps:**
+    0. **Ground truth.** The code editions in force in Indiana County, from the Pennsylvania
+       Bulletin. The free source for each system. A known case for each calculation: NEC Annex
+       D's multifamily load examples; the plumbing code's fixture-unit tables; IAPMO's free Water
+       Demand Calculator (UPC Appendix M; whether Pennsylvania accepts it under the IPC is to
+       check); ASHRAE 62.2 (already in the model); pipe and duct friction against closed forms.
+       - **Found while scoping:** the bid set's checks (D27, steps 3-8) are to IBC 2018, one
+         edition behind what Pennsylvania now enforces. To recheck (Jon to say when).
+       - **Done 2026-11-21** (a research agent, then the Bulletin read again):
+         - **The rule:** 55 Pa.B. 7701 (2025-11-08), Doc. No. 25-1513: "These regulations will
+           be effective January 1, 2026." Not 25-1602, which York City's page links, a different
+           rule (industrialized housing).
+           - 34 Pa. Code §403.21(a) adopts the IBC, IMC, IPC (accessibility excepted) and IECC of
+             2021.
+           - §403.21(c): "Appendices to a code or standard listed in subsection (a) are not
+             adopted", the IEBC's and two named ones excepted. So IPC Appendix E (pipe sizing) is
+             not in force, and IAPMO's Water Demand Calculator could serve only as a method the
+             code official approves (IPC 604.1).
+           - Projects contracted under the 2018 codes could use them until mid-2026; that has
+             passed.
+         - **NFPA editions (IBC 2021 chapter 35, on UpCodes):** NFPA 70-2020, 13R-2019, 72-2019.
+           Pennsylvania's IBC 903.3.1.2 allows 13R for R-2 up to 4 storeys.
+         - **Climate zone 5A** for Indiana County (PNNL-33270, 2022). A 3-storey R-2 falls under
+           the IECC's residential provisions (R202).
+           - IECC 2021 R403.6.1 requires heat-recovery ventilation only in zones 7-8, so here
+             it goes beyond code.
+           - Air leakage: 3.0 ACH50 prescriptive (R402.4.1.3); for attached units tested one by
+             one, 0.30 cfm50 per ft2 of enclosure.
+           - Phius 2024 (Certification Guidebook v26.1.2, free) asks 0.06 cfm50/ft2, outdoor air
+             to every bedroom, and supply and exhaust balanced within 10%.
+           - IMC 2021 ventilation: Eq. 4-9 and Table 403.3.2.3 (kitchen 100 cfm intermittent or
+             25 continuous, bath 50 or 20).
+         - **Known cases found:**
+           - **NEC 220.84:** Mike Holt's 12-unit example (EC&M, 2009, free). 460,800 VA connected
+             x 0.41 = 188,928 VA. The NEC's own Annex D examples sit behind NFPA's login viewer:
+             unread.
+           - **Water demand:** the Water Demand Calculator's user guide (IAPMO, 2026). A one-bath
+             house gives 9.0 gpm.
+           - **Radiant floor:** REHAU's design guide 855.601 and pressure-loss tables 855.681.
+           - **I-joist holes:** APA Z725E (2012) Table 5, hole size against distance from the
+             support for 11-7/8 in. joists. The 2024 edition is to check.
+         - **Plumbing noise, free:**
+           - **The limit:** a neighbour's plumbing at no more than 33 dBA Leq (CMHC Research
+             Highlight 99-112).
+           - **Pipe data:** cast iron, PVC and ABS drains bare and enclosed (CMHC RH 02-117,
+             paid for by CISPI, so trade-sponsored). Clamps, sleeves and drywall (NRC, Warnock
+             and Morin 1990). Water pressure, mounts and wall contact (MJM's 1990 summary for
+             CMHC).
+         - **Fees:** Washington OFM's A/E fee guidelines (2027-29), Schedule B: ~10% of
+           construction for design-bid-build at $2M. No split by discipline.
+         - **Baseline:** Census, Characteristics of New Housing 2025, new multifamily units:
+           - US: heat pump 52%, furnace 35%, air conditioning 99%;
+           - Northeast: heat pump 43%, furnace 36%.
+         - **Unread or unresolved:**
+           - the 2021 IBC's corridor width (Table 1020.2) and escape openings (1031): UpCodes'
+             chapter 10 page cuts off at 1010, as in D27, so Jon to save them;
+           - 1208's exact wording: UpCodes' page was read only in summary, giving 1208.1 7 ft,
+             1208.2 7 ft 6 in, 1208.3 one room of 120 ft2 and others 70;
+           - NEC Annex D;
+           - the 62.2 edition the codes cite;
+           - a free shaft-wall STC source;
+           - the MEP share of a fee;
+           - WHO's bedroom levels at first hand.
+    1. **Rooms.** The model has none (bidset.md). Two-bedroom flats with kitchens and baths
+       stacked floor over floor and back to back across the spine, so a few shafts serve all
+       12. A mechanical and meter room. Each escape window assigned to its bedroom, which closes
+       D27's open item. Forge writes them to `out/pass3/apartment.json`.
+       - **Forge done 2026-11-21** (`forge/src/rooms.rs`;
+         `cargo run --release -- apartment-json addendum-2 60` writes
+         `out/pass3/apartment-addendum-2.json`, Addendum 1 plus Addendum 2):
+         - **122 rooms:** 10 a flat and the annex's two. In a flat, bed 1 113 ft2, bed 2 96,
+           living 274, kitchen 82, bath 44 (5.35 x 8.12 ft clear), entry 86, study nook 61,
+           utility 17, hall and passage 33.
+         - **84 walls:** 6 partitions and a plumbing wall a flat. The plumbing wall is 2x6 with
+           gypsum on the room side, a half inch clear of the spine. It runs behind the bath, the
+           utility closet and the kitchen, so no pipe touches or pierces the party wall.
+         - **The annex:** 20 x 10.8 ft behind the stair core, walls 9 ft. Mechanical and plumbing
+           room 114 ft2 with a 42 in. door in its side; electrical room 70 ft2 with a 36 in. door
+           at the far end. Both are provisional until steps 4-5 size the equipment.
+         - **Removed:** the ground floor's back stair window (`1-stair/back/0`), which the annex
+           covers (`Building::addendum_2`). It is the only opening that changes: 114 to 113.
+         - **Forge's own checks pass:**
+           - no room or wall overlaps another, the building's parts, the stair's or the annex's;
+           - every flat is covered exactly: rooms, walls and the plumbing wall's gap sum to its
+             floor;
+           - every bedroom has a window in an outside wall;
+           - the annex covers no opening left, and its doors sit in its walls.
+         - **Found:** the stair splits the building in two. Its enclosure may be pierced only for
+           fire protection, security and communication systems and the stair's own ventilation
+           and power (IBC 2021 1023.5), not the flats' water, heat or power. So the annex's pipes
+           and conduits reach both halves under the ground-floor slab: pre-insulated buried pipe,
+           as district heating is laid.
+       - **Checked against the code 2026-11-21** (`uv run brownfield systems`;
+         `src/brownfield/systems.py`, `params/systems.yaml`). IBC 2021 1208, Table 1020.3 and
+         1031 were read verbatim from UpCodes' pages as Jon saved them. 14 checks, all pass:
+         - **Addendum 2 changes only the one stair window:** parts and the stair are unchanged.
+         - **Each flat's rooms and walls cover its floor exactly,** measured against pass 3b's
+           `flat_envelope`, an independent number.
+         - **Room sizes:**
+           - habitable rooms 7 ft in plan and 70 ft2: the narrowest is bed 1 at 9.23 ft, the
+             smallest bed 2 at 96 ft2;
+           - one room of 120 ft2 a flat: living 274;
+           - ceilings 106.5 in on the upper floors, against 90 (84 in wet rooms); no soffits yet.
+         - **Clearances:**
+           - the hall 37.5 in clear, against 36 (Table 1020.3);
+           - the kitchen 65.5 in clear past a 25 in counter, against 36.
+         - **Escape windows:** every bedroom has one, named on the window. A 3 x 4 ft window can
+           clear 1031 only side-hinged: hung, it opens under 24 in high; sliding, under 20 in
+           wide. So the escape windows are casements. That closes D27's open question.
+         - **Wet rooms** stack floor over floor and sit back to back across the spine.
+         - **Plumbing walls** stand 0.5 in clear of the party wall.
+         - **The annex** has its two rooms, each with an outside door.
+       - **Tests:** `tests/test_walkup_systems.py`, 15 tests. Each check is broken on purpose
+         and must catch it: a 69 ft2 bedroom, a 6.9 ft one, a 35 in hall, a low ceiling, a
+         bedroom without a window, 52 in windows (a hung sash would then do), and one such window
+         alone; a bath out of stack, a plumbing wall touching the spine, and one pushed into it;
+         any other change to the building, a missing annex door.
+       - **Review before commit (2026-11-21) fixed:**
+         - the casement check took `all()` over the windows, so one window that could be hung
+           would have slipped through;
+         - the plumbing wall's gap was an `abs()`, so a wall pushed an inch into the spine read
+           as clear;
+         - `brownfield systems` now leaves the published plan sheet alone when a check fails;
+         - 1023.5 is reworded to the 2021 text (fire protection, security and communication may
+           pierce the stair; the flats' services may not).
+       - **Plan sheet:** `docs/pass3/systems_plan.png`.
+       - **Also closed:** safety glazing at wet areas (2406.4.5), which D27 couldn't assess
+         without rooms. The baths have no windows.
+       - **CORTENFORGE.md:** spaces (rooms) as part of the model, under Suggestions.
+         **RESEARCH.md:** the Bulletin, IBC 2021 1208, 1020.3 and 1031, and step 0's sources.
+       - **To do:** IfcSpace, the partitions, the plumbing walls and the annex in the IFC, with
+         the escape windows marked (casement) on each window; Addendum 2's element diff against
+         Addendum 1, as `brownfield addendum` did for Addendum 1.
+    2. **Loads, room by room:** heat (the existing model split by room), cooling, ventilation,
+       water demand, drainage and electrical load.
+    3. **Heating, cooling and ventilation:** radiant floor loops on the loop's ~30 C water, a
+       manifold and a heat meter in each flat, every loop balanced; heat-recovery ventilation in
+       each flat; cooling sized to the real load (a radiant floor can't cool); ducts sized.
+    4. **Plumbing:** cold and hot water and recirculation, the hot-water plant (central or per
+       flat, to choose), drains and vents, plumbing noise.
+    5. **Electrical:** the service, meter room, feeders, panels and circuits, and space for EV
+       chargers and solar.
+    6. **Sprinklers and alarms:** NFPA 13R with a hydraulic calculation; the single stair
+       depends on it.
+    7. **In the model and the IFC:** every pipe, duct, riser and piece of equipment; routes
+       through the I-joists only where the maker's hole chart allows; a clash check; the
+       schedules and the priced item list from the IFC, as the window schedule is.
+    8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
+       electrician; their comments logged, then taken or answered (Addendum 2).
+    9. **The inspection and commissioning plan.**
+    10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
+        fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
+  - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
+    the envelope.
+  - **What we expect not to know:** what US engineers charge for this on a 12-flat building
+    (the fee needs a source); installers' real comments until Jon's round; plumbing noise in
+    the walk-up's own walls, which only a test in a built one would show.
 
 ## Pass 1: site screen (done 2026-11-15, first full run)
 

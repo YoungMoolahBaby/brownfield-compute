@@ -416,6 +416,14 @@ impl Building {
         }
     }
 
+    /// Addendum 2 (pass 3g step 1, D28): the service annex behind the stair core covers the
+    /// ground floor's back stair window, so it goes. The annex itself, and the rooms, are
+    /// `rooms::Layout`'s, built from this building as `stair` is.
+    pub fn addendum_2(&mut self) {
+        let (mid, storey) = (self.length / 2.0, self.storey);
+        self.openings.retain(|o| !(o.face == Face::Back && (o.along - mid).abs() < 1.0 && o.sill < storey));
+    }
+
     /// The flat an opening belongs to, from where its centre is (None in the stair core). Found
     /// from the geometry, not from `flat_openings`, so the two can check each other.
     fn flat_at(&self, storey: usize, c: Vector3<f64>) -> Option<String> {

@@ -633,6 +633,29 @@ def cmd_bidset(args) -> int:
     return 0 if all(ok for _, ok, _ in res + second) else 1
 
 
+def cmd_systems(_args) -> int:
+    import json
+
+    from . import systems
+
+    P = values(load_params())
+    apt = systems.load()
+    base = json.loads(systems.BASE.read_text(encoding="utf-8"))
+    res = systems.check(apt, base, P)
+    print(systems.report(res))
+    print(NL + "The typical flat (2-front-left), clear of its walls:")
+    print(f"{'room':10s} {'use':9s} {'ft x ft':>13s} {'ft2':>6s} {'ceiling in':>10s}  escape window")
+    for r in systems.typical_flat(apt, P):
+        print(f"{r['room']:10s} {r['use']:9s} {r['x_ft']:5.2f} x {r['y_ft']:5.2f} {r['area_ft2']:6.1f} {r['ceiling_in']:10.1f}  {r['escape']}")
+    if not all(ok for _, ok, _ in res):
+        print(NL + "a check fails: docs/pass3/systems_plan.png left as it was")
+        return 1
+    path = OUT_DIR.parent / "docs" / "pass3" / "systems_plan.png"
+    systems.plan_figure(apt, P, path)
+    print(NL + "wrote " + str(path.relative_to(OUT_DIR.parent)))
+    return 0
+
+
 def cmd_addendum(_args) -> int:
     from . import addendum, bidset
 
@@ -881,6 +904,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    sub.add_parser("systems", help="pass 3g: the walk-up's rooms, plumbing walls and service annex against IBC 2021 (after forge `apartment-json addendum-2 60`)")
     sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")
     bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")
     bs.add_argument("--setup-reader", action="store_true", help="install the second reader, web-ifc (tools/webifc, npm ci with the dev group's Node)")
@@ -893,7 +917,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

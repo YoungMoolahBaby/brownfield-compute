@@ -1,0 +1,86 @@
+# Pass 3g (D28): the walk-up's systems, designed before anyone bids. The numbers its checks use.
+#
+# IBC 2021 is the edition Pennsylvania's UCC adopts from 2026-01-01 (55 Pa.B. 7701, Doc. No.
+# 25-1513, 34 Pa. Code 403.21(a); appendices not adopted, 403.21(c)). Chapters 10 and 12 were read
+# from UpCodes' "Pennsylvania Building Code 2021" pages as Jon saved them (2026-11-21,
+# data/raw/upcodes/, gitignored). No Pennsylvania amendment note shows under 1020, 1031 or 1208.
+
+code:
+  room:
+    min_dimension_ft:
+      value: 7
+      unit: ft, the least plan dimension of a habitable space other than a kitchen
+      conf: high
+      source: "IBC 2021 1208.1 Minimum room widths: 'Habitable spaces, other than a kitchen, shall be not less than 7 feet (2134 mm) in any plan dimension.'"
+    kitchen_passage_in:
+      value: 36
+      unit: in, the least clear passage between counter fronts and appliances or walls in a kitchen
+      conf: high
+      source: "IBC 2021 1208.1: 'Kitchens shall have a clear passageway of not less than 3 feet (914 mm) between counter fronts and appliances or counter fronts and walls.'"
+    min_ceiling_habitable_in:
+      value: 90
+      unit: in, the least ceiling height of habitable spaces and corridors (7 ft 6 in)
+      conf: high
+      source: "IBC 2021 1208.2 Minimum ceiling heights: 'Occupiable spaces, habitable spaces and corridors shall have a ceiling height of not less than 7 feet 6 inches (2286 mm) above the finished floor.'"
+    min_ceiling_service_in:
+      value: 84
+      unit: in, the least ceiling height of bathrooms, kitchens, storage and laundry rooms, and of corridors within a dwelling unit (7 ft)
+      conf: high
+      source: "IBC 2021 1208.2: 'Bathrooms, toilet rooms, kitchens, storage rooms and laundry rooms shall have a ceiling height of not less than 7 feet (2134 mm)'; exception 4: 'Corridors contained within a dwelling unit or sleeping unit in a Group R occupancy shall have a ceiling height of not less than 7 feet (2134 mm)'"
+    one_room_min_ft2:
+      value: 120
+      unit: ft2 of net floor area, the least a dwelling unit's largest room may have
+      conf: high
+      source: "IBC 2021 1208.3 Room area: 'Every dwelling unit shall have not less than one room that shall have not less than 120 square feet (11.2 m2) of net floor area.'"
+    habitable_min_ft2:
+      value: 70
+      unit: ft2 of net floor area, the least for any other habitable room (kitchens exempt)
+      conf: high
+      source: "IBC 2021 1208.3: 'Other habitable rooms shall have a net floor area of not less than 70 square feet (6.5 m2).' Exception: 'Kitchens are not required to be of a minimum floor area.'"
+  corridor:
+    within_unit_min_in:
+      value: 36
+      unit: in, the least clear width of a corridor within a dwelling unit
+      conf: high
+      source: "IBC 2021 Table 1020.3 Minimum corridor width: 'Within a dwelling unit' 36 inches. (In 2018 this was Table 1020.2; 2021's Table 1020.2 is corridor fire-resistance rating.)"
+    equipment_access_min_in:
+      value: 24
+      unit: in, the least clear width of a corridor for access to and use of mechanical, plumbing or electrical systems or equipment
+      conf: high
+      source: "IBC 2021 Table 1020.3: 'Access to and utilization of mechanical, plumbing or electrical systems or equipment' 24 inches"
+  escape:
+    # Same values as IBC 2018 1030 (params/bidset.yaml code.escape); the section is 1031 in 2021.
+    net_clear_ft2:
+      value: 5.7
+      unit: ft2, the least net clear opening of an emergency escape and rescue opening
+      conf: high
+      source: "IBC 2021 1031.3.1 Minimum size: 'a minimum net clear opening of 5.7 square feet (0.53 m2)'. The 5 ft2 grade-floor exception isn't used: 5.7 everywhere is the safe side"
+    min_height_in:
+      value: 24
+      unit: in, the least net clear opening height of an escape opening
+      conf: high
+      source: "IBC 2021 1031.3.2 Minimum dimensions: 'The minimum net clear opening height dimension shall be 24 inches (610 mm).' The dimensions 'shall be the result of normal operation of the opening.'"
+    min_width_in:
+      value: 20
+      unit: in, the least net clear opening width of an escape opening
+      conf: high
+      source: "IBC 2021 1031.3.2: 'The minimum net clear opening width dimension shall be 20 inches (508 mm).'"
+    max_sill_in:
+      value: 44
+      unit: in above the floor, the highest the bottom of an escape opening's clear opening may be
+      conf: high
+      source: "IBC 2021 1031.3.3 Maximum height from floor: 'not greater than 44 inches (1118 mm) measured from the floor.' 1031.2: R-2 in stories with one exit, and 'sleeping rooms below the fourth story above grade plane shall have not fewer than one emergency escape and rescue opening'"
+
+design:
+  counter_depth_in:
+    value: 25
+    low: 24
+    high: 26
+    unit: in, a kitchen counter's depth with its overhang, along the plumbing wall
+    conf: low
+    source: "judgement: the usual US base cabinet (24 in) with a countertop overhang; no source fetched yet"
+  finished_floor_upper_in:
+    value: 1.5
+    unit: in, the radiant floor's gypsum topping on the upper floors, which comes off the ceiling height below it
+    conf: medium
+    source: "pass 3b's radiant topping (docs/pass3/README.md, 1.5 in. at 115 lb/ft3); the ground floor's tubing is in the slab"
