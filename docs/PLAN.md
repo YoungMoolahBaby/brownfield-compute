@@ -19,8 +19,8 @@ Addendum 1 (34 checks pass). Step 2 under way: heat and ventilation room by room
 the walls didn't meet Pennsylvania's 2021 energy code, so Addendum 3 brings the envelope to code
 (continuous insulation, the heated slab's). The plan room now reads as an exchange's project page
 (D29): an addenda dropdown, the documents in folders, the viewer with rooms, framing and each
-addendum's changes. Built and checked, not pushed. Next: the rest of step 2 (cooling, water,
-drainage, electrical).
+addendum's changes (live). Step 2 finished: cooling, water, drainage, hot water and electrical
+loads, each with a known case. Next: step 3, heating, cooling and ventilation designed.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2307,8 +2307,69 @@ test. Then the township brief's ask.
          - The isotropic diffuse model reads the south and west walls' peak hours more than 5% low
            (a test holds it), so cooling uses PVGIS's own sun-on-wall series, 2005-2023, cached.
        - **Tests:** `tests/test_walkup_loads.py`, 9.
-       - **To do:** cooling room by room; water demand, drainage and hot water; electrical (NEC
-         220.84).
+       - **Step 2 finished 2026-11-21** (`uv run brownfield loads`, on Addendum 3; writes
+         `out/pass3/loads.json` for steps 3-6). All 8 checks pass.
+         - **Sources, read verbatim from saved pages:**
+           - the IECC reference design's internal gains (IGain = 17,900 + 23.8 CFA + 4,104 Nbr
+             Btu/day) and its 75 F cooling setpoint (Table R405.4.2(1));
+           - Indiana County Airport's 428 m and 96,288 Pa;
+           - IPC 2021 Tables E103.3(2)-(3) (Michigan's copy), 709.1 and 710.1(1)-(2);
+           - Ecosizer's manual and its engine's load shape (commit 7586430);
+           - Holt's 220.82 and 220.84 articles.
+
+           Multi-row tables are in `data/` with their sources.
+         - **Corrections to the research agent's reading:**
+           - Table 709.1 counts a kitchen sink with its dishwasher as 2 dfu together, so a flat
+             is 9 dfu, not 11;
+           - the Ecosizer occupancy table's layout text is shifted a row. The raw text, and
+             each column's own pattern (CTCAC 1.5 a bedroom; ASHRAE market rate 1.49 + 0.45 a
+             bedroom), give a 2-bedroom flat 2.57 / 3 / 2.39 / 2.83: the agent was right.
+         - **Heat:** the engineered design on Addendum 3's envelope takes 1,524-2,327 W a flat
+           against pass 3b's case 2,744-3,502. The floor water is 32.0-36.5 C, the ground
+           floor's corner bedroom setting it.
+         - **Ventilation:** 45 cfm a flat (above).
+         - **Cooling** (`room_cooling`, `cooling_design`):
+           - **Method:** every hour of 2005-2023, PVGIS's sun on each wall, the air shifted
+             +0.78 K so its 0.4% hour meets ASHRAE's 30.9 C. Conduction at the hour's air (the
+             slab edge left out), sun through the glass at an SHGC of 0.35 (a placeholder: the
+             schedule has none), leakage and ventilation (the ERV's recovery), IGain spread by
+             floor area. Indoors 75 F; the four ways the building could face, the worst taken.
+           - **Results:** each flat 3.23-3.36 kW sensible (0.92-0.95 ton) at the 0.4% hour,
+             worst with the long facade west (front flats) or east (back). The living room
+             about 1.9 kW, worst facing south on the lower floors (low autumn sun on its glass)
+             and west on the top. Outdoor air latent 160-180 W a flat with an ERV.
+           - **Limit:** no thermal mass, so peaks lean high.
+         - **Water** (Hunter, IPC Appendix E as the approved method under 604.1):
+           - a flat 7.8 wsfu (cold 4.7, hot 4.9) and 9 dfu;
+           - demand: a flat 12.6 gpm, a stack of three 20.9, half the building 28.2, the
+             building 41.9 (hot 31.7).
+         - **Drains:** 3 in. branches and stacks (a water closet's minimum; a stack carries 27
+           dfu against 48). The building drain is 4 in. (108 dfu; 3 in. takes 42 at 1/4 in./ft).
+         - **Hot water, the design day** (Ecosizer: 25 gal a person, 3 a flat):
+           - 900 gal at 120 F;
+           - the busiest hour (07:00-08:00) 137 gal, 23.4 kW of heat;
+           - 154 kWh a day from a 50 F inlet (a placeholder);
+           - recirculation 1.2 kW.
+         - **Electrical:**
+           - **Known case:** Holt's 12-unit example reproduced exactly (460,800 VA, 188,928
+             VA, 787 A).
+           - **Each flat's feeder (220.82):** 16.6 kVA, 69 A. The optional method wants a
+             feeder of 100 A or more, so 100 A.
+           - **The 12 flats (220.84):** 287.3 kVA connected x 0.41 = 117.8 kVA, 491 A at
+             120/240 V or 327 A at 208Y/120 V, before house loads.
+           - **Placeholders:** the appliance nameplates, until chosen.
+         - **Tests:** `tests/test_walkup_loads.py`, 17, the known cases among them.
+         - **Review before commit fixed:** `weather()` carried the site's coordinates as numbers
+           in the code; it takes them from `land.PLANT` (EIA-860), as the test now does. An unused
+           import went, and the module's docstring covers 2a-2f.
+         - **What we don't know:**
+           - the windows' SHGC and the ERV's recoveries (placeholders);
+           - the appliance nameplates;
+           - the cold inlet's temperature;
+           - Hunter against IAPMO's Water Demand Calculator (free, by email form: Jon to fetch
+             if wanted). Hunter is known to read apartments high;
+           - cooling's thermal mass;
+           - the house loads (steps 4-5).
     3. **Heating, cooling and ventilation:** radiant floor loops on the loop's ~30 C water, a
        manifold and a heat meter in each flat, every loop balanced; heat-recovery ventilation in
        each flat; cooling sized to the real load (a radiant floor can't cool); ducts sized.

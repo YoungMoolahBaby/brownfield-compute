@@ -1,0 +1,11 @@
+# IPC 2021 (Pennsylvania, unamended), from UpCodes' chapter 7 page as a research agent saved it (2026-11-21).
+# Table 710.1(1) Building drains and sewers: maximum dfu connected at a slope (in. per ft); Table 710.1(2) Horizontal fixture branches and stacks: maximum dfu.
+# "The minimum size of any building drain serving a water closet shall be 3 inches." Blank = not allowed.
+size_in,drain_1_16,drain_1_8,drain_1_4,drain_1_2,branch,stack_one_interval,stack_3_intervals,stack_over_3
+1.5,,,3,3,3,2,4,8
+2,,,21,26,6,6,10,24
+2.5,,,24,31,12,9,20,42
+3,,36,42,50,20,20,48,72
+4,,180,216,250,160,90,240,500
+5,,390,480,575,360,200,540,1100
+6,,700,840,1000,620,350,960,1900

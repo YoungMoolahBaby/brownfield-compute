@@ -75,7 +75,9 @@ def test_sun_on_a_wall_against_pvgis():
 
     from brownfield import climate
 
-    lat, lon = 40.512825, -79.19611
+    from brownfield.land import PLANT
+
+    lat, lon = PLANT
     h = climate.pvgis_vertical(lat, lon, 2020, 0, angle=0)
     t = pd.to_datetime(h["time"], format="%Y%m%d:%H%M")
     alt, az = climate.sun_position(lat, lon, t.dt.day_of_year.values, (t.dt.hour + t.dt.minute / 60).values)
@@ -128,3 +130,79 @@ def test_the_engineered_design_needs_less_heat_and_cooler_water(apt, P):
     rooms = {x["room"]["id"]: x for x in drawn["2-front-left"]["rooms"]}
     assert rooms["2-front-left/kitchen"]["ua_parts"]["ventilation"] == 0.0
     assert rooms["2-front-left/bed-1"]["ua_parts"]["ventilation"] > rooms["2-front-left/bed-2"]["ua_parts"]["ventilation"] > 0
+
+
+# ---- 2c-2f: cooling, water, drainage, hot water, electrical ----
+
+@pytest.fixture(scope="module")
+def apt3():
+    return systems.load(systems.OUT_DIR / "pass3" / "apartment-addendum-3.json")
+
+
+@pytest.fixture(scope="module")
+def cooling(apt3, P):
+    return loads.cooling_design(apt3, P)
+
+
+def test_cooling_design(cooling, apt3, P):
+    # The weather is shifted up to meet ASHRAE's 0.4% dry bulb, not down.
+    assert 0 < cooling["shift_k"] < 2
+    for f in apt3["flats"]:
+        q, worst = cooling["flats"][f["name"]]
+        rooms = [cooling["rooms"][r["id"]][0] for r in apt3["rooms"]["rooms"] if r["flat"] == f["name"]]
+        assert 2000 < q < 5000  # watts, about a ton
+        assert sum(rooms) >= q - 1e-6  # rooms peak at different hours: their sum is at least the flat's
+    # The long facade's living room is worst facing the sun: west (summer afternoons) or south (low
+    # autumn sun on the glass), never north or east.
+    assert all(cooling["rooms"][f"{k}-front-left/living"][1] in ("S", "W") for k in (1, 2, 3))
+    assert cooling["latent"]["1-front-left"] > 0
+
+
+def test_cooling_follows_the_sun(apt3, P):
+    wx = loads.weather(P)
+    shaded = dict(P, **{"systems.design.shgc": 0.0})
+    sunny = loads.room_cooling(apt3, P, wx, 270)["2-front-left"]["flat"]
+    dark = loads.room_cooling(apt3, shaded, wx, 270)["2-front-left"]["flat"]
+    assert sunny.max() > dark.max() + 1000  # the glass's sun is most of the peak
+
+
+def test_facing():
+    # Front to the south: back north, and +y (the right end) 90 degrees clockwise, west.
+    assert loads.facing(180) == {"front": "S", "back": "N", "right": "W", "left": "E"}
+
+
+def test_holt_known_case(P):
+    h = loads.holt_example(P)
+    assert (h["connected_va"], round(h["calculated_va"]), round(h["amps_240_1ph"])) == (460800, 188928, 787)
+
+
+def test_hunter_passes_through_its_rows():
+    assert [loads.hunter_gpm(u) for u in (1, 20, 60, 70, 90, 100, 500)] == [3.0, 19.6, 32.0, 35.0, 41.0, 43.5, 124.0]
+    assert loads.hunter_gpm(95) == pytest.approx(42.25)
+
+
+def test_water_and_drains(apt3, P):
+    w = loads.water(apt3, P)
+    # A flat: bathroom group 3.6 + kitchen sink 1.4 + dishwasher 1.4 + washer 1.4 wsfu; 5 + 2 + 2 dfu.
+    assert w["per_flat"]["wsfu"] == pytest.approx(7.8) and w["per_flat"]["dfu"] == 9
+    assert w["demand_gpm"]["the building"]["wsfu"] == pytest.approx(loads.hunter_gpm(12 * 7.8))
+    # 3 in. at least wherever a water closet drains; the building's 108 dfu needs 4 in.
+    assert w["drains_in"]["flat branch"] == 3.0 and w["drains_in"]["stack"] == 3.0
+    assert w["drains_in"]["building drain, 1/4 in/ft"] == 4.0 and loads.pipe_for(43, "drain_1_4") == 4.0
+    assert loads.pipe_for(42, "drain_1_4") == 3.0
+
+
+def test_hot_water_design_day(apt3, P):
+    hw = loads.hot_water(apt3, P)
+    assert hw["people"] == 36 and hw["day_gal"] == 900
+    assert hw["peak_hour_gal"] == pytest.approx(900 * 0.151975684)
+    # 8.34 lb a gallon, 70 F rise: 900 gallons is about 154 kWh.
+    assert hw["day_kwh"] == pytest.approx(900 * 8.34 * 70 / 3412.142)
+
+
+def test_electrical(apt3, P):
+    el = loads.electrical(apt3, P)
+    f = el["flat_feeder"]
+    assert f["calculated_va"] == pytest.approx(10000 + 0.4 * (f["connected_less_hvac_va"] - 10000) + P["systems.electrical.cooling_va"])
+    b = el["flats_220_84"]
+    assert b["calculated_va"] == pytest.approx(0.41 * b["connected_va"]) and b["per_unit_va"] > f["connected_less_hvac_va"]

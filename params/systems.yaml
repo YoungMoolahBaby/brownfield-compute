@@ -159,6 +159,50 @@ design:
     unit: C, the mean coincident wet bulb at the 0.4% cooling dry bulb
     conf: high
     source: "2025 ASHRAE Handbook, Indiana County Airport (as above)"
+  cooling_indoor_f:
+    value: 75
+    unit: F, the indoor temperature cooling is designed to
+    conf: high
+    source: "PA 2021 IECC Table R405.4.2(1), the standard reference design's thermostat: 'cooling temperature setpoint = 75 F' (UpCodes' page as a research agent saved it, 2026-11-21)"
+  cooling_indoor_rh:
+    value: 0.50
+    unit: relative humidity held indoors in cooling, as a fraction
+    conf: low
+    source: "judgement: 50% at 75 F, the usual comfort design point; no free primary source fetched"
+  station_pressure_pa:
+    value: 96288
+    unit: Pa, standard air pressure at Indiana County Airport's 428 m
+    conf: high
+    source: "climate.onebuilding.org's TMYx .stat for Indiana County Airport - Stewart Field (WMO 725175): 'Elevation -- 428 m above sea level', 'Standard Pressure at Elevation -- 96288 Pa'"
+  igain_btu_day:
+    value: 17900
+    unit: Btu/day per dwelling unit, the constant in the IECC reference design's internal gains
+    conf: high
+    source: "PA 2021 IECC Table R405.4.2(1): 'IGain, in units of Btu/day per dwelling unit, shall equal 17,900 + 23.8 x CFA + 4,104 x Nbr' (CFA conditioned floor area ft2, Nbr bedrooms)"
+  igain_btu_day_per_ft2:
+    value: 23.8
+    unit: Btu/day per ft2 of conditioned floor area
+    conf: high
+    source: "PA 2021 IECC Table R405.4.2(1) (above)"
+  igain_btu_day_per_bedroom:
+    value: 4104
+    unit: Btu/day per bedroom
+    conf: high
+    source: "PA 2021 IECC Table R405.4.2(1) (above)"
+  shgc:
+    value: 0.35
+    low: 0.25
+    high: 0.45
+    unit: the windows' and patio doors' solar heat gain coefficient
+    conf: placeholder
+    source: "placeholder until the window is chosen (the schedule carries none: the IDS field is empty); PA 2021 IECC sets none in zone 5 (Table R402.1.2, 'NR')"
+  erv_latent_eff:
+    value: 0.5
+    low: 0.0
+    high: 0.65
+    unit: the flats' ventilation units' moisture recovery, as a fraction (0 for an HRV)
+    conf: placeholder
+    source: "placeholder until step 3 picks a unit"
   erv_sensible_eff:
     value: 0.75
     low: 0.65
@@ -233,3 +277,162 @@ addendum_3:
     unit: ft, how far the slab-edge insulation reaches
     conf: high
     source: "PA 2021 IECC Table R402.1.3, zone 5 slab: '10, 4 ft'; footnote d: for heated slabs it 'shall not be required to extend below the slab'"
+
+# Pass 3g step 2 (D28): water, drainage, hot water and electrical loads.
+plumbing:
+  # IPC 2021 Appendix E Table E103.3(2), private fixtures (via Michigan's 2021 IPC; see
+  # data/ipc2021_hunter_flush_tank.csv for why). Water supply fixture units, total / cold / hot.
+  wsfu_bath_group:
+    value: 3.6
+    unit: wsfu, a bathroom group with a flush tank (cold 2.7, hot 1.5)
+    conf: high
+    source: "IPC 2021 Table E103.3(2): 'Bathroom group | Private | Flush tank | 2.7 | 1.5 | 3.6'"
+  wsfu_bath_group_cold:
+    value: 2.7
+    unit: wsfu, cold
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (above)"
+  wsfu_bath_group_hot:
+    value: 1.5
+    unit: wsfu, hot
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (above)"
+  wsfu_kitchen_sink:
+    value: 1.4
+    unit: wsfu (cold 1.0, hot 1.0)
+    conf: high
+    source: "IPC 2021 Table E103.3(2): 'Kitchen sink | Private | Faucet | 1.0 | 1.0 | 1.4'"
+  wsfu_kitchen_sink_each:
+    value: 1.0
+    unit: wsfu, cold or hot
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (above)"
+  wsfu_dishwasher:
+    value: 1.4
+    unit: wsfu, hot only
+    conf: high
+    source: "IPC 2021 Table E103.3(2): 'Dishwashing machine | Private | Automatic | — | 1.4 | 1.4'"
+  wsfu_washer:
+    value: 1.4
+    unit: wsfu (cold 1.0, hot 1.0)
+    conf: high
+    source: "IPC 2021 Table E103.3(2): 'Washing machine (8 lb) | Private | Automatic | 1.0 | 1.0 | 1.4'"
+  wsfu_washer_each:
+    value: 1.0
+    unit: wsfu, cold or hot
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (above)"
+  # IPC 2021 Table 709.1, drainage fixture units (Pennsylvania, unamended).
+  dfu_bath_group:
+    value: 5
+    unit: dfu, a bathroom group with a 1.6 gpf water closet
+    conf: high
+    source: "IPC 2021 Table 709.1: 'Bathroom group as defined in Section 202 (1.6 gpf water closet) | 5'"
+  dfu_kitchen:
+    value: 2
+    unit: dfu, a kitchen sink with its dishwasher
+    conf: high
+    source: "IPC 2021 Table 709.1: 'Kitchen sink, domestic with food waste disposer, dishwasher or both | 2 | 1 1/2'"
+  dfu_washer:
+    value: 2
+    unit: dfu, a clothes washer
+    conf: high
+    source: "IPC 2021 Table 709.1: 'Automatic clothes washers, residential | 2 | 2'"
+hot_water:
+  gpd_per_person:
+    value: 25
+    low: 20
+    high: 49
+    unit: gallons of 120 F hot water per person on the design day
+    conf: high
+    source: "Ecotope, Ecosizer manual (May 2025) p. 6: field studies' '98th percentile of daily hot water demand ... evaluates to 25 gpdpp'; ASHRAE Low 20, Medium 49 (the range); EcosizerEngine's multi_family.json 'ecoMark': 25 (GitHub EcotopeResearch/EcosizerEngine, commit 7586430)"
+  occupants_per_flat:
+    value: 3
+    low: 2.39
+    high: 3
+    unit: people in a 2-bedroom flat
+    conf: medium
+    source: "Ecosizer manual Table 2, 2 BR: CBECC-Res 2.57, CTCAC 3, ASHRAE market rate 2.39 (1.49 + 0.45 per bedroom, FSEC-PF-464-15's multifamily formula), ASHRAE low income 2.83; 3 is Phius's count (bedrooms + 1), the ventilation's"
+  peak_hour_fraction:
+    value: 0.151975684
+    unit: of the design day's hot water drawn in its busiest hour (07:00-08:00)
+    conf: high
+    source: "EcosizerEngine src/ecoengine/data/load_shapes/multi_family.json, 'loadshapes' 'Stream' (commit 7586430, data/raw/ecosizer/): hour 7 0.151975684; the evening's highest 0.091185"
+  recirc_w_per_flat:
+    value: 100
+    low: 66
+    high: 175
+    unit: W of recirculation loss per apartment
+    conf: medium
+    source: "Ecosizer manual p. 14: 'median of ~100 watts per apartment (W/apt), with a 25th percentile of ~66 W/apt and a 75th percentile of ~175 W/apt'"
+  supply_f:
+    value: 120
+    unit: F, the hot water's temperature at the tap, as the demand figures are stated
+    conf: high
+    source: "Ecosizer manual p. 6: demand 'at 120 F'"
+  inlet_f:
+    value: 50
+    low: 45
+    high: 55
+    unit: F, the cold water's temperature into the heater on the design day
+    conf: placeholder
+    source: "placeholder: western Pennsylvania mains in winter; to source (the water authority's records)"
+electrical:
+  # NEC 2020 Article 220 as Mike Holt works it (EC&M, 'Multifamily Dwelling Unit Service and Feeder
+  # Calculations', 2009-12-01, free): the optional multifamily calculation, 220.84.
+  general_va_per_ft2:
+    value: 3
+    unit: VA per ft2 for general lighting and general-use receptacles
+    conf: high
+    source: "Holt (EC&M, 2009): '3VA per sq ft for general lighting and general-use receptacles [Table 220.12]'"
+  small_appliance_va:
+    value: 3000
+    unit: VA, two small-appliance circuits at 1,500 VA
+    conf: high
+    source: "Holt (EC&M, 2009): '1,500VA for each small-appliance circuit (minimum of 2 circuits) [220.52(A)]'"
+  laundry_va:
+    value: 1500
+    unit: VA, the laundry circuit
+    conf: high
+    source: "Holt (EC&M, 2009): '1,500VA for each laundry circuit [220.52(B)]'"
+  demand_factor_12_units:
+    value: 0.41
+    unit: Table 220.84's demand factor for 12 dwelling units
+    conf: high
+    source: "Holt (EC&M, 2009), the 12-unit example: '460,800VA x 0.41 [Table 220.84]'; the same in a 2020 NEC study guide's table (open-exam-prep.com, '12-13 | 41')"
+  range_va:
+    value: 11500
+    low: 9600
+    high: 14400
+    unit: VA, an induction range's nameplate (no gas in the building)
+    conf: placeholder
+    source: "placeholder until the range is chosen; Holt's example range 14.4 kVA (the high end)"
+  dishwasher_va:
+    value: 1500
+    unit: VA, nameplate
+    conf: placeholder
+    source: "placeholder: Holt's example dishwasher, 1.5 kVA"
+  washer_va:
+    value: 1200
+    unit: VA, nameplate
+    conf: placeholder
+    source: "placeholder: Holt's example washing machine, 1.2 kVA"
+  dryer_va:
+    value: 2000
+    low: 1000
+    high: 4500
+    unit: VA, a ventless heat-pump dryer's nameplate (no dryer duct through the envelope)
+    conf: placeholder
+    source: "placeholder until the dryer is chosen; Holt's example (resistance) dryer 4.5 kVA (the high end)"
+  cooling_va:
+    value: 1700
+    low: 1200
+    high: 2500
+    unit: VA, the flat's heat pump for cooling, nameplate (about a 1-ton unit for the 0.95 ton design load)
+    conf: placeholder
+    source: "placeholder until step 3 picks the unit"
+  fixed_va:
+    value: 250
+    unit: VA, the flat's ERV and its radiant floor's circulator together
+    conf: placeholder
+    source: "placeholder until step 3 picks them"

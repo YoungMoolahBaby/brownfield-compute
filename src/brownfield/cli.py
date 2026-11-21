@@ -691,6 +691,22 @@ def cmd_systems(args) -> int:
     return 0 if ok else 1
 
 
+def cmd_loads(_args) -> int:
+    import json
+
+    from . import loads, systems
+
+    P = values(load_params())
+    path = OUT_DIR / "pass3" / "apartment-addendum-3.json"
+    apt = systems.load(path if path.exists() else systems.PATH)
+    s = loads.summary(apt, P)
+    print(loads.report(s))
+    out = OUT_DIR / "pass3" / "loads.json"
+    out.write_text(json.dumps(s, indent=1, default=str) + NL, encoding="utf-8")
+    print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
+    return 0 if all(ok for _, ok, _ in s["checks"]) else 1
+
+
 def cmd_addendum(_args) -> int:
     from . import addendum, bidset
 
@@ -939,6 +955,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    sub.add_parser("loads", help="pass 3g step 2: the walk-up's loads room by room: heat, ventilation, cooling, water, drainage, hot water, electrical")
     sy = sub.add_parser("systems", help="pass 3g: the walk-up's rooms, plumbing walls and service annex against IBC 2021 (after forge `apartment-json addendum-2 60`)")
     sy.add_argument("--publish", action="store_true", help="with --ifc: publish Addenda 2 and 3 into docs/pass3/bidset, with addenda.json and each addendum's changes (only if every check passes)")
     sy.add_argument("--ifc", action="store_true", help="also Addenda 2 and 3 in the bid set: the IFC, both readers, the IDS, each one's diff against the one before, the drawings, RFI 002")
@@ -954,7 +971,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 
