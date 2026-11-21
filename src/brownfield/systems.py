@@ -164,13 +164,15 @@ def check_addendum_3(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, st
 
 
 def addendum_4(apt3: dict, P: dict) -> dict:
-    """Addendum 4's model: Addendum 3's building with its glass specified (`glass_shgc`, the most
-    solar heat gain the windows and patio doors may have, `systems.addendum_4.shgc_max`). Nothing
-    is drawn differently, so it is made here, not in forge."""
+    """Addendum 4's model: Addendum 3's building with its glass specified: `glass_shgc`, the most
+    solar heat gain the windows and patio doors may have (`systems.addendum_4.shgc_max`), and
+    `glass_u`, their most U-factor (`window_u_max`, ENERGY STAR's Northern zone). Nothing is drawn
+    differently, so it is made here, not in forge."""
     out = dict(apt3)
     out["revision"] = "addendum-4"
     out["glass_shgc"] = P["systems.addendum_4.shgc_max"]
-    out["source"] = apt3.get("source", "") + "; Addendum 4: the glass's SHGC (brownfield systems)"
+    out["glass_u"] = P["systems.addendum_4.window_u_max"]
+    out["source"] = apt3.get("source", "") + "; Addendum 4: the glass (brownfield systems)"
     return out
 
 
@@ -194,13 +196,16 @@ def latest_model() -> Path:
 
 
 def check_addendum_4(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
-    """Addendum 4 is Addendum 3 (`base`) with the glass's SHGC specified, and nothing else."""
-    rest = {k: v for k, v in apt.items() if k not in ("revision", "glass_shgc", "source")}
-    rest0 = {k: v for k, v in base.items() if k not in ("revision", "glass_shgc", "source")}
-    ok = (apt.get("revision") == "addendum-4" and abs(apt.get("glass_shgc", -1) - P["systems.addendum_4.shgc_max"]) < 1e-12
-          and rest == rest0)
-    return [("Addendum 4 specifies the glass's SHGC and changes nothing drawn", ok,
-             f"SHGC at most {apt.get('glass_shgc')}; the building {'unchanged' if rest == rest0 else 'CHANGED'}")]
+    """Addendum 4 is Addendum 3 (`base`) with the glass specified, and nothing else."""
+    keys = ("revision", "glass_shgc", "glass_u", "source")
+    rest = {k: v for k, v in apt.items() if k not in keys}
+    rest0 = {k: v for k, v in base.items() if k not in keys}
+    a = "systems.addendum_4."
+    ok = (apt.get("revision") == "addendum-4" and abs(apt.get("glass_shgc", -1) - P[a + "shgc_max"]) < 1e-12
+          and abs(apt.get("glass_u", -1) - P[a + "window_u_max"]) < 1e-12 and rest == rest0)
+    return [("Addendum 4 specifies the glass and changes nothing drawn", ok,
+             f"SHGC at most {apt.get('glass_shgc')}, U at most {apt.get('glass_u')}; "
+             f"the building {'unchanged' if rest == rest0 else 'CHANGED'}")]
 
 
 def room_checks(apt: dict, P: dict) -> list[tuple[str, bool, str]]:
@@ -405,13 +410,14 @@ IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
 RFI_002_ASKED = "2026-11-21T16:45:00"
 RFI_002_ANSWER_AFTER_MIN = 30
 # When each addendum went out (D29): Addendum 1 when it was first published (git 8a9d200), Addendum
-# 2 when it was produced and checked (git 2f6623f), Addenda 3 and 4 when they were published.
+# 2 when it was produced and checked (git 2f6623f), Addenda 3 and 4 when they were published (4 with
+# ENERGY STAR's glass, before it went out).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
-          4: "2026-11-21T11:10:46-08:00"}
+          4: "2026-11-21T11:41:33-08:00"}
 TITLES = {1: "The patio doors: their glass and their width",
           2: "The rooms, the plumbing walls and the service annex",
           3: "The envelope to Pennsylvania's 2021 energy code",
-          4: "The glass's solar heat gain, which sizes the cooling"}
+          4: "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -537,7 +543,8 @@ def ifc_report(r: dict) -> str:
                 f"  The stair's checks after the move: {r['stair'][0]} of {r['stair'][1]} pass."]
         before = "Addendum 2"
     elif r["revision"] == "addendum-4":
-        head = ["Addendum 4 (made up, pass 3g step 3c, D28): the glass's solar heat gain, which sizes the cooling", "",
+        head = ["Addendum 4 (made up, pass 3g step 3c, D28): the glass: ENERGY STAR's Northern zone, at a solar heat gain "
+                "that sizes the cooling", "",
                 *(f"  {x}" for x in r["words"]["items"])]
         before = "Addendum 3"
     else:
@@ -555,15 +562,19 @@ def ifc_report(r: dict) -> str:
 
 
 def addendum_4_words(params: dict) -> dict:
-    """Addendum 4's items, from the params (the glass's limit, the units it lets serve)."""
+    """Addendum 4's items, from the params (the glass's limits, the units it lets serve)."""
     v = lambda k: params[k].value  # noqa: E731
+    a = "systems.addendum_4."
     return {"items": [
-        f"Item 1 (glass): every window and patio door has a whole-unit solar heat gain coefficient of at most "
-        f"{v('systems.addendum_4.shgc_max'):g} (NFRC 200), with its U-factor still at most {v('pass3.envelope.window_u'):.2f} "
-        "Btu/h ft2 F. The window and door schedule now carries it (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
+        f"Item 1 (glass): every window and patio door is rated, whole unit, at a U-factor of at most {v(a + 'window_u_max'):.2f} "
+        f"Btu/h ft2 F (NFRC 100; the code asks {v('pass3.envelope.window_u'):.2f}), a solar heat gain coefficient from "
+        f"{v(a + 'shgc_min'):.2f} to {v(a + 'shgc_max'):.2f} (NFRC 200) and air leakage of at most {v(a + 'air_leakage_cfm_ft2'):g} "
+        "cfm/ft2: ENERGY STAR v7's Northern zone, which all of western Pennsylvania is in. The window and door schedule now "
+        "carries the U-factor and the SHGC (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
         f"Why: the flats' cooling (step 3c). The schedule gave no SHGC, and the cooling design had assumed "
         f"{v('systems.design.shgc'):g}: at that, no 1-ton unit covers a flat; at this glass one does. The winter sun the "
         "glass gives up is heat the data center's loop supplies anyway.",
+        "Why the U-factor: ENERGY STAR, chosen beyond the code; it lowers the flats' heat, and the water their floors need.",
         "No drawing changes; no opening moves or resizes.",
     ]}
 
@@ -666,8 +677,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("drawings-addendum-3/schedule.csv", "The window and door schedule (unchanged)"),
             ("rfi-002.bcf", "RFI 002, the question it answers (BCF 3.0)")],
         4: [("addendum-4.md", "The addendum: its item, what changed and the checks"),
-            ("apartment-addendum-4.ifc", "The revised model, IFC4, the glass's SHGC on its types"),
-            ("drawings-addendum-4/schedule.csv", "The revised window and door schedule, with the SHGC")],
+            ("apartment-addendum-4.ifc", "The revised model, IFC4, the glass's U-factor and SHGC on its types"),
+            ("drawings-addendum-4/schedule.csv", "The revised window and door schedule, with the glass's U-factor and SHGC")],
     }
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-3.ifc", "revision": "addendum-3", "members": len(frame["members"]),

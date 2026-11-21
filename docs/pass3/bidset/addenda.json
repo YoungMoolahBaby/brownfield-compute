@@ -107,11 +107,12 @@
   },
   {
    "number": 4,
-   "title": "The glass's solar heat gain, which sizes the cooling",
-   "issued": "2026-11-21T11:10:46-08:00",
+   "title": "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling",
+   "issued": "2026-11-21T11:41:33-08:00",
    "items": [
-    "Item 1 (glass): every window and patio door has a whole-unit solar heat gain coefficient of at most 0.25 (NFRC 200), with its U-factor still at most 0.30 Btu/h ft2 F. The window and door schedule now carries it (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
+    "Item 1 (glass): every window and patio door is rated, whole unit, at a U-factor of at most 0.22 Btu/h ft2 F (NFRC 100; the code asks 0.30), a solar heat gain coefficient from 0.17 to 0.25 (NFRC 200) and air leakage of at most 0.3 cfm/ft2: ENERGY STAR v7's Northern zone, which all of western Pennsylvania is in. The window and door schedule now carries the U-factor and the SHGC (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
     "Why: the flats' cooling (step 3c). The schedule gave no SHGC, and the cooling design had assumed 0.35: at that, no 1-ton unit covers a flat; at this glass one does. The winter sun the glass gives up is heat the data center's loop supplies anyway.",
+    "Why the U-factor: ENERGY STAR, chosen beyond the code; it lowers the flats' heat, and the water their floors need.",
     "No drawing changes; no opening moves or resizes."
    ],
    "model": "apartment-addendum-4.ifc",
@@ -124,11 +125,11 @@
     },
     {
      "path": "apartment-addendum-4.ifc",
-     "label": "The revised model, IFC4, the glass's SHGC on its types"
+     "label": "The revised model, IFC4, the glass's U-factor and SHGC on its types"
     },
     {
      "path": "drawings-addendum-4/schedule.csv",
-     "label": "The revised window and door schedule, with the SHGC"
+     "label": "The revised window and door schedule, with the glass's U-factor and SHGC"
     }
    ]
   }

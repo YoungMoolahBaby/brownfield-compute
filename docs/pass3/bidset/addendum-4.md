@@ -1,7 +1,8 @@
-Addendum 4 (made up, pass 3g step 3c, D28): the glass's solar heat gain, which sizes the cooling
+Addendum 4 (made up, pass 3g step 3c, D28): the glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling
 
-  Item 1 (glass): every window and patio door has a whole-unit solar heat gain coefficient of at most 0.25 (NFRC 200), with its U-factor still at most 0.30 Btu/h ft2 F. The window and door schedule now carries it (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).
+  Item 1 (glass): every window and patio door is rated, whole unit, at a U-factor of at most 0.22 Btu/h ft2 F (NFRC 100; the code asks 0.30), a solar heat gain coefficient from 0.17 to 0.25 (NFRC 200) and air leakage of at most 0.3 cfm/ft2: ENERGY STAR v7's Northern zone, which all of western Pennsylvania is in. The window and door schedule now carries the U-factor and the SHGC (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).
   Why: the flats' cooling (step 3c). The schedule gave no SHGC, and the cooling design had assumed 0.35: at that, no 1-ton unit covers a flat; at this glass one does. The winter sun the glass gives up is heat the data center's loop supplies anyway.
+  Why the U-factor: ENERGY STAR, chosen beyond the code; it lowers the flats' heat, and the water their floors need.
   No drawing changes; no opening moves or resizes.
 
 What changed (against Addendum 3):
@@ -55,9 +56,21 @@ The checklist (IDS), where it moved:
   SHGC (door): 0 of 12 -> 12 of 12
 
 The schedule, where it moved:
+  W1 u_factor_btu_h_ft2_f: 0.30 -> 0.22
+  W1 u_factor_w_m2k: 1.703 -> 1.249
+  W1 u_factor_source: params pass3.envelope.window_u (medium) -> params systems.addendum_4.window_u_max (high)
   W1 shgc: not in the model -> 0.25
+  W2 u_factor_btu_h_ft2_f: 0.30 -> 0.22
+  W2 u_factor_w_m2k: 1.703 -> 1.249
+  W2 u_factor_source: params pass3.envelope.window_u (medium) -> params systems.addendum_4.window_u_max (high)
   W2 shgc: not in the model -> 0.25
+  W3 u_factor_btu_h_ft2_f: 0.30 -> 0.22
+  W3 u_factor_w_m2k: 1.703 -> 1.249
+  W3 u_factor_source: params pass3.envelope.window_u (medium) -> params systems.addendum_4.window_u_max (high)
   W3 shgc: not in the model -> 0.25
+  D1 u_factor_btu_h_ft2_f: 0.30 -> 0.22
+  D1 u_factor_w_m2k: 1.703 -> 1.249
+  D1 u_factor_source: params pass3.envelope.window_u (medium) -> params systems.addendum_4.window_u_max (high)
   D1 shgc: not in the model -> 0.25
 
 Openings in the exterior walls (the annex's doors aside): 150.8 -> 150.8 m2 (1,623 -> 1,623 ft2).

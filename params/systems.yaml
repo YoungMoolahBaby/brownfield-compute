@@ -820,9 +820,24 @@ minisplit:
     conf: low
     source: "judgement until the roof layout places the 12 outdoor units; the vertical run is the model's, from the hall ceiling to the roof"
 
-# Addendum 4 (pass 3g step 3c, D28): the glass's solar heat gain, decided by Jon 2026-11-21 ("we can
-# go with your recommendations").
+# Addendum 4 (pass 3g step 3c, D28): the glass, decided by Jon 2026-11-21: its solar heat gain ("we
+# can go with your recommendations"), and ENERGY STAR v7's Northern zone ("Want it? - yes").
 addendum_4:
+  window_u_max:
+    value: 0.22
+    unit: Btu/h ft2 F, the most whole-unit U-factor of the windows and patio doors (NFRC 100)
+    conf: high
+    source: "ENERGY STAR's criteria table, v7 (October 2023, https://www.energystar.gov/sites/default/files/asset/document/ES_Windows_Table_Oct2023.pdf), as a research agent read it (2026-11-21): Northern zone, prescriptive, 'U-Factor <= 0.22', 'SHGC >= 0.17'; every Pennsylvania ZIP code starting 15 or 16 is Northern (ENERGY STAR's 'V7 ES Zones by Zip Code'). The code asks 0.30 (PA 2021 IECC zone 5). Sold, NFRC-certified: Pella 250 Series vinyl casement, SunDefense+ Low-E, argon, foam-insulated frame, PEL-A-287-00292-00001, U 0.22, SHGC 0.18; its fixed unit PEL-A-289-00258-00001, U 0.22, SHGC 0.22 (Pella 2026 Architectural Design Manual); its Standard sliding patio door, 1 in. triple-pane SunDefense Low-E, 4/4/4 mm, argon, WDI-A-33-02762-00001, U 0.19, SHGC 0.23 (Pella 2025 ADM, 250-SPD, read by me)"
+  shgc_min:
+    value: 0.17
+    unit: the least SHGC of the windows and patio doors (NFRC 200), ENERGY STAR's Northern floor
+    conf: high
+    source: "ENERGY STAR's criteria table, v7 (October 2023, https://www.energystar.gov/sites/default/files/asset/document/ES_Windows_Table_Oct2023.pdf), as a research agent read it (2026-11-21): Northern zone, prescriptive, 'SHGC >= 0.17'"
+  air_leakage_cfm_ft2:
+    value: 0.3
+    unit: cfm per ft2, the most air leakage of the windows and patio doors (ENERGY STAR, all zones)
+    conf: high
+    source: "ENERGY STAR's criteria table, v7 (October 2023, https://www.energystar.gov/sites/default/files/asset/document/ES_Windows_Table_Oct2023.pdf), as a research agent read it (2026-11-21): 'Air Leakage <= 0.3 cfm/ft2', all zones"
   shgc_max:
     value: 0.25
     unit: the most solar heat gain coefficient of the windows and patio doors (NFRC 200, the whole unit)

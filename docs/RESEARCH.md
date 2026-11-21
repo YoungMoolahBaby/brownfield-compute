@@ -1045,8 +1045,16 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       - Impervia fiberglass casement PEL-N-277-00243-00001, 0.28 / 0.20.
 
       The NFRC directory itself wasn't readable by script.
-    - **ENERGY STAR v7 criteria (October 2023):**
+    - **ENERGY STAR v7 criteria (October 2023), which Addendum 4 takes:**
       - Northern zone: U at most 0.22 with SHGC at least 0.17, or trade-offs that all need SHGC
-        0.35 or more;
+        0.35 or more; air leakage at most 0.3 cfm/ft2 in every zone;
       - every Pennsylvania ZIP code starting 15 or 16 is Northern (ENERGY STAR's zone
         spreadsheet).
+    - **Pella 250 Series units at the Northern zone,** NFRC-certified:
+      - the casement, SunDefense+ Low-E, argon, foam-insulated frame: PEL-A-287-00292-00001, U
+        0.22, SHGC 0.18;
+      - the fixed unit, PEL-A-289-00258-00001, 0.22 / 0.22 (2026 ADM);
+      - the Standard sliding patio door, 1 in. triple-pane SunDefense Low-E, 4/4/4 mm, argon:
+        WDI-A-33-02762-00001, 0.19 / 0.23 (2025 ADM).
+
+      Its dual-pane doors stop at 0.26.

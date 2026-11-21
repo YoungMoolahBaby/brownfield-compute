@@ -22,11 +22,12 @@ the walls didn't meet Pennsylvania's 2021 energy code, so Addendum 3 brings the 
 addendum's changes (live). Step 2 finished: cooling, water, drainage, hot water and electrical
 loads, each with a known case. Step 3 designed: radiant floors on REHAU's own data, an ERV and a
 ducted mini-split a flat from certified ratings, the building loop off the data center's 50 C
-return. Found: pass 3's floor was optimistic (the flats need 36.7-41.5 C water, not ~30; still no
+return. Found: pass 3's floor was optimistic (the flats need 35.1-40.2 C water, not ~30; still no
 heat pump), and the ERV's air reaches the bedrooms at 6.8 C on the coldest hour. Jon took both
-recommendations: Addendum 4 specifies the glass at SHGC 0.25 or under (published in the plan
-room), so a 12k mini-split serves each flat, and an electric preheater ahead of each ERV keeps it
-from defrosting and brings its air to 16.5 C. Next: step 4, plumbing.
+recommendations and ENERGY STAR: Addendum 4 specifies the glass at ENERGY STAR's Northern zone (U
+0.22) with SHGC 0.17-0.25 (published in the plan room), so a 12k mini-split serves each flat, and
+an electric preheater ahead of each ERV keeps it from defrosting and brings its air to 16.5 C.
+Next: step 4, plumbing.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2346,7 +2347,8 @@ test. Then the township brief's ask.
              about 1.9 kW, worst facing south on the lower floors (low autumn sun on its glass)
              and west on the top. Outdoor air latent 89-106 W a flat with step 3's ERV (its
              HVI moisture transfer, 0.74; 160-180 W with the placeholder 0.5).
-           - **On Addendum 4's glass (SHGC 0.25):** 2.51-2.62 kW sensible (0.71-0.75 ton).
+           - **On Addendum 4's glass (U 0.22, SHGC 0.25):** 2.49-2.60 kW sensible (0.71-0.74
+             ton). Its heat (ERV alone): 1,431-2,234 W a flat.
            - **Limit:** no thermal mass, so peaks lean high.
          - **Water** (Hunter, IPC Appendix E as the approved method under 604.1):
            - a flat 7.8 wsfu (cold 4.7, hot 4.9) and 9 dfu;
@@ -2410,25 +2412,26 @@ test. Then the township brief's ask.
              20 F. The model asks 0.8-1.8 F more water than the chart: the safe side.
          - **Found: pass 3's floor (6 W/m2K water to room, "judgement, to source") was
            optimistic.** This floor, bare, is about 4.
-           - Pass 3's "every flat runs on ~30 C water" becomes 36.7-41.5 C here.
+           - Pass 3's "every flat runs on ~30 C water" becomes 35.1-40.2 C here (Addendum 4's
+             glass; 36.7-41.5 C on Addendum 3's).
            - Its conclusion holds: no heat pump for space heat, the flats run off the data
-             center's 50 C return. But the margin is 8.5 K, not ~20.
+             center's 50 C return. But the margin is 9.8 K, not ~20.
            - To correct in pass 3's report.
          - **Coverings:** sheet linoleum or vinyl (R-0.26) in the living rooms, bedrooms and halls;
-           tile (R-0.23) in the wet rooms. Laminated hardwood (R-0.87) would ask 49.2 C on the
-           ground floor, over the 47 C the exchanger can give: the covering is a design decision,
-           not a finish to leave to the end.
+           tile (R-0.23) in the wet rooms. Laminated hardwood (R-0.87) would ask 47.3 C on the
+           ground floor, just over the 47 C the exchanger can give (49.2 C on Addendum 3's glass):
+           the covering is a design decision, not a finish to leave to the end.
          - **Loops:**
            - ½ in. PEX at 6 in.; 4 in. where a room needs over 60 W/m2 (the ground floor's
-             corner bedrooms, 72 W/m2).
+             corner bedrooms, 66 W/m2).
            - No circuit in the inside rooms. The top floor's low-heat rooms (under 15 W/m2:
              hall, bath, utility, passage, kitchen, entry, 164 W together) share one circuit, in
              series.
            - That gives 5-7 circuits a flat, near REHAU's preferred manifold of up to 6 (without
              the sharing, the top floor had 12).
-           - Every circuit is under 330 ft, every surface under its limit (the warmest 26.6 C).
+           - Every circuit is under 330 ft, every surface under its limit (the warmest 26.2 C).
          - **The water:** one supply for the building, set by its hardest room (the ground
-           floor's corner bedroom): 41.5 C. Every other loop is balanced to the flow that
+           floor's corner bedroom): 40.2 C. Every other loop is balanced to the flow that
            delivers its heat, the water cooling toward the room along the loop.
          - **Friction:** Darcy-Weisbach with Churchill's factor, the PEX taken as smooth (0.485 in.
            bore for ½ in.), within 3% of REHAU's Table 1A in turbulent flow.
@@ -2465,7 +2468,8 @@ test. Then the township brief's ask.
              - what it buys is ventilation that never unbalances, and warm air.
            - **Not asked of Broan:** a hydronic preheater off the loop, which would make it
              waste heat. Broan's manual names only an electric one. For the installers' round.
-           - **Effect:** the ground floor's water drops from 45.6 C (ERV alone) to 41.5 C.
+           - **Effect** (on Addendum 3's glass): the ground floor's water drops from 45.6 C (ERV
+             alone) to 41.5 C.
          - **Ducts:** ACCA Manual D's friction-rate method on round galvanized steel (ASHRAE's
            0.0003 ft roughness), the unit holding 0.4 in. w.c. across its range.
            - Every branch 4 in. (none under the unit's ports); outdoor-air and exhaust ducts 4
@@ -2480,46 +2484,54 @@ test. Then the township brief's ask.
            - At the placeholder SHGC 0.35 (Addendum 3): the 18k in every flat, 3.90-3.94 kW
              sensible against 3.23-3.37 kW. The 12k gives 2.77 kW sensible on the ground floor's
              36 ft line set: short.
-           - **Addendum 4 (Jon's decision 2026-11-21): SHGC at most 0.25.** The 12k in every
-             flat, 2.77-2.96 kW sensible against 2.51-2.62 kW: 7% to spare on the ground floor,
-             13% on the top.
+           - **Addendum 4 (Jon's decisions 2026-11-21): SHGC 0.17-0.25, U 0.22.** The 12k in every
+             flat, 2.77-2.96 kW sensible against 2.49-2.60 kW: 8% to spare on the ground floor,
+             14% on the top.
          - **Ducts** (Addendum 4), at 0.3 in. w.c. (a setting inside the unit's 0.12-0.80):
            supplies to the bedrooms, study and living room by their loads.
-           - On 2-front-left: living 276 cfm in 8 in., bed-1 118 in 6 in., bed-2 57 and study 50
+           - On 2-front-left: living 276 cfm in 8 in., bed-1 117 in 6 in., bed-2 57 and study 50
              in 5 in.; a 10 in. return in the hall.
            - The rooms under 150 W (182 W together) take the hall's moving air.
          - **Addendum 4,** published to the plan room:
-           - **The item:** every window and patio door at a whole-unit SHGC of at most 0.25 (NFRC
-             200), its U-factor still at most 0.30. The schedule and the IFC's glazing type
-             carry it, and the IDS holds it: 0 of 112 glazed units pass on Addendum 3, all 112 on
-             Addendum 4.
+           - **The item:** every window and patio door rated, whole unit, at ENERGY STAR v7's
+             Northern zone (all of western Pennsylvania): a U-factor of at most 0.22 (the code
+             asks 0.30), an SHGC from 0.17 to 0.25, air leakage of at most 0.3 cfm/ft2.
+           - **Where it lives:** the schedule and the IFC carry the U-factor and the SHGC. The IDS
+             holds the SHGC to its range: 0 of 112 glazed units pass on Addendum 3, all 112 on
+             Addendum 4. Its U line stays the code's 0.30, as Addenda 2 and 3 print it.
            - **Nothing drawn changes:** 112 units changed in properties, on 4 types.
-           - **Such units are sold, NFRC-certified:** Pella 250 vinyl casement U 0.26 / SHGC 0.18,
-             its fixed unit 0.26 / 0.22, its sliding patio door 0.27 / 0.21; Pella Impervia
-             fiberglass casement 0.28 / 0.20.
-           - **Not ENERGY STAR:** v7's Northern zone, all of western Pennsylvania, asks U at most
-             0.22 with SHGC at least 0.17. Pella 250's SunDefense+ (0.22 / 0.18-0.23) would meet
-             both. That's a choice for Jon: the code asks 0.30.
+           - **Such units are sold, NFRC-certified, all Pella 250 Series vinyl:**
+             - the casement with SunDefense+ glass and the foam-insulated frame, U 0.22 / SHGC
+               0.18;
+             - the fixed unit, 0.22 / 0.22;
+             - the sliding patio door with 1 in. triple-pane SunDefense glass, 0.19 / 0.23.
+
+             The patio doors go triple-pane: the dual-pane doors don't reach 0.22.
+           - **The effect:** the windows from U 0.30 to 0.22 take the building's design heat from
+             21.8 to 19.4 kW and its water from 41.5 to 40.2 C; the cooling barely moves.
            - **The model:** Addendum 4 draws nothing, so its model is Addendum 3's plus the glass,
              made in Python (`systems.addendum_4`), not forge.
        - **3d, the building loop:**
          - **The plant:** a plate heat exchanger in the annex's mechanical room off the data
            center's liquid loop (its 50 C return, pass 2), keeping a 3 K approach (judgement,
            until selected).
-         - **At design:** 21.8 kW for the 12 flats, 41.5 C out and 29.0 C back, 6.61 gpm. The
-           data center's water drops from 50 C to 32.0 C at 4.63 gpm.
+         - **At design** (Addendum 4): 19.4 kW for the 12 flats, 40.2 C out and 27.9 C back,
+           6.04 gpm. The data center's water drops from 50 C to 30.9 C at 3.90 gpm.
          - **Pipes:** pre-insulated PEX mains below the slab to two risers, one in each plumbing
            wall, six flats each.
            - Sized to 4 ft/s, half REHAU's 8 ft/s limit, for quiet.
-           - A 1 in. header (3.5 ft/s) and ¾ in. risers (2.9 ft/s).
+           - A 1 in. header (3.2 ft/s) and ¾ in. risers (2.7 ft/s).
            - Lengths taken square until step 7 routes them: 55 ft of main and 20 ft up.
          - **Heat meters:** one per flat, Kamstrup MULTICAL 403, qp 0.6 m3/h, its smallest. At
-           design 70-197 l/h, 12-33% of qp, inside its 6-1,200 l/h; 0.01-0.05 psi.
-         - **The pump:** 9.6 ft at 6.61 gpm along the worst path (the riser at its whole flow,
+           design 61-183 l/h, 10-31% of qp, inside its 6-1,200 l/h; 0.01-0.04 psi.
+         - **The pump:** 8.1 ft at 6.04 gpm along the worst path (the riser at its whole flow,
            the meter, the index circuit). The exchanger's and the valves' drops come with their
            selection. A small circulator.
-       - **Jon's decisions (2026-11-21), "we can go with your recommendations":** the glass at
-         SHGC 0.25 or under (Addendum 4, above); an electric preheater ahead of each ERV (3b).
+       - **Jon's decisions (2026-11-21):**
+         - "we can go with your recommendations": the glass at SHGC 0.25 or under (Addendum 4,
+           above), and an electric preheater ahead of each ERV (3b);
+         - ENERGY STAR's Northern zone for the glass, "yes": U 0.22, SHGC at least 0.17, folded
+           into Addendum 4 before it went out.
        - **For the installers' round (step 8):**
          - the low-heat loops are balanced to 0.015-0.1 gpm; can a manifold's valves and flow
            gauges be set that fine, or does each room's actuator cycle its loop instead?

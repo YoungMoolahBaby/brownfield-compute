@@ -296,6 +296,8 @@ def test_addendum_4_catches_anything_drawn(apt4, apt3, P):
     assert not systems.check(bad, apt3, P)[0][1]
     bad = dict(apt4, glass_shgc=0.35)
     assert not systems.check(bad, apt3, P)[0][1]
+    bad = dict(apt4, glass_u=0.30)
+    assert not systems.check(bad, apt3, P)[0][1]
 
 
 @pytest.fixture(scope="module")
@@ -319,8 +321,21 @@ def test_addendum_4_ifc(run4):
               if (ue.get_pset(t, "Pset_DoorWindowGlazingType") or {}).get("SolarHeatGainTransmittance") is not None]
     assert glazed and all(ue.get_pset(t, "Pset_DoorWindowGlazingType")["SolarHeatGainTransmittance"] == shgc for t in glazed)
     assert all(t.is_a("IfcWindowType") or "Patio" in (t.Description or "") for t in glazed)
+    # ENERGY STAR's Northern U-factor on every glazed type, the code's on the opaque doors.
+    u = load_params()["systems.addendum_4.window_u_max"].value * 5.678263
+    for t in glazed:
+        common = ue.get_pset(t, "Pset_WindowCommon" if t.is_a("IfcWindowType") else "Pset_DoorCommon")
+        assert abs(common["ThermalTransmittance"] - u) < 1e-9
     # The checklist's SHGC line passes on Addendum 4 where it didn't on Addendum 3.
     assert "SHGC (window): 0 of 100 -> 100 of 100" in run4["ids_changes"]
+
+
+def test_addendum_4_glass_lowers_the_heat(apt4, apt3, P):
+    from brownfield import loads
+
+    h3 = loads.room_heat(apt3, P, loads.design_case(apt3, P))
+    h4 = loads.room_heat(apt4, P, loads.design_case(apt4, P))
+    assert all(h4[n]["design_w"] < h3[n]["design_w"] for n in h3)
 
 
 def test_addendum_4_glass_lets_the_12k_serve(apt4, apt3, P):

@@ -90,6 +90,16 @@ MASTERFORMAT_WHY = {
 U_PARAM = {"window": "pass3.envelope.window_u", "patio_door": "pass3.envelope.window_u",
            "entry_door": "pass3.envelope.door_u", "flat_door": None,  # a flat door is inside the envelope
            "service_door": "pass3.envelope.door_u"}
+
+
+def u_param(apt: dict, kind: str) -> str | None:
+    """The params name of a kind's U-factor in this model: Addendum 4's glass (`glass_u`) for the
+    glazed units where the model has it, else `U_PARAM`'s."""
+    if apt.get("glass_u") is not None and U_PARAM[kind] == "pass3.envelope.window_u":
+        return "systems.addendum_4.window_u_max"
+    return U_PARAM[kind]
+
+
 NAMES = {"window": "Window", "patio_door": "Patio door", "entry_door": "Entry door", "flat_door": "Flat entry door",
          "service_door": "Service room door"}
 # The flat doors open into the stair, the one exit, so each is a fire door assembly (IBC 2018
@@ -579,7 +589,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
                                  if kind == "flat_door" else ""))
         ps = pset.add_pset(f, product=e, name="Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon")
         if U_PARAM[kind]:
-            u = params[U_PARAM[kind]]
+            u = params[u_param(apt, kind)]
             pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": True,
                                                    "ThermalTransmittance": u.value * BTU_FT2})
             _note_source(ps, "ThermalTransmittance", u)
@@ -1234,7 +1244,8 @@ def ids_fields(params: dict) -> list[dict]:
         # The label stays as issued (Addenda 2 and 3 print it); Addendum 4 added the limit.
         dict(key="shgc", label="SHGC", on=glazed, std=True,
              facet=prop(GLAZING, "SolarHeatGainTransmittance",
-                        ids.Restriction(options={"maxInclusive": params["systems.addendum_4.shgc_max"].value}, base="double"),
+                        ids.Restriction(options={"minInclusive": params["systems.addendum_4.shgc_min"].value,
+                                                 "maxInclusive": params["systems.addendum_4.shgc_max"].value}, base="double"),
                         "IFCNORMALISEDRATIOMEASURE")),
         dict(key="grade", label="performance grade (design pressure)", on=outside, std=True,
              facet=prop(unit, "WindLoadRating", ids.Restriction(options={"pattern": "(R|LC|CW|AW)-PG[0-9]+.*"}), "IFCLABEL")),
@@ -1886,7 +1897,7 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
     for (kind, *_), mark in marks.items():
         ps = tps.get(mark, {}).get("Pset_WindowCommon" if kind == "window" else "Pset_DoorCommon", {})
         if U_PARAM[kind]:
-            if not abs(_num(ps.get("ThermalTransmittance")) - params[U_PARAM[kind]].value * BTU_FT2) <= 1e-9:
+            if not abs(_num(ps.get("ThermalTransmittance")) - params[u_param(apt, kind)].value * BTU_FT2) <= 1e-9:
                 u_off.append(mark)
         elif not (ps.get("FireRating") == _hours(params[FIRE_DOOR]) and ps.get("SelfClosing") is True
                   and ps.get("ThermalTransmittance") is None):

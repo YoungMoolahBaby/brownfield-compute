@@ -109,7 +109,7 @@ def room_ua(f: dict, rows: list[dict], p: dict, case: dict) -> list[dict]:
         rid = x["room"]["id"]
         parts = {
             "walls": wall_u * BTU_FT2 * x["wall_net_m2"],
-            "windows": p[e + "window_u"] * BTU_FT2 * x["glazed_m2"],
+            "windows": case.get("window_u", p[e + "window_u"]) * BTU_FT2 * x["glazed_m2"],
             "doors": 0.0,  # a flat's door opens into the stair, inside the envelope
             "ceiling": p[e + "ceiling_u"] * BTU_FT2 * x["ceiling_m2"],
             "slab edge": p[e + "slab_f"] * BTU_FT * x["slab_perimeter_m"],
@@ -262,7 +262,8 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None, preheat: bool =
     0.06 cfm50 per ft2 of each flat's share of the gross enclosure (its outside walls, its roof,
     its floor on the ground) over pass 3's n-factor, the 2025 ASHRAE heating design temperature for
     Indiana County, and the walls at `wall_u` (default: as drawn: Addendum 3's continuous insulation
-    where the model has it, `systems.addendum_3.wall_u`, else pass 3's).
+    where the model has it, `systems.addendum_3.wall_u`, else pass 3's), the windows at Addendum 4's
+    U-factor where the model has it (`glass_u`), else pass 3's.
 
     With `preheat` (step 3's design), an electric heater warms the outdoor air ahead of the ERV to
     `preheat_c`: the ERV never defrosts, so it stays balanced, and its supply reaches PHI's minimum;
@@ -288,6 +289,7 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None, preheat: bool =
             "supply_c": supply_c, "preheat_w": v["design_cfm"] * CFM_M3H * RHO_CP_AIR * (t_core - t_out),
             "supply_share": {rid: q / v["design_cfm"] for rid, q in v["supply"].items()},
             **({"wall_u": wall_u} if wall_u is not None else {}),
+            **({"window_u": apt["glass_u"]} if apt.get("glass_u") is not None else {}),  # Addendum 4's glass
         }
     return {"flats": flats, "design_c": p["systems.design.heating_c"]}
 
