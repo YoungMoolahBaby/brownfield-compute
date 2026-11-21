@@ -196,20 +196,6 @@ design:
     unit: the windows' and patio doors' solar heat gain coefficient
     conf: placeholder
     source: "placeholder until the window is chosen (the schedule carries none: the IDS field is empty); PA 2021 IECC sets none in zone 5 (Table R402.1.2, 'NR')"
-  erv_latent_eff:
-    value: 0.5
-    low: 0.0
-    high: 0.65
-    unit: the flats' ventilation units' moisture recovery, as a fraction (0 for an HRV)
-    conf: placeholder
-    source: "placeholder until step 3 picks a unit"
-  erv_sensible_eff:
-    value: 0.75
-    low: 0.65
-    high: 0.85
-    unit: sensible recovery of the flats' ventilation units, as a fraction
-    conf: placeholder
-    source: "placeholder until step 3 picks a unit; low end the IECC's 65% at 32 F where it requires recovery (zones 7-8, R403.6.1)"
   bed_1_occupants:
     value: 2
     unit: occupants of the larger bedroom; the other bedroom has 1, so a flat has bedrooms + 1 (Phius)
@@ -425,14 +411,414 @@ electrical:
     conf: placeholder
     source: "placeholder until the dryer is chosen; Holt's example (resistance) dryer 4.5 kVA (the high end)"
   cooling_va:
-    value: 1700
-    low: 1200
-    high: 2500
-    unit: VA, the flat's heat pump for cooling, nameplate (about a 1-ton unit for the 0.95 ton design load)
-    conf: placeholder
-    source: "placeholder until step 3 picks the unit"
+    value: 3552
+    low: 2954
+    high: 3552
+    unit: VA, the flat's mini-split outdoor unit (Fujitsu AOUH18KUAS1, step 3c), its minimum circuit ampacity at 240 V
+    conf: high
+    source: "Fujitsu submittal 18KUAS1R v20251015A: MCA 14.8 A, 208/230 V, maximum circuit breaker 20 A; 14.8 x 240 = 3,552 VA; low: the 12k's MCA 14.2 A at 208 V, 2,954 VA, if low-SHGC glass lets the 12k serve"
   fixed_va:
     value: 250
     unit: VA, the flat's ERV and its radiant floor's circulator together
     conf: placeholder
     source: "placeholder until step 3 picks them"
+
+# Pass 3g step 3a (D28): the radiant floors. REHAU's Radiant Heating Systems Design Guide (855.601,
+# 09.2017) and PEXa Pressure Loss Tables (855.681, 03.2015), free, as a research agent saved them
+# (2026-11-21).
+radiant:
+  rehau_example_btuh_ft2:
+    value: 25
+    unit: Btu/h ft2, the output of REHAU's worked example
+    conf: high
+    source: "REHAU 855.601 6.9: '12 ft x 12 ft living room space with 3,600 Btu/h heat requirement ... thin carpet with padding (R=1.0 h-ft2-F/Btu) ... Lightweight 1.5 in. overpour above suspended wood floor ... 1/2 in. RAUPEX with 6 in. on-center spacing ... PanelHeatOutput = 3,600 / (12 x 12) = 25 Btu/h-ft2'"
+  rehau_example_dt_f:
+    value: 62
+    unit: F, the example's mean water above the room
+    conf: high
+    source: "REHAU 855.601 6.9: 'Differential Temperature of 62 F from Fig 6.5 ... MHWT = 62 + 68 = 130 F'"
+  rehau_example_cover_r:
+    value: 1.0
+    unit: h ft2 F/Btu, the example's carpet and pad
+    conf: high
+    source: "REHAU 855.601 6.9 (above)"
+  spacing_in:
+    value: 6
+    unit: in, the pipes' spacing, everywhere
+    conf: medium
+    source: "a design choice within REHAU 855.601 Table 6.2: 'Overpour with tile 6-9 in ... throughout'; 'Overpour in bathrooms 6 in ... throughout'; 'Slab-on-grade, residential ... bathrooms 6 in'; the spacing of the worked example, which calibrates the floor"
+  max_circuit_ft:
+    value: 330
+    unit: ft, the longest circuit of 1/2 in. pipe with its tails
+    conf: high
+    source: "REHAU 855.601 Table 6.1 Pipe Sizes: '1/2 in ... up to 330 ft (101 m)'"
+  index_dt_f:
+    value: 10
+    unit: F, the drop across the hardest room's loop
+    conf: medium
+    source: "REHAU 855.601 6.9: 'Typical hydronic designs are based on 20 F (11 C) or 10 F (6 C)'; the smaller, for the lowest supply (pass 3 took 6 K)"
+  bore_in:
+    value: 0.485
+    unit: in, the bore of 1/2 in. RAUPEX (SDR9)
+    conf: high
+    source: "REHAU 855.681 Table 1A's velocities for 1/2 in.: 0.4 gpm at 0.7 ft/s and 1.0 gpm at 1.7 ft/s imply 0.483 and 0.490 in"
+  linoleum_r:
+    value: 0.26
+    unit: h ft2 F/Btu, PVC/linoleum with adhesive, 3/16 in
+    conf: high
+    source: "REHAU 855.601 Table 5.2 Maximum Temperatures and R-values for Typical Floor Coverings: 'PVC/linoleum with adhesive | 100 F (38 C) | 3/16 in (4 mm) | 0.26 (.05)'"
+  linoleum_max_f:
+    value: 100
+    unit: F, its maximum surface temperature
+    conf: high
+    source: "REHAU 855.601 Table 5.2 (above)"
+  tile_r:
+    value: 0.23
+    unit: h ft2 F/Btu, ceramic tile with mortar bed, 1/4 in
+    conf: high
+    source: "REHAU 855.601 Table 5.2: 'Ceramic tile floor with mortar bed (elastometric bonding agent) | 100 F (38 C) | 1/4 in (6 mm) | 0.23 (.04)'"
+  tile_max_f:
+    value: 100
+    unit: F, its maximum surface temperature
+    conf: high
+    source: "REHAU 855.601 Table 5.2 (above)"
+  laminate_r:
+    value: 0.87
+    unit: h ft2 F/Btu, laminated hardwood with adhesive, 11/16 in
+    conf: high
+    source: "REHAU 855.601 Table 5.2: 'Laminated hardwood with adhesive | 90 F (32 C) | 11/16 in (17 mm) | 0.87 (.15)'"
+  laminate_max_f:
+    value: 90
+    unit: F, its maximum surface temperature
+    conf: high
+    source: "REHAU 855.601 Table 5.2 (above)"
+  dense_spacing_in:
+    value: 4
+    unit: in, the spacing in rooms that need more than dense_above_w_m2
+    conf: medium
+    source: "a design choice: REHAU 855.601 Fig. 6.5 charts 4 in.; Table 6.2 tightens the spacing where the heat is ('Perimeter 6-8 in ... bathrooms 6 in'); Table 6.3: 4 in. takes 3 ft of pipe a square foot"
+  dense_above_w_m2:
+    value: 60
+    unit: W/m2, the output above which a room's pipes go at dense_spacing_in
+    conf: low
+    source: "judgement: the ground floor's corner bedrooms (about 80 W/m2) set the flat's supply temperature; the rest need under 50"
+  shared_below_w_m2:
+    value: 15
+    unit: W/m2, the output under which a room shares one circuit with the flat's other such rooms
+    conf: low
+    source: "judgement: 15 W/m2 is a floor 1.6 K over the room (EN 1264's 8.92 dT^1.1); REHAU 855.601 6.11 prefers manifolds of up to 6 circuits ('Smaller manifolds (up to 6 circuits) ... are usually preferred to a large, central manifold (such as 10, 11, 12 or more circuits)'), and the top floor's halls, passage and wet rooms need 4-50 W each"
+
+# Pass 3g step 3d (D28): the building loop, off the data center's liquid loop through a plate heat
+# exchanger in the annex's mechanical room.
+substation:
+  approach_k:
+    value: 3
+    low: 2
+    high: 5
+    unit: K, the least difference the heat exchanger keeps between the data center's water and the building's, at each end
+    conf: low
+    source: "judgement, to select: a plate heat exchanger can be sized to any approach (a smaller one is a bigger exchanger); 3 K is a design choice until a unit is selected"
+  max_velocity_fps:
+    value: 4
+    unit: ft/s, the most the building loop's pipes carry
+    conf: medium
+    source: "a design choice at half REHAU's limit for PEX, for quiet pipes in a dwelling: REHAU 855.681 p. 4: 'Flow velocity exceeding 8 fps (2.5 m/s) might result in excessive pressure loss, noise or erosion of the system components'"
+
+# Each flat's heat meter, basis of design: Kamstrup MULTICAL 403, the qp 0.6 m3/h flow sensor (the
+# smallest), ultrasonic, EN 1434. Kamstrup's data sheet (German, 'MULTICAL 403 Datenblatt', as
+# aquamess.de serves it: https://aquamess.de/wp-content/uploads/multical-403-data-sheet-deutsch.pdf),
+# its flow-sensor table, row A: 'A 0,6 1,2 6 3 1,5 DN15/DN20 0,03 3,46 1,7' under 'qp [m3/h], qs
+# [m3/h], qi [l/h], Cut-off [l/h], Saettigungsdurchfluss [m3/h], Nennweite, dp@qp [bar], kv,
+# q@0,25 bar'; and the Danish type approval TS 27.02 009 rev. 5 (2023-03-17, sik.dk): 'Pressure loss,
+# max. @ qp ... 0,03' at qp 0,6, 'Dynamic range, qp 0,6 m3/h: qp:qi 100:1 and 50:1'.
+heat_meter:
+  qp_m3h:
+    value: 0.6
+    unit: m3/h, the meter's permanent flow
+    conf: high
+    source: "Kamstrup MULTICAL 403 data sheet, flow-sensor table row A (above)"
+  qs_m3h:
+    value: 1.2
+    unit: m3/h, the most it measures
+    conf: high
+    source: "Kamstrup MULTICAL 403 data sheet, row A (above)"
+  qi_l_h:
+    value: 6
+    unit: l/h, the least it measures within its accuracy (qp:qi 100:1)
+    conf: high
+    source: "Kamstrup MULTICAL 403 data sheet, row A; type approval TS 27.02 009: 'qp:qi 100:1' (above)"
+  cutoff_l_h:
+    value: 3
+    unit: l/h, below which it counts nothing
+    conf: high
+    source: "Kamstrup MULTICAL 403 data sheet, row A (above)"
+  kv_m3h:
+    value: 3.46
+    unit: m3/h at 1 bar drop
+    conf: high
+    source: "Kamstrup MULTICAL 403 data sheet, row A (above); 0.6 m3/h through it is 0.03 bar, as row A and the type approval give"
+
+# Pass 3g step 3b and 3c (D28): the ducts, ventilation and cooling.
+ducts:
+  roughness_ft:
+    value: 0.0003
+    low: 0.00027
+    high: 0.0005
+    unit: ft, the absolute roughness of galvanized steel duct
+    conf: medium
+    source: "ASHRAE Handbook - Fundamentals, ch. 21 Duct Design, Table 1, as ASHRAE's eSociety article 'Determining the absolute roughness of phenolic duct' (https://www.ashrae.org/news/esociety/determining-the-absolute-roughness-of-phenolic-duct) gives it: 0.0003 ft the average for galvanized steel, from tests reporting 0.00027 to 0.0005 ft (a search summary, the handbook not opened)"
+  grille_inwc:
+    value: 0.03
+    unit: in. w.c., the drop at each supply outlet, return or exhaust grille
+    conf: medium
+    source: "ACCA Manual D's default as HVAC School's 'Manual D Speedsheet Walkthrough' (https://hvacrschool.com/manual-d-speedsheet-walkthrough/) and a Manual D friction rate worksheet (Green Building Advisor, https://images.greenbuildingadvisor.com/app/uploads/2023/02/19143040/49490_1676835039_Manual-D_FR.pdf) give it: 0.03 IWC for a supply outlet, a return grille and a balancing damper (search summaries; Manual D not opened)"
+  fittings_el_ft:
+    value: 70
+    low: 40
+    high: 120
+    unit: ft, the fittings on a path from the unit to an outlet, as equivalent length of straight duct
+    conf: low
+    source: "judgement until step 7 routes the ducts: a take-off, two elbows and a boot; Manual D's normative section N4 gives each fitting tens of feet (a study guide quotes 20 ft for a return elbow and 20 ft for a return grille boot, not checked against ACCA's text)"
+
+# Each flat's ERV, basis of design: Broan EDGE BLP120E80NS-HW (HVI 2005431), from the HVI Certified
+# Products Directory, Section III, its energy-ratings and air-flow spreadsheets (generated 2026-11-18:
+# https://www.hvi.org/HVIORG/includes/themes/MuraBootstrap3/remote/cpd_reports/section_3_energyRatings.xlsx,
+# .../section_3_airFlow.xlsx), which Broan's spec sheet (rev 1118775D) matches, as a research agent
+# read them (2026-11-21). 120 V; four 4 in. ports; defrost: 'Automatically activated; maintain
+# exhaust fan operation and shut off supply fan'.
+erv:
+  sre_32f:
+    value: 0.80
+    unit: sensible recovery efficiency at 32 F outdoors, 49 cfm net supply
+    conf: high
+    source: "HVI 2005431 energy ratings: 32 F, 49 cfm, 28 W, SRE 80%, ASRE 83%, NMT 0.77"
+  sre_m13f:
+    value: 0.55
+    unit: sensible recovery efficiency at -13 F outdoors, 49 cfm, over its defrost cycles
+    conf: high
+    source: "HVI 2005431 energy ratings: -13 F, 49 cfm, 30 W, SRE 55%, ASRE 56%, NMT 0.51; low-temperature airflow drop 26.9% supply, 0.0% exhaust; imbalance 69.2%"
+  nmt_95f:
+    value: 0.74
+    unit: net moisture transfer at 95 F outdoors (cooling), 49 cfm, as a fraction
+    conf: high
+    source: "HVI 2005431 energy ratings: 95 F, 49 cfm, 28 W, TRE 71%, ATRE 74%, NMT 0.74"
+  watts_49cfm:
+    value: 28
+    unit: W at 49 cfm, 32 F
+    conf: high
+    source: "HVI 2005431 energy ratings (above)"
+  esp_inwc:
+    value: 0.4
+    unit: in. w.c. it holds for its ducts across its airflow range
+    conf: high
+    source: "Broan spec sheet BLP120E80NS-HW (rev 1118775D): '30 to 125 CFM @ 0.2 in. w.g. / 30 to 112 CFM @ 0.4 in. w.g.', set in 1 cfm steps"
+  cfm_min:
+    value: 30
+    unit: cfm, the least it can be set to
+    conf: high
+    source: "Broan spec sheet (above)"
+  cfm_max:
+    value: 112
+    unit: cfm, the most it holds at esp_inwc
+    conf: high
+    source: "Broan spec sheet (above)"
+  coil_dt_k:
+    value: 20
+    low: 10
+    high: 22
+    unit: K, the drop of the post-heater coil's water
+    conf: low
+    source: "a design choice for a counterflow coil: the building's 41.5 C water leaves at 21.5 C against air entering at 6.8 C, a 14.7 K approach at the cold end; a bigger drop returns colder water to the data center. To confirm with a coil's selection"
+  post_heat_c:
+    value: 16.5
+    unit: C, the least the supply air reaches the rooms at, after a hot-water coil off the flat's manifold
+    conf: high
+    source: "the Passive House Institute's comfort criterion, held here at the design temperature (stricter than PHI's -10 C): PHI Testing Procedures for Large Ventilation Units (11-2018, provisional, https://database.passivehouse.com/Media/certified_components_v2/component/model/icons/PHI_Testing_Procedures_for_Large_Ventilation_Units.pdf): 'a minimum supply air temperature of 16.5 C up to -10 C outdoor air temperature' (a search summary); Zehnder's PHI certificate 0325vs03 for its ComfoAir 160 ERV: a heater coil is required where the supply falls below it"
+
+# Fujitsu ARUH12KUAS + AOUH12KUBS1: a ducted mini-split for one flat, cooling (and back-up heat). Capacities at indoor 75 F dry
+# bulb / 63 F wet bulb and the High fan, the only airflow the tables give (Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS (https://docs.fujitsugeneral.com/assets/DR_AR107ES_02--ARUH12-48KUAS.pdf), p. 15); its
+# '87' F row is 30.0 C (86 F) in the same table in SI units, so read as 86 F (the lower capacity at
+# the design's 87.6 F). Submittal: Fujitsu submittal 12KUBS1R v20260707A (https://docs.fujitsugeneral.com/assets/ARUH12KUAS_AOUH12KUBS1_SZ_En_v2.pdf). Line-set factors: cooling, indoor unit lower than the
+# outdoor unit (the same as no height difference), 'calculated based on the maximum capacity' (p. 121).
+minisplit_12:
+  total_86f_btuh:
+    value: 11640
+    unit: Btu/h total at 86 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 15, the 75/63 column, 87 F row (30.0 C in SI)"
+  sensible_86f_btuh:
+    value: 9930
+    unit: Btu/h sensible at 86 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 15 (above)"
+  total_95f_btuh:
+    value: 10920
+    unit: Btu/h total at 95 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 15 (above)"
+  sensible_95f_btuh:
+    value: 9550
+    unit: Btu/h sensible at 95 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 15 (above)"
+  cfm:
+    value: 500
+    unit: cfm, the indoor unit's High fan, at which the capacities are given
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A (https://docs.fujitsugeneral.com/assets/ARUH12KUAS_AOUH12KUBS1_SZ_En_v2.pdf)"
+  esp_min_inwc:
+    value: 0.12
+    unit: in. w.c., the least external static pressure it can be set to
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A (https://docs.fujitsugeneral.com/assets/ARUH12KUAS_AOUH12KUBS1_SZ_En_v2.pdf): 0.12 to 0.80 in. w.c. (30-200 Pa)"
+  esp_max_inwc:
+    value: 0.80
+    unit: in. w.c., the most
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A (https://docs.fujitsugeneral.com/assets/ARUH12KUAS_AOUH12KUBS1_SZ_En_v2.pdf) (above)"
+  mca_a:
+    value: 14.2
+    unit: A, the outdoor unit's minimum circuit ampacity, 208/230 V
+    conf: high
+    source: "Fujitsu submittal 12KUBS1R v20260707A (https://docs.fujitsugeneral.com/assets/ARUH12KUAS_AOUH12KUBS1_SZ_En_v2.pdf); maximum circuit breaker 15 A; AHRI 217734522"
+  line_factor_16ft:
+    value: 1.025
+    unit: cooling capacity factor at 16 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_25ft:
+    value: 1.0
+    unit: cooling capacity factor at 25 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_33ft:
+    value: 0.971
+    unit: cooling capacity factor at 33 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_49ft:
+    value: 0.906
+    unit: cooling capacity factor at 49 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_66ft:
+    value: 0.841
+    unit: cooling capacity factor at 66 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_82ft:
+    value: 0.837
+    unit: cooling capacity factor at 82 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+  line_factor_98ft:
+    value: 0.833
+    unit: cooling capacity factor at 98 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 121, cooling, indoor unit lower than outdoor unit"
+
+# Fujitsu ARUH18KUAS + AOUH18KUAS1: a ducted mini-split for one flat, cooling (and back-up heat). Capacities at indoor 75 F dry
+# bulb / 63 F wet bulb and the High fan, the only airflow the tables give (Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS (https://docs.fujitsugeneral.com/assets/DR_AR107ES_02--ARUH12-48KUAS.pdf), p. 16); its
+# '87' F row is 30.0 C (86 F) in the same table in SI units, so read as 86 F (the lower capacity at
+# the design's 87.6 F). Submittal: Fujitsu submittal 18KUAS1R v20251015A (https://docs.fujitsugeneral.com/assets/Submittal_18KUAS1R.pdf). Line-set factors: cooling, indoor unit lower than the
+# outdoor unit (the same as no height difference), 'calculated based on the maximum capacity' (p. 122).
+minisplit_18:
+  total_86f_btuh:
+    value: 17420
+    unit: Btu/h total at 86 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 16, the 75/63 column, 87 F row (30.0 C in SI)"
+  sensible_86f_btuh:
+    value: 13550
+    unit: Btu/h sensible at 86 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 16 (above)"
+  total_95f_btuh:
+    value: 16380
+    unit: Btu/h total at 95 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 16 (above)"
+  sensible_95f_btuh:
+    value: 12750
+    unit: Btu/h sensible at 95 F outdoors
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 16 (above)"
+  cfm:
+    value: 618
+    unit: cfm, the indoor unit's High fan, at which the capacities are given
+    conf: high
+    source: "Fujitsu submittal 18KUAS1R v20251015A (https://docs.fujitsugeneral.com/assets/Submittal_18KUAS1R.pdf)"
+  esp_min_inwc:
+    value: 0.12
+    unit: in. w.c., the least external static pressure it can be set to
+    conf: high
+    source: "Fujitsu submittal 18KUAS1R v20251015A (https://docs.fujitsugeneral.com/assets/Submittal_18KUAS1R.pdf): 0.12 to 0.80 in. w.c. (30-200 Pa)"
+  esp_max_inwc:
+    value: 0.80
+    unit: in. w.c., the most
+    conf: high
+    source: "Fujitsu submittal 18KUAS1R v20251015A (https://docs.fujitsugeneral.com/assets/Submittal_18KUAS1R.pdf) (above)"
+  mca_a:
+    value: 14.8
+    unit: A, the outdoor unit's minimum circuit ampacity, 208/230 V
+    conf: high
+    source: "Fujitsu submittal 18KUAS1R v20251015A (https://docs.fujitsugeneral.com/assets/Submittal_18KUAS1R.pdf); maximum circuit breaker 20 A; AHRI 215434557"
+  line_factor_16ft:
+    value: 1.002
+    unit: cooling capacity factor at 16 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_25ft:
+    value: 1.0
+    unit: cooling capacity factor at 25 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_33ft:
+    value: 0.995
+    unit: cooling capacity factor at 33 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_49ft:
+    value: 0.983
+    unit: cooling capacity factor at 49 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_66ft:
+    value: 0.982
+    unit: cooling capacity factor at 66 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_82ft:
+    value: 0.978
+    unit: cooling capacity factor at 82 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+  line_factor_98ft:
+    value: 0.972
+    unit: cooling capacity factor at 98 ft of line set
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS, p. 122, cooling, indoor unit lower than outdoor unit"
+
+# How the flats' mini-splits are laid out (step 3c).
+minisplit:
+  line_min_ft:
+    value: 16
+    unit: ft, the least line set either unit takes
+    conf: high
+    source: "Fujitsu submittals 12KUBS1R and 18KUAS1R and the design manual's outdoor-unit specifications: 'Min. length 16 (5)' ft (m)"
+  esp_inwc:
+    value: 0.3
+    unit: in. w.c., the external static pressure the indoor unit is set to
+    conf: low
+    source: "a design choice inside both units' 0.12-0.80 in. w.c. (Fujitsu submittals); Fujitsu tested capacity at 0.58 in. and ships at 0.18 (manual p. 3 and p. 5)"
+  room_min_w:
+    value: 150
+    unit: W, the least design sensible load a room has to get its own supply duct
+    conf: low
+    source: "judgement: under it (the hall, bath, passage, utility, kitchen and entry, 5-70 W) the moving air from the hall's return does"
+  line_set_horizontal_ft:
+    value: 15
+    unit: ft of line set across the roof from the chase to the outdoor unit
+    conf: low
+    source: "judgement until the roof layout places the 12 outdoor units; the vertical run is the model's, from the hall ceiling to the roof"
+

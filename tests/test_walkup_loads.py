@@ -125,7 +125,13 @@ def test_the_engineered_design_needs_less_heat_and_cooler_water(apt, P):
         n = f["name"]
         assert drawn[n]["design_w"] < 0.75 * base[n]["design_w"]
         assert code[n]["design_w"] < drawn[n]["design_w"]
-        assert drawn[n]["supply_c"] < base[n]["supply_c"]
+    # Its hardest rooms need cooler water than pass 3b's case once the ERV's supply is post-heated
+    # to PHI's 16.5 C (step 3); with the ERV alone, the bedrooms take its cold air on their floors.
+    post = loads.room_heat(apt, P, loads.design_case(apt, P, post_heat=True))
+    for f in apt["flats"]:
+        n = f["name"]
+        assert post[n]["supply_c"] < base[n]["supply_c"]
+        assert post[n]["supply_c"] < drawn[n]["supply_c"]
     # Ventilation heat lands only where the air is supplied: the bedrooms.
     rooms = {x["room"]["id"]: x for x in drawn["2-front-left"]["rooms"]}
     assert rooms["2-front-left/kitchen"]["ua_parts"]["ventilation"] == 0.0

@@ -239,16 +239,33 @@ def ventilation_checks(apt: dict, p: dict, vent: dict) -> list[tuple[str, bool, 
 
 # ---- The engineered design's case ----
 
-def design_case(apt: dict, p: dict, wall_u: float | None = None) -> dict:
+def erv_sensible(p: dict, t_c: float) -> float:
+    """The ERV's sensible recovery at an outdoor temperature: a straight line between HVI's two
+    tests of the unit (`systems.erv`, 32 F and -13 F, the latter over its defrost cycles), held at
+    their values beyond them."""
+    t_f = t_c * 1.8 + 32
+    hi, lo = p["systems.erv.sre_32f"], p["systems.erv.sre_m13f"]
+    return lo + (hi - lo) * min(max((t_f + 13) / 45, 0.0), 1.0)
+
+
+def design_case(apt: dict, p: dict, wall_u: float | None = None, post_heat: bool = False) -> dict:
     """The engineered design for `room_heat`: the flats' balanced ventilation with heat recovery
-    (`ventilation`, the ERV's sensible recovery a placeholder until step 3), air leakage at Phius's
+    (`ventilation`, the ERV's sensible recovery at the design temperature, `erv_sensible`), air leakage at Phius's
     0.06 cfm50 per ft2 of each flat's share of the gross enclosure (its outside walls, its roof,
     its floor on the ground) over pass 3's n-factor, the 2025 ASHRAE heating design temperature for
     Indiana County, and the walls at `wall_u` (default: as drawn: Addendum 3's continuous insulation
-    where the model has it, `systems.addendum_3.wall_u`, else pass 3's)."""
+    where the model has it, `systems.addendum_3.wall_u`, else pass 3's).
+
+    With `post_heat`, a hot-water coil after the ERV lifts the supply to `systems.erv.post_heat_c`:
+    the rooms see only what is left, and each flat's case carries the coil's heat (`coil_w`).
+    """
     if wall_u is None and apt.get("continuous_insulation_m", 0.0) > 0.0:
         wall_u = p["systems.addendum_3.wall_u"]
     vent = ventilation(apt, p)
+    t_out, t_in = p["systems.design.heating_c"], p["pass3.loads.indoor_c"]
+    erv = erv_sensible(p, t_out)
+    post = (p["systems.erv.post_heat_c"] - t_out) / (t_in - t_out) if post_heat else erv
+    recovery = max(erv, post)
     flats = {}
     for f in apt["flats"]:
         v = vent[f["name"]]
@@ -258,7 +275,8 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None) -> dict:
         cfm50 = p["systems.phius.airtight_cfm50_ft2"] * enclosure_ft2
         flats[f["name"]] = {
             "infil_m3h": cfm50 / p["pass3.air.n_factor"] * CFM_M3H, "vent_m3h": v["design_cfm"] * CFM_M3H,
-            "recovery": p["systems.design.erv_sensible_eff"],
+            "recovery": recovery,
+            "coil_w": v["design_cfm"] * CFM_M3H * RHO_CP_AIR * (recovery - erv) * (t_in - t_out),
             "supply_share": {rid: q / v["design_cfm"] for rid, q in v["supply"].items()},
             **({"wall_u": wall_u} if wall_u is not None else {}),
         }
@@ -377,7 +395,7 @@ def cooling_design(apt: dict, p: dict, pct: float = 99.6) -> dict:
     rho = P / (287.055 * (t_in + 273.15))  # dry air at the indoor temperature, kg/m3
     latent = {}
     for name, c in case["flats"].items():
-        m3s = (c["infil_m3h"] + c["vent_m3h"] * (1 - p["systems.design.erv_latent_eff"])) / 3600
+        m3s = (c["infil_m3h"] + c["vent_m3h"] * (1 - p["systems.erv.nmt_95f"])) / 3600
         latent[name] = m3s * rho * max(w_out - w_in, 0.0) * 2.45e6
     return {"rooms": rooms, "flats": flats, "latent": latent, "shift_k": wx["shift_k"], "w_out": w_out, "w_in": w_in}
 

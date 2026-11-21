@@ -972,3 +972,58 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - MJM's 1990 summary for CMHC.
   - **Fees:** Washington OFM, *A/E Fee Guidelines* (2027-29), Schedule B.
   - **Baseline:** US Census, *Characteristics of New Housing 2025*, the multifamily tables.
+- **Step 3, heating, cooling and ventilation (2026-11-21).** Equipment found by a research agent,
+  which read HVI's spreadsheets and the makers' sheets; the REHAU chart and Kamstrup's tables I
+  read myself.
+  - **REHAU, *Radiant Heating Systems Design Guide* 855.601 (09.2017):**
+    - **6.9's worked example:** a 1.5 in. lightweight overpour, ½ in. pipe at 6 in., R-1.0
+      carpet. 25 Btu/h ft2 at a mean water 62 F over a 68 F room; the flow 0.4 gpm at a 20 F
+      drop; the circuit 247 ft.
+    - **Fig. 6.5, the performance chart:** an image. Read by eye at 20 F: bare at 6 in. 14.5
+      Btu/h ft2, R-0.25 11.8, bare at 4 in. 17.4, each ±1.
+    - **Tables:**
+      - Table 5.2, coverings: linoleum 0.26, tile 0.23, laminated hardwood 0.87, carpet 1.17
+        h ft2 F/Btu, with their surface limits;
+      - Table 6.1: ½ in. circuits up to 330 ft;
+      - Table 6.2: spacing;
+      - Table 6.3: pipe a square foot.
+    - **6.11:** manifolds of up to 6 circuits preferred to "10, 11, 12 or more".
+    - **Limit:** one chart, for the overpour; none here for a slab on grade.
+  - **REHAU, *PEXa Pressure Loss Tables* 855.681 (03.2015):**
+    - Table 1A, ½ in. at 60 F and 120 F. The model, the pipe taken as smooth, is within 3% from 0.6
+      gpm up. Under that, the
+      table steps through the laminar-turbulent transition.
+    - "Flow velocity exceeding 8 fps (2.5 m/s) might result in excessive pressure loss, noise or
+      erosion".
+  - **HVI Certified Products Directory, Section III (ERV/HRV), its spreadsheets (generated
+    2026-11-18):**
+    - **Broan EDGE BLP120E80NS-HW (2005431):**
+      - 32 F, 49 cfm: SRE 80%, NMT 0.77, 28 W;
+      - -13 F: SRE 55%, its supply airflow down 26.9%, 69.2% imbalance;
+      - 95 F: TRE 71%, NMT 0.74.
+
+      The fan table is at the top speed only. Broan's spec sheet: "30 to 112 CFM @ 0.4 in. w.g."
+    - **Also listed:** Zehnder ComfoAir 160 ERV (2005181) and Panasonic FV-12ESC1 (2005340).
+  - **Fujitsu, *Design & Technical Manual* DR_AR107ES_02 (ARUH12-48KUAS):**
+    - **Capacity tables at the High fan only** (12k p. 15, 18k p. 16). At 75/63 F indoors:
+      - 12k: 9.93 kBtu/h sensible at 86 F, 9.55 at 95 F;
+      - 18k: 13.55 at 86 F, 12.75 at 95 F.
+    - **The row's temperature:** printed 87 F; 30.0 C in the SI table.
+    - **Line-set factors** (pp. 121-122), "calculated based on the maximum capacity". The 12k
+      loses 9.4% at 49 ft, the 18k 1.7%.
+    - **Submittals:** 12KUBS1R (AHRI 217734522, MCA 14.2 A) and 18KUAS1R (AHRI 215434557, MCA
+      14.8 A); the AHRI directory itself refused automated reading.
+  - **Kamstrup MULTICAL 403:**
+    - **The data sheet (German, via aquamess.de):** flow-sensor row A gives qp 0.6 m3/h, qs
+      1.2, qi 6 l/h, cut-off 3 l/h, 0.03 bar at qp, kv 3.46.
+    - **The Danish type approval** TS 27.02 009 rev. 5 (2023-03-17) agrees: 0.03 bar, qp:qi
+      100:1.
+  - **Passive House Institute, *Testing Procedures for Large Ventilation Units* (11-2018,
+    provisional):** supply air at least 16.5 C down to -10 C outdoors. Read as a search summary;
+    Zehnder's PHI certificate 0325vs03 states the same need for a heater.
+  - **ASHRAE Fundamentals ch. 21, Table 1, through ASHRAE's eSociety article on phenolic duct:**
+    galvanized steel 0.0003 ft average (0.00027-0.0005). The handbook itself not opened.
+  - **ACCA Manual D defaults:** 0.03 in. w.c. a grille and a damper. These come from HVAC
+    School and a Manual D worksheet that Green Building Advisor hosts; the manual itself is paid
+    and not opened. Its fitting equivalent lengths (N4) weren't found free, so the design uses
+    70 ft a path, judgement.
