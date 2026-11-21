@@ -1184,3 +1184,32 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     swing tank at each peak; the heater sized to the storage temperature. Its regression case (100
     people, a 5 gpm loop at 110 F: 106.70997942 kBtu/h, 624.06056943 gal, 80 gal, 43.85605875
     kBtu/h) is reproduced to 1e-15.
+- **Step 6, sprinklers and alarms (2026-11-21).** Two research agents; I checked each quote used
+  against their saved text.
+  - **IBC 2021 as Pennsylvania adopted it:** UpCodes' chapters 4, 5, 7, 9 and 10, downloaded whole
+    with the amendments UpCodes marks (in these chapters 426.1, 704.2, 704.4.1, 903.3.1.2 and
+    1011.5.2, the same set a township's summary of Pennsylvania's amendments lists). Read:
+    903.2.8, 903.3.1.2 (amended: an R-2's roof under 45 ft above the fire road), 903.3.1.2.1-.3,
+    903.3.5, 903.4 and its eight exceptions, 903.4.1-.3, 907.2.9.1, 907.2.11.2-.6, 907.5.2.3.3
+    (907.5.2.3.4 doesn't exist in 2021), 912.1-912.2.1, 915.1.1, Table 716.1(2), 716.2.2.3,
+    716.2.6.1, 708.3, 711.2.4.3, 420.2-420.3, Tables 504.3, 504.4 and 506.2, 1006.3.4 and its
+    table, 1008.3, 1011.12-1011.16, 1013.1, 1023.2-1023.7.
+    - Cornell LII's copy of 34 Pa. Code 403.21 is out of date (still the 2018 codes).
+  - **NFPA 13R-2019:** NFPA's public development records print it: the 2019 cycle's Second Draft
+    Report and the 2022 cycle's First Draft (2019 as its baseline). Committee drafts, so struck
+    and inserted text run together and the published wording may differ. Read: 3.3.3
+    (compartment), 5.2.1, 5.4.1-5.4.4, 6.2.1-6.2.3.3.4, 6.4.5, 6.4.6, 6.6.1-6.6.9, 6.8, 6.9-6.12,
+    6.16, 7.1.1.1, 7.1.1.3.1, 7.2.3.1, 9.2.1, 9.3, 10.2.2.1; Tables 9.3.2 and 6.2.3.3.3.
+  - **The US Fire Administration's 'Commercial Fire Sprinkler System Plans Review' student manual
+    (May 2023):** NFPA 13's C values, and a worked example the model reproduces. Its slide prints
+    a 1.087 in. bore where its arithmetic used Schedule 40's 1.049.
+  - **Equipment:**
+    - Tyco TFP403 (TY2236, March 2026) and TFP412 (TY2334, January 2025);
+    - BlazeMaster CPVC dimensions and fittings from Viking's (2018) and IPEX's (2023) manuals
+      (Lubrizol's own not found free);
+    - Watts LF007 loss charts (read by eye);
+    - Potter VSR, OSYSU and PFC-6006 (its data sheet and manual disagree on AC current and
+      standby draw: the higher taken);
+    - First Alert/BRK 9120B (ionization: the design asks photoelectric).
+  - **Not found free:** a worked 13R calculation (a permit portal's sheets refused automated
+    fetches); NFPA 13's stair and electrical-room provisions at first hand.

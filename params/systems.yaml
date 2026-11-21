@@ -1598,12 +1598,312 @@ house:
     conf: medium
     source: "NEC 2020 220.14(I), 180 VA a receptacle outlet (Holt and every NEC study guide); the count is the design's"
   fire_alarm_va:
-    value: 240
-    unit: VA, the fire alarm control unit's branch circuit
-    conf: placeholder
-    source: "placeholder until step 6 chooses the alarm"
+    value: 120
+    low: 90
+    high: 120
+    unit: VA, the sprinkler monitoring panel (Potter PFC-6006, step 6) on its own circuit
+    conf: high
+    source: "Potter PFC-6006 data sheet 8830038 Rev E (4/19): 'AC Mains 1.0 amp @ 120 VAC 60 Hz'; its manual 5403559 Rev H (6/24): 'Primary AC 120VAC, 60Hz, .75 AMP' (the low). No building fire alarm is required (step 6, IBC 907.2.9.1)"
   telecom_va:
     value: 300
     unit: VA, the telecom backboard's equipment (the network's terminal, a switch)
     conf: placeholder
     source: "placeholder until the telecom design (step 7)"
+
+# Pass 3g step 6 (D28): sprinklers and alarms. The 2021 IBC as Pennsylvania adopted it, from UpCodes'
+# 'Pennsylvania Building Code 2021' chapters 4, 5, 7, 9 and 10 (https://up.codes/viewer/pennsylvania/
+# ibc-2021/chapter/...), as a research agent saved them whole (2026-11-21), with the amendments UpCodes
+# marks; chapter 10 also as Jon saved it (data/raw/upcodes/ibc2021-ch10.htm). NFPA 13R-2019 through
+# free sources that quote it.
+fire_code:
+  single_exit_max_storeys:
+    value: 3
+    unit: storeys above grade plane on which an R-2 may have one exit
+    conf: high
+    source: "IBC 2021 Table 1006.3.4(1): 'Basement, first, second or third story above grade plane R-2 a, b 4 dwelling units 125 feet'; 'Fourth story above grade plane and higher NP'; note a: 'Buildings classified as Group R-2 equipped throughout with an automatic sprinkler system in accordance with Section 903.3.1.1 or 903.3.1.2 and provided with emergency escape and rescue openings in accordance with Section 1031'"
+  single_exit_max_units:
+    value: 4
+    unit: dwelling units a storey with one exit
+    conf: high
+    source: "IBC 2021 Table 1006.3.4(1) (above)"
+  single_exit_max_travel_ft:
+    value: 125
+    unit: ft, the most exit access travel with one exit
+    conf: high
+    source: "IBC 2021 Table 1006.3.4(1) (above)"
+  r13_max_storeys:
+    value: 4
+    unit: storeys above grade plane for an NFPA 13R system
+    conf: high
+    source: "IBC 2021 903.3.1.2 as Pennsylvania amends it (UpCodes): '1. Four stories or fewer above grade plane.'"
+  r13_max_roof_ft:
+    value: 45
+    unit: ft, the R-2 roof assembly's height above the lowest fire department vehicle access, less than which 13R is allowed (Pennsylvania's amendment)
+    conf: high
+    source: "IBC 2021 903.3.1.2 item 2, Pennsylvania's amendment (UpCodes marks it): 'For R-2 occupancies, the roof assembly is less than 45 feet (13716 mm) above the lowest level of fire department vehicle access. The height of the roof assembly shall be determined by measuring the distance from the lowest required fire vehicle access road surface adjacent to the building to the eave of the highest pitched roof, the intersection of the highest roof to the exterior wall, or the top of the highest parapet, whichever yields the greatest distance.'"
+  access_road_below_slab_ft:
+    value: 1.0
+    low: 0.5
+    high: 3.0
+    unit: ft, the fire department's access road below the ground slab's top
+    conf: placeholder
+    source: "placeholder until the site plan sets the grades"
+  manual_alarm_storeys_above:
+    value: 3
+    unit: storeys above the lowest level of exit discharge at which a dwelling unit makes an R-2 need a manual fire alarm system
+    conf: high
+    source: "IBC 2021 907.2.9.1: 'A manual fire alarm system ... shall be installed in Group R-2 occupancies where any of the following conditions apply: 1. Any dwelling unit or sleeping unit is located three or more stories above the lowest level of exit discharge. 2. Any dwelling unit or sleeping unit is located more than one story below the highest level of exit discharge of exits serving the dwelling unit or sleeping unit. 3. The building contains more than 16 dwelling units or sleeping units.'"
+  manual_alarm_max_units:
+    value: 16
+    unit: dwelling units, past which an R-2 needs a manual fire alarm system
+    conf: high
+    source: "IBC 2021 907.2.9.1 item 3 (above)"
+  stair_enclosure_hr:
+    value: 1
+    unit: hours, the stair's enclosure (fewer than four storeys)
+    conf: high
+    source: "IBC 2021 1023.2: 'not less than 1 hour where connecting less than four stories'"
+  exterior_wall_reach_ft:
+    value: 10
+    unit: ft in plan from the stair's unrated wall or opening within which other exterior walls of the building must be rated
+    conf: high
+    source: "IBC 2021 1023.7: 'Where nonrated walls or unprotected openings enclose the exterior of the stairway ... and ... are exposed by other parts of the building at an angle of less than 180 degrees (3.14 rad), the building exterior walls within 10 feet (3048 mm) horizontally of a nonrated wall or unprotected opening shall have a fire-resistance rating of not less than 1 hour. Openings within such exterior walls shall be protected by opening protectives having a fire protection rating of not less than 3/4 hour. This construction shall extend vertically from the ground to a point 10 feet (3048 mm) above the topmost landing ... or to the roof line, whichever is lower.'"
+  opening_protective_hr:
+    value: 0.75
+    unit: hours, an opening in such a wall
+    conf: high
+    source: "IBC 2021 1023.7 (above)"
+  flat_door_hr:
+    value: 1
+    unit: hours, a flat's door into the stair
+    conf: high
+    source: "IBC 2021 Table 716.1(2), 'Fire barriers having a required fire-resistance rating of 1 hour: Enclosures for ... interior exit stairways ...': fire door assembly 1 hour; 716.2.6.1 'Fire doors shall be latching and self- or automatic-closing'; 716.2.2.3's temperature-rise limit waived in a building sprinklered per 903.3.1.1 or 903.3.1.2"
+  separation_hr:
+    value: 1
+    unit: hours, the walls and floors between flats with a 13R system
+    conf: high
+    source: "IBC 2021 708.3 and 711.2.4.3: 1 hour; their 1/2-hour exceptions (Types IIB, IIIB, VB) need a system per 903.3.1.1 (NFPA 13), not 903.3.1.2 (13R). 420.2 and 420.3 make the separations fire partitions and horizontal assemblies"
+  vb_s13r_storeys:
+    value: 3
+    unit: storeys an R-2 of Type V-B may have with 13R
+    conf: high
+    source: "IBC 2021 Table 504.4, R-2, Type V-B, S13R: 3 (V-A: 4)"
+  vb_s13r_height_ft:
+    value: 60
+    unit: ft, the height of an R building of Type V-B with 13R
+    conf: high
+    source: "IBC 2021 Table 504.3, R, Type V-B, S13R: 60"
+  vb_area_ft2:
+    value: 7000
+    unit: ft2 a storey, an R-2 of Type V-B with 13R (Table 506.2's area factor)
+    conf: high
+    source: "IBC 2021 Table 506.2, R-2, Type V-B, NS and S13R (one cell): 7,000 (V-A 12,000)"
+  smoke_from_cooking_ft:
+    value: 6
+    unit: ft, the least a photoelectric smoke alarm sits from a cooking appliance
+    conf: high
+    source: "IBC 2021 907.2.11.3: '3. Photoelectric smoke alarms shall not be installed less than 6 feet (1829 mm) horizontally from a permanently installed cooking appliance.'"
+  hatch_w_in:
+    value: 30
+    unit: in., the roof hatch's width
+    conf: low
+    source: "judgement: a common service hatch for ladder access, 30 x 36 in.; IBC 1011.12.2's 16 ft2 is for a roof a stairway serves, which this one isn't (1011.12: four storeys or more)"
+  hatch_l_in:
+    value: 36
+    unit: in., its length
+    conf: low
+    source: "judgement (above)"
+  hatch_guard_ft:
+    value: 10
+    unit: ft from the roof's edge, inside which a roof hatch needs guards
+    conf: high
+    source: "IBC 2021 1011.13: 'Where the roof hatch opening providing the required access is located within 10 feet (3049 mm) of the roof edge, such roof access or roof edge shall be protected by guards installed in accordance with Section 1015.'"
+  hatch_margin_in:
+    value: 6
+    unit: in. past that line
+    conf: low
+    source: "judgement"
+  ladder_depth_in:
+    value: 7
+    unit: in., the fixed ladder from the wall to its rungs' outer face
+    conf: low
+    source: "judgement: IMC 2021 306.5 asks rails and rungs, not a depth"
+  ladder_clearance_in:
+    value: 30
+    unit: in., from the rungs' centreline to anything on the climbing side
+    conf: high
+    source: "IMC 2021 306.5 item 7 (UpCodes' Connecticut copy of the 2021 IMC): 'The distance from the centerline of the rungs to the nearest permanent object on the climbing side of the ladder shall be not less than 30 inches (762 mm) measured perpendicular to the rungs.'"
+  imc_access_ft:
+    value: 16
+    unit: ft of climb past which equipment on a roof needs a permanent means of access
+    conf: high
+    source: "IMC 2021 306.5 (UpCodes' Connecticut copy): 'Where equipment requiring access or appliances are located on an elevated structure or the roof of a building such that personnel will have to climb higher than 16 feet (4877 mm) above grade to access such equipment or appliances, an interior or exterior means of access shall be provided ... Such access shall not require the use of portable ladders.'"
+
+# NFPA 13R-2019 through NFPA's own public development records, which print its text: the Second Draft
+# Report of the 2019 edition (https://docinfofiles.nfpa.org/files/AboutTheCodes/13R/13R_A2018_SDR.pdf)
+# and the 2022 cycle's First Draft, which prints 2019 as its baseline; committee drafts, so the
+# published edition may differ in wording. As a research agent saved them (2026-11-21); I checked
+# each quote below against its saved text.
+sprinkler:
+  min_head_psi:
+    value: 7
+    unit: psi, the least a sprinkler may operate at
+    conf: high
+    source: "NFPA 13R-2019 6.4.5 (Second Draft): the minimum operating pressure is 'the higher of the minimum operating pressure specified by the listing or 7 psi'"
+  min_density:
+    value: 0.05
+    unit: gpm per ft2, the least a residential sprinkler in a dwelling unit discharges
+    conf: high
+    source: "NFPA 13R-2019 7.1.1.1: 'at least the flow required to produce a minimum discharge density of 0.05 gpm/ft2 (2.04 mm/min) or the sprinkler listing, whichever is greater, to the design sprinklers'"
+  design_heads_max:
+    value: 4
+    unit: sprinklers in the design area
+    conf: high
+    source: "NFPA 13R-2019 7.1.1.3.1: 'the number of sprinklers in the design area shall be all of the sprinklers within a compartment, up to a maximum of four sprinklers, that require the greatest hydraulic demand' (a flat, smooth ceiling up to 24 ft); 3.3.3 defines a compartment by its walls, openings of at most 8 ft with 8 in. lintels"
+  duration_min:
+    value: 30
+    unit: minutes the water supply must hold the system's demand
+    conf: high
+    source: "NFPA 13R-2019 9.2.1: 'The water supply shall be capable of supplying the system demand for at least 30 minutes.'"
+  bath_exempt_ft2:
+    value: 55
+    unit: ft2, a bathroom no larger than which needs no sprinkler
+    conf: high
+    source: "NFPA 13R-2019 6.6.2: 'Sprinklers shall not be required in bathrooms where the bathroom area does not exceed 55 ft2 (5.1 m2).' 6.6.4: 'Sprinklers shall be installed in any closet used for heating or air-conditioning equipment, washers, dryers, or water heaters'; 6.2.3.3.4: 'Sprinklers in closets containing ventless clothes dryers shall be of the intermediate-temperature classification or higher.'"
+  qr_density:
+    value: 0.1
+    unit: gpm per ft2, a quick-response sprinkler outside the flats (light hazard)
+    conf: medium
+    source: "NFPA 13R-2019 6.2.1.3 and 6.2.1.4 (quick-response sprinklers 'discharging a minimum of 0.1 gpm/ft2'); 7.2.3: quick-response areas designed to NFPA 13, whose light-hazard density this is; 6.6.9.4: 'Interior stairwells located outside the dwelling unit shall be protected in accordance with NFPA 13.'"
+  lh_spacing_ft2:
+    value: 225
+    unit: ft2 a quick-response sprinkler covers at most, light hazard
+    conf: high
+    source: "NFPA 13R-2019 7.2.3.1(2): 'The sprinklers are spaced at 225 ft2 ... maximum for light hazard, 130 ft2 ... maximum for ordinary hazard'"
+  oh_spacing_ft2:
+    value: 130
+    unit: ft2, the same for ordinary hazard
+    conf: high
+    source: "NFPA 13R-2019 7.2.3.1(2) (above)"
+  oh_density:
+    value: 0.15
+    low: 0.15
+    high: 0.2
+    unit: gpm per ft2 in the annex's mechanical and electrical rooms (ordinary hazard group 1)
+    conf: placeholder
+    source: "placeholder: NFPA 13's ordinary-hazard group 1 density, where its annex places mechanical rooms, not read here"
+  qr_k:
+    value: 5.6
+    unit: K-factor (gpm per psi^0.5) of the quick-response sprinklers outside the flats
+    conf: medium
+    source: "the standard orifice, as the US Fire Administration's 'Commercial Fire Sprinkler System Plans Review' student manual (May 2023) works it: 'P = (15.5 / 5.6)^2 = 7.66 psi'; the model to choose"
+  c_cpvc:
+    value: 150
+    unit: Hazen-Williams C of CPVC sprinkler pipe
+    conf: high
+    source: "Viking Plastics' BlazeMaster installation and design manual F_080712 Rev 18.1 (2018): 'must be calculated using a Hazen-Williams C value of 150'; the USFA manual's table of NFPA 13's values: 'PVC & CPVC 150'"
+  c_underground:
+    value: 150
+    unit: Hazen-Williams C of the underground fire service (PVC)
+    conf: medium
+    source: "the USFA manual's table of NFPA 13's values (above): 'PVC & CPVC 150'"
+  underground_id_in:
+    value: 4.0
+    unit: in., the underground fire service's bore (a 4 in. service)
+    conf: placeholder
+    source: "placeholder until the water authority sets the fire service's size and pipe"
+  underground_ft:
+    value: 60
+    low: 30
+    high: 150
+    unit: ft from the main to the riser assembly in the annex
+    conf: placeholder
+    source: "placeholder until the site plan places the main"
+  underground_el_ft:
+    value: 30
+    unit: ft of equivalent length for the tap, its valve and the bends
+    conf: placeholder
+    source: "placeholder until the service is drawn"
+  drop_ft:
+    value: 1.0
+    unit: ft of pipe from a branch line down to a pendent sprinkler
+    conf: low
+    source: "judgement: branch lines in the joists just above the ceiling"
+  ceiling_m:
+    value: 2.6
+    unit: m, a sprinkler's deflector above its floor
+    conf: low
+    source: "judgement: the flats' and the stair's ceilings near 8 ft 9 in. (step 1: 106.5 in. on the upper floors less the topping), the deflector 1-1/4 to 4 in. below (Tyco TFP403)"
+  margin_psi:
+    value: 10
+    low: 5
+    high: 15
+    unit: psi held back from the street's pressure for its seasonal and daily swing
+    conf: low
+    source: "judgement until the hydrant test: IBC 2021 903.3.5: 'the water supply test used for design of fire protection systems shall be adjusted to account for seasonal and daily pressure fluctuations based on information from the water supply authority'"
+  party_wall_u:
+    value: 0.05
+    low: 0.03
+    high: 0.08
+    unit: Btu/h ft2 F, the walls between the stair and the flats
+    conf: placeholder
+    source: "placeholder: a 10 in. double-stud party wall with sound insulation; its assembly isn't specified yet"
+  fire_door_u:
+    value: 0.4
+    low: 0.2
+    high: 0.6
+    unit: Btu/h ft2 F, a flat's 1-hour door into the stair
+    conf: placeholder
+    source: "placeholder until the door is chosen"
+  stair_min_f:
+    value: 40
+    unit: F, the least a wet-pipe sprinkler system's space may fall to
+    conf: high
+    source: "NFPA 13R-2019 5.4.1: wet pipe only where the space is 'maintained reliably above 40 F'; otherwise antifreeze, dry pipe, dry sprinklers or heat tracing (5.4.2)"
+  facp_standby_a:
+    value: 0.12
+    unit: A from the battery at standby, the sprinkler monitoring panel (Potter PFC-6006, main board)
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H (6/24): main board 120 mA standby, 185 mA alarm; 'Primary AC 120VAC, 60Hz, .75 AMP'; 'rated for 8 to 18 AH batteries'; 'NFPA 72 requires 24 hours of standby power followed by 5 minutes of alarm activation'; batteries sized at / 0.80 (its efficiency factor). Its data sheet 8830038 Rev E (4/19) says 105 mA standby and 1.0 A AC"
+  facp_alarm_a:
+    value: 0.185
+    unit: A in alarm, the panel itself
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H (above)"
+  nac_alarm_a:
+    value: 0.25
+    low: 0.15
+    high: 0.4
+    unit: A, the exterior horn-strobe in alarm (903.4.2)
+    conf: placeholder
+    source: "placeholder until the horn-strobe is chosen"
+  battery_min_ah:
+    value: 8
+    unit: Ah, the smallest battery the panel takes
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H: 'rated for 8 to 18 AH batteries'"
+  facp_standby_h:
+    value: 24
+    unit: h of standby the panel's battery must give
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H (6/24): 'NFPA 72 requires 24 hours of standby power followed by 5 minutes of alarm activation'"
+  facp_alarm_min:
+    value: 5
+    unit: minutes of alarm after it
+    conf: high
+    source: "Potter PFC-6006 manual (above)"
+  battery_derate:
+    value: 0.8
+    unit: the battery calculation's efficiency factor (divide by it)
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H: its battery calculation divides by 0.80"
+  battery_max_ah:
+    value: 18
+    unit: Ah, the largest battery the panel takes
+    conf: high
+    source: "Potter PFC-6006 manual 5403559 Rev H: 'rated for 8 to 18 AH batteries'"
+  fdc_area_ft2:
+    value: 2000
+    unit: ft2, past which (or above one storey) a 13R building needs a fire department connection
+    conf: high
+    source: "NFPA 13R-2019 6.11.1: 'At least one fire department connection shall be provided for buildings, accessible by a fire department, that exceed 2000 ft2 (185 m2) or are more than a single story.' 6.11.4: an automatic drip where freezing"

@@ -1,0 +1,15 @@
+# BlazeMaster CPVC SDR 13.5 (ASTM F442) pipe dimensions and fitting equivalent lengths (feet of SDR 13.5 pipe). Manufacturer (fabricator) data.
+# Sources (identical values): Viking Plastics "BlazeMaster CPVC Fire Sprinkler Systems" Installation & Design Manual, Form F_080712 Rev 18.1, 11-29-2018, p.47,
+#   https://www.vikinggroupinc.com/sites/default/files/documents/TDR-4122%20080712%20Viking%20Plastics%20Install%20Design%20Manual%20Rev%2018-1.pdf
+# and IPEX "BlazeMaster Fire Sprinkler Systems", Mechanical Technical Manual Series Vol. II, (c) 2023, p.12-13 (copy via wolseleyexpress.com document 210034).
+# Hazen-Williams C = 150. Rated 175 psi continuous at 150F, 3/4-3 in. Ambient 35F (Viking) / 36F (IPEX) to 150F.
+# "The above average OD and average ID information is per ASTM F-442. Check with individual manufacturers for actual OD and ID information."
+# Lubrizol's own current manual was not found as a free PDF; these are licensed fabricators' manuals for the same product.
+nominal_in,avg_OD_in,avg_ID_in,empty_lb_ft,water_filled_lb_ft,tee_branch_ft,elbow90_ft,elbow45_ft,coupling_ft,tee_run_ft
+3/4,1.050,0.874,0.168,0.428,3,7,1,1,1
+1,1.315,1.101,0.262,0.675,5,7,1,1,1
+1-1/4,1.660,1.394,0.418,1.079,6,8,2,1,1
+1-1/2,1.900,1.598,0.548,1.417,8,9,2,1,1
+2,2.375,2.003,0.859,2.224,10,11,2,1,1
+2-1/2,2.875,2.423,1.257,3.255,12,12,3,2,2
+3,3.500,2.950,1.867,4.829,15,13,4,2,2

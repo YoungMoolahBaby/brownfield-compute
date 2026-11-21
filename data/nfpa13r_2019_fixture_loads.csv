@@ -1,0 +1,31 @@
+# NFPA 13R-2019 Table 9.3.2(a) Fixture Load Values and Table 9.3.2(b) Total Estimated Domestic Demand.
+# Source: NFPA 13R A2018 Second Draft Report (2019 edition text, legislative markup) cross-checked against the clean 2019 baseline printed in the NFPA 13R A2021 First Draft Report p.54-55.
+# https://docinfofiles.nfpa.org/files/AboutTheCodes/13R/13R_A2018_SDR.pdf and .../13R_A2021_FDR.pdf. Standard text from NFPA public development records.
+# 9.3.1: included only "For systems with common domestic/fire mains serving more than one dwelling unit ... unless provisions are made to prevent the domestic waterflow on sprinkler system activation."
+# 9.3.3: "Domestic demand shall be added to the hydraulic calculations at the point the piping becomes combined or common."
+# Table 9.3.2(a) Fixture Load Values.
+table,facility_class,fixture,load_units
+9.3.2(a),private,Bathroom group with flush tank (lavatory + water closet + bathtub with shower),3.6
+9.3.2(a),private,Bathroom group with flush valve,8
+9.3.2(a),private,Bathtub,1.4
+9.3.2(a),private,Dishwasher,1.4
+9.3.2(a),private,Kitchen sink,1.4
+9.3.2(a),private,Laundry trays (1 to 3),1.4
+9.3.2(a),private,Lavatory,0.7
+9.3.2(a),private,Shower head (stall),1.4
+9.3.2(a),private,Washing machine,1.4
+9.3.2(a),private,Water closet with flush valve,6
+9.3.2(a),private,Water closet with flush tank,2.2
+9.3.2(a),public,Bathtub,4
+9.3.2(a),public,Drinking fountain,0
+9.3.2(a),public,Kitchen sink,4
+9.3.2(a),public,Lavatory,2
+9.3.2(a),public,Service sink,3
+9.3.2(a),public,Shower head,4
+9.3.2(a),public,Urinal with 1 in. flush valve,10
+9.3.2(a),public,Urinal with 3/4 in. flush valve,5
+9.3.2(a),public,Urinal with flush tank,3
+9.3.2(a),public,Washing machine 8 lb,3
+9.3.2(a),public,Washing machine 16 lb,4
+9.3.2(a),public,Water closet with flush valve,10
+9.3.2(a),public,Water closet with flush tank,5

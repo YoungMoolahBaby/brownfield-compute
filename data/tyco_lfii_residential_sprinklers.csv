@@ -1,0 +1,27 @@
+# Tyco (Johnson Controls) Series LFII residential sprinklers, wet pipe, NFPA 13D/13R/13 hydraulic design criteria (Table A). Manufacturer data.
+# TY2236 pendent/recessed pendent, K=4.9: TFP403, MARCH 2026, https://docs.jci.com/tycofire/tfp403 ("TY2236 is a replacement for the TY2234").
+#   TFP400 (TY2234, SEPTEMBER 2019) wet-pipe table is identical. Smooth ceiling deflector-to-ceiling 1-1/4 to 4 in.; min spacing 8 ft; max spacing = coverage length.
+# TY2334 horizontal sidewall/recessed HSW, K=4.4: TFP412, JANUARY 2025, https://docs.jci.com/tycofire/tfp412 (DECEMBER 2018 copy has the same table).
+#   End of deflector boss to wall 1-1/8 to 6 in.; min spacing 8 ft; max spacing = coverage width. Width = back wall, Length = throw.
+# Both: max working pressure 175 psi; 155F or 175F with the same flows; "For coverage area dimensions less than or between those indicated, use the minimum required flow for the next highest coverage area".
+# Pressures are "calculated using the nominal K-factor". NFPA 13 use only: greater of table flow or 0.1 gpm/ft2. NFPA 13R floor is 0.05 gpm/ft2 (13R 7.1.1.1).
+model,type,K,coverage_w_ft,coverage_l_ft,deflector_to_ceiling,max_spacing_ft,min_flow_gpm,min_pressure_psi,doc
+TY2236,pendent,4.9,12,12,1-1/4 to 4 in.,12,13,7.0,TFP403 2026-03
+TY2236,pendent,4.9,14,14,1-1/4 to 4 in.,14,13,7.0,TFP403 2026-03
+TY2236,pendent,4.9,16,16,1-1/4 to 4 in.,16,13,7.0,TFP403 2026-03
+TY2236,pendent,4.9,18,18,1-1/4 to 4 in.,18,17,12.0,TFP403 2026-03
+TY2236,pendent,4.9,20,20,1-1/4 to 4 in.,20,20,16.7,TFP403 2026-03
+TY2334,horizontal sidewall,4.4,12,12,4 to 6 in.,12,13,8.7,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,14,14,4 to 6 in.,14,14,10.1,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,16,4 to 6 in.,16,16,13.2,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,18,4 to 6 in.,16,19,18.6,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,20,4 to 6 in.,16,23,27.3,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,18,18,4 to 6 in.,18,23,27.3,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,18,20,4 to 6 in.,18,26,34.9,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,12,12,6 to 12 in.,12,13,8.7,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,14,14,6 to 12 in.,14,14,10.1,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,16,6 to 12 in.,16,17,14.9,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,18,6 to 12 in.,16,20,20.7,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,16,20,6 to 12 in.,16,23,27.3,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,18,18,6 to 12 in.,18,23,27.3,TFP412 2025-01
+TY2334,horizontal sidewall,4.4,18,20,6 to 12 in.,18,26,34.9,TFP412 2025-01

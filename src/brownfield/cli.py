@@ -752,6 +752,21 @@ def cmd_electrical(_args) -> int:
     return 0 if all(ok for _, ok, _ in s["checks"]) else 1
 
 
+def cmd_fire(_args) -> int:
+    import json
+
+    from . import fire, systems
+
+    P = values(load_params())
+    apt = systems.load(systems.latest_model())
+    s = fire.summary(apt, P)
+    print(fire.report(s))
+    out = OUT_DIR / "pass3" / "fire.json"
+    out.write_text(json.dumps(s, indent=1, default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o)) + NL, encoding="utf-8")
+    print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
+    return 0 if all(ok for _, ok, _ in s["checks"]) else 1
+
+
 def cmd_addendum(_args) -> int:
     from . import addendum, bidset
 
@@ -1000,6 +1015,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    sub.add_parser("fire", help="pass 3g step 6: sprinklers and alarms: the one stair, NFPA 13R layout and hydraulics, the stair's enclosure, smoke alarms, the roof hatch")
     sub.add_parser("electrical", help="pass 3g step 5: electrical designed: each flat's panel, circuits and feeder, the house loads, the service and its fault current, the meter wall, room for PV and EV")
     sub.add_parser("plumbing", help="pass 3g step 4: plumbing designed: the hot-water plant, recirculation, pipe sizes and pressure, drains, vents, noise")
     sub.add_parser("hvac", help="pass 3g step 3: heating, cooling and ventilation designed: radiant floors, the building loop, ERV and mini-split ducts")
@@ -1019,7 +1035,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

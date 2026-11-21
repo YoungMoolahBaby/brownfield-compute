@@ -31,12 +31,17 @@ Step 4 designed: a central hot-water plant that takes 75% of its heat from the d
 center's return, a recirculating loop held at WHO's temperatures, every pipe sized by the code's
 pressure method, cast-iron stacks for quiet. It needs at least 49.5 psi at the street main, which
 the water authority doesn't publish: a hydrant test to ask for. Step 5 designed: a 208Y/120 V
-service with the meters outdoors (FirstEnergy's rule), each flat's circuits, feeder and panel held to
-the code's tables and a 5% voltage drop, a 600 A main (the code's load needs more than 400 A). Found on the way: step 4's hot-water heat pump had
-no real unit at its 122 F source. Jon took the fix: it takes its heat from the data center's water
-after the preheat (a rated unit, COP 4.4), and the loop returns to a swing tank, so the data center
-gives about 89% of the hot water's heat. No chargers at the walk-up: D14 puts them at the mobility
-hub. Next: step 6, sprinklers and alarms.
+service with the meters outdoors (FirstEnergy's rule), each flat's circuits, feeder and panel held
+to the code's tables and a 5% voltage drop, a 600 A main (the code's load needs more than 400 A).
+Found on the way: step 4's hot-water heat pump had no real unit at its 122 F source. Jon took the
+fix: it takes its heat from the data center's water after the preheat (a rated unit, COP 4.4), and
+the loop returns to a swing tank, so the data center gives about 89% of the hot water's heat. No
+chargers at the walk-up: D14 puts them at the mobility hub. Step 6 designed: NFPA 13R sprinklers
+throughout (116) on a separate, monitored fire service (Jon's choice), sized by a hydraulic
+calculation to the street; the one stair holds (it depends on them), no building fire alarm is
+required, smoke alarms in every flat. Found: the annex's walls and its mechanical room's door near
+the stair need fire ratings (IBC 1023.7), an addendum item with the roof hatch. Next: step 7,
+routing in the model.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2223,7 +2228,8 @@ test. Then the township brief's ask.
            mustn't freeze, so its doors take the exterior door's U-factor.
          - **Open for step 6 (fire):** where the annex abuts the stair, the stair's back wall
            stops being an exterior wall. It must carry the enclosure's 1-hour rating (IBC 2021
-           1023.2) there; the model rates the stair's side walls only.
+           1023.2) there; the model rates the stair's side walls only. (Step 6: confirmed, and
+           1023.7 reaches further into the annex; see step 6.)
          - **Tests:** `tests/test_walkup_systems.py` gains 5 (20 in all):
            - the checks pass;
            - marks and type GlobalIds kept;
@@ -2557,7 +2563,8 @@ test. Then the township brief's ask.
          - the exchanger and the pump selected;
          - the ground slab's own chart (taken as the pour);
          - the slab edge's F-factor (pass 3's 0.6, judgement), which drives the ground floor;
-         - the mini-split's back-up heat and the stair's heat;
+         - the mini-split's back-up heat and the stair's heat (step 6: with no heater the stair
+           holds about 55 F at the design hour, enough for wet sprinkler pipe; comfort is apart);
          - the preheater's circuit in each flat's panel (step 5: done, and the preheater grew
            to 1 kW so it covers the design hour at the voltage it gets);
          - a bath floor warmed for comfort;
@@ -2799,7 +2806,7 @@ test. Then the township brief's ask.
            - Feeder and branch together: at most 4.72% at any outlet, inside the
              informational notes' 5% (not enforceable; no energy code reaches a 3-storey R-2).
        - **5c, the house loads** (one 45 A position on the stack, 120/208 V like a flat):
-         9.7 kVA calculated.
+         9.5 kVA calculated (step 6 sourced the alarm panel: 120 VA, not the 240 placeholder).
          - the plant's heat pump (ClimateMaster SW036, MCA 22.3 A, on a 25 A breaker);
          - the swing tank's 1.75 kW element (step 4's plant);
          - the two circulators (Grundfos ALPHA2, 45 W);
@@ -2809,13 +2816,13 @@ test. Then the township brief's ask.
            210.63; one at the meter wall, 210.63(B)(1)), the fire alarm and telecom
            (placeholders).
        - **5d, the service** (208Y/120 V three-phase, offered by FirstEnergy):
-         - **The calculation:** the flats 339.1 kVA x 0.41 = 139.0 kVA (220.84), the house 9.7;
-           148.7 kVA, 413 A.
+         - **The calculation:** the flats 339.1 kVA x 0.41 = 139.0 kVA (220.84), the house 9.5;
+           148.6 kVA, 412 A.
            - **The preheater counts as space heating** (a duct heater, Article 424), so under
              220.84(C)(5) and 220.82(C) only the larger of it and the air conditioning counts.
          - **The main:**
            - the meter stack offers 400 and 600 A mains, none between;
-           - 413 A takes the 600 A main;
+           - 412 A takes the 600 A main;
            - its lugs take cable to 500 kcmil, so two sets of 250 kcmil copper (510 A).
            FirstEnergy asks for approval of parallel sets to a meter stack: a question for it.
          - **The calculation is the code's, not the building's.** No 12 all-electric flats on a
@@ -2883,6 +2890,150 @@ test. Then the township brief's ask.
          - step 3's outdoor-air duct at 5 in. for the heater (its model still sizes it 4 in.).
     6. **Sprinklers and alarms:** NFPA 13R with a hydraulic calculation; the single stair
        depends on it.
+       - **Step 6 designed 2026-11-21** (`uv run brownfield fire`, on Addendum 4; writes
+         `out/pass3/fire.json`). Code: `src/brownfield/fire.py`. Data:
+         `data/tyco_lfii_residential_sprinklers.csv`, `data/blazemaster_cpvc_sdr13_5.csv`,
+         `data/watts_lf007_dcva_chartread.csv`, `data/nfpa13r_2019_fixture_loads.csv`,
+         `data/nfpa13r_2019_domestic_demand.csv`. Parameters: `params/systems.yaml` `fire_code`,
+         `sprinkler`. Tests: `tests/test_walkup_fire.py`, 9; all 12 checks pass.
+         - **Sources:**
+           - **IBC 2021, Pennsylvania's:** UpCodes' chapters 4, 5, 7, 9 and 10 saved whole, with
+             the amendments UpCodes marks (903.3.1.2 among them).
+           - **NFPA 13R-2019:** NFPA's own public development records, whose Second Draft prints
+             the standard. Those are committee drafts, so the published wording may differ.
+           - **IMC 2021 306.5:** UpCodes' Connecticut copy.
+           - **The makers' sheets:** Tyco's sprinklers, BlazeMaster CPVC (from its fabricators'
+             manuals), Watts' backflow assembly (its loss chart read by eye), Potter's switches
+             and panel, First Alert's smoke alarm.
+           - **The US Fire Administration's plans-review manual (2023),** for a worked example.
+
+           Two research agents read them; I checked each quote used against the saved text.
+       - **Known cases:**
+         - **The USFA's worked example:** Q = K√P gives 7.66 psi, and Hazen-Williams gives 0.081
+           psi/ft and 0.87 psi.
+           - Its slide prints the bore as 1.087 in., but 0.081 is what 1 in. Schedule 40's 1.049
+             in. gives (both bores are in its own pipe table); 1.087 would give 0.068. The worked
+             numbers are reproduced at 1.049.
+         - **Tyco's listing tables hold to Q = K√P,** within 0.3% on all 12 rows, and to 13R's
+           0.05 gpm/ft2.
+       - **6a, the one stair:** IBC 2021 Table 1006.3.4(1) allows one exit up to the third storey
+         with four flats a storey and 125 ft of travel. The building has four flats a storey and
+         at most 61 ft of travel, taken square from any room's far corner to the flat's door into
+         the stair. The table's note a asks for sprinklers (903.3.1.1 or .2) and escape openings
+         (1031, step 1): the stair depends on the sprinklers.
+       - **The code's frame:**
+         - **13R is allowed.** 903.3.1.2 as Pennsylvania amends it: four storeys or fewer, and an
+           R-2's roof under 45 ft above the fire department's road. This roof is 32 ft up, with the
+           road a placeholder 1 ft below the slab.
+         - **Type V-B is enough with 13R:** 3 storeys, 60 ft, 7,000 ft2 a storey (Tables 504.3,
+           504.4, 506.2), against 3 storeys, 32 ft and 4,000 ft2.
+         - **The flats' walls and floors stay 1-hour.** 708.3's and 711.2.4.3's half-hour
+           exceptions need NFPA 13, not 13R.
+         - **No building fire alarm system** (907.2.9.1): no flat is three storeys above the
+           exit (the top ones are two), and there are 12 flats, not more than 16.
+         - **No carbon monoxide alarms** (915.1.1): nothing burns fuel, and there's no garage.
+       - **6b, the stair's enclosure** (1-hour, 1023.2):
+         - **The wall it shares with the annex is now part of it.**
+         - **1023.7 reaches the annex.** The stair's back windows on floors 2 and 3 are unrated
+           and sit above the annex, whose side walls meet that wall at 90 degrees.
+           - So the annex's two side walls are 1-hour for their first 10 ft from the stair,
+             ground to roof.
+           - The mechanical room's 42 in. door, 5.4 ft from a window in plan, needs a 3/4-hour
+             fire door.
+           - That's an addendum item: wall types and door D5. Alternatively, rated windows in the
+             stair (1023.7 only applies where its walls or openings are unrated).
+       - **6c, the sprinklers** (116 in all):
+         - **In each flat, 9:** Tyco TY2236 residential pendents (K 4.9), every room but the bath.
+           - 6 in the open living area (living room 2; study, kitchen, entry and hall 1 each),
+             each bedroom 1.
+           - The laundry closet 1, intermediate-temperature: 13R 6.6.4 asks a sprinkler in a closet
+             with a washer or dryer, and 6.2.3.3.4 the temperature for a ventless dryer.
+           - The 44 ft2 bath goes without: 6.6.2 allows up to 55 ft2.
+           - Coverage: 12x12 to 14x14 ft at 13 gpm, 7 psi.
+         - **The stair, 6:** quick-response (K 5.6), two a storey, at 225 ft2 each. 13R 6.6.9.1
+           asks for sprinklers throughout an enclosed stair, and 6.6.9.4 designs it to NFPA 13.
+         - **The annex, 2:** one in each room. 13R has no omission for mechanical or electrical
+           rooms; NFPA 13's for electrical rooms would need the authority's say.
+         - **None in the roof's joist space or the floors:** 13R 6.6.6, which omits concealed
+           spaces that aren't lived in, used for storage or fuel-fired.
+         - **CPVC throughout** (BlazeMaster, C 150), concealed in the ceilings and walls.
+       - **6d, the hydraulics** (Hazen-Williams, each compartment its own design; 13R 7.1.1.3.1:
+         all its sprinklers up to four):
+         - **The route:** the fire service enters the annex's mechanical room: a 2 in. double
+           check assembly, which 13R 6.8.5-6.8.6 lets serve as the check and the control valve.
+           It runs into the stair (1023.5 lets fire protection pierce it), up a 2 in. riser at the
+           back of each storey's hall, and through the stair's side walls into each flat at its
+           door.
+         - **Sizes:** each flat's feed 1½ in., its branch lines 1¼ in. With 1 in. branches the
+           top flats' living area would ask the street 50.2 psi, over the 45 allowed; at 1¼ in.
+           it asks 38.1.
+         - **What governs:** the stair, read the safe way, every one of its 6 sprinklers flowing
+           (127 gpm, 40.4 psi). Whether 13R 7.2.3.1's four-sprinkler limit applies to the stair
+           is the authority's call. The top flats' living areas come next: 4 sprinklers, 55 gpm,
+           38.1 psi.
+         - **The street's 55 psi is step 4's placeholder,** held to 45 for its seasonal swing
+           (903.3.5 asks for that adjustment). The hydrant test (NFPA 291) settles it.
+           - It needs a 3,800 gal supply over 30 minutes (13R 9.2.1).
+         - **A separate fire service,** so no domestic demand is added (13R 9.3.1).
+       - **The stair needs no heater for its pipe.** With no heater it holds about 55 F at the
+         design hour (47 F with the walls' low U-values). It is tied about four times as closely
+         to the flats (190 m2 of party wall and their doors) as to outdoors (its two end walls,
+         roof, slab edge and air leakage). 13R 5.4.1 asks 40 F for wet pipe. The party walls' and
+         doors' U-values are placeholders.
+       - **6e, the alarms:**
+         - **36 smoke alarms,** three a flat: each bedroom and the hall outside them (907.2.11.2).
+           - Photoelectric, as the hall's is 7.8 ft from the kitchen (6 ft is the least,
+             907.2.11.3).
+           - Interconnected within the flat (907.2.11.5), on the building wiring with a battery
+             (907.2.11.6): step 5's sleeping-side lighting circuit.
+         - **The sprinkler system's own:**
+           - a waterflow switch and an exterior horn-strobe (903.4.2);
+           - tamper switches on the backflow assembly's two valves (903.4: electrically
+             supervised by a listed panel);
+           - a monitoring panel (Potter PFC-6006) sending to a supervising station (903.4.1),
+             on an 8 Ah battery (3.6 needed for 24 h and 5 min). Step 5's house panel carries it
+             (120 VA, now sourced).
+         - **A separate, supervised fire service** (Jon, 2026-11-21: "keep it separate").
+           - **The other way:** a main shared with the taps. 903.4's exception 3 would then drop
+             the panel and the monitoring, if there were no separate sprinkler shutoff.
+           - **But a shared main must add the flats' domestic demand** (13R 9.3.1). That's 93.6
+             fixture load units and 42.9 gpm (Tables 9.3.2(a) and (b)), so 170 gpm under the
+             stair's reading and 98 for the flats.
+             - That outgrows step 4's 2 in. service and meter, on a street pressure not yet
+               known.
+             - Any shutoff of the water for plumbing would also shut off every sprinkler, and no
+               fire department call goes out.
+           - **The one stair depends on these sprinklers.** Their valves shouldn't be closable
+             unseen, and a monitored flow calls the fire department.
+           - **The cost difference is for step 10's baseline:** a second service, its backflow
+             assembly and the monitoring contract against the bigger shared service. It needs
+             sourced prices.
+         - **A fire department connection** (13R 6.11.1: over 2,000 ft2 or one storey), on the
+           street side (912.2.1), with a check valve and an automatic drip.
+       - **6f, the roof hatch** (step 5's finding):
+         - **Over the top storey's stair hall,** 30 x 36 in., with a fixed ladder (IBC 1011.16
+           and IMC 306.5).
+         - **It may open from the stair:** 1023.4 limits only the enclosure's openings other than
+           unprotected exterior ones.
+         - **No guards needed:** it sits 10.5 ft from the roof's edge (1011.13 asks for them
+           within 10).
+         - **The ladder leaves 73 in. of hall beside it,** clear of the flats' doors.
+       - **Not yet:**
+         - **The hydrant test,** and with it the water authority's fire service (size, tap,
+           backflow device).
+         - **The site plan:** the access road's grade, the main's distance, the fire department
+           connection's place.
+         - **The routes (step 7),** which replace every length taken square and place each
+           sprinkler exactly.
+           - The sprinkler at each room's cell centre is a layout, not yet checked against the
+             lights, the ducts' outlets or the 9 in. from the range 13R's table asks of an
+             intermediate sprinkler.
+         - **The NFPA 13 design for the stair and the annex,** the authority's reading.
+         - **The addendum** (with step 7): the annex's rated walls and door, the roof hatch and
+           its ladder, the stair's back wall rated where the annex meets it.
+         - **The inspection tests (step 9):** 116 sprinklers, so the NFPA 13 hydrostatic test
+           (13R 10.2.2.1), a forward-flow test of the backflow assembly (6.8.9), and the alarms'
+           acceptance.
     7. **In the model and the IFC:** every pipe, duct, riser and piece of equipment; routes
        through the I-joists only where the maker's hole chart allows; a clash check; the
        schedules and the priced item list from the IFC, as the window schedule is.
