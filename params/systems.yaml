@@ -411,12 +411,12 @@ electrical:
     conf: placeholder
     source: "placeholder until the dryer is chosen; Holt's example (resistance) dryer 4.5 kVA (the high end)"
   cooling_va:
-    value: 3552
+    value: 3408
     low: 2954
     high: 3552
-    unit: VA, the flat's mini-split outdoor unit (Fujitsu AOUH18KUAS1, step 3c), its minimum circuit ampacity at 240 V
+    unit: VA, the flat's mini-split outdoor unit (Fujitsu AOUH12KUBS1, step 3c under Addendum 4's glass), its minimum circuit ampacity at 240 V
     conf: high
-    source: "Fujitsu submittal 18KUAS1R v20251015A: MCA 14.8 A, 208/230 V, maximum circuit breaker 20 A; 14.8 x 240 = 3,552 VA; low: the 12k's MCA 14.2 A at 208 V, 2,954 VA, if low-SHGC glass lets the 12k serve"
+    source: "Fujitsu submittal 12KUBS1R v20260707A: MCA 14.2 A, 208/230 V, maximum circuit breaker 15 A; 14.2 x 240 = 3,408 VA. Low: the same at 208 V, 2,954 VA; high: the 18k (submittal 18KUAS1R, MCA 14.8 A) at 240 V, 3,552 VA, which the placeholder glass would need"
   fixed_va:
     value: 250
     unit: VA, the flat's ERV and its radiant floor's circulator together
@@ -622,18 +622,16 @@ erv:
     unit: cfm, the most it holds at esp_inwc
     conf: high
     source: "Broan spec sheet (above)"
-  coil_dt_k:
-    value: 20
-    low: 10
-    high: 22
-    unit: K, the drop of the post-heater coil's water
-    conf: low
-    source: "a design choice for a counterflow coil: the building's 41.5 C water leaves at 21.5 C against air entering at 6.8 C, a 14.7 K approach at the cold end; a bigger drop returns colder water to the data center. To confirm with a coil's selection"
-  post_heat_c:
-    value: 16.5
-    unit: C, the least the supply air reaches the rooms at, after a hot-water coil off the flat's manifold
+  preheat_min_c:
+    value: 0
+    unit: C, the least the outdoor air is warmed to ahead of the ERV, so that it never defrosts
     conf: high
-    source: "the Passive House Institute's comfort criterion, held here at the design temperature (stricter than PHI's -10 C): PHI Testing Procedures for Large Ventilation Units (11-2018, provisional, https://database.passivehouse.com/Media/certified_components_v2/component/model/icons/PHI_Testing_Procedures_for_Large_Ventilation_Units.pdf): 'a minimum supply air temperature of 16.5 C up to -10 C outdoor air temperature' (a search summary); Zehnder's PHI certificate 0325vs03 for its ComfoAir 160 ERV: a heater coil is required where the supply falls below it"
+    source: "Broan EDGE user and installer manual 1115155WEB-A, 2.9.2 In-line Duct Heater (a research agent's reading, 2026-11-21): 'To prevent the unit from operating in defrost mode and allow continuous operation in cold conditions, the minimum heating temperature is 0 C (32 F)'; the heater 'shall have an integrated airflow sensor and an over temperature sensor', at least 12 in. from the unit's collar. Broan names an electric heater only. Without it the unit defrosts by stopping its supply fan (CSI spec 1119216B; HVI's -13 F test: 69.2% imbalance)"
+  supply_min_c:
+    value: 16.5
+    unit: C, the least the ERV's supply reaches the rooms at
+    conf: high
+    source: "the Passive House Institute's comfort criterion, held here at the design temperature (stricter than PHI's -10 C): PHI Testing Procedures for Large Ventilation Units (11-2018, provisional, https://database.passivehouse.com/Media/certified_components_v2/component/model/icons/PHI_Testing_Procedures_for_Large_Ventilation_Units.pdf): 'a minimum supply air temperature of 16.5 C up to -10 C outdoor air temperature' (a search summary); Zehnder's PHI certificate 0325vs03 for its ComfoAir 160 ERV: a heater is required where the supply falls below it"
 
 # Fujitsu ARUH12KUAS + AOUH12KUBS1: a ducted mini-split for one flat, cooling (and back-up heat). Capacities at indoor 75 F dry
 # bulb / 63 F wet bulb and the High fan, the only airflow the tables give (Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12-48KUAS (https://docs.fujitsugeneral.com/assets/DR_AR107ES_02--ARUH12-48KUAS.pdf), p. 15); its
@@ -822,3 +820,11 @@ minisplit:
     conf: low
     source: "judgement until the roof layout places the 12 outdoor units; the vertical run is the model's, from the hall ceiling to the roof"
 
+# Addendum 4 (pass 3g step 3c, D28): the glass's solar heat gain, decided by Jon 2026-11-21 ("we can
+# go with your recommendations").
+addendum_4:
+  shgc_max:
+    value: 0.25
+    unit: the most solar heat gain coefficient of the windows and patio doors (NFRC 200, the whole unit)
+    conf: high
+    source: "the design (pass 3g step 3c): at the placeholder 0.35 no 1-ton unit covers a flat's cooling (Fujitsu's 12k gives 2.77 kW sensible on the ground floor's line set against 3.37 kW); at 0.25 the worst flat needs 2.62 kW and the 12k serves. The winter sun it gives up is heat the data center supplies. Such units are sold, NFRC-certified (makers' tables, a research agent's reading and mine, 2026-11-21): Pella 250 Series vinyl casement, 3/4 in. SunDefense Low-E, argon, PEL-A-287-00157-00001, U 0.26, SHGC 0.18; its fixed unit PEL-A-289-00122-00001, U 0.26, SHGC 0.22 (Pella 2026 Architectural Design Manual); its Standard sliding patio door, 3/4 in. SunDefense Low-E, 5 mm glass, argon, WDI-A-33-02494-00001, U 0.27, SHGC 0.21 (Pella 2025 ADM, 250-SPD); Pella Impervia fiberglass casement PEL-N-277-00243-00001, U 0.28, SHGC 0.20. Not ENERGY STAR v7 in its Northern zone (all of western Pennsylvania), which asks U at most 0.22 with SHGC at least 0.17"

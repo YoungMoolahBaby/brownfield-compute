@@ -104,6 +104,33 @@
      "label": "RFI 002, the question it answers (BCF 3.0)"
     }
    ]
+  },
+  {
+   "number": 4,
+   "title": "The glass's solar heat gain, which sizes the cooling",
+   "issued": "2026-11-21T11:10:46-08:00",
+   "items": [
+    "Item 1 (glass): every window and patio door has a whole-unit solar heat gain coefficient of at most 0.25 (NFRC 200), with its U-factor still at most 0.30 Btu/h ft2 F. The window and door schedule now carries it (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
+    "Why: the flats' cooling (step 3c). The schedule gave no SHGC, and the cooling design had assumed 0.35: at that, no 1-ton unit covers a flat; at this glass one does. The winter sun the glass gives up is heat the data center's loop supplies anyway.",
+    "No drawing changes; no opening moves or resizes."
+   ],
+   "model": "apartment-addendum-4.ifc",
+   "changes": "changes-addendum-4.json",
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-4.md",
+     "label": "The addendum: its item, what changed and the checks"
+    },
+    {
+     "path": "apartment-addendum-4.ifc",
+     "label": "The revised model, IFC4, the glass's SHGC on its types"
+    },
+    {
+     "path": "drawings-addendum-4/schedule.csv",
+     "label": "The revised window and door schedule, with the SHGC"
+    }
+   ]
   }
  ]
 }

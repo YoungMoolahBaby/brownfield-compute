@@ -23,9 +23,10 @@ addendum's changes (live). Step 2 finished: cooling, water, drainage, hot water 
 loads, each with a known case. Step 3 designed: radiant floors on REHAU's own data, an ERV and a
 ducted mini-split a flat from certified ratings, the building loop off the data center's 50 C
 return. Found: pass 3's floor was optimistic (the flats need 36.7-41.5 C water, not ~30; still no
-heat pump), and the ERV's air reaches the bedrooms at 6.8 C on the coldest hour (a post-heater
-coil added). Decisions for Jon: the window's SHGC (it sets the cooling unit's size) and the ERV's
-defrost. Next: step 4, plumbing.
+heat pump), and the ERV's air reaches the bedrooms at 6.8 C on the coldest hour. Jon took both
+recommendations: Addendum 4 specifies the glass at SHGC 0.25 or under (published in the plan
+room), so a 12k mini-split serves each flat, and an electric preheater ahead of each ERV keeps it
+from defrosting and brings its air to 16.5 C. Next: step 4, plumbing.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2345,6 +2346,7 @@ test. Then the township brief's ask.
              about 1.9 kW, worst facing south on the lower floors (low autumn sun on its glass)
              and west on the top. Outdoor air latent 89-106 W a flat with step 3's ERV (its
              HVI moisture transfer, 0.74; 160-180 W with the placeholder 0.5).
+           - **On Addendum 4's glass (SHGC 0.25):** 2.51-2.62 kW sensible (0.71-0.75 ton).
            - **Limit:** no thermal mass, so peaks lean high.
          - **Water** (Hunter, IPC Appendix E as the approved method under 604.1):
            - a flat 7.8 wsfu (cold 4.7, hot 4.9) and 9 dfu;
@@ -2360,12 +2362,12 @@ test. Then the township brief's ask.
          - **Electrical:**
            - **Known case:** Holt's 12-unit example reproduced exactly (460,800 VA, 188,928
              VA, 787 A).
-           - **Each flat's feeder (220.82):** 18.4 kVA, 77 A (with step 3's mini-split at its
-             14.8 A MCA; 16.6 kVA and 69 A with the placeholder). The optional method wants a
+           - **Each flat's feeder (220.82):** 18.3 kVA, 76 A, with step 3's 12k mini-split at
+             its 14.2 A MCA (16.6 kVA and 69 A with the placeholder). The optional method wants a
              feeder of 100 A or more, so 100 A.
-           - **The 12 flats (220.84):** 309.5 kVA connected x 0.41 = 126.9 kVA, 529 A at
-             120/240 V or 352 A at 208Y/120 V, before house loads (287.3 kVA, 491 A with the
-             placeholder).
+           - **The 12 flats (220.84):** 307.8 kVA connected x 0.41 = 126.2 kVA, 526 A at
+             120/240 V or 350 A at 208Y/120 V, before house loads (287.3 kVA, 491 A with the
+             placeholder). The ERV preheaters (482 W each) aren't in it yet: step 5.
            - **Placeholders:** the appliance nameplates, until chosen.
          - **Tests:** `tests/test_walkup_loads.py`, 17, the known cases among them.
          - **Review before commit fixed:** `weather()` carried the site's coordinates as numbers
@@ -2383,11 +2385,12 @@ test. Then the township brief's ask.
     3. **Heating, cooling and ventilation:** radiant floor loops on the loop's ~30 C water, a
        manifold and a heat meter in each flat, every loop balanced; heat-recovery ventilation in
        each flat; cooling sized to the real load (a radiant floor can't cool); ducts sized.
-       - **Step 3 designed 2026-11-21** (`uv run brownfield hvac`, on Addendum 3; writes
-         `out/pass3/hvac.json`). Code: `src/brownfield/hvac.py`, and `loads.erv_sensible` and
-         `design_case(post_heat=True)`. Parameters: `params/systems.yaml` `radiant`,
-         `substation`, `heat_meter`, `ducts`, `erv`, `minisplit_12`, `minisplit_18`,
-         `minisplit`. Tests: `tests/test_walkup_hvac.py`, 12; all 11 checks pass.
+       - **Step 3 designed 2026-11-21** (`uv run brownfield hvac`, on the latest revision, now
+         Addendum 4; writes `out/pass3/hvac.json`). Code: `src/brownfield/hvac.py`, and
+         `loads.erv_sensible`, `loads.preheat_c` and `design_case(preheat=True)`. Parameters:
+         `params/systems.yaml` `radiant`, `substation`, `heat_meter`, `ducts`, `erv`,
+         `minisplit_12`, `minisplit_18`, `minisplit`, `addendum_4`. Tests:
+         `tests/test_walkup_hvac.py`, 12; all 12 checks pass.
          - **Sources:**
            - REHAU's radiant design guide (855.601) and PEX pressure-loss tables (855.681);
            - HVI's certified-products spreadsheets (Section III, generated 2026-11-18);
@@ -2444,10 +2447,24 @@ test. Then the township brief's ask.
          - **Found: the fresh air reaches the bedrooms at 6.8 C at the design hour,** under the
            Passive House Institute's 16.5 C comfort minimum. It lands on the bedroom floors, the
            rooms that set the water.
-           - **Added:** a hot-water post-heater coil on each ERV's supply, off the flat's
-             manifold, lifting the air to 16.5 C. That is 248 W a flat from the loop's waste
-             heat, not electric, its water dropping 20 K (a counterflow coil; less flow and
-             colder water back to the data center).
+         - **Found: the Broan defrosts by stopping its supply fan** (HVI's -13 F test: 69%
+           imbalance), so in the coldest hours a flat runs on exhaust only.
+         - **The fix, Jon's decision 2026-11-21: an electric preheater ahead of each ERV.**
+           - Broan's manual permits an in-line duct heater, electric (with its own airflow and
+             over-temperature sensors, 12 in. from the collar). It says warming the outdoor air
+             to 0 C keeps the unit out of defrost.
+           - **Set to 2.5 C:** at HVI's 32 F recovery (80%), that brings the ERV's own supply to
+             16.5 C.
+           - **At design:** 482 W a flat. Over a year 345 kWh a flat (about 4,100 for the
+             building), over about 2,400 hours (ERA5 2005-2023).
+           - **It replaces** the hot-water post-heater coil step 3 first added (248 W a flat off
+             the manifold): after the preheater, the coil would add 0.5 K at most.
+           - **The price, plainly:**
+             - it spends 482 W of electricity at design to save 248 W of the loop's heat, since
+               a warmer inlet leaves the ERV less to recover;
+             - what it buys is ventilation that never unbalances, and warm air.
+           - **Not asked of Broan:** a hydronic preheater off the loop, which would make it
+             waste heat. Broan's manual names only an electric one. For the installers' round.
            - **Effect:** the ground floor's water drops from 45.6 C (ERV alone) to 41.5 C.
          - **Ducts:** ACCA Manual D's friction-rate method on round galvanized steel (ASHRAE's
            0.0003 ft roughness), the unit holding 0.4 in. w.c. across its range.
@@ -2459,47 +2476,56 @@ test. Then the township brief's ask.
          - **Selection:** the smallest of Fujitsu's ARUH12KUAS and ARUH18KUAS that covers the
            flat. Capacity is taken at our design point (87.6 F out, 75/63 F in, from Fujitsu's
            tables) and derated for the line set to the roof (16-36 ft) by Fujitsu's own factors.
-         - **Result at the placeholder SHGC 0.35:** the 18k in every flat, 3.90-3.94 kW sensible
-           against 3.23-3.37 kW. The 12k gives 2.77 kW sensible on the ground floor's 36 ft line
-           set: short.
          - **The glass decides the size.** Each 0.1 of SHGC moves a flat's peak by about 780 W.
-           At SHGC 0.25 the worst flat's load is 2.62 kW and the 12k covers it, by 5%.
-         - **Ducts:** at 0.3 in. w.c. (a setting inside the unit's 0.12-0.80), supplies to the
-           bedrooms, study and living room by their loads.
-           - On 2-front-left: living 346 cfm in 9 in., bed-1 143 in 7 in., bed-2 68 and study 61
-             in 5 in.; a 12 in. return in the hall.
+           - At the placeholder SHGC 0.35 (Addendum 3): the 18k in every flat, 3.90-3.94 kW
+             sensible against 3.23-3.37 kW. The 12k gives 2.77 kW sensible on the ground floor's
+             36 ft line set: short.
+           - **Addendum 4 (Jon's decision 2026-11-21): SHGC at most 0.25.** The 12k in every
+             flat, 2.77-2.96 kW sensible against 2.51-2.62 kW: 7% to spare on the ground floor,
+             13% on the top.
+         - **Ducts** (Addendum 4), at 0.3 in. w.c. (a setting inside the unit's 0.12-0.80):
+           supplies to the bedrooms, study and living room by their loads.
+           - On 2-front-left: living 276 cfm in 8 in., bed-1 118 in 6 in., bed-2 57 and study 50
+             in 5 in.; a 10 in. return in the hall.
            - The rooms under 150 W (182 W together) take the hall's moving air.
+         - **Addendum 4,** published to the plan room:
+           - **The item:** every window and patio door at a whole-unit SHGC of at most 0.25 (NFRC
+             200), its U-factor still at most 0.30. The schedule and the IFC's glazing type
+             carry it, and the IDS holds it: 0 of 112 glazed units pass on Addendum 3, all 112 on
+             Addendum 4.
+           - **Nothing drawn changes:** 112 units changed in properties, on 4 types.
+           - **Such units are sold, NFRC-certified:** Pella 250 vinyl casement U 0.26 / SHGC 0.18,
+             its fixed unit 0.26 / 0.22, its sliding patio door 0.27 / 0.21; Pella Impervia
+             fiberglass casement 0.28 / 0.20.
+           - **Not ENERGY STAR:** v7's Northern zone, all of western Pennsylvania, asks U at most
+             0.22 with SHGC at least 0.17. Pella 250's SunDefense+ (0.22 / 0.18-0.23) would meet
+             both. That's a choice for Jon: the code asks 0.30.
+           - **The model:** Addendum 4 draws nothing, so its model is Addendum 3's plus the glass,
+             made in Python (`systems.addendum_4`), not forge.
        - **3d, the building loop:**
          - **The plant:** a plate heat exchanger in the annex's mechanical room off the data
            center's liquid loop (its 50 C return, pass 2), keeping a 3 K approach (judgement,
            until selected).
-         - **At design:** 24.8 kW for the 12 flats (coils included), 41.5 C out and 28.4 C back,
-           7.18 gpm. The data center's water drops from 50 C to 31.4 C at 5.10 gpm.
+         - **At design:** 21.8 kW for the 12 flats, 41.5 C out and 29.0 C back, 6.61 gpm. The
+           data center's water drops from 50 C to 32.0 C at 4.63 gpm.
          - **Pipes:** pre-insulated PEX mains below the slab to two risers, one in each plumbing
            wall, six flats each.
            - Sized to 4 ft/s, half REHAU's 8 ft/s limit, for quiet.
-           - A 1 in. header (3.8 ft/s) and ¾ in. risers (3.2 ft/s).
+           - A 1 in. header (3.5 ft/s) and ¾ in. risers (2.9 ft/s).
            - Lengths taken square until step 7 routes them: 55 ft of main and 20 ft up.
          - **Heat meters:** one per flat, Kamstrup MULTICAL 403, qp 0.6 m3/h, its smallest. At
-           design 81-208 l/h, 13-35% of qp, inside its 6-1,200 l/h; 0.01-0.05 psi.
-         - **The pump:** 10.9 ft at 7.18 gpm along the worst path (the riser at its whole flow,
+           design 70-197 l/h, 12-33% of qp, inside its 6-1,200 l/h; 0.01-0.05 psi.
+         - **The pump:** 9.6 ft at 6.61 gpm along the worst path (the riser at its whole flow,
            the meter, the index circuit). The exchanger's and the valves' drops come with their
            selection. A small circulator.
-       - **Review notes for Jon (decisions):**
-         - **The window's SHGC.** Recommended: glass at 0.25 or under, by an addendum to the
-           window schedule.
-           - It cuts the cooling peak by about a fifth and lets the 12k serve.
-           - The winter sun it gives up is heat the data center supplies anyway.
-           - Its U-factor must stay at or under 0.30, to confirm with a window's NFRC label.
-         - **The ERV's defrost.** The Broan stops its supply fan to defrost (HVI's -13 F test:
-           69% imbalance), so in the coldest hours a flat runs on exhaust only. The fix is a
-           preheater (electric, or the Zehnder's built-in one), or accepting it. To price in
-           step 10.
+       - **Jon's decisions (2026-11-21), "we can go with your recommendations":** the glass at
+         SHGC 0.25 or under (Addendum 4, above); an electric preheater ahead of each ERV (3b).
        - **For the installers' round (step 8):**
          - the low-heat loops are balanced to 0.015-0.1 gpm; can a manifold's valves and flow
            gauges be set that fine, or does each room's actuator cycle its loop instead?
          - at part load a flat's flow falls toward the meter's 3 l/h cut-off, under which it
-           counts nothing.
+           counts nothing;
+         - a hydronic preheater for the ERV off the loop, instead of the electric one.
        - **Not yet:**
          - the routes (step 7, CortenForge), which replace every length taken square;
          - the duct fittings' equivalent length (70 ft a path, judgement until routed);
@@ -2507,6 +2533,7 @@ test. Then the township brief's ask.
          - the ground slab's own chart (taken as the pour);
          - the slab edge's F-factor (pass 3's 0.6, judgement), which drives the ground floor;
          - the mini-split's back-up heat and the stair's heat;
+         - the preheater's circuit in each flat's panel (step 5);
          - a bath floor warmed for comfort;
          - the hall's dropped ceiling for the indoor unit against IBC 1208.2's 7 ft.
     4. **Plumbing:** cold and hot water and recirculation, the hot-water plant (central or per

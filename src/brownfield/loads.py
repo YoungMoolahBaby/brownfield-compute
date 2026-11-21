@@ -248,7 +248,15 @@ def erv_sensible(p: dict, t_c: float) -> float:
     return lo + (hi - lo) * min(max((t_f + 13) / 45, 0.0), 1.0)
 
 
-def design_case(apt: dict, p: dict, wall_u: float | None = None, post_heat: bool = False) -> dict:
+def preheat_c(p: dict) -> float:
+    """The setpoint of the electric preheater ahead of each ERV: at least Broan's 0 C, below which
+    the unit defrosts by stopping its supply fan, and warm enough that the ERV's supply reaches
+    PHI's minimum (`supply_min_c`) at the recovery HVI measured at 32 F."""
+    sre, t_in = p["systems.erv.sre_32f"], p["pass3.loads.indoor_c"]
+    return max(p["systems.erv.preheat_min_c"], (p["systems.erv.supply_min_c"] - sre * t_in) / (1 - sre))
+
+
+def design_case(apt: dict, p: dict, wall_u: float | None = None, preheat: bool = False) -> dict:
     """The engineered design for `room_heat`: the flats' balanced ventilation with heat recovery
     (`ventilation`, the ERV's sensible recovery at the design temperature, `erv_sensible`), air leakage at Phius's
     0.06 cfm50 per ft2 of each flat's share of the gross enclosure (its outside walls, its roof,
@@ -256,16 +264,17 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None, post_heat: bool
     Indiana County, and the walls at `wall_u` (default: as drawn: Addendum 3's continuous insulation
     where the model has it, `systems.addendum_3.wall_u`, else pass 3's).
 
-    With `post_heat`, a hot-water coil after the ERV lifts the supply to `systems.erv.post_heat_c`:
-    the rooms see only what is left, and each flat's case carries the coil's heat (`coil_w`).
+    With `preheat` (step 3's design), an electric heater warms the outdoor air ahead of the ERV to
+    `preheat_c`: the ERV never defrosts, so it stays balanced, and its supply reaches PHI's minimum;
+    the rooms see only what is left, and each flat's case carries the heater's power (`preheat_w`).
     """
     if wall_u is None and apt.get("continuous_insulation_m", 0.0) > 0.0:
         wall_u = p["systems.addendum_3.wall_u"]
     vent = ventilation(apt, p)
     t_out, t_in = p["systems.design.heating_c"], p["pass3.loads.indoor_c"]
-    erv = erv_sensible(p, t_out)
-    post = (p["systems.erv.post_heat_c"] - t_out) / (t_in - t_out) if post_heat else erv
-    recovery = max(erv, post)
+    t_core = max(t_out, preheat_c(p)) if preheat else t_out  # the air entering the ERV
+    supply_c = t_core + erv_sensible(p, t_core) * (t_in - t_core)
+    recovery = (supply_c - t_out) / (t_in - t_out)  # what the rooms see, as a recovery from outdoors
     flats = {}
     for f in apt["flats"]:
         v = vent[f["name"]]
@@ -276,7 +285,7 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None, post_heat: bool
         flats[f["name"]] = {
             "infil_m3h": cfm50 / p["pass3.air.n_factor"] * CFM_M3H, "vent_m3h": v["design_cfm"] * CFM_M3H,
             "recovery": recovery,
-            "coil_w": v["design_cfm"] * CFM_M3H * RHO_CP_AIR * (recovery - erv) * (t_in - t_out),
+            "supply_c": supply_c, "preheat_w": v["design_cfm"] * CFM_M3H * RHO_CP_AIR * (t_core - t_out),
             "supply_share": {rid: q / v["design_cfm"] for rid, q in v["supply"].items()},
             **({"wall_u": wall_u} if wall_u is not None else {}),
         }
@@ -344,6 +353,7 @@ def room_cooling(apt: dict, p: dict, wx: dict | None = None, front_az: int = 180
     flats = {f["name"]: f for f in apt["flats"]}
     ops = {o["id"]: o for o in apt["openings"]}
     face_dir = facing(front_az)
+    shgc = apt.get("glass_shgc", p["systems.design.shgc"])  # Addendum 4's glass, else the placeholder
     dt = wx["t"] - t_in
     out = {}
     for name, rows in room_envelopes(apt).items():
@@ -361,7 +371,7 @@ def room_cooling(apt: dict, p: dict, wx: dict | None = None, front_az: int = 180
             for oid in r["openings"]:
                 o = ops[oid]
                 if o["glazed"]:
-                    sun = sun + p["systems.design.shgc"] * o["width_m"] * o["height_m"] * wx[face_dir[o["face"]]]
+                    sun = sun + shgc * o["width_m"] * o["height_m"] * wx[face_dir[o["face"]]]
             rooms[r["id"]] = cond + air + sun + igain_w * x["area_share"]
         out[name] = {"rooms": rooms, "flat": sum(rooms.values())}
     return out

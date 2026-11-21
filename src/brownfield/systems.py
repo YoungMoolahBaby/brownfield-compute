@@ -119,9 +119,10 @@ def _covered(rooms: list[dict], walls: list[dict]) -> float:
 
 
 def check(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
-    """The rooms against the code, after the revision's own check: Addendum 2 against Addendum 1
-    (`base`), or (`apt`'s revision addendum-3) Addendum 3 against Addendum 2."""
-    head = check_addendum_3(apt, base, P) if apt.get("revision") == "addendum-3" else check_addendum_2(apt, base)
+    """The rooms against the code, after the revision's own check against the one before it
+    (`base`): Addendum 2 against Addendum 1, 3 against 2, 4 against 3, by `apt`'s revision."""
+    head = {"addendum-3": check_addendum_3, "addendum-4": check_addendum_4}.get(
+        apt.get("revision"), lambda a, b, _: check_addendum_2(a, b))(apt, base, P)
     return head + room_checks(apt, P)
 
 
@@ -160,6 +161,46 @@ def check_addendum_3(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, st
         f"walls {base['ext_t_m'] / IN:g} -> {apt['ext_t_m'] / IN:g} in (continuous insulation {ci / IN:g} in); "
         f"outside {apt['length_m'] / FT:g} x {apt['depth_m'] / FT:g} ft unchanged; openings {'unchanged' if same_openings else 'CHANGED'}")
     return res
+
+
+def addendum_4(apt3: dict, P: dict) -> dict:
+    """Addendum 4's model: Addendum 3's building with its glass specified (`glass_shgc`, the most
+    solar heat gain the windows and patio doors may have, `systems.addendum_4.shgc_max`). Nothing
+    is drawn differently, so it is made here, not in forge."""
+    out = dict(apt3)
+    out["revision"] = "addendum-4"
+    out["glass_shgc"] = P["systems.addendum_4.shgc_max"]
+    out["source"] = apt3.get("source", "") + "; Addendum 4: the glass's SHGC (brownfield systems)"
+    return out
+
+
+def write_addendum_4(P: dict) -> Path | None:
+    """out/pass3/apartment-addendum-4.json from Addendum 3's, if forge has written that."""
+    src = OUT_DIR / "pass3" / "apartment-addendum-3.json"
+    if not src.exists():
+        return None
+    path = OUT_DIR / "pass3" / "apartment-addendum-4.json"
+    path.write_text(json.dumps(addendum_4(json.loads(src.read_text(encoding="utf-8")), P), indent=1) + "\n", encoding="utf-8")
+    return path
+
+
+def latest_model() -> Path:
+    """The latest revision's model that has been written: Addendum 4's, else 3's."""
+    for rev in ("addendum-4", "addendum-3"):
+        path = OUT_DIR / "pass3" / f"apartment-{rev}.json"
+        if path.exists():
+            return path
+    return PATH
+
+
+def check_addendum_4(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
+    """Addendum 4 is Addendum 3 (`base`) with the glass's SHGC specified, and nothing else."""
+    rest = {k: v for k, v in apt.items() if k not in ("revision", "glass_shgc", "source")}
+    rest0 = {k: v for k, v in base.items() if k not in ("revision", "glass_shgc", "source")}
+    ok = (apt.get("revision") == "addendum-4" and abs(apt.get("glass_shgc", -1) - P["systems.addendum_4.shgc_max"]) < 1e-12
+          and rest == rest0)
+    return [("Addendum 4 specifies the glass's SHGC and changes nothing drawn", ok,
+             f"SHGC at most {apt.get('glass_shgc')}; the building {'unchanged' if rest == rest0 else 'CHANGED'}")]
 
 
 def room_checks(apt: dict, P: dict) -> list[tuple[str, bool, str]]:
@@ -356,18 +397,21 @@ def plan_figure(apt: dict, P: dict, path: Path, storey: int = 1) -> None:
 
 # {revision: (the model before it, its own model)}, under out/pass3/.
 REVISIONS = {"addendum-2": ("apartment-addendum-1.json", "apartment-addendum-2.json"),
-             "addendum-3": ("apartment-addendum-2.json", "apartment-addendum-3.json")}
+             "addendum-3": ("apartment-addendum-2.json", "apartment-addendum-3.json"),
+             "addendum-4": ("apartment-addendum-3.json", "apartment-addendum-4.json")}
 IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
 # RFI 002 (made up), which Addendum 3 answers: asked when the walls' shortfall was confirmed
 # (08:45 Pacific, D28), answered when Addendum 3 went out (ISSUED[3]). UTC, as BCF keeps it.
 RFI_002_ASKED = "2026-11-21T16:45:00"
 RFI_002_ANSWER_AFTER_MIN = 30
 # When each addendum went out (D29): Addendum 1 when it was first published (git 8a9d200), Addendum
-# 2 when it was produced and checked (git 2f6623f), Addendum 3 when it was published.
-ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00"}
+# 2 when it was produced and checked (git 2f6623f), Addenda 3 and 4 when they were published.
+ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
+          4: "2026-11-21T11:10:46-08:00"}
 TITLES = {1: "The patio doors: their glass and their width",
           2: "The rooms, the plumbing walls and the service annex",
-          3: "The envelope to Pennsylvania's 2021 energy code"}
+          3: "The envelope to Pennsylvania's 2021 energy code",
+          4: "The glass's solar heat gain, which sizes the cooling"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -439,6 +483,8 @@ def ifc_run(params: dict, revision: str = REVISION) -> dict:
                        if (ifcopenshell.util.element.get_pset(w, "Pset_WallCommon") or {}).get("IsExternal"))
         rfi = addendum.write_rfi(base, out / "rfi-002.bcf", words, guids=walls, asked=RFI_002_ASKED,
                                  answered_after=timedelta(minutes=RFI_002_ANSWER_AFTER_MIN), key="rfi-002")
+    if revision == "addendum-4":
+        words = addendum_4_words(params)
     diff = addendum.element_diff(base, rev)
     checks = bidset.check(rev, apt2, params)
     with tempfile.TemporaryDirectory() as tmp:
@@ -490,6 +536,10 @@ def ifc_report(r: dict) -> str:
                 *(f"  {x}" for x in w["items"]),
                 f"  The stair's checks after the move: {r['stair'][0]} of {r['stair'][1]} pass."]
         before = "Addendum 2"
+    elif r["revision"] == "addendum-4":
+        head = ["Addendum 4 (made up, pass 3g step 3c, D28): the glass's solar heat gain, which sizes the cooling", "",
+                *(f"  {x}" for x in r["words"]["items"])]
+        before = "Addendum 3"
     else:
         head = ["Addendum 2 (made up, pass 3g step 1, D28): the rooms, the plumbing walls and the service annex", "",
                 *(f"  {x}" for x in addendum_2_items(r))]
@@ -502,6 +552,20 @@ def ifc_report(r: dict) -> str:
              f"Openings in the exterior walls (the annex's doors aside): {q1['openings_m2']:.1f} -> {q2['openings_m2']:.1f} m2 "
              f"({q1['openings_m2'] / bidset.FT2:,.0f} -> {q2['openings_m2'] / bidset.FT2:,.0f} ft2)."]
     return "\n".join(lines)
+
+
+def addendum_4_words(params: dict) -> dict:
+    """Addendum 4's items, from the params (the glass's limit, the units it lets serve)."""
+    v = lambda k: params[k].value  # noqa: E731
+    return {"items": [
+        f"Item 1 (glass): every window and patio door has a whole-unit solar heat gain coefficient of at most "
+        f"{v('systems.addendum_4.shgc_max'):g} (NFRC 200), with its U-factor still at most {v('pass3.envelope.window_u'):.2f} "
+        "Btu/h ft2 F. The window and door schedule now carries it (Pset_DoorWindowGlazingType.SolarHeatGainTransmittance).",
+        f"Why: the flats' cooling (step 3c). The schedule gave no SHGC, and the cooling design had assumed "
+        f"{v('systems.design.shgc'):g}: at that, no 1-ton unit covers a flat; at this glass one does. The winter sun the "
+        "glass gives up is heat the data center's loop supplies anyway.",
+        "No drawing changes; no opening moves or resizes.",
+    ]}
 
 
 def addendum_2_items(r: dict) -> list[str]:
@@ -551,12 +615,12 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
 
     from . import addendum, bidset
 
-    for rev in ("addendum-2", "addendum-3"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
     written = []
-    for n in (2, 3):
+    for n in (2, 3, 4):
         rev, out = f"addendum-{n}", ifc_out(f"addendum-{n}")
         for src, dst in ((out / "apartment.ifc", to / f"apartment-{rev}.ifc"), (out / f"{rev}.md", to / f"{rev}.md")):
             shutil.copyfile(src, dst)
@@ -567,8 +631,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         written.append(to / f"drawings-{rev}")
     shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
     written.append(to / "rfi-002.bcf")
-    models = {0: "apartment.ifc", 1: "apartment-addendum-1.ifc", 2: "apartment-addendum-2.ifc", 3: "apartment-addendum-3.ifc"}
-    for n in (1, 2, 3):
+    models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4)}}
+    for n in (1, 2, 3, 4):
         path = to / f"changes-addendum-{n}.json"
         path.write_text(json.dumps(changes(to / models[n - 1], to / models[n]), indent=1) + "\n", encoding="utf-8")
         written.append(path)
@@ -586,7 +650,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     apt0, _ = bidset.load()
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
-             3: runs["addendum-3"]["words"]["items"]}
+             3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -601,6 +665,9 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("apartment-addendum-3.ifc", "The revised model, IFC4"),
             ("drawings-addendum-3/schedule.csv", "The window and door schedule (unchanged)"),
             ("rfi-002.bcf", "RFI 002, the question it answers (BCF 3.0)")],
+        4: [("addendum-4.md", "The addendum: its item, what changed and the checks"),
+            ("apartment-addendum-4.ifc", "The revised model, IFC4, the glass's SHGC on its types"),
+            ("drawings-addendum-4/schedule.csv", "The revised window and door schedule, with the SHGC")],
     }
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-3.ifc", "revision": "addendum-3", "members": len(frame["members"]),
@@ -608,8 +675,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
                                     "walls and the service annex aren't framed yet (D28 step 7)"},
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models[n], "changes": f"changes-addendum-{n}.json",
-                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf"}[n],
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3)]}
+                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None}[n],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4)]}
     path = to / "addenda.json"
     path.write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
     written.append(path)

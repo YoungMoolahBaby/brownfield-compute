@@ -1027,3 +1027,26 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     School and a Manual D worksheet that Green Building Advisor hosts; the manual itself is paid
     and not opened. Its fitting equivalent lengths (N4) weren't found free, so the design uses
     70 ft a path, judgement.
+  - **Addendum 4 and the ERV's preheater (Jon's decisions, 2026-11-21).** A research agent read
+    the makers' PDFs; I read Pella's sliding-door table myself.
+    - **Broan EDGE user and installer manual 1115155WEB-A:**
+      - 2.9.2 permits an electric in-line duct heater ahead of the unit, with its own airflow and
+        over-temperature sensors, at least 12 in. from the collar;
+      - "To prevent the unit from operating in defrost mode and allow continuous operation in
+        cold conditions, the minimum heating temperature is 0 C (32 F)";
+      - its defrost (CSI spec 1119216B): "maintain exhaust fan operation and shut off supply
+        fan".
+      - **Not published:** the temperature at which it starts defrosting, and its cycle times.
+    - **Pella Architectural Design Manuals,** NFRC-certified rows:
+      - 250 Series vinyl casement, 3/4 in. SunDefense Low-E, argon: PEL-A-287-00157-00001, U
+        0.26, SHGC 0.18; fixed, PEL-A-289-00122-00001, 0.26 / 0.22 (2026);
+      - 250 Standard sliding patio door, 3/4 in. SunDefense Low-E, 5 mm glass, argon:
+        WDI-A-33-02494-00001, 0.27 / 0.21 (2025, 250-SPD);
+      - Impervia fiberglass casement PEL-N-277-00243-00001, 0.28 / 0.20.
+
+      The NFRC directory itself wasn't readable by script.
+    - **ENERGY STAR v7 criteria (October 2023):**
+      - Northern zone: U at most 0.22 with SHGC at least 0.17, or trade-offs that all need SHGC
+        0.35 or more;
+      - every Pennsylvania ZIP code starting 15 or 16 is Northern (ENERGY STAR's zone
+        spreadsheet).

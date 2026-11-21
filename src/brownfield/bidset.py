@@ -587,6 +587,12 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             pset.edit_pset(f, pset=ps, properties={"Reference": mark, "IsExternal": False,
                                                    "FireRating": _hours(params[FIRE_DOOR]), "SelfClosing": True})
             _note_source(ps, "FireRating", params[FIRE_DOOR])
+        if apt.get("glass_shgc") is not None and U_PARAM[kind] == "pass3.envelope.window_u":
+            # Addendum 4 on (pass 3g step 3c): the glass's solar heat gain, which sizes the cooling.
+            shgc = params["systems.addendum_4.shgc_max"]
+            g = pset.add_pset(f, product=e, name=GLAZING)
+            pset.edit_pset(f, pset=g, properties={"SolarHeatGainTransmittance": apt["glass_shgc"]})
+            _note_source(g, "SolarHeatGainTransmittance", shgc)
         if esc:  # the operation a quote needs, in the checklist's words (BidSet_Unit.Operation)
             more = pset.add_pset(f, product=e, name="BidSet_Unit")
             pset.edit_pset(f, pset=more, properties={"Operation": f.createIfcLabel("casement")})
@@ -1225,7 +1231,11 @@ def ids_fields(params: dict) -> list[dict]:
         dict(key="u", label="U-factor within the code's limit", on=glazed, std=True,
              facet=prop(unit, "ThermalTransmittance", ids.Restriction(options={"maxInclusive": u_max}, base="double"),
                         "IFCTHERMALTRANSMITTANCEMEASURE")),
-        dict(key="shgc", label="SHGC", on=glazed, std=True, facet=prop(GLAZING, "SolarHeatGainTransmittance", dt="IFCNORMALISEDRATIOMEASURE")),
+        # The label stays as issued (Addenda 2 and 3 print it); Addendum 4 added the limit.
+        dict(key="shgc", label="SHGC", on=glazed, std=True,
+             facet=prop(GLAZING, "SolarHeatGainTransmittance",
+                        ids.Restriction(options={"maxInclusive": params["systems.addendum_4.shgc_max"].value}, base="double"),
+                        "IFCNORMALISEDRATIOMEASURE")),
         dict(key="grade", label="performance grade (design pressure)", on=outside, std=True,
              facet=prop(unit, "WindLoadRating", ids.Restriction(options={"pattern": "(R|LC|CW|AW)-PG[0-9]+.*"}), "IFCLABEL")),
         dict(key="escape", label="escape window (yes or no)", on=windows, std=True, facet=prop("Pset_WindowCommon", "FireExit", dt="IFCBOOLEAN")),

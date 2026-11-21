@@ -413,7 +413,7 @@ def _complete(path, out):
         pset.edit_pset(f, pset=common, properties={"WindLoadRating": "LC-PG50", **({"FireExit": True} if window else {})})
         glass = pset.add_pset(f, product=t, name="Pset_DoorWindowGlazingType")
         pset.edit_pset(f, pset=glass, properties={"IsCoated": True, "FillGas": "argon", "IsTempered": True,
-                                                  "SolarHeatGainTransmittance": 0.3})
+                                                  "SolarHeatGainTransmittance": 0.22})  # under Addendum 4's 0.25
         ours = pset.add_pset(f, product=t, name="BidSet_Unit")
         label = f.createIfcLabel
         pset.edit_pset(f, pset=ours, properties={

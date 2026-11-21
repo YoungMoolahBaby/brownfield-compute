@@ -1,7 +1,7 @@
 """Pass 3g step 3 (D28): heating, cooling and ventilation, designed from step 2's loads.
 
 **3a, the radiant floors.** Each room's design heat (`loads.room_heat` on the engineered case with
-the ERV's supply post-heated, `design_case(post_heat=True)`) is delivered by ½ in. PEX in the
+the ERV's outdoor air preheated, `design_case(preheat=True)`) is delivered by ½ in. PEX in the
 floor's 1.5 in. gypsum topping (the upper floors) or the slab (the ground floor), every circuit on
 one manifold per flat in its utility closet:
 
@@ -24,13 +24,14 @@ one manifold per flat in its utility closet:
   tails (Table 6.1), the tails twice the walk from the manifold.
 - **The water.** One supply: the hardest room's mean water plus half the index loop's 10 F drop.
   Every other loop takes less flow, set at its balancing valve: the flow that, with the water
-  cooling along the loop toward the room, delivers the room's heat. The ERV's post-heater coil is
-  one more branch on each manifold.
+  cooling along the loop toward the room, delivers the room's heat.
 - **Friction:** Darcy-Weisbach with Churchill's (1977) friction factor in SDR 9 PEX, water's
   viscosity by the Vogel equation; held to REHAU's pressure-loss table (855.681, Table 1A).
 
 **3b, ventilation** (`ventilation_ducts`): one ERV a flat (`systems.erv`, Broan's, from HVI's
-certified ratings), its ducts sized by ACCA Manual D's friction-rate method (`size_paths`).
+certified ratings), an electric preheater ahead of it (`loads.preheat_c`, `preheat_energy`) so it
+never defrosts and its supply reaches PHI's 16.5 C, its ducts sized by ACCA Manual D's
+friction-rate method (`size_paths`).
 
 **3c, cooling** (`cooling_ducts`): one ducted mini-split a flat, the smallest of two Fujitsu units
 (`systems.minisplit_12`, `_18`) that covers the flat at the design dry bulb, derated for its line
@@ -166,7 +167,7 @@ def radiant(apt: dict, p: dict, alt_covering: bool = False, supply_c: float | No
     circuits, their lengths, flows and friction; the flat's supply temperature (its own need, or
     `supply_c` if given and no lower), total flow and index circuit."""
     r = "systems.radiant."
-    case = design_case(apt, p, post_heat=True)
+    case = design_case(apt, p, preheat=True)
     heat = room_heat(apt, p, case)
     t_room = p["pass3.loads.indoor_c"]
     rooms_by = {r_["id"]: r_ for r_ in apt["rooms"]["rooms"]}
@@ -220,16 +221,13 @@ def radiant(apt: dict, p: dict, alt_covering: bool = False, supply_c: float | No
             y.update({"gpm_per_circuit": gpm, "return_c": t_room + supply_rise - (y["w"] / (m * cp) if m else 0.0),
                       "psi": pex_psi_per_100ft(gpm, t_mean, p[r + "bore_in"]) * y["circuit_ft"] / 100})
         idx = max(rooms, key=lambda y: y["psi"])
-        # The ERV's post-heater: one more branch on the manifold, its water dropping `coil_dt_k`.
-        coil_w = case["flats"][name]["coil_w"]
-        coil_m = coil_w / (cp * p["systems.erv.coil_dt_k"])
-        coil = {"w": coil_w, "gpm": coil_m / rho / GPM, "air_c": p["systems.erv.post_heat_c"]}
-        w = sum(y["w"] for y in rooms) + coil_w
-        m = sum(y["gpm_per_circuit"] * y["circuits"] for y in rooms) * GPM * rho + coil_m
+        w = sum(y["w"] for y in rooms)
+        m = sum(y["gpm_per_circuit"] * y["circuits"] for y in rooms) * GPM * rho
+        erv = {"preheat_w": case["flats"][name]["preheat_w"], "supply_c": case["flats"][name]["supply_c"]}
         out[name] = {"rooms": rooms, "supply_c": t_room + supply_rise, "need_c": t_room + need_rise, "index_room": index["id"],
                      "w": w, "return_c": t_room + supply_rise - (w / (m * cp) if m else 0.0),
-                     "circuits": sum(y["circuits"] for y in rooms), "coil": coil,
-                     "gpm": sum(y["gpm_per_circuit"] * y["circuits"] for y in rooms) + coil["gpm"],
+                     "circuits": sum(y["circuits"] for y in rooms), "erv": erv,
+                     "gpm": sum(y["gpm_per_circuit"] * y["circuits"] for y in rooms),
                      "index_circuit": idx["id"], "index_psi": idx["psi"], "index_ft": idx["circuit_ft"],
                      "surface_over_limit": [y["id"] for y in rooms if y["surface_c"] > y["surface_limit_c"] + 1e-9],
                      "too_long": [y["id"] for y in rooms if y["circuit_ft"] > p[r + "max_circuit_ft"] + 1e-9]}
@@ -425,6 +423,23 @@ def outside_wall_ft(apt: dict, r: dict) -> float:
     return min(x, apt["depth_m"] - x) / FT
 
 
+def preheat_energy(apt: dict, p: dict) -> dict:
+    """The ERV preheater's electricity a year, a flat: every hour of 2005-2023's ERA5 air at the
+    site (as recorded: not the cooling design's shift) under the setpoint, warmed to it at the
+    flat's airflow; with the hours it runs."""
+    import numpy as np
+
+    from .loads import CFM_M3H, RHO_CP_AIR, preheat_c, ventilation, weather
+
+    wx = weather(p)
+    t = np.asarray(wx["t"]) - wx["shift_k"]
+    years = len(t) / 8766.0
+    cfm = max(v["design_cfm"] for v in ventilation(apt, p).values())
+    under = np.clip(preheat_c(p) - t, 0.0, None)
+    return {"kwh_year": float(under.sum()) * cfm * CFM_M3H * RHO_CP_AIR / 1000 / years,
+            "hours_year": float((under > 0).sum()) / years, "setpoint_c": preheat_c(p), "cfm": cfm}
+
+
 def ventilation_ducts(apt: dict, p: dict) -> dict:
     """Each flat's ERV (`systems.erv`, basis of design) in its utility closet's ceiling: its supply
     fan pulls outdoor air from the nearer long facade and supplies each bedroom its share
@@ -524,6 +539,8 @@ def summary(apt: dict, p: dict) -> dict:
     cool = cooling_ducts(apt, p)
     worst_t1a = max(abs(m / psi - 1) for _, _, psi, m in t1a)
     meter_qp = heat_meter(p["systems.heat_meter.qp_m3h"] / 3600 / GPM, p)["psi"] * PSI / 1e5
+    erv_in = min(f["erv"]["supply_c"] for f in sub["flats"].values())
+    pre = preheat_energy(apt, p)
     return {
         "revision": apt.get("revision"),
         "checks": [
@@ -538,6 +555,9 @@ def summary(apt: dict, p: dict) -> dict:
              f"{sub['supply_c']:.1f} C against {sub['primary_in_c']:.0f} - {p['systems.substation.approach_k']:g}"),
             ("every flat's heat meter within its measuring range at design", all(m["in_range"] for m in sub["meters"].values()),
              f"{min(m['l_h'] for m in sub['meters'].values()):.0f}-{max(m['l_h'] for m in sub['meters'].values()):.0f} l/h"),
+            ("every ERV's supply at or over PHI's minimum at the design hour, with no defrost (preheated to at least Broan's 0 C)",
+             erv_in >= p["systems.erv.supply_min_c"] - 1e-9 and pre["setpoint_c"] >= p["systems.erv.preheat_min_c"],
+             f"supply {erv_in:.1f} C; preheated to {pre['setpoint_c']:.1f} C"),
             ("every ERV path within its fan's pressure, its airflow within its range",
              all(v[s_]["ok"] and v["in_range"] for v in vent.values() for s_ in ("supply", "exhaust")), ""),
             ("every mini-split path within the unit's pressure", all(c["ducts"]["ok"] for c in cool.values()), ""),
@@ -549,7 +569,7 @@ def summary(apt: dict, p: dict) -> dict:
              all(p[f"systems.{c['unit']}.esp_min_inwc"] <= p["systems.minisplit.esp_inwc"] <= p[f"systems.{c['unit']}.esp_max_inwc"]
                  for c in cool.values()), f"{p['systems.minisplit.esp_inwc']:g} in. w.c."),
         ],
-        "substation": sub, "laminate_supply_c": {n: f["supply_c"] for n, f in alt.items()},
+        "substation": sub, "laminate_supply_c": {n: f["supply_c"] for n, f in alt.items()}, "preheat": pre,
         "ventilation_ducts": vent, "cooling": cool,
     }
 
@@ -570,7 +590,7 @@ def report(s: dict) -> str:
     lines += ["", "The radiant floors (linoleum or vinyl; tile in the wet rooms), each flat on the building's supply:"]
     for n in sorted(sub["flats"], key=lambda n: (n[0], n)):
         f, m = sub["flats"][n], sub["meters"][n]
-        lines.append(f"  {n:14s} needs {f['need_c']:.1f} C ({f['index_room'].split('/')[1]}); {f['w']:5.0f} W (ERV coil {f['coil']['w']:.0f}), {f['circuits']} circuits, "
+        lines.append(f"  {n:14s} needs {f['need_c']:.1f} C ({f['index_room'].split('/')[1]}); {f['w']:5.0f} W, {f['circuits']} circuits, "
                      f"{f['gpm']:.2f} gpm, back at {f['return_c']:.1f} C; meter {m['l_h']:.0f} l/h ({m['share_of_qp']:.0%} of qp)")
     ex = sub["flats"]["1-front-left"]
     lines.append("  1-front-left's circuits: " + "; ".join(
@@ -579,7 +599,10 @@ def report(s: dict) -> str:
     lines.append("  laminated hardwood instead would need: " + ", ".join(
         f"floor {k} {v:.1f} C" for k, v in sorted({n[0]: c for n, c in s["laminate_supply_c"].items()}.items())))
     v = s["ventilation_ducts"]["2-front-left"]
-    lines += ["", f"Ventilation, 2-front-left: {v['cfm']:.0f} cfm; outdoor-air and exhaust ducts {v['wall_ft']:.0f} ft to the facade."]
+    pre, e = s["preheat"], sub["flats"]["2-front-left"]["erv"]
+    lines += ["", f"Ventilation, 2-front-left: {v['cfm']:.0f} cfm; outdoor-air and exhaust ducts {v['wall_ft']:.0f} ft to the facade. "
+              f"Its preheater: {e['preheat_w']:.0f} W at the design hour, to {pre['setpoint_c']:.1f} C, so the supply leaves at "
+              f"{e['supply_c']:.1f} C; {pre['kwh_year']:.0f} kWh a year over {pre['hours_year']:.0f} hours (ERA5 2005-2023)."]
     for side in ("supply", "exhaust"):
         d = v[side]
         lines.append(f"  {side}: fan {d['esp']:.2f} in. w.c. at {sum(b['cfm'] for b in d['branches'].values()):.0f} cfm, friction rate "

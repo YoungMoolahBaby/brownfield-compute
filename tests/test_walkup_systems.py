@@ -277,6 +277,60 @@ def test_addendum_3_walls_lower_the_heat(apt3, apt, P):
     assert all(h3[n]["design_w"] < h2[n]["design_w"] for n in h2)
 
 
+# ---- Addendum 4: the glass's solar heat gain (pass 3g step 3c) ----
+
+@pytest.fixture(scope="module")
+def apt4(apt3, P):
+    return systems.addendum_4(apt3, P)
+
+
+def test_addendum_4_model_checks_pass(apt4, apt3, P):
+    res = systems.check(apt4, apt3, P)
+    assert [label for label, ok, _ in res if not ok] == []
+    assert res[0][0].startswith("Addendum 4 specifies the glass") and apt4["glass_shgc"] == P["systems.addendum_4.shgc_max"]
+
+
+def test_addendum_4_catches_anything_drawn(apt4, apt3, P):
+    bad = copy.deepcopy(apt4)
+    bad["openings"][5]["width_m"] += 0.01
+    assert not systems.check(bad, apt3, P)[0][1]
+    bad = dict(apt4, glass_shgc=0.35)
+    assert not systems.check(bad, apt3, P)[0][1]
+
+
+@pytest.fixture(scope="module")
+def run4():
+    systems.write_addendum_4(values(load_params()))
+    return systems.ifc_run(load_params(), "addendum-4")
+
+
+def test_addendum_4_ifc(run4):
+    import ifcopenshell
+    import ifcopenshell.util.element as ue
+
+    assert [label for label, ok, _ in run4["checks"] + run4["second"] if not ok] == []
+    d = run4["diff"]
+    # Nothing drawn moves: no element added, deleted or changed but the glazed types.
+    assert d["added"] == [] and d["deleted"] == [] and d["spaces"]["resized"] == []
+    assert run4["schedule_changes"]  # the schedule's SHGC column fills
+    f = ifcopenshell.open(str(run4["written"][2]))
+    shgc = load_params()["systems.addendum_4.shgc_max"].value
+    glazed = [t for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")
+              if (ue.get_pset(t, "Pset_DoorWindowGlazingType") or {}).get("SolarHeatGainTransmittance") is not None]
+    assert glazed and all(ue.get_pset(t, "Pset_DoorWindowGlazingType")["SolarHeatGainTransmittance"] == shgc for t in glazed)
+    assert all(t.is_a("IfcWindowType") or "Patio" in (t.Description or "") for t in glazed)
+    # The checklist's SHGC line passes on Addendum 4 where it didn't on Addendum 3.
+    assert "SHGC (window): 0 of 100 -> 100 of 100" in run4["ids_changes"]
+
+
+def test_addendum_4_glass_lets_the_12k_serve(apt4, apt3, P):
+    from brownfield import hvac
+
+    assert {c["unit"] for c in hvac.cooling_ducts(apt3, P).values()} == {"minisplit_18"}
+    c4 = hvac.cooling_ducts(apt4, P)
+    assert {c["unit"] for c in c4.values()} == {"minisplit_12"} and all(c["covered"] for c in c4.values())
+
+
 def test_the_published_frame_is_forges():
     # The framing model on the plan room (D29): every member of forge's frame on Addendum 3's
     # building once, each where forge has it, schema valid; and the manifest says so.

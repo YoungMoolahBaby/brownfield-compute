@@ -92,20 +92,24 @@ def test_heat_meter_drop_at_its_rating(P):
     assert hvac.heat_meter(qp_gpm, P)["psi"] * hvac.PSI / 1e5 == pytest.approx(0.03, abs=0.0005)
 
 
-def test_the_erv_post_heater(apt3, P):
-    # Without it, the ERV's air reaches the bedrooms well under PHI's 16.5 C at the design hour; the
-    # coil lifts it there and carries the difference on the flat's manifold.
+def test_the_erv_preheater(apt3, P):
+    # Without it, the ERV's air reaches the bedrooms well under PHI's 16.5 C at the design hour, and
+    # the ERV defrosts by stopping its supply. Warmed to the setpoint (at least Broan's 0 C), the ERV
+    # runs at HVI's 32 F recovery and its supply reaches 16.5 C.
     from brownfield import loads
     t_out, t_in = P["systems.design.heating_c"], P["pass3.loads.indoor_c"]
-    erv = loads.erv_sensible(P, t_out)
-    assert t_out + erv * (t_in - t_out) < P["systems.erv.post_heat_c"] - 5
-    case = loads.design_case(apt3, P, post_heat=True)
-    for name, c in case["flats"].items():
-        assert t_out + c["recovery"] * (t_in - t_out) == pytest.approx(P["systems.erv.post_heat_c"])
-        cfm = c["vent_m3h"] / loads.CFM_M3H
-        assert c["coil_w"] == pytest.approx(cfm * loads.CFM_M3H * loads.RHO_CP_AIR * (P["systems.erv.post_heat_c"] - (t_out + erv * (t_in - t_out))))
-    rad = hvac.radiant(apt3, P)
-    assert all(f["coil"]["w"] == pytest.approx(case["flats"][n]["coil_w"]) for n, f in rad.items())
+    assert t_out + loads.erv_sensible(P, t_out) * (t_in - t_out) < P["systems.erv.supply_min_c"] - 5
+    sp = loads.preheat_c(P)
+    assert sp >= P["systems.erv.preheat_min_c"]
+    assert sp + P["systems.erv.sre_32f"] * (t_in - sp) == pytest.approx(P["systems.erv.supply_min_c"])
+    case = loads.design_case(apt3, P, preheat=True)
+    for c in case["flats"].values():
+        assert c["supply_c"] == pytest.approx(P["systems.erv.supply_min_c"])
+        assert t_out + c["recovery"] * (t_in - t_out) == pytest.approx(c["supply_c"])
+        assert c["preheat_w"] == pytest.approx(c["vent_m3h"] * loads.RHO_CP_AIR * (sp - t_out))
+    # Above the setpoint it does nothing.
+    warm = dict(P, **{"systems.design.heating_c": sp + 1})
+    assert all(c["preheat_w"] == 0 for c in loads.design_case(apt3, warm, preheat=True)["flats"].values())
 
 
 def test_the_erv_between_hvis_tests(P):

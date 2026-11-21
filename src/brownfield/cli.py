@@ -641,6 +641,7 @@ def cmd_systems(args) -> int:
     P = values(load_params())
     ok = True
     latest = None
+    systems.write_addendum_4(P)  # Addendum 4 draws nothing new: its model is Addendum 3's plus the glass
     for revision, (before, mine) in systems.REVISIONS.items():
         path = OUT_DIR / "pass3" / mine
         if not path.exists():
@@ -697,8 +698,7 @@ def cmd_loads(_args) -> int:
     from . import loads, systems
 
     P = values(load_params())
-    path = OUT_DIR / "pass3" / "apartment-addendum-3.json"
-    apt = systems.load(path if path.exists() else systems.PATH)
+    apt = systems.load(systems.latest_model())
     s = loads.summary(apt, P)
     print(loads.report(s))
     out = OUT_DIR / "pass3" / "loads.json"
@@ -713,8 +713,7 @@ def cmd_hvac(_args) -> int:
     from . import hvac, systems
 
     P = values(load_params())
-    path = OUT_DIR / "pass3" / "apartment-addendum-3.json"
-    apt = systems.load(path if path.exists() else systems.PATH)
+    apt = systems.load(systems.latest_model())
     s = hvac.summary(apt, P)
     print(hvac.report(s))
     out = OUT_DIR / "pass3" / "hvac.json"
