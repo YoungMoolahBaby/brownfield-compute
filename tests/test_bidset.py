@@ -162,11 +162,12 @@ def test_the_check_catches_a_window_moved_or_resized(ifc):
 def test_types_and_their_u_factors(ifc):
     apt, _, p, path = ifc
     # The windows the code calls for safety glazing in are their own type, W2; the flat doors
-    # into the stair (pass 3f step 8) are D3.
+    # into the stair (pass 3f step 8) are D3. A key's last element is whether the unit is an
+    # escape window (Addendum 2 on, pass 3g): none is in the base bid set.
     assert bidset.types(apt, bidset.safety_glazing(apt, p)) == {
-        ("window", 0.9144, 1.2192, False): "W1", ("window", 0.9144, 1.2192, True): "W2",
-        ("patio_door", 1.8288, 2.032, True): "D1", ("entry_door", 1.0668, 2.032, False): "D2",
-        ("flat_door", 0.9144, 2.1336, False): "D3"}
+        ("window", 0.9144, 1.2192, False, False): "W1", ("window", 0.9144, 1.2192, True, False): "W2",
+        ("patio_door", 1.8288, 2.032, True, False): "D1", ("entry_door", 1.0668, 2.032, False, False): "D2",
+        ("flat_door", 0.9144, 2.1336, False, False): "D3"}
     f = ifcopenshell.open(str(path))
     common = {t.Name: ue.get_psets(t)["Pset_WindowCommon" if t.is_a("IfcWindowType") else "Pset_DoorCommon"]
               for t in f.by_type("IfcWindowType") + f.by_type("IfcDoorType")}

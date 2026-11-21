@@ -313,3 +313,94 @@ def plan_figure(apt: dict, P: dict, path: Path, storey: int = 1) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, facecolor=SURFACE)
     plt.close(fig)
+
+
+# ---- Addendum 2 in the bid set: the IFC, checked and diffed against Addendum 1 ----
+
+IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
+
+
+def ifc_run(params: dict) -> dict:
+    """Addendum 2 as a reviewed change, as `brownfield addendum` ran Addendum 1: the rooms checked
+    first (`check`); then Addendum 1 and Addendum 2 written as IFC (Addendum 1's tempered patio
+    doors carried on), the element diff between them, both readers and the IDS on the revision, a
+    second export compared byte for byte, and the schedule, elevations and quantities regenerated,
+    with what changed in each. Written to `IFC_OUT`; the published bid set is left alone."""
+    import tempfile
+
+    from . import addendum, bidset
+    from .params import values
+
+    raw2, raw1 = load(), json.loads(BASE.read_text(encoding="utf-8"))
+    failing = [label for label, ok, _ in check(raw2, raw1, values(params)) if not ok]
+    if failing:
+        raise SystemExit("Addendum 2's rooms fail their checks (run `brownfield systems`): " + "; ".join(failing))
+    apt1, frame = bidset.load("apartment-addendum-1.json")
+    apt2, _ = bidset.load(f"apartment-{REVISION}.json")
+    base, rev = IFC_OUT / "base.ifc", IFC_OUT / "apartment.ifc"
+    bidset.write_ifc(apt1, frame, params, base, spec=addendum.SPEC)
+    bidset.write_ifc(apt2, frame, params, rev, spec=addendum.SPEC)
+    diff = addendum.element_diff(base, rev)
+    checks = bidset.check(rev, apt2, params)
+    with tempfile.TemporaryDirectory() as tmp:
+        again = Path(tmp) / "apartment.ifc"
+        bidset.write_ifc(apt2, frame, params, again, spec=addendum.SPEC)
+        checks.append(("a second export is byte-for-byte the same file", again.read_bytes() == rev.read_bytes(),
+                       f"{len(bidset.body_text(rev)):,} lines"))
+    why = bidset.webifc_status()
+    second = bidset.check_webifc(rev, apt2, params) if why is None else []
+    doc = bidset.write_ids(params, IFC_OUT / "bidset.ids")
+    ids1, ids2 = bidset.run_ids(doc, base), bidset.run_ids(doc, rev)
+    ids_changes = [f"{b['name']}: {a['passed']} of {a['applicable']} -> {b['passed']} of {b['applicable']}"
+                   for a, b in zip(ids1, ids2) if (a["passed"], a["applicable"]) != (b["passed"], b["applicable"])]
+    with tempfile.TemporaryDirectory() as tmp:
+        d1 = bidset.write_drawings(base, Path(tmp))
+    d2 = bidset.write_drawings(rev, IFC_OUT / "drawings")
+    h1, h2 = bidset.safety_glazing(apt1, params), bidset.safety_glazing(apt2, params)
+    R = raw2["rooms"]
+    return {
+        "diff": diff, "checks": checks, "second": second, "second_status": why, "ids_changes": ids_changes,
+        "schedule_changes": addendum.schedule_changes(d1["schedule"], d2["schedule"]),
+        "hazards": (len(h1), len(h2)), "removed": sorted(set(h1) - set(h2)),
+        "quantities": (d1["quantities"]["total"], d2["quantities"]["total"]),
+        "rooms": len(R["rooms"]), "partitions": sum(w["kind"] == "partition" for w in R["walls"]),
+        "plumbing_walls": sum(w["kind"] == "plumbing_wall" for w in R["walls"]),
+        "annex_marks": {u["name"]: u["mark"] for u in d2["read"]["units"] if u["face"] == "annex"},
+        "escapes": len(bidset.escape_windows(raw2, params)),
+        "escape_marks": sorted({u["mark"] for u in d2["read"]["units"]
+                                if (u["psets"].get("Pset_WindowCommon") or {}).get("FireExit") is True}),
+        "written": [IFC_OUT / "bidset.ids", base, rev, *d2["written"]],
+    }
+
+
+def ifc_report(r: dict) -> str:
+    """Addendum 2 as a reviewed change, in plain text."""
+    from . import addendum, bidset
+
+    (q1, q2), (h1, h2) = r["quantities"], r["hazards"]
+    am = r["annex_marks"]
+    second = (r["second"] if r["second_status"] is None else
+              [("the second reader (web-ifc) ran", False, f"it didn't: {r['second_status']}")])
+    mech, elec = am.get("annex-mechanical/left/0", "(missing)"), am.get("annex-electrical/back/0", "(missing)")
+    items = [
+        f"1. Every room as a space (IfcSpace), {r['rooms']} in all: its use, the openings in its walls and its net "
+        "floor area, from forge `rooms` (pass 3g step 1).",
+        f"2. The flats' walls: {r['partitions']} partitions and {r['plumbing_walls']} plumbing walls (IFC's PLUMBINGWALL), "
+        "each plumbing wall 1/2 in. clear of the party wall.",
+        f"3. The service annex behind the stair: its walls, slab and roof; a mechanical and plumbing room (door {mech}) "
+        f"and an electrical room (door {elec}), each with its own outside door.",
+        f"4. The ground floor's back stair window removed ({', '.join(r['removed']) or 'none'} was safety glazed): the "
+        f"annex covers it. Safety glazing goes {h1} -> {h2} openings.",
+        f"5. Each bedroom's escape window named ({r['escapes']}): its own type ({', '.join(r['escape_marks'])}), side-hinged "
+        "(a casement), since hung or sliding a window of their size can't clear IBC 2021 1031; every window now says "
+        "whether it is one (Pset_WindowCommon.FireExit).",
+    ]
+    lines = ["Addendum 2 (made up, pass 3g step 1, D28): the rooms, the plumbing walls and the service annex", "",
+             *(f"  {x}" for x in items), "",
+             "What changed (against Addendum 1):", *(f"  {x}" for x in addendum.diff_summary(r["diff"])), "",
+             "Checks on the revision:", *(f"  {x}" for x in bidset.report(r["checks"] + second).splitlines()), "",
+             "The checklist (IDS), where it moved:", *(f"  {x}" for x in r["ids_changes"]), "",
+             "The schedule, where it moved:", *(f"  {x}" for x in r["schedule_changes"]), "",
+             f"Openings in the exterior walls (the annex's doors aside): {q1['openings_m2']:.1f} -> {q2['openings_m2']:.1f} m2 "
+             f"({q1['openings_m2'] / bidset.FT2:,.0f} -> {q2['openings_m2'] / bidset.FT2:,.0f} ft2)."]
+    return "\n".join(lines)

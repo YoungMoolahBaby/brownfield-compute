@@ -99,8 +99,8 @@ def words(apt0: dict, apt1: dict, params: dict) -> dict:
     kept = {m: key0[m] for m in left if key0[m] in m1}
     gone = [m for m in left if m not in kept]
 
-    def units(key):
-        return sum(1 for o in apt1["openings"] if (o["kind"], o["width_m"], o["height_m"], o["id"] in h1) == key)
+    def units(key):  # by mark, not by rebuilding the key (its shape is bidset.types')
+        return sum(1 for o in apt1["openings"] if bidset.mark_of(o, m1, h1) == m1[key])
 
     moved = (f"type {', '.join(gone)} is withdrawn; " if gone else "") + f"they are {', '.join(wmarks1)}" + "".join(
         f"; {m} stays{f' (now {m1[k]})' if m1[k] != m else ''} for the {units(k)} other "
@@ -281,11 +281,14 @@ def diff_summary(diff: dict) -> list[str]:
 
 
 def schedule_changes(old: list[dict], new: list[dict]) -> list[str]:
-    """What changed in the schedule. Types are matched on what they are (kind, size, safety
-    glazing), since marks are numbered by position; a type matched that way under another mark
-    is reported as renumbered, and a mark left on each side with no match is taken as resized."""
+    """What changed in the schedule. Types are matched on what they are (what kind of unit its
+    description names, size, safety glazing, escape window), since marks are numbered by position;
+    a type matched that way under another mark is reported as renumbered, and a mark left on each
+    side with no match is taken as resized. (The description's first words tell an entry door from
+    a service room door of the same size, Addendum 2.)"""
     def key(r):
-        return (r["kind"], str(r["width_mm"]), str(r["height_mm"]), r["safety_glazing_required"] != "no")
+        return (r["kind"], r.get("description", "").split(",")[0], str(r["width_mm"]), str(r["height_mm"]),
+                r["safety_glazing_required"] != "no", str(r.get("escape_window")) == "True")
 
     ok, nk = {key(r): r for r in old}, {key(r): r for r in new}
     pairs = [(ok[k], nk[k]) for k in ok if k in nk]

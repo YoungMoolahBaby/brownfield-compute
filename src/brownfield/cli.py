@@ -633,7 +633,7 @@ def cmd_bidset(args) -> int:
     return 0 if all(ok for _, ok, _ in res + second) else 1
 
 
-def cmd_systems(_args) -> int:
+def cmd_systems(args) -> int:
     import json
 
     from . import systems
@@ -653,7 +653,17 @@ def cmd_systems(_args) -> int:
     path = OUT_DIR.parent / "docs" / "pass3" / "systems_plan.png"
     systems.plan_figure(apt, P, path)
     print(NL + "wrote " + str(path.relative_to(OUT_DIR.parent)))
-    return 0
+    if not args.ifc:
+        return 0
+    r = systems.ifc_run(load_params())
+    text = systems.ifc_report(r)
+    print(NL + text)
+    (systems.IFC_OUT / "addendum-2.md").write_text(text + NL, encoding="utf-8")
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in [systems.IFC_OUT / "addendum-2.md", *r["written"]]))
+    if r["second_status"]:
+        print(f"FAIL the second reader (web-ifc) didn't run: {r['second_status']}")
+        return 1
+    return 0 if all(ok for _, ok, _ in r["checks"] + r["second"]) else 1
 
 
 def cmd_addendum(_args) -> int:
@@ -904,7 +914,8 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
-    sub.add_parser("systems", help="pass 3g: the walk-up's rooms, plumbing walls and service annex against IBC 2021 (after forge `apartment-json addendum-2 60`)")
+    sy = sub.add_parser("systems", help="pass 3g: the walk-up's rooms, plumbing walls and service annex against IBC 2021 (after forge `apartment-json addendum-2 60`)")
+    sy.add_argument("--ifc", action="store_true", help="also Addendum 2 in the bid set: the IFC, both readers, the IDS, the diff against Addendum 1, the drawings")
     sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")
     bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")
     bs.add_argument("--setup-reader", action="store_true", help="install the second reader, web-ifc (tools/webifc, npm ci with the dev group's Node)")

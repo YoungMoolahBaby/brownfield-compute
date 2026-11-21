@@ -13,8 +13,9 @@ feedback, and the inspection plan. Only the engineered design is drawn; the usua
 priced from sources as the baseline. Found while scoping: Pennsylvania now enforces the 2021
 I-codes, and the bid set was checked to IBC 2018. Decided: one central water heater; two service
 rooms (electrical; mechanical and plumbing) in an annex behind the stair. Step 0 (sources) done;
-step 1 (rooms and annex) built in forge as Addendum 2 and checked against IBC 2021 (14 checks
-pass; the escape windows must be casements); the IFC and Addendum 2's diff to do.
+step 1 (rooms and annex) built in forge as Addendum 2, checked against IBC 2021 (14 checks; the
+escape windows must be casements) and run through the bid set's IFC as a reviewed change against
+Addendum 1 (34 checks pass). Next: step 2, the loads room by room.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2159,9 +2160,58 @@ test. Then the township brief's ask.
          without rooms. The baths have no windows.
        - **CORTENFORGE.md:** spaces (rooms) as part of the model, under Suggestions.
          **RESEARCH.md:** the Bulletin, IBC 2021 1208, 1020.3 and 1031, and step 0's sources.
-       - **To do:** IfcSpace, the partitions, the plumbing walls and the annex in the IFC, with
-         the escape windows marked (casement) on each window; Addendum 2's element diff against
-         Addendum 1, as `brownfield addendum` did for Addendum 1.
+       - **In the bid set's IFC, 2026-11-21** (`uv run brownfield systems --ifc`, written to
+         `out/pass3/bidset/addendum-2/`; the published bid set is untouched). Addendum 2 is run as
+         a reviewed change against Addendum 1, as `brownfield addendum` ran Addendum 1.
+         - **The items:**
+           - 122 rooms as IfcSpace, each with its use, the openings in its walls and its net
+             floor area (Qto_SpaceBaseQuantities);
+           - 72 partitions and 12 plumbing walls (IFC4's PLUMBINGWALL);
+           - the annex's walls, slab, roof and two doors: D4 (36 in, electrical) and D5 (42 in,
+             mechanical);
+           - the stair window removed;
+           - the 24 escape windows their own type, W3, side-hinged (BidSet_Unit.Operation
+             "casement"), with every window carrying Pset_WindowCommon.FireExit yes or no.
+         - **The diff against Addendum 1:**
+           - 92 elements added, 1 deleted (the stair window), no opening moved;
+           - new types W3, D4, D5 and 4 wall types; marks W1, W2 and D1-D3 keep their
+             numbers and GlobalIds (escape types number after the others).
+         - **The removed window was safety glazed,** so safety glazing goes 14 -> 13 openings.
+         - **Checks:** all 34 pass.
+           - IfcOpenShell (22): every element, opening and room once, each where forge has it
+             (to 1 mm), no clashes among 130 walls and slabs, schema valid;
+           - a second export byte for byte the same;
+           - web-ifc (11).
+         - **The checklist (IDS):** "escape window (yes or no)" 0 -> 100 of 100 windows;
+           "operation" 0 -> 24. The escape windows' clear-opening fields are 0 of 24: those are the
+           maker's numbers, for the window quote.
+         - **Schedule:** W3 new (24), D4 and D5 new; W1 99 -> 75; W2 2 -> 1.
+         - **Unchanged:** the base bid set's and Addendum 1's IFC regenerate byte for byte as
+           published.
+         - **Fixed on the way:**
+           - the schedule diff matched types by kind and size alone, so the 42 in entry door and
+             the 42 in mechanical-room door collided ("D2 renumbered D5"); it now matches on the
+             unit named in the description too;
+           - Addendum 1's wording rebuilt a type key by hand and broke when keys grew; it counts
+             by mark now.
+         - **Review before commit fixed:** every window with no hazard carried "2406.4.5, wet
+           areas, not assessed: the model has no rooms" into the IFC, false once the rooms are in.
+           With rooms, `safety_glazing` now assesses 2406.4.5 (glazing in a bath's walls: none),
+           and the units say so. The base bid set and Addendum 1 still regenerate as published.
+         - **Our choice, for Jon:** the annex is inside the thermal envelope, since its pipes
+           mustn't freeze, so its doors take the exterior door's U-factor.
+         - **Open for step 6 (fire):** where the annex abuts the stair, the stair's back wall
+           stops being an exterior wall. It must carry the enclosure's 1-hour rating (IBC 2021
+           1023.2) there; the model rates the stair's side walls only.
+         - **Tests:** `tests/test_walkup_systems.py` gains 5 (20 in all):
+           - the checks pass;
+           - marks and type GlobalIds kept;
+           - the diff is the addendum;
+           - an escape window left unmarked fails;
+           - a window put in a bath's wall is found under 2406.4.5.
+
+           `test_bidset.py`'s type-key test now names the escape element. The suite: 291 pass.
+       - **To do:** publish Addendum 2 in the plan room (the website) if Jon wants it.
     2. **Loads, room by room:** heat (the existing model split by room), cooling, ventilation,
        water demand, drainage and electrical load.
     3. **Heating, cooling and ventilation:** radiant floor loops on the loop's ~30 C water, a

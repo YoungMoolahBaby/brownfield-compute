@@ -159,3 +159,67 @@ def test_the_annex_needs_its_doors(apt, base, P):
     bad = copy.deepcopy(apt)
     bad["rooms"]["annex"]["doors"] = bad["rooms"]["annex"]["doors"][:1]
     assert any("own outside door" in x for x in _failing(bad, base, P))
+
+
+# ---- Addendum 2 in the bid set (IFC), against Addendum 1 ----
+
+@pytest.fixture(scope="module")
+def run():
+    return systems.ifc_run(load_params())
+
+
+def test_addendum_2_ifc_checks_pass(run):
+    failing = [label for label, ok, _ in run["checks"] + run["second"] if not ok]
+    assert failing == []
+    if run["second_status"] is None:  # the second reader ran
+        assert any(label.startswith("web-ifc") for label, _, _ in run["second"])
+
+
+def test_marks_and_type_ids_keep_from_addendum_1(run):
+    import ifcopenshell
+
+    f0, f1 = ifcopenshell.open(str(run["written"][1])), ifcopenshell.open(str(run["written"][2]))
+    t0 = {t.Name: t.GlobalId for t in f0.by_type("IfcTypeProduct") if t.is_a() in ("IfcWindowType", "IfcDoorType")}
+    t1 = {t.Name: t.GlobalId for t in f1.by_type("IfcTypeProduct") if t.is_a() in ("IfcWindowType", "IfcDoorType")}
+    assert sorted(t0) == ["D1", "D2", "D3", "W1", "W2"]
+    assert all(t1[m] == g for m, g in t0.items())  # same marks, same GlobalIds
+    assert sorted(set(t1) - set(t0)) == ["D4", "D5", "W3"]
+
+
+def test_the_diff_is_the_addendum(run):
+    d = run["diff"]
+    assert len(d["added"]) == 7 * 12 + 6 + 2  # walls a flat, the annex's six parts, its two doors
+    assert len(d["deleted"]) == 1 and d["openings_resized"] == []
+    assert run["removed"] == ["1-stair/back/0"] and run["hazards"] == (14, 13)
+    sched = run["schedule_changes"]
+    assert {"W3: new (24 windows)", "D4: new (1 door)", "D5: new (1 door)"} <= set(sched)
+    assert not any("renumbered" in x for x in sched)
+    ids = run["ids_changes"]
+    assert "escape window (yes or no) (window): 0 of 101 -> 100 of 100" in ids
+    assert "operation (window): 0 of 101 -> 24 of 100" in ids
+
+
+def test_an_unmarked_escape_window_fails(apt, P):
+    import ifcopenshell
+    from brownfield import bidset
+    from brownfield.params import load_params as lp
+
+    f = ifcopenshell.open(str(systems.IFC_OUT / "apartment.ifc"))
+    esc = bidset.escape_windows(apt, lp())
+    assert [ok for label, ok, _ in bidset._room_checks(f, apt, esc) if "escape window" in label] == [True]
+    one = dict(list(esc.items())[1:])  # a bedroom whose window the check no longer expects
+    assert [ok for label, ok, _ in bidset._room_checks(f, apt, one) if "escape window" in label] == [False]
+
+
+def test_wet_areas_are_assessed_with_rooms(apt, base):
+    # 2406.4.5: with rooms, glazing in a bath's walls is a hazardous location. The baths have none,
+    # so nothing changes; a window put in a bath's wall must be found.
+    from brownfield import bidset
+    from brownfield.params import load_params as lp
+
+    p = lp()
+    assert bidset.safety_glazing(apt, p).keys() == bidset.safety_glazing(base, p).keys() - {"1-stair/back/0"}
+    assert bidset.no_hazard(apt) == bidset.NO_HAZARD_ROOMS and bidset.no_hazard(base) == bidset.NO_HAZARD
+    bad = copy.deepcopy(apt)
+    _room(bad, "2-front-left/bath")["openings"] = ["2-front-left/front/2"]
+    assert "2406.4.5" in bidset.safety_glazing(bad, p)["2-front-left/front/2"]

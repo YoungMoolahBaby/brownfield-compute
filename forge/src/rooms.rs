@@ -412,11 +412,17 @@ impl Layout {
         let annex: Vec<_> = self.annex_parts(b).iter().map(part).collect();
         let doors: Vec<_> = self.annex_doors(b).iter().map(|d| {
             let out = d.face.outward();
+            // The leaf as the building's doors are drawn: a 45 mm slab at the middle of the wall.
+            let (mut plo, mut phi) = (d.lo, d.hi);
+            let (axis, along) = if matches!(d.face, Face::Left | Face::Right) { (1, (d.lo.x + d.hi.x) / 2.0) } else { (0, (d.lo.y + d.hi.y) / 2.0) };
+            let mid = (d.lo[axis] + d.hi[axis]) / 2.0;
+            plo[axis] = mid - 22.5;
+            phi[axis] = mid + 22.5;
             json!({
                 "id": d.id, "kind": "service_door", "glazed": false, "storey": 1, "room": d.room, "face": d.face.name(),
-                "wall": d.wall, "index": 0, "width_m": r6(d.width), "height_m": r6(d.height),
+                "wall": d.wall, "index": 0, "width_m": r6(d.width), "height_m": r6(d.height), "along_m": r6(along),
                 "sill_m": 0.0, "sill_above_floor_m": 0.0, "lo_m": m(d.lo), "hi_m": m(d.hi),
-                "outward": m(out * 1e3), "swing": "out",
+                "panel_lo_m": m(plo), "panel_hi_m": m(phi), "outward": m(out * 1e3), "swing": "out",
             })
         }).collect();
         json!({
