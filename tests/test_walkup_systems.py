@@ -347,14 +347,14 @@ def test_addendum_4_glass_lets_the_12k_serve(apt4, apt3, P):
 
 
 def test_the_published_frame_is_forges():
-    # The framing model on the plan room (D29): every member of forge's frame on Addendum 3's
-    # building once, each where forge has it, schema valid; and the manifest says so.
+    # The framing model on the plan room (D29), Addendum 5's completed frame (D28 step 7e): every
+    # member of forge's frame once, each where forge has it, schema valid; and the manifest says so.
     import json
 
     from brownfield import framingifc
 
-    frame = framingifc.load("addendum-3")
-    path = systems.PUBLISHED / "framing-addendum-3.ifc"
+    frame = framingifc.load("addendum-5")
+    path = systems.PUBLISHED / "framing-addendum-5.ifc"
     assert [label for label, ok, _ in framingifc.check(path, frame) if not ok] == []
     m = json.loads((systems.PUBLISHED / "addenda.json").read_text(encoding="utf-8"))
     assert m["framing"]["members"] == len(frame["members"]) and m["framing"]["model"] == path.name

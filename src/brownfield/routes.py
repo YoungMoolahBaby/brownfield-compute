@@ -203,6 +203,11 @@ def requests(apt: dict, p: dict) -> dict:
         b = pinned[id_]
         return [_box([b["lo"][0], b["lo"][1], b["lo"][2] if z0 is None else z0], [b["hi"][0], b["hi"][1], b["hi"][2] if z1 is None else z1])]
 
+    # The roof hatch's fixed ladder (Addendum 5), up through the top hall's ceiling: the stair's
+    # sprinkler arm there keeps clear of it.
+    if apt.get("roof_ladder"):
+        block("stair/roof-ladder", apt["roof_ladder"]["lo_m"], apt["roof_ladder"]["hi_m"])
+
     # -- Pinned: 7a's vertical services, from under the slab up their column.
     top_tee = {}
     for col, v in vs.items():
@@ -633,7 +638,12 @@ def requests(apt: dict, p: dict) -> dict:
         y = own["y"] if own else c["panel_y"]
         cd = conduit_for([fd[n]["size"]] * 3 + [fd[n]["egc"]], p)
         add(f"electrical/feeder/{n}", "feeder", cd["od_in"], meter, [("riser", [c["x"], y, z_feed])], slab_zone(apt, p) + [outside],
-            attach=["electrical/feeder/*", f"{column(n)}/feeder/{n}"], voxel=v2, flat=n, role="feeder", square_ft=fd[n]["ft"])
+            # It may touch the other feeders and its column's feeder risers: one trade's conduits, laid side by
+            # side where they stub up into the partition.
+            attach=["electrical/feeder/*", f"{column(n)}/feeder/*"], voxel=v2, flat=n, role="feeder", square_ft=fd[n]["ft"],
+            # Straight at any angle (forge's `pull`): under the slab nothing holds a conduit to the
+            # lattice, and NEC 352.26 counts its bends' degrees (D28 step 7e, Jon 2026-11-22).
+            straight=True)
 
     # -- Each flat's branch circuits: up the panel's bay into the joists, to the far point of the rooms
     # each serves.

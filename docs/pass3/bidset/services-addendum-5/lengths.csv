@@ -33,5 +33,5 @@ Sprinklers (NFPA 13R),Sprinklers,IfcPipeSegment,"CPVC sprinkler pipe, SDR 13.5 (
 Feeders and branch circuits,Wiring,IfcCableSegment,"NM-B cable, copper",12 AWG,138,1200.19,763,0,2074,3937.6
 Feeders and branch circuits,Wiring,IfcCableSegment,"NM-B cable, copper",14 AWG,66,420.78,399,0,618,1380.5
 Feeders and branch circuits,Wiring,IfcCableSegment,"NM-B cable, copper",8 AWG,12,99.63,70,0,182,326.9
-Feeders and branch circuits,Wiring,IfcCableCarrierSegment,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",1,11,162.02,26,0,14,531.6
-Feeders and branch circuits,Wiring,IfcCableCarrierSegment,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",1-1/4,9,149.58,25,0,10,490.8
+Feeders and branch circuits,Wiring,IfcCableCarrierSegment,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",1,14,191.98,30,0,18,629.8
+Feeders and branch circuits,Wiring,IfcCableCarrierSegment,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",1-1/4,6,89.02,15,0,6,292.1

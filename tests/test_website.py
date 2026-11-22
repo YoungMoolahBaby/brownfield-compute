@@ -86,8 +86,8 @@ def test_every_file_the_viewer_loads_or_links_is_in_the_site(site):
 
 @ready
 def test_the_plan_room_counts_are_the_models(site):
-    # As of the latest addendum (Addendum 4), the documents as they stand.
-    apt, _ = bidset.load("apartment-addendum-4.json")
+    # As of the latest addendum (Addendum 5), the documents as they stand.
+    apt, _ = bidset.load("apartment-addendum-5.json")
     p = load_params()
     facts = {label: int(n.replace(",", "")) for n, label in
              re.findall(r'<div class="fact"><b>([\d,]+)</b><span>([^<]+)</span>', _page(site))}
@@ -99,7 +99,7 @@ def test_the_plan_room_counts_are_the_models(site):
     assert facts[f"windows, in {w_types} types"] == len(windows)
     assert facts[f"doors, in {d_types} types"] == len(apt["openings"]) - len(windows)
     assert facts["openings the code calls for safety glass in"] == len(hazards)
-    assert facts["addenda; counts as of Addendum 4"] == 4
+    assert facts["addenda; counts as of Addendum 5"] == 5
 
 
 @ready
@@ -133,18 +133,20 @@ def test_the_addenda_are_the_manifests_and_the_runs(site):
     raw2 = systems.load()
     assert m["addenda"][2]["items"] == systems.rfi_002_words(raw2, load_params())["items"]
     assert m["addenda"][3]["items"] == systems.addendum_4_words(load_params())["items"]
-    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in (1, 2, 3, 4)]
+    raw5 = systems.load(systems.OUT_DIR / "pass3" / "apartment-addendum-5.json")
+    assert m["addenda"][4]["items"] == systems.addendum_5_words(load_params(), raw5)["items"]
+    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in (1, 2, 3, 4, 5)]
 
 
 @ready
 def test_the_documents_are_in_folders(site):
     page = _page(site)
     for folder in ("01 Bid documents", "02 Addenda", "03 RFIs", "04 Framing model", "Drawings", "Model", "Schedules",
-                   "Requirements", "Addendum 01:", "Addendum 02:", "Addendum 03:", "Addendum 04:"):
+                   "Requirements", "Addendum 01:", "Addendum 02:", "Addendum 03:", "Addendum 04:", "Addendum 05:"):
         assert f'<span class="fold">{folder}' in page, folder
     # Every published bid document and addendum file is listed once at least.
     for path in ("bidset.pdf", "apartment.ifc", "drawings/schedule.csv", "bidset.ids", "rfi-001.bcf", "rfi-002.bcf",
-                 "apartment-addendum-3.ifc", "framing-addendum-3.ifc"):
+                 "apartment-addendum-3.ifc", "apartment-addendum-5.ifc", "framing-addendum-5.ifc"):
         assert f'href="files/{path}"' in page, path
     m = json.loads((site / "models" / "addenda.json").read_text(encoding="utf-8"))
     if m.get("services"):  # the services model and every schedule read back from it

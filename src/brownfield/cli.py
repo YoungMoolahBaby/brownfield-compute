@@ -642,6 +642,7 @@ def cmd_systems(args) -> int:
     ok = True
     latest = None
     systems.write_addendum_4(P)  # Addendum 4 draws nothing new: its model is Addendum 3's plus the glass
+    systems.write_addendum_5(P)  # Addendum 5: Addendum 4's plus the fire ratings and the roof hatch (pass 3g step 7e)
     for revision, (before, mine) in systems.REVISIONS.items():
         path = OUT_DIR / "pass3" / mine
         if not path.exists():

@@ -177,14 +177,14 @@ def tree(m: dict) -> str:
     if f:
         last = next(a for a in m["addenda"] if f"addendum-{a['number']}" == f["revision"])
         label = f"The wood frame, IFC4: {f['members']:,} members ({f['note']})"
-        out.append(f'<details class="folder top"><summary><span class="fold">04 Framing model</span><span class="n">reference</span></summary>'
+        out.append(f'<details class="folder top"><summary><span class="fold">04 Framing model</span><span class="n">{html.escape(f.get("status", "reference"))}</span></summary>'
                    f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
                    f'{_row(f["model"], label, last["issued"])}</table></details>')
     s = m.get("services")
     if s:
         rows = [_row(s["model"], f"The services, IFC4: {s['elements']:,} elements, routed through {s['frame']} ({s['note']})", s["issued"])]
         rows += [_row(x["path"], x["label"], s["issued"]) for x in s["files"]]
-        out.append(f'<details class="folder top"><summary><span class="fold">05 Services model</span><span class="n">preliminary</span></summary>'
+        out.append(f'<details class="folder top"><summary><span class="fold">05 Services model</span><span class="n">{html.escape(s.get("status", "preliminary"))}</span></summary>'
                    f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
                    f'{"".join(rows)}</table></details>')
     return "".join(out)

@@ -1440,4 +1440,41 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     to horizontal only for a fixture drain of 2 in. or smaller (or a short sweep 3 in. and up); a
     long sweep, a wye or a combination wye and eighth bend in every direction; a sanitary tee only
     horizontal to vertical.
+- **Step 7e, Addendum 5 (2026-11-22).** Under `data/raw/pass3g/` (gitignored).
+  - **The floor/ceiling between flats,** from AWC's DCA 3 (February 2024, saved
+    `firestop/ul_l500/AWC_DCA3_20240312.pdf`, encrypted: read with pypdf and the `cryptography`
+    package), each assembly's own page:
+    - **WIJ-1.1** (p. 21): hat-shaped furring channels (resilient channels "may be used in lieu"),
+      "Minimum 1-1/2-inch-thick mineral wool batt insulation - 2.5 pcf", I-joists with "Minimum
+      I-joist flange depth: 1-1/2 inches Minimum I-joist flange area: 5.25 inches2 Minimum I-joist
+      web thickness: 3/8 inch", 5/8 in. Type C;
+    - **WIJ-1.2** (p. 22): the same on resilient channels, its web at least 7/16 in.;
+    - **WIJ-1.3** (p. 23), which Addendum 5 specifies: "Minimum 2-inch-thick mineral wool batt
+      insulation - 3.5 pcf (nominal), supported by setting strip edges"; "Minimum I-joist flange
+      depth: 1-5/16 inches Minimum I-joist flange area: 2.25 inches2 Minimum I-joist web thickness:
+      3/8 inch Minimum I-joist depth: 9-1/4 inches"; 1x4 setting strips; resilient channels 16 in.
+      o.c.; "Minimum 5/8-inch-thick Type C gypsum wallboard ... Fasteners spaced 7 inches on
+      center"; "Minimum 23/32-inch-thick tongue-and-groove wood sheathing"; tested at National
+      Gypsum, 2001-09-28, witnessed by UL (NC3369). Its sound, AWC's TR15 estimates: joists 16 in.
+      o.c. with 1 in. of gypsum concrete, STC 57 and IIC 46 under cushioned vinyl, 57 and 59 under
+      carpet and pad.
+    - The PRI-60 (pass 3b's `frame.json`): flanges 38.1 x 58.7 mm (1-1/2 x 2-5/16 in., 3.47 in.2),
+      web 9.5 mm (3/8 in.). It meets WIJ-1.3, not WIJ-1.1. The repo had named WIJ-1.1 with 5/8 in.
+      Type X (`systems.routing.ceiling_assembly_in`); `village.yaml` had it right (Type C, mineral
+      wool).
+  - **No UL L500 design matches** (a research agent; its copies in `firestop/ul_l500/`, from PAC
+    International's reprints of the directory, 2025, and a 2014 archive of UL's): L589 and L570
+    (I-joists to ICC-ES ESR-1153, Weyerhaeuser's TJI, chords "minimum 1-3/8 in. deep by 2.3 in.
+    wide"; "Two layers of 1/2 in. or 5/8 in." on resilient channels; listed toppings), L518, L547,
+    L583, L591 and the M-series all one maker's joists and two layers; L530 (2014 copy) one layer
+    of Type C on hat channels and Simpson CSC clips with 1 in. Thermafiber FireSpan 90, TJI only.
+    USG (IG1995, 2021): "I-Joists require two layers of 5/8 in. (16 mm) Type X wallboard to achieve
+    a one hour UL fire rating." Not checked against UL Product iQ (it needs a login).
+  - **The roof hatch:** the 2021 IECC (`dl/upc/iecc_re4.txt`): R402.3.4, "One side-hinged opaque
+    door assembly not greater than 24 square feet (2.22 m2) in area shall be exempt from the
+    U-factor requirement in Section R402.1.2"; Table R405.4.2(1)'s reference house takes opaque
+    doors' "U-factor: same as fenestration as specified in Table R402.1.2". IMC 2021 306.5
+    (`step7/imc/imc3_pa.txt`): "There shall be not less than 18 inches (457 mm) between rails";
+    rungs "not to exceed 14 inches (356 mm) on center"; side rails "not less than 30 inches (762
+    mm)" above the roof; a 30 by 30 in. clear landing at its foot.
 

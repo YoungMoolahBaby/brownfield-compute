@@ -60,7 +60,7 @@ IN = 0.0254
 HEADER_TIME = "2026-11-19T00:00:00"  # D27's date: the IFC header's time stamp, fixed (see write_ifc)
 
 # The order types are numbered in (W1..., then D1, D2...).
-KINDS = ("window", "patio_door", "entry_door", "flat_door", "service_door")
+KINDS = ("window", "patio_door", "entry_door", "flat_door", "service_door", "roof_hatch")
 # The parts that are walls (IfcWall), as forge names their kinds; the rest of `parts` are slabs.
 WALL_KINDS = ("exterior_wall", "party_wall", "stair_partition", "partition", "plumbing_wall", "annex_wall",
               "annex_partition")
@@ -74,6 +74,7 @@ MASTERFORMAT = {
     "entry_door": ("08 10 00", "Doors and Frames"),
     "flat_door": ("08 10 00", "Doors and Frames"),
     "service_door": ("08 10 00", "Doors and Frames"),
+    "roof_hatch": ("07 72 00", "Roof Accessories"),
 }
 # Written into each reference, so the file says these are our choice, not a specifier's.
 MASTERFORMAT_WHY = {
@@ -83,13 +84,17 @@ MASTERFORMAT_WHY = {
     "flat_door": "judgement (brownfield-compute pass 3f): level 2 until the door and frame material are chosen "
                  "(a fire door assembly, as Table 716.1(2) asks)",
     "service_door": "judgement (brownfield-compute pass 3g): level 2 until the door and frame material are chosen",
+    "roof_hatch": "judgement (brownfield-compute pass 3g step 7e): a roof accessory, level 2 until the hatch is chosen",
 }
 # The U-factor each kind takes from params/pass3.yaml: glazed units are fenestration.
 # The annex (pass 3g) is inside the thermal envelope (its pipes must not freeze), so its doors are
 # exterior doors as the entry door is.
 U_PARAM = {"window": "pass3.envelope.window_u", "patio_door": "pass3.envelope.window_u",
            "entry_door": "pass3.envelope.door_u", "flat_door": None,  # a flat door is inside the envelope
-           "service_door": "pass3.envelope.door_u"}
+           "service_door": "pass3.envelope.door_u",
+           # The roof hatch (Addendum 5) is an opaque door in the envelope: not a side-hinged one,
+           # so 2021 IECC R402.3.4's exemption doesn't reach it.
+           "roof_hatch": "pass3.envelope.door_u"}
 
 
 def u_param(apt: dict, kind: str) -> str | None:
@@ -101,7 +106,7 @@ def u_param(apt: dict, kind: str) -> str | None:
 
 
 NAMES = {"window": "Window", "patio_door": "Patio door", "entry_door": "Entry door", "flat_door": "Flat entry door",
-         "service_door": "Service room door"}
+         "service_door": "Service room door", "roof_hatch": "Roof hatch"}
 # The flat doors open into the stair, the one exit, so each is a fire door assembly (IBC 2018
 # Table 716.1(2)); the stair walls are its enclosure (1023.2).
 FIRE_DOOR = "bidset.code.exit_stair.door_rating_h"
@@ -237,6 +242,8 @@ def mark_of(o: dict, marks: dict, hazards=(), escapes=()) -> str:
 def flat_label(o: dict) -> str:
     """What BF_Opening calls a unit's place: its flat, the annex (a service room door) or its
     storey's stair."""
+    if o["kind"] == "roof_hatch":
+        return "roof"
     return o["flat"] or ("annex" if o["kind"] == "service_door" else f"{o['storey']}-stair")
 
 
@@ -288,6 +295,15 @@ def _boxes_rep(f, ctx, origin, boxes):
         items.append(f.createIfcExtrudedAreaSolid(
             prof, f.createIfcAxis2Placement3D(f.createIfcCartesianPoint(at), None, None), f.createIfcDirection((0.0, 0.0, 1.0)), dz))
     return f.createIfcShapeRepresentation(ctx, "Body", "SweptSolid", items)
+
+
+def _rated(f, e, ps, part: dict) -> None:
+    """A wall's or a floor's fire rating where the model gives one (Addendum 5), and why, in BF_Fire."""
+    if not part.get("fire_rating_h"):
+        return
+    pset.edit_pset(f, pset=ps, properties={"FireRating": f"{part['fire_rating_h']:g} h"})
+    more = pset.add_pset(f, product=e, name="BF_Fire")
+    pset.edit_pset(f, pset=more, properties={"Why": part["fire_why"]})
 
 
 def _place_boxes(f, ctx, product, boxes) -> None:
@@ -470,6 +486,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             ps = pset.add_pset(f, product=e, name="Pset_WallCommon")
             pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] == "annex_wall",
                                                    "LoadBearing": part["id"] in ("annex-left", "annex-right")})
+            _rated(f, e, ps, part)
             if to_code and part["kind"] == "annex_wall":  # inside the envelope, so to code (Addendum 3)
                 u = params["systems.addendum_3.wall_u"]
                 pset.edit_pset(f, pset=ps, properties={"ThermalTransmittance": u.value * BTU_FT2})
@@ -495,6 +512,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             pset.edit_pset(f, pset=ps, properties=props)
             if prefix == "stair":
                 _note_source(ps, "FireRating", params[ENCLOSURE])
+            _rated(f, e, ps, part)
             if to_code and external:
                 _note_source(ps, "ThermalTransmittance", params["systems.addendum_3.wall_u"])
             walls[part["id"]] = e
@@ -503,6 +521,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             ps = pset.add_pset(f, product=e, name="Pset_SlabCommon")
             pset.edit_pset(f, pset=ps, properties={"IsExternal": part["kind"] in ("ground_slab", "roof", "annex_slab", "annex_roof"),
                                                    "LoadBearing": True})
+            _rated(f, e, ps, part)  # Addendum 5: the floors between flats
             if to_code and part["kind"] in ("ground_slab", "annex_slab"):  # Addendum 3: the slab's insulation
                 a = "systems.addendum_3."
                 edge = (f"R-{params[a + 'slab_edge_r'].value:g} slab-edge insulation to "
@@ -515,6 +534,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             if part["kind"] == "landing":  # part of its storey's IfcStair (below), placed there
                 landings[part["id"]] = e
                 continue
+            walls[part["id"]] = e  # a slab may host an opening too (the roof hatch, Addendum 5)
         spatial.assign_container(f, products=[e], relating_structure=storeys[k])
         _place_box(f, body, e, part["lo_m"], part["hi_m"])
 
@@ -549,6 +569,12 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
         if part["storey"] not in stair_storeys:
             spatial.assign_container(f, products=[e], relating_structure=storeys[part["storey"]])
             _place_box(f, body, e, part["lo_m"], part["hi_m"])
+    if apt.get("roof_ladder"):  # Addendum 5: the roof hatch's fixed ladder (IFC4 has no ladder of its own)
+        lad = apt["roof_ladder"]
+        e = _make(f, "IfcStair", f"part/{lad['id']}", lad["id"], PredefinedType="USERDEFINED", ObjectType="fixed ladder",
+                  Description=f"a fixed steel ladder to the roof hatch, against the top hall's side wall: {lad['why']}")
+        spatial.assign_container(f, products=[e], relating_structure=storeys[lad["storey"]])
+        _place_box(f, body, e, lad["lo_m"], lad["hi_m"])
     for g in (pt for pt in st["parts"] if pt["kind"] == "guard"):
         e = _make(f, "IfcRailing", f"part/{g['id']}", g["id"], PredefinedType="GUARDRAIL",
                   Description=f"a solid guard, {(g['hi_m'][2] - g['lo_m'][2]) / IN:g} in. high, where the top floor's "
@@ -573,7 +599,7 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
         secs = sorted(cited[(kind, w, h, safe, esc)])
         why = (f"{', '.join(secs[:-1])} and {secs[-1]} call" if len(secs) > 1 else f"{secs[0]} calls") if secs else ""
         cls = "IfcWindowType" if kind == "window" else "IfcDoorType"
-        attrs = {"PredefinedType": "WINDOW" if kind == "window" else "DOOR"}
+        attrs = {"PredefinedType": "WINDOW" if kind == "window" else "TRAPDOOR" if kind == "roof_hatch" else "DOOR"}
         # Keyed on what the type is, not its mark: marks are numbered by position, so a type
         # withdrawn in an addendum would rename the ones after it.
         e = _make(f, cls, f"type/{kind}/{round(w * 1e6)}/{round(h * 1e6)}/{int(safe)}" + ("/escape" if esc else ""), mark, **attrs,
@@ -619,14 +645,14 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
 
     # Every opening: the void in its wall, and the window or door that fills it.
     for o in apt["openings"]:
-        axes = _face_axes(o["outward"])
+        axes = np.eye(3) if o["kind"] == "roof_hatch" else _face_axes(o["outward"])
         mark = mark_of(o, marks, hazards, escapes)
         void = _make(f, "IfcOpeningElement", f"opening/{o['id']}", o["id"], PredefinedType="OPENING")
         feature.add_feature(f, feature=void, element=walls[o["wall"]])
         _place_box(f, body, void, o["lo_m"], o["hi_m"], axes)
         window = o["kind"] == "window"
         e = _make(f, "IfcWindow" if window else "IfcDoor", f"element/{o['id']}", o["id"], Tag=o["id"],
-                  PredefinedType="WINDOW" if window else "DOOR",
+                  PredefinedType="WINDOW" if window else "TRAPDOOR" if o["kind"] == "roof_hatch" else "DOOR",
                   OverallWidth=o["width_m"], OverallHeight=o["height_m"])
         spatial.assign_container(f, products=[e], relating_structure=storeys[o["storey"]])
         feature.add_filling(f, opening=void, element=e)
@@ -641,6 +667,11 @@ def write_ifc(apt: dict, frame: dict, params: dict, path: Path, spec: dict | Non
             # Our reading of IBC 2018 2406.4 from the geometry (`safety_glazing`).
             "SafetyGlazingRequired": o["id"] in hazards,
             "SafetyGlazingReason": hazards.get(o["id"], no_hazard(apt))})
+        if o.get("fire_rating_h"):  # Addendum 5: an annex door near the stair, a fire door assembly
+            ps = pset.add_pset(f, product=e, name="Pset_DoorCommon")
+            pset.edit_pset(f, pset=ps, properties={"FireRating": f"{o['fire_rating_h']:g} h", "SelfClosing": True})
+            more = pset.add_pset(f, product=e, name="BF_Fire")
+            pset.edit_pset(f, pset=more, properties={"Why": o["fire_why"]})
         if window and "rooms" in apt:
             # Addendum 2 on: every window says whether it is an escape window, and whose.
             ps = pset.add_pset(f, product=e, name="Pset_WindowCommon")
@@ -1855,7 +1886,7 @@ def check_webifc(path: Path, apt: dict, params: dict) -> list[tuple[str, bool, s
             "IFCOPENINGELEMENT": set(ops),
             "IFCWINDOW": {n for n, o in ops.items() if o["kind"] == "window"},
             "IFCDOOR": {n for n, o in ops.items() if o["kind"] != "window"},
-            "IFCSTAIR": {f"stair-{k}" for k in {fl["storey"] for fl in st["flights"]}},
+            "IFCSTAIR": {f"stair-{k}" for k in {fl["storey"] for fl in st["flights"]}} | ({apt["roof_ladder"]["id"]} if apt.get("roof_ladder") else set()),
             "IFCSTAIRFLIGHT": {fl["id"] for fl in st["flights"]},
             "IFCRAILING": {r["id"] for r in st["rails"]} | {pt["id"] for pt in st["parts"] if pt["kind"] == "guard"}}
     bad = {c: sorted(set(e["name"] for e in by[c]) ^ want[c]) for c in want}

@@ -438,6 +438,9 @@ struct Request {
     /// Terminals routed before the rest, in this order: those that failed in an earlier pass (`run`),
     /// so a branch with little room isn't shut out by its own tree's earlier branches.
     first: Vec<String>,
+    /// Run straight at any angle where nothing holds it to the lattice (`pull`): a feeder's conduit
+    /// under the slab, whose bends NEC 352.26 counts in degrees (D28 step 7e).
+    straight: bool,
 }
 
 impl Request {
@@ -468,6 +471,7 @@ impl Request {
             slope: v["slope"].as_f64().unwrap_or(0.0),
             flat: v["flat"].as_str().unwrap_or("").to_string(),
             first: vec![],
+            straight: v["straight"].as_bool().unwrap_or(false),
         }
     }
 }
@@ -701,12 +705,22 @@ fn snap(g: &Grid, p: V3, r: usize, max: f64) -> Option<usize> {
 /// fittings). A drain's sloped run goes in pieces of `PIECE_M`, each boxed to its own heights, so
 /// the box doesn't reach over what the run passes above.
 const PIECE_M: f64 = 0.25;
-fn solids_of(owner: &str, pts: &[V3], half: f64) -> Vec<Solid> {
+/// A straight run's diagonal (`Request::straight`) goes in pieces this long: each piece's box is
+/// the pipe's and a few centimetres more, not the diagonal's whole rectangle.
+const DIAG_M: f64 = 0.05;
+fn solids_of(owner: &str, pts: &[V3], half: f64, straight: bool) -> Vec<Solid> {
     let mut out = Vec::new();
     for w in pts.windows(2) {
         let (a, c) = (w[0], w[1]);
         let run = (0..3).max_by(|&i, &j| (c[i] - a[i]).abs().total_cmp(&(c[j] - a[j]).abs())).unwrap();
-        let n = if run != 2 && (c[2] - a[2]).abs() > 1e-9 { ((c[run] - a[run]).abs() / PIECE_M).ceil().max(1.0) as usize } else { 1 };
+        let skew = (0..3).filter(|&i| (c[i] - a[i]).abs() > 1e-9).count() > 1;
+        let n = if straight && skew {
+            (dist(a, c) / DIAG_M).ceil().max(1.0) as usize
+        } else if run != 2 && (c[2] - a[2]).abs() > 1e-9 {
+            ((c[run] - a[run]).abs() / PIECE_M).ceil().max(1.0) as usize
+        } else {
+            1
+        };
         for k in 0..n {
             let (t0, t1) = (k as f64 / n as f64, (k + 1) as f64 / n as f64);
             let p0: V3 = std::array::from_fn(|i| a[i] + (c[i] - a[i]) * t0);
@@ -735,6 +749,116 @@ fn turns(g: &Grid, path: &[usize]) -> Vec<usize> {
         }
     }
     out
+}
+
+/// Whether a pipe of `r` cells' half width can run straight from `a` to `b` (m): every cell within
+/// `r` of the line (sampled every quarter cell) inside the grid, not blocked, and no member's.
+fn sight(g: &Grid, a: V3, b: V3, r: usize) -> bool {
+    let n = ((dist(a, b) / (0.25 * g.h)).ceil() as usize).max(1);
+    for k in 0..=n {
+        let t = k as f64 / n as f64;
+        let mut lo = [0usize; 3];
+        let mut hi = [0usize; 3];
+        for i in 0..3 {
+            let c = ((a[i] + (b[i] - a[i]) * t - g.o[i]) / g.h).floor() as i64;
+            let (l, u) = (c - r as i64, c + r as i64);
+            if l < 0 || u >= g.n[i] as i64 {
+                return false;
+            }
+            lo[i] = l as usize;
+            hi[i] = u as usize;
+        }
+        if (0..4).any(|kk| g.count(kk, lo, hi) > 0) {
+            return false;
+        }
+    }
+    true
+}
+
+/// A level path (cells, from the tree out) pulled straight: the chain of straight runs through
+/// points along it (its corners and every `PULL_STEP`th cell) that turns least in all, a shorter
+/// chain breaking ties. A run may jump between any two points in straight sight (`sight`), or go
+/// on to the next point along the path as searched. A member it crosses (a stem wall's sleeve, a
+/// footing) it crosses as searched: the points `r` + 1 cells before and after are among the
+/// points, so a straight run meets the crossing clear of the member. NEC 352.26 counts a conduit's
+/// bends in degrees: the least turning is what it asks, not the shortest line (2026-11-22: the
+/// farthest point in sight left a feeder a square turn past a footing a 76 degree one avoided).
+/// Returns the kept indices, its ends among them.
+const PULL_STEP: usize = 2;
+fn pull(g: &Grid, path: &[usize], r: usize) -> Vec<usize> {
+    let mut cand: Vec<usize> = turns(g, path);
+    cand.extend((0..path.len()).step_by(PULL_STEP));
+    for k in 1..path.len() {
+        let (was, is) = (g.cls[path[k - 1]] >= BORE, g.cls[path[k]] >= BORE);
+        if !was && is {
+            cand.push(k.saturating_sub(r + 2));
+            cand.push(k - 1);
+        }
+        if was && !is {
+            cand.push(k);
+            cand.push((k + r + 1).min(path.len() - 1));
+        }
+    }
+    cand.sort_unstable();
+    cand.dedup();
+    let n = cand.len();
+    if n < 3 {
+        return cand;
+    }
+    let pts: Vec<V3> = cand.iter().map(|&k| g.centre(g.cell(path[k]))).collect();
+    let dir = |i: usize, j: usize| -> V3 {
+        let d = dist(pts[i], pts[j]).max(1e-12);
+        std::array::from_fn(|k| (pts[j][k] - pts[i][k]) / d)
+    };
+    let turn = |h: usize, i: usize, j: usize| -> f64 {
+        let (u, v) = (dir(h, i), dir(i, j));
+        (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]).clamp(-1.0, 1.0).acos().to_degrees()
+    };
+    const PER_M: f64 = 1e-3; // degrees a metre: length only breaks ties
+    // ok[i][j]: a run may go straight from point i to point j.
+    let mut ok = vec![vec![false; n]; n];
+    for i in 0..n - 1 {
+        ok[i][i + 1] = true;
+        for j in i + 2..n {
+            ok[i][j] = sight(g, pts[i], pts[j], r);
+        }
+    }
+    // best[i][j]: the least turning of a chain from point 0 whose last run is i -> j.
+    let mut best = vec![vec![f64::INFINITY; n]; n];
+    let mut from = vec![vec![usize::MAX; n]; n];
+    for j in 1..n {
+        if ok[0][j] {
+            best[0][j] = PER_M * dist(pts[0], pts[j]);
+        }
+    }
+    for i in 1..n - 1 {
+        for j in i + 1..n {
+            if !ok[i][j] {
+                continue;
+            }
+            for h in 0..i {
+                if best[h][i].is_finite() {
+                    let c = best[h][i] + turn(h, i, j) + PER_M * dist(pts[i], pts[j]);
+                    if c < best[i][j] {
+                        best[i][j] = c;
+                        from[i][j] = h;
+                    }
+                }
+            }
+        }
+    }
+    let last = n - 1;
+    let mut i = (0..last).min_by(|&a, &b| best[a][last].total_cmp(&best[b][last])).unwrap();
+    let mut chain = vec![last];
+    let mut j = last;
+    while i != usize::MAX {
+        chain.push(i);
+        let h = if i == 0 { usize::MAX } else { from[i][j] };
+        j = i;
+        i = h;
+    }
+    chain.reverse();
+    chain.into_iter().map(|k| cand[k]).collect()
 }
 
 /// A polyline's length: each straight run's, end to end (a drain's sloped run along its slope).
@@ -845,7 +969,8 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
                 path.reverse(); // from the tree out to the terminal
                 ran.reverse();
                 let attach = path[0];
-                let pl: Vec<V3> = turns(&g, &path).into_iter().map(|k| at(path[k], ran[k])).collect();
+                let keep = if req.straight && slope == 0.0 { pull(&g, &path, r) } else { turns(&g, &path) };
+                let pl: Vec<V3> = keep.into_iter().map(|k| at(path[k], ran[k])).collect();
                 let mut bores = Vec::new();
                 let mut seen = HashSet::new();
                 for (k, &i0) in path.iter().enumerate() {
@@ -900,7 +1025,7 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
     let mut solids = Vec::new();
     for b in &branches {
         let pts: Vec<V3> = b["points"].as_array().unwrap().iter().map(v3).collect();
-        solids.extend(solids_of(&req.id, &pts, half));
+        solids.extend(solids_of(&req.id, &pts, half, req.straight));
     }
     let total: f64 = branches.iter().map(|b| b["length_m"].as_f64().unwrap()).sum();
     (json!({"id": req.id, "ok": failed.is_empty(), "branches": branches, "failed": failed, "snaps": snaps, "length_m": total,
@@ -1063,7 +1188,7 @@ pub fn debug(root: &std::path::Path, id: &str) -> std::io::Result<()> {
                     }
                 }
                 let pts: Vec<V3> = b["points"].as_array().unwrap().iter().map(v3).collect();
-                routed.extend(solids_of(rid, &pts, half));
+                routed.extend(solids_of(rid, &pts, half, r0["straight"].as_bool().unwrap_or(false)));
             }
         }
     }
@@ -1178,6 +1303,7 @@ pub fn check() -> bool {
     let req = |zones: Vec<(V3, V3)>, a: V3, b: V3| Request {
         id: "check".into(), od: 0.02, clear: 0.0, hole_clear: 0.0, h, root: a, terminals: vec![("t".into(), b)], zones, snap: 0.05,
         attach: HashSet::new(), grade: 0, goals: vec![], blocks: vec![], slope: 0.0, flat: String::new(), first: vec![],
+        straight: false,
     };
     // 1. An empty box: the route is the square length, with at most two bends.
     let (a, b) = ([0.1, 0.1, 0.1], [0.8, 0.7, 0.5]);
@@ -1187,6 +1313,15 @@ pub fn check() -> bool {
     let sq = (b[0] - a[0]).abs() + (b[1] - a[1]).abs() + (b[2] - a[2]).abs();
     say("an empty box routes at its square length with at most two bends", (l - sq).abs() <= 3.0 * h && br["bends"].as_u64().unwrap_or(9) <= 2,
         format!("{l:.3} m against {sq:.3}, {} bends", br["bends"]));
+    // 1b. The same box with the run asked straight (a feeder's conduit under the slab): one line,
+    // its length the straight distance between its cells, no bend.
+    let (rec, sol, _) = route(&Request { straight: true, ..req(vec![([0.0; 3], [1.0, 1.0, 0.6])], a, b) }, &empty, &rules, &[], &[], &[]);
+    let br = &rec["branches"][0];
+    let l = br["length_m"].as_f64().unwrap_or(0.0);
+    let line = dist(a, b);
+    let widest = sol.iter().map(|s| (0..3).map(|i| s.hi[i] - s.lo[i]).fold(0.0, f64::max)).fold(0.0, f64::max);
+    say("asked straight, an empty box routes as one line, boxed in short pieces", (l - line).abs() <= 2.0 * h && br["bends"].as_u64() == Some(0)
+        && widest <= DIAG_M + 2.0 * 0.01 + 1e-9, format!("{l:.3} m against {line:.3}, {} bends; widest box {widest:.3} m", br["bends"]));
     // 2. A wall with one gap: the detour's closed form.
     let wall = Frame { ids: vec!["wall".into(), "wall".into()], kinds: vec!["x".into(), "x".into()], pieces: vec![
         Piece { member: 0, lo: [0.95, 0.0, 0.0], hi: [1.05, 0.8, 0.1], bore: None, sleeve: false },

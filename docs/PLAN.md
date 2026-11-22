@@ -84,7 +84,15 @@ preliminary. Found:
   plates, 24 CPVC drops);
 - the top storey's ceiling is unrated in Type V-B, so its 188 openings need fireblocking only.
 
-Next: Jon's call on the feeders and the firestop route (below), then 7e, Addendum 5.
+7e done: Addendum 5 issues the services and the completed frame as bid documents, with the
+annex's rated walls and door, the stair's back wall, the roof hatch and its ladder, and the floors
+between flats rated. Found and settled:
+- the feeders run straight under the slab, 335-356° of bends each (NEC 352.26: 360);
+- the floor wasn't WIJ-1.1 (the PRI-60's flanges are too small); it is now AWC's WIJ-1.3, and no
+  UL L500 design matches it, so 345 rated openings take STI's engineering judgment;
+- the floor's IIC under a hard finish (46) is short of 1206.3's 50: flagged for the interiors.
+
+Next: step 8, the installers' round (Jon).
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3610,6 +3618,80 @@ test. Then the township brief's ask.
                apply as tested.
              - Optionally, feed the soffits' sprinklers inside the soffits, which removes the 24
                CPVC drops through the ceiling.
+           - **Taken 2026-11-22** (Jon: "we can go with your recommendations"): see 7e.
+       - **7e done 2026-11-22: Addendum 5, the services, the frame, the stair's enclosure and the
+         roof hatch.** Jon took both recommendations above ("we can go with your
+         recommendations"), and WIJ-1.3 for the floor when the L500 one fell through.
+         - **How:**
+           - **The building** (`systems.addendum_5`, from Addendum 4's model; forge's building
+             draws none of it):
+             - the annex's side walls 1-hour, the mechanical room's door a 45-minute fire door
+               (1023.7);
+             - the ground storey's back wall cut where the stair walls meet it, the middle piece
+               part of the stair's 1-hour enclosure (1023.2);
+             - the floors between flats 1-hour (711.2.4.3), named as AWC's WIJ-1.3;
+             - the roof hatch, an opening in the roof filled by a trapdoor (D6, U-0.20, an opaque
+               door the IECC holds to the fenestration U-factor: R402.3.4 exempts only a
+               side-hinged one), and its fixed ladder.
+             - `bidset.write_ifc` writes the ratings (`Pset_WallCommon`, `Pset_SlabCommon` and
+               `Pset_DoorCommon` FireRating, with why in `BF_Fire`), the hatch and the ladder (IFC4
+               has no ladder: an `IfcStair`, USERDEFINED "fixed ladder").
+           - **The frame and the services** issued as bid documents: `framing-addendum-5.ifc` (4,832
+             members) and `services-addendum-5.ifc`; the firestop, lengths and fittings schedules among
+             the addendum's files, all eleven in the services' folder.
+           - **The feeders straight under the slab** (forge `pull`, `sight`): forge's search, then
+             the chain of straight runs through points along it that turns least, each run in clear
+             sight with the conduit's width or as searched, crossing the stem walls and footings as
+             searched. Requests ask it with `straight` (the feeders only); the conduit may touch the
+             other feeders and its column's feeder risers.
+           - The routes on Addendum 5's model: the roof ladder an obstacle; `data/route_sizes.json`
+             keyed to the new model, so the fire riser and main (2-1/2 in.) and the return main (3/4
+             in.) were asked again and routed at.
+         - **Run (2026-11-22):** forge routed all 430 on its third pass, no clashes, 406 s. Every check
+           of 7a-7d passes (71), Addendum 5's (both readers, a second export byte for byte), and the
+           suite.
+           - The feeders: 335-356° of bends from the meter to a panel (NEC 352.26: 360), 61-114 ft
+             (square 79-130), six a size smaller; the worst outlet's drop 4.60% (5%).
+           - Addendum 5 against Addendum 4: 4 elements added (the hatch, its opening, the ladder,
+             the back wall's middle piece), 9 changed (the rated walls, door and floors; the roof's
+             and the back wall's geometry), one type new (D6). The checklist's "in a wall" reads 27
+             of 28 doors: the hatch is in the roof.
+           - The services model: 3,118 elements; wiring 6,567 ft.
+         - **Found:**
+           - **The floor between flats wasn't WIJ-1.1.** WIJ-1.1 (AWC DCA 3, Feb 2024, p. 21) asks
+             I-joist flanges at least 1-1/2 in. deep and 5.25 in.2; pass 3b's PRI-60's are 1-1/2 x
+             2-5/16 in. (3.47 in.2). It also asks Type C board and mineral wool, where the repo said
+             Type X. WIJ-1.3 (p. 23: flanges 1-5/16 in. and 2.25 in.2, web 3/8 in.) fits the PRI-60:
+             2 in. of 3.5 pcf mineral wool on 1x4 setting strips, resilient channels 16 in. o.c., one
+             layer of 5/8 in. Type C screwed 7 in. o.c., 23/32 in. sheathing. The ceiling's depth
+             doesn't change.
+           - **No UL L500 design matches the floor.** Every I-joist design found names Weyerhaeuser's
+             TJI and two layers of board under resilient channels (L589, L570, L518 and the rest;
+             L530, one layer, is on CSC clips with Thermafiber). Taking L589 would have meant TJI
+             560 joists, a second layer and every route again. So the listed floor firestop systems
+             (tested in L500 floors) take the authority's acceptance or STI's engineering judgment.
+           - **The floor's IIC under a hard finish is short.** AWC's estimates for WIJ-1.3 at 16 in.
+             o.c. with 1 in. of gypsum concrete: STC 57; IIC 59 under carpet and pad, 46 under
+             cushioned vinyl, where IBC 1206.3 asks 50. Flagged in Addendum 5; the finish is chosen
+             with the interiors (Jon).
+           - **The feeders' bends:** the square search left 450-630°. Pulled to the farthest point in
+             sight, 402-437° on four. Turning least, all twelve pass. A turn cost on the search (5 m
+             a turn) changed nothing and was taken out.
+           - **Addendum 4's published model had drifted from the code** (d92622a reworded its
+             building's description after it was issued); the code now reads as issued, so a
+             publish leaves Addenda 1-4 byte for byte.
+         - **What we don't know:**
+           - Whether the authority accepts STI's engineering judgments (345 openings) and the listed
+             floor systems in a WIJ-1.3 floor: a question for the building department before bids.
+           - The feeders' ends: a piece under 0.16 m at either end is counted as that end's sweep
+             (forge lands a run up to two voxels short of its riser). A sweep's own radius may need
+             more room than the riser's bay gives.
+           - The hatch's U-factor and the ladder's make: placeholders and IMC 306.5's minimums.
+           - The PRI-60's flange from pass 3b's schedule (`frame.json`), not a maker's sheet.
+           - The UL directory's current designs and revisions: the L500 designs and the firestop
+             systems were read from makers' reprints and a 2014 archive, not UL Product iQ (it needs a
+             login).
+           - NEC 2020 352.26 and 300.4(A)(1) were read through IAEI and EC&M, not NFPA 70's text.
     8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
        electrician; their comments logged, then taken or answered (Addendum 2).
     9. **The inspection and commissioning plan.**

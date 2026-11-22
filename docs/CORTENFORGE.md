@@ -158,6 +158,15 @@ the end collects the features this project wanted, with what we built instead.
     its slope puts it, and a branch joining only where the trunk has fallen as far;
   - order: sequential routing depends on it, and a run that fails is moved and all rerouted.
   Instead: all of that in `forge/src/routing.rs` (about 1,250 lines). See Suggestions.
+- **missing** (2026-11-22, pass 3g step 7e, forge/src/routing.rs `sight`, `pull`): a straight run at
+  any angle needs a line of sight with the pipe's width: every voxel within its half width of the
+  line free. `VoxelGrid`'s raycast (cortenforge-spatial-0.9.0) follows a thin ray. Instead: `sight`
+  samples the line every quarter voxel and checks the pipe's cube on our summed-volume tables;
+  `pull` takes the chain of straight runs through points along a searched path that turns least
+  in all (a small dynamic program over the points in sight of each other), keeping a member's
+  crossing as searched (the feeders' conduit under the slab, whose bends NEC 352.26 counts in
+  degrees). Pulling to the farthest point in sight, the usual string-pulling, left a feeder a
+  square turn past a footing. See Suggestions.
 
 ## Expected gaps (scoping, not yet hit in code)
 
@@ -185,6 +194,10 @@ Nice-to-haves for CortenForge, with what this project built instead.
   search on it: A* with costs for bends and for crossing members, crossings allowed along one axis
   only, multi-terminal trees, grade constraints, and rip-up and reroute. Building services, cable
   harnesses and tendons are all this problem. Instead: `forge/src/routing.rs` (see cf-spatial).
+  Also any-angle paths (2026-11-22, step 7e): a line of sight with a swept width, and paths that
+  turn least as well as shortest (Theta* and string-pulling shorten; a conduit's code counts its
+  bends in degrees). A conduit, a duct in an open plenum or a cable in a tray needn't keep to the
+  lattice. Instead: `sight` and `pull` in `forge/src/routing.rs`.
 
 - **Building physics** (2026-11-15): heat transfer through assemblies and a room-level thermal
   network (RC model), coolant and district heat loops, heat pumps. Instead: an hourly energy

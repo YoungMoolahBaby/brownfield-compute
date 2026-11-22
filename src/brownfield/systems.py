@@ -121,7 +121,7 @@ def _covered(rooms: list[dict], walls: list[dict]) -> float:
 def check(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
     """The rooms against the code, after the revision's own check against the one before it
     (`base`): Addendum 2 against Addendum 1, 3 against 2, 4 against 3, by `apt`'s revision."""
-    head = {"addendum-3": check_addendum_3, "addendum-4": check_addendum_4}.get(
+    head = {"addendum-3": check_addendum_3, "addendum-4": check_addendum_4, "addendum-5": check_addendum_5}.get(
         apt.get("revision"), lambda a, b, _: check_addendum_2(a, b))(apt, base, P)
     return head + room_checks(apt, P)
 
@@ -172,7 +172,7 @@ def addendum_4(apt3: dict, P: dict) -> dict:
     out["revision"] = "addendum-4"
     out["glass_shgc"] = P["systems.addendum_4.shgc_max"]
     out["glass_u"] = P["systems.addendum_4.window_u_max"]
-    out["source"] = apt3.get("source", "") + "; Addendum 4: the glass (brownfield systems)"
+    out["source"] = apt3.get("source", "") + "; Addendum 4: the glass's SHGC (brownfield systems)"  # as issued (ISSUED[4])
     return out
 
 
@@ -186,13 +186,130 @@ def write_addendum_4(P: dict) -> Path | None:
     return path
 
 
+def addendum_5(apt4: dict, P: dict) -> dict:
+    """Addendum 5's building (pass 3g step 7e): Addendum 4's with step 6's fire items and the roof
+    hatch, which forge's building doesn't draw, so they are made here (the frame's hatch opening is
+    forge's, `framing-json addendum-5`):
+    - **the annex's walls near the stair** (`fire.enclosure`): each within `exterior_wall_reach_ft`
+      of the stair's unrated back windows above it is rated `exterior_wall_hr`, ground to the annex
+      roof (IBC 1023.7), over its whole length: one rating a wall is simpler to build than one for
+      its first 10 ft;
+    - **the annex's doors there:** each a `opening_protective_hr` fire door assembly, self-closing;
+    - **the stair's back wall where the annex meets it,** part of the stair's 1-hour enclosure
+      (1023.2): the ground storey's back wall is cut into three, the middle one between the stair
+      walls' outer faces rated `stair_enclosure_hr`, and the windows move to whichever piece holds
+      them;
+    - **the floors between flats** rated `separation_hr` (711.2.4.3), named as AWC's WIJ-1.3 (PRI-60's
+      flanges are too small for WIJ-1.1, which pass 3 named);
+    - **the roof hatch** (`fire.roof_access`): an opening through the roof over the stair's top
+      hall, filled by a hatch (an opaque door, `pass3.envelope.door_u`), and its fixed ladder
+      against the hall's side wall, `ladder_w_in` between its rails."""
+    import copy
+
+    from .fire import enclosure, roof_access
+
+    c = "systems.fire_code."
+    out = copy.deepcopy(apt4)
+    out["revision"] = "addendum-5"
+    out["source"] = apt4.get("source", "") + "; Addendum 5: the stair's enclosure and the annex, the roof hatch (brownfield systems)"
+    enc = enclosure(out, P)
+    why_wall = (f"IBC 2021 1023.7: within {P[c + 'exterior_wall_reach_ft']:g} ft of the stair's unrated windows above the annex; "
+                "rated over its whole length, ground to the annex roof")
+    for w in enc["rated_walls"]:
+        part = next(x for x in out["rooms"]["annex"]["parts"] if x["id"] == w["id"])
+        part["fire_rating_h"], part["fire_why"] = P[c + "exterior_wall_hr"], why_wall
+    # The floors between flats, 1 hour (711.2.4.3), as AWC's WIJ-1.3: pass 3's WIJ-1.1 asks I-joist
+    # flanges of 5.25 in.2, more than PRI-60's 1-1/2 x 2-5/16 in.
+    floor_why = ("IBC 2021 711.2.4.3, the floor between dwelling units; built as AWC DCA 3 (Feb 2024) WIJ-1.3: 23/32 in. "
+                 "tongue-and-groove sheathing on the I-joists, 2 in. of 3.5 pcf mineral wool batts on 1x4 setting strips along "
+                 "the bottom flanges, resilient channels 16 in. o.c., one layer of 5/8 in. Type C gypsum board screwed 7 in. o.c.")
+    for part in out["parts"]:
+        if part["kind"] == "floor":
+            part["fire_rating_h"], part["fire_why"] = P[c + "separation_hr"], floor_why
+    for d in enc["protected_doors"]:
+        door = next(x for x in out["rooms"]["annex"]["doors"] if x["id"] == d["id"])
+        door["fire_rating_h"] = P[c + "opening_protective_hr"]
+        door["fire_why"] = f"IBC 2021 1023.7: an opening within {P[c + 'exterior_wall_reach_ft']:g} ft of the stair's unrated windows"
+    # The ground storey's back wall, cut where the stair's walls meet it.
+    back = next(x for x in out["parts"] if x["id"] == "ext-back-1")
+    sl = next(x for x in out["parts"] if x["id"] == "stair-left-1")
+    sr = next(x for x in out["parts"] if x["id"] == "stair-right-1")
+    y0, y1 = sl["lo_m"][1], sr["hi_m"][1]
+    k = out["parts"].index(back)
+    pieces = [dict(back, hi_m=[back["hi_m"][0], y0, back["hi_m"][2]]),
+              dict(back, id="ext-back-1-stair", lo_m=[back["lo_m"][0], y0, back["lo_m"][2]], hi_m=[back["hi_m"][0], y1, back["hi_m"][2]],
+                   fire_rating_h=P[c + "stair_enclosure_hr"],
+                   fire_why="IBC 2021 1023.2: the stair's enclosure, where the annex meets its back wall"),
+              dict(back, id="ext-back-1-end", lo_m=[back["lo_m"][0], y1, back["lo_m"][2]])]
+    out["parts"][k:k + 1] = pieces
+    for o in out["openings"]:
+        if o.get("wall") == "ext-back-1":
+            yc = (o["lo_m"][1] + o["hi_m"][1]) / 2
+            o["wall"] = "ext-back-1" if yc < y0 else "ext-back-1-stair" if yc < y1 else "ext-back-1-end"
+    # The roof hatch and its ladder.
+    ra = roof_access(out, P)
+    roof = next(x for x in out["parts"] if x["kind"] == "roof")
+    hall = next(x for x in out["stair"]["parts"] if x["id"] == f"floor-{out['storeys']}-hall")
+    (x0, y0h), (x1, y1h) = ra["lo"], ra["hi"]
+    zr0, zr1 = roof["lo_m"][2], roof["hi_m"][2]
+    out["openings"].append({
+        "id": "roof-hatch", "kind": "roof_hatch", "storey": out["storeys"], "flat": None, "face": "roof", "index": 0,
+        "width_m": x1 - x0, "height_m": y1h - y0h, "sill_m": 0.0, "sill_above_floor_m": 0.0, "along_m": (x0 + x1) / 2,
+        "lo_m": [x0, y0h, zr0], "hi_m": [x1, y1h, zr1], "panel_lo_m": [x0, y0h, zr1 - 0.05], "panel_hi_m": [x1, y1h, zr1],
+        "outward": [0.0, 0.0, 1.0], "wall": "roof", "glazed": False, "swing": "up",
+        "fire_why": "IMC 2021 306.5: a permanent means of access to the roof's equipment; IBC 2021 1011.16: a ladder and hatch "
+                    "serve a roof that needs no stair"})
+    lw, ld = P[c + "ladder_w_in"] * IN, P[c + "ladder_depth_in"] * IN
+    xm = (x0 + x1) / 2
+    out["roof_ladder"] = {"id": "roof-ladder", "lo_m": [xm - lw / 2, hall["lo_m"][1], hall["hi_m"][2]],
+                          "hi_m": [xm + lw / 2, hall["lo_m"][1] + ld, zr1], "storey": out["storeys"],
+                          "why": f"IMC 2021 306.5: {P[c + 'ladder_w_in']:g} in. between its rails, rungs at most 14 in. apart, "
+                                 "its rails 30 in. above the roof, a 30 in. clear landing at its foot"}
+    return out
+
+
+def write_addendum_5(P: dict) -> Path | None:
+    """out/pass3/apartment-addendum-5.json from Addendum 4's."""
+    src = OUT_DIR / "pass3" / "apartment-addendum-4.json"
+    if not src.exists():
+        return None
+    path = OUT_DIR / "pass3" / "apartment-addendum-5.json"
+    path.write_text(json.dumps(addendum_5(json.loads(src.read_text(encoding="utf-8")), P), indent=1) + "\n", encoding="utf-8")
+    return path
+
+
 def latest_model() -> Path:
-    """The latest revision's model that has been written: Addendum 4's, else 3's."""
-    for rev in ("addendum-4", "addendum-3"):
+    """The latest revision's model that has been written: Addendum 5's, 4's, else 3's."""
+    for rev in ("addendum-5", "addendum-4", "addendum-3"):
         path = OUT_DIR / "pass3" / f"apartment-{rev}.json"
         if path.exists():
             return path
     return PATH
+
+
+def check_addendum_5(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
+    """Addendum 5 is Addendum 4 (`base`) with the fire ratings, the back wall cut at the stair and
+    the roof hatch and its ladder, and nothing else: every other part and opening as it was."""
+    res = []
+    add = lambda label, ok, detail: res.append((label, bool(ok), detail))  # noqa: E731
+    strip = lambda x: {k: v for k, v in x.items() if k not in ("fire_rating_h", "fire_why", "wall")}  # noqa: E731
+    before = {x["id"]: x for x in base["parts"]}
+    after = {x["id"]: x for x in apt["parts"]}
+    cut = {"ext-back-1", "ext-back-1-stair", "ext-back-1-end"}
+    same_parts = all(strip(after[k]) == strip(v) for k, v in before.items() if k not in cut) and set(after) - set(before) == cut - {"ext-back-1"}
+    b_open = {o["id"]: o for o in base["openings"]}
+    same_openings = all(strip(o) == strip(b_open[o["id"]]) for o in apt["openings"] if o["id"] in b_open)
+    added = sorted({o["id"] for o in apt["openings"]} - set(b_open))
+    whole = sum(after[k]["hi_m"][1] - after[k]["lo_m"][1] for k in cut)
+    rated = [x["id"] for x in apt["rooms"]["annex"]["parts"] + apt["parts"] if x.get("fire_rating_h")]
+    doors = [x["id"] for x in apt["rooms"]["annex"]["doors"] if x.get("fire_rating_h")]
+    add("Addendum 5 rates the annex's walls and door near the stair and the floors between flats, cuts the back wall at the "
+        "stair, adds the roof hatch and its ladder, and changes nothing else", apt.get("revision") == "addendum-5" and same_parts and same_openings
+        and added == ["roof-hatch"] and abs(whole - (before["ext-back-1"]["hi_m"][1] - before["ext-back-1"]["lo_m"][1])) < EPS
+        and "roof_ladder" in apt,
+        f"rated {', '.join(rated)}; doors {', '.join(doors)}; back wall in three ({whole / FT:.1f} ft whole); added "
+        f"{', '.join(added)}; other parts and openings {'unchanged' if same_parts and same_openings else 'CHANGED'}")
+    return res
 
 
 def check_addendum_4(apt: dict, base: dict, P: dict) -> list[tuple[str, bool, str]]:
@@ -403,24 +520,26 @@ def plan_figure(apt: dict, P: dict, path: Path, storey: int = 1) -> None:
 # {revision: (the model before it, its own model)}, under out/pass3/.
 REVISIONS = {"addendum-2": ("apartment-addendum-1.json", "apartment-addendum-2.json"),
              "addendum-3": ("apartment-addendum-2.json", "apartment-addendum-3.json"),
-             "addendum-4": ("apartment-addendum-3.json", "apartment-addendum-4.json")}
+             "addendum-4": ("apartment-addendum-3.json", "apartment-addendum-4.json"),
+             "addendum-5": ("apartment-addendum-4.json", "apartment-addendum-5.json")}
 IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
 # RFI 002 (made up), which Addendum 3 answers: asked when the walls' shortfall was confirmed
 # (08:45 Pacific, D28), answered when Addendum 3 went out (ISSUED[3]). UTC, as BCF keeps it.
 RFI_002_ASKED = "2026-11-21T16:45:00"
 RFI_002_ANSWER_AFTER_MIN = 30
 # When each addendum went out (D29): Addendum 1 when it was first published (git 8a9d200), Addendum
-# 2 when it was produced and checked (git 2f6623f), Addenda 3 and 4 when they were published (4 with
-# ENERGY STAR's glass, before it went out).
+# 2 when it was produced and checked (git 2f6623f), Addenda 3 to 5 when they were published (4 with
+# ENERGY STAR's glass, before it went out; 5 with the services and the frame, D28 step 7e).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
-          4: "2026-11-21T11:41:33-08:00"}
+          4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00"}
 # When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
 # Addendum 5 to issue.
 SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
 TITLES = {1: "The patio doors: their glass and their width",
           2: "The rooms, the plumbing walls and the service annex",
           3: "The envelope to Pennsylvania's 2021 energy code",
-          4: "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling"}
+          4: "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling",
+          5: "The services, the frame, the stair's enclosure and the roof hatch"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -494,6 +613,8 @@ def ifc_run(params: dict, revision: str = REVISION) -> dict:
                                  answered_after=timedelta(minutes=RFI_002_ANSWER_AFTER_MIN), key="rfi-002")
     if revision == "addendum-4":
         words = addendum_4_words(params)
+    if revision == "addendum-5":
+        words = addendum_5_words(params, raw2)
     diff = addendum.element_diff(base, rev)
     checks = bidset.check(rev, apt2, params)
     with tempfile.TemporaryDirectory() as tmp:
@@ -550,6 +671,10 @@ def ifc_report(r: dict) -> str:
                 "that sizes the cooling", "",
                 *(f"  {x}" for x in r["words"]["items"])]
         before = "Addendum 3"
+    elif r["revision"] == "addendum-5":
+        head = [f"Addendum 5 (made up, pass 3g step 7e, D28): {TITLES[5].lower()}", "",
+                *(f"  {x}" for x in r["words"]["items"])]
+        before = "Addendum 4"
     else:
         head = ["Addendum 2 (made up, pass 3g step 1, D28): the rooms, the plumbing walls and the service annex", "",
                 *(f"  {x}" for x in addendum_2_items(r))]
@@ -580,6 +705,83 @@ def addendum_4_words(params: dict) -> dict:
         "Why the U-factor: ENERGY STAR, chosen beyond the code; it lowers the flats' heat, and the water their floors need.",
         "No drawing changes; no opening moves or resizes.",
     ]}
+
+
+def addendum_5_words(params: dict, apt5: dict) -> dict:
+    """Addendum 5's items: step 6's fire items, the roof hatch, the completed frame and the services
+    with their firestop schedule, as bid documents (pass 3g step 7e). The services' figures are read
+    from 7d's run (`out/pass3/routes-7d.json`) and its schedules, never typed in."""
+    import csv
+
+    from . import servicesifc
+    from .fire import enclosure, roof_access
+    from .params import values
+
+    P = values(params)
+    c = "systems.fire_code."
+    enc, ra = enclosure(apt5, P), roof_access(apt5, P)
+    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
+    sch = servicesifc.OUT / "schedules"
+    rows = lambda name: list(csv.DictReader(open(sch / f"{name}.csv", encoding="utf-8")))  # noqa: E731
+    lengths = rows("lengths")
+    by_layer: dict[str, float] = {}
+    for r in lengths:
+        by_layer[r["layer"]] = by_layer.get(r["layer"], 0.0) + float(r["ft"])
+    fire = rows("firestop")
+    bends = rec["conduit_bends"]
+    walls = ", ".join(w["id"] for w in enc["rated_walls"])
+    door = enc["protected_doors"][0]["id"] if enc["protected_doors"] else "none"
+    rated_openings = sum(int(r["count"]) for r in fire if r["F"])
+    fits = sorted({r["listed_system"] for r in fire if r["F"] and r["fit"] in ("fits", "fits if")})
+    judged = sum(int(r["count"]) for r in fire if r["F"] and "listed" in r["asks"].split(";")[0] and r["fit"] in ("partial", "none"))
+    items = [
+        f"Item 1 (the stair's enclosure and the annex, IBC 2021 1023.7 and 1023.2): the annex's walls {walls}, within "
+        f"{P[c + 'exterior_wall_reach_ft']:g} ft of the stair's unrated back windows above the annex, are rated "
+        f"{P[c + 'exterior_wall_hr']:g} hour from the ground to the annex's roof, over their whole length; the door {door} is a "
+        f"{P[c + 'opening_protective_hr'] * 60:g}-minute fire door assembly, self-closing and latching; and the stair's back wall "
+        f"where the annex meets it (the wall between the stair walls, ext-back-1-stair) is part of the stair's "
+        f"{P[c + 'stair_enclosure_hr']:g}-hour enclosure.",
+        f"Item 2 (the roof hatch, IMC 2021 306.5 and IBC 2021 1011.16): a {P[c + 'hatch_w_in']:g} x {P[c + 'hatch_l_in']:g} in. "
+        f"insulated roof hatch over the stair's top hall, {ra['edge_ft']:.1f} ft from the roof's edge (no guards: 1011.13), and a "
+        f"fixed steel ladder to it against the hall's side wall, {P[c + 'ladder_w_in']:g} in. between its rails, its rungs at most "
+        f"14 in. apart and its rails 30 in. above the roof; the hall keeps {ra['hall_left_in']:.0f} in. clear beside it. The "
+        f"hatch is an opaque door in the envelope, at most U-{P['pass3.envelope.door_u']:.2f}.",
+        "Item 3 (the frame): the completed wood frame is issued, framing-addendum-5.ifc: the flats' partitions and plumbing "
+        "walls, the service annex, the stair halls' floors and the roof hatch's opening (doubled trimmers and headers), with "
+        "the shell's members. It replaces Addendum 3's frame, which was for reference.",
+        f"Item 4 (the services): the services model is issued, services-addendum-5.ifc, {rec['elements']:,} elements in their "
+        f"systems: " + "; ".join(f"{k.lower()} {v:,.0f} ft" for k, v in sorted(by_layer.items())) + " of pipe, duct, conduit and "
+        "cable, with their fittings, fixtures, equipment and sprinklers. Its schedules: lengths, fittings, equipment, "
+        "fixtures, sprinklers, registers, switches, holes through the frame and the firestop schedule. For the trades:",
+        "  a. PEX is bent on a bend support at its turns; elbows only at the fixtures' stub-outs, the risers' feet, where the "
+        "top flat's branch leaves its riser and at the manifolds.",
+        "  b. Holes through studs, plates and joists are bored at the member's centre: there every pipe and cable clears NEC "
+        "300.4(A)(1), IPC 305.6, IMC 305.5 and NFPA 13R 5.2.3.7 without a steel plate.",
+        "  c. The feeders' PVC conduit runs straight under the slab between its stub-ups, at most "
+        f"{max(b['degrees'] for b in bends):.0f}° of bends from the meter to a panel (NEC 352.26: 360°), with no pull point "
+        "between.",
+        f"  d. A {P['systems.services.vent_stack_in']:g} in. vent stack in each column's plumbing wall (IPC 905.1, Table 906.1).",
+        "  e. Each mini-split's static pressure is set to its ducts by Fujitsu's function setting, and each takes a UL 508 "
+        "water-level switch at its drain, wired to its forced stop (IMC 307.2.3 item 4).",
+        f"Item 5 (firestopping, IBC 2021 714): {rated_openings} openings through rated assemblies, each by its condition in "
+        "the firestop schedule. Listed systems where they fit as tested (" + ", ".join(fits) + "); for the other "
+        f"{judged}, the same maker's engineering judgments, submitted for the authority's approval. Pipe insulation stops at "
+        "each face of a rated floor (714.3); partitions under a rated ceiling are sheathed in Type X gypsum board and the "
+        "ceiling is tight to their double top plates (714.5.2 exception 7); the top storey's ceiling, a roof/ceiling Type "
+        "V-B doesn't rate, and the stair's halls take fireblocking only (718.2.1.4). Every listed floor system found is "
+        "tested in UL L500 floors; the walk-up's is AWC's WIJ-1.3 (Item 6), so each takes the authority's acceptance or the "
+        "maker's engineering judgment for it.",
+        f"Item 6 (the floors between flats, IBC 2021 711.2.4.3): {P[c + 'separation_hr']:g}-hour, built as AWC DCA 3 (Feb 2024) "
+        "WIJ-1.3: 23/32 in. tongue-and-groove sheathing glued and nailed to the I-joists, 2 in. of 3.5 pcf mineral wool batts "
+        "on 1x4 setting strips along the bottom flanges, resilient channels 16 in. o.c., and one layer of 5/8 in. Type C "
+        "gypsum board screwed 7 in. o.c. It replaces WIJ-1.1, which the bid set named: WIJ-1.1 asks I-joist flanges of "
+        "5.25 in.2 and the PRI-60's are 1-1/2 x 2-5/16 in. (3.5 in.2); WIJ-1.3 asks 2.25. No UL L500 design matches the floor "
+        "(the I-joist ones name one maker's joists, and two layers of board under resilient channels). Sound (AWC's TR15 "
+        "estimates, joists 16 in. o.c., 1 in. of gypsum concrete): STC 57; IIC 59 under carpet and pad but 46 under "
+        "cushioned vinyl, short of IBC 1206.3's 50: a hard floor finish needs a tested underlayment, chosen with the "
+        "interiors.",
+    ]
+    return {"items": items}
 
 
 def addendum_2_items(r: dict) -> list[str]:
@@ -621,20 +823,21 @@ def changes(old: Path, new: Path) -> dict:
 
 
 def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[Path]:
-    """Addenda 2 and 3 into the published bid set, with the manifest the plan room and the viewer
+    """Addenda 2 to 5 into the published bid set, with the manifest the plan room and the viewer
     read (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
-    included. Only from runs whose every check passed (both readers'), and only Addenda 2 and 3's
-    own files are written; the bid set and Addendum 1's files are left as they are."""
+    included. Only from runs whose every check passed (both readers'), and only Addenda 2 to 5's
+    own files are written; the bid set and Addendum 1's files are left as they are. Addendum 5
+    issues the frame and the services as bid documents (pass 3g step 7e)."""
     import shutil
 
     from . import addendum, bidset
 
-    for rev in ("addendum-2", "addendum-3", "addendum-4"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
     written = []
-    for n in (2, 3, 4):
+    for n in (2, 3, 4, 5):
         rev, out = f"addendum-{n}", ifc_out(f"addendum-{n}")
         for src, dst in ((out / "apartment.ifc", to / f"apartment-{rev}.ifc"), (out / f"{rev}.md", to / f"{rev}.md")):
             shutil.copyfile(src, dst)
@@ -645,26 +848,28 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         written.append(to / f"drawings-{rev}")
     shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
     written.append(to / "rfi-002.bcf")
-    models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4)}}
-    for n in (1, 2, 3, 4):
+    models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
+    for n in (1, 2, 3, 4, 5):
         path = to / f"changes-addendum-{n}.json"
         path.write_text(json.dumps(changes(to / models[n - 1], to / models[n]), indent=1) + "\n", encoding="utf-8")
         written.append(path)
-    # The frame of the latest addendum's building (forge `framing-json addendum-3 ...`), checked.
+    # The completed frame (forge `framing-json addendum-5 ...`), checked; Addendum 3's, published as
+    # reference before, stays as it was.
     from . import framingifc
 
-    frame = framingifc.load("addendum-3")
-    fpath = ifc_out("addendum-3") / "framing.ifc"
+    frame = framingifc.load("addendum-5")
+    fpath = ifc_out("addendum-5") / "framing.ifc"
     framingifc.write(frame, fpath)
     bad = [label for label, ok, _ in framingifc.check(fpath, frame) if not ok]
     if bad:
         raise SystemExit(f"won't publish the frame: {bad}")
-    shutil.copyfile(fpath, to / "framing-addendum-3.ifc")
-    written.append(to / "framing-addendum-3.ifc")
+    shutil.copyfile(fpath, to / "framing-addendum-5.ifc")
+    written.append(to / "framing-addendum-5.ifc")
     apt0, _ = bidset.load()
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
-             3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"]}
+             3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"],
+             5: runs["addendum-5"]["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -682,29 +887,37 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         4: [("addendum-4.md", "The addendum: its item, what changed and the checks"),
             ("apartment-addendum-4.ifc", "The revised model, IFC4, the glass's U-factor and SHGC on its types"),
             ("drawings-addendum-4/schedule.csv", "The revised window and door schedule, with the glass's U-factor and SHGC")],
+        5: [("addendum-5.md", "The addendum: its items, what changed and the checks"),
+            ("apartment-addendum-5.ifc", "The revised model, IFC4: the annex's rated walls and door, the stair's back wall, "
+                                         "the floors between flats rated, the roof hatch and its ladder"),
+            ("drawings-addendum-5/schedule.csv", "The revised window and door schedule, with the roof hatch"),
+            ("framing-addendum-5.ifc", "The completed wood frame, IFC4"),
+            ("services-addendum-5.ifc", "The services, IFC4: pipe, duct, conduit, cable, fittings, fixtures, equipment, "
+                                        "sprinklers"),
+            ("services-addendum-5/firestop.csv", "The firestop schedule, by condition (IBC 714)"),
+            ("services-addendum-5/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
+            ("services-addendum-5/fittings.csv", "Fittings, by system, kind and size")],
     }
     # The services model (pass 3g step 7d, `brownfield routes --ifc`), when it has been built.
     from . import servicesifc
 
-    services = None
-    if (servicesifc.OUT / f"services-{servicesifc.REVISION}.ifc").exists():
-        services = servicesifc.publish(to, SERVICES_ISSUED)
-        written += [to / services["model"], to / f"services-{servicesifc.REVISION}"]
+    services = servicesifc.publish(to, ISSUED[5], addendum=5)
+    written += [to / services["model"], to / f"services-{servicesifc.REVISION}"]
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
-                "framing": {"model": "framing-addendum-3.ifc", "revision": "addendum-3", "members": len(frame["members"]),
-                            "note": "pass 3b's wood frame on Addendum 3's building; the flats' partitions and plumbing "
-                                    "walls and the service annex aren't framed yet (D28 step 7)"},
+                "framing": {"model": "framing-addendum-5.ifc", "revision": "addendum-5", "status": "Addendum 5",
+                            "members": len(frame["members"]),
+                            "note": "the completed wood frame: the shell, the flats' partitions and plumbing walls, the "
+                                    "service annex, the stair halls' floors and the roof hatch's opening (D28 step 7)"},
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models[n], "changes": f"changes-addendum-{n}.json",
-                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None}[n],
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4)]}
-    if services:
-        manifest["services"] = services
+                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None, 5: None}[n],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4, 5)],
+                "services": services}
     path = to / "addenda.json"
     path.write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
     written.append(path)
     missing = [f["path"] for a in manifest["addenda"] for f in a["files"] if not (to / f["path"]).exists()]
-    missing += [f["path"] for f in (services or {}).get("files", []) if not (to / f["path"]).exists()]
+    missing += [f["path"] for f in services["files"] if not (to / f["path"]).exists()]
     if missing:
         raise SystemExit(f"addenda.json names files that aren't published: {missing}")
     return written

@@ -94,12 +94,16 @@ def test_a_riser_through_a_floor_is_one_opening_and_the_top_storeys_ceiling_is_u
 
 
 def test_feeder_bends_count_the_turns_up_at_each_end(P):
-    # Under the slab with one bend, turning up at both ends: 270 degrees; with three, 450 (over 352.26's 360).
-    def feeder(bends):
-        pts = [[0, 0, -0.4], [1, 0, -0.4], [1, 1, -0.4], [2, 1, -0.4], [2, 2, -0.4]][: bends + 2]
-        return {"props": {"Key": "run/electrical/feeder/x/0", "Flat": "x", "Bends": bends}, "sweep": pts}
-    got = sv.conduit_bends([feeder(1), feeder(3)], P)
-    assert [b["degrees"] for b in got] == [270, 450] and [b["ok"] for b in got] == [True, False]
+    # Under the slab with one square bend, turning up at both ends: 270 degrees; with three, 450
+    # (over 352.26's 360); straight with one 30 degree turn, 210. A 3 cm jog where it snapped to its
+    # terminal is no bend.
+    def feeder(pts):
+        return {"props": {"Key": f"run/electrical/feeder/{len(pts)}/0", "Flat": str(len(pts))}, "sweep": pts}
+    square = [[0, 0, -0.4], [1, 0, -0.4], [1, 1, -0.4], [2, 1, -0.4], [2, 2, -0.4]]
+    skew = [[0, 0, -0.4], [2, 0, -0.4], [2 + 3 ** 0.5, 1, -0.4], [2 + 3 ** 0.5 + 0.02, 1.02, -0.42]]
+    got = {b["flat"]: b for b in sv.conduit_bends([feeder(square[:3]), feeder(square), feeder(skew)], P)}
+    assert [got[k]["degrees"] for k in ("3", "5", "4")] == pytest.approx([270, 450, 210])
+    assert [got[k]["ok"] for k in ("3", "5", "4")] == [True, False, True]
 
 
 def test_nominal_sizes_as_the_trade_writes_them():
@@ -119,8 +123,7 @@ def test_the_services_model_holds_every_route_where_forge_has_it(apt, P, tmp_pat
     if not routes.fresh:
         pytest.skip(f"routes stale: {routes.why}")
     s = sv.run(apt, P, out=tmp_path)
-    model = [c for c in s["checks"] if not c[0].startswith(("every feeder's conduit", "a listed firestop system"))]
-    assert [label for label, ok, _ in model if not ok] == []
+    assert [label for label, ok, _ in s["checks"] if not ok] == []
     # Every routed run's length is in the lengths schedule, read back from the file.
     sch = s["schedules"]
     routed_m = sum(routes.tree(k).length_m for k in routes.recs)

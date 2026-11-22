@@ -481,6 +481,8 @@ def elements(apt: dict, p: dict, routes, s7: dict, placed: dict) -> list[El]:
                           {"System": "drain", "Layer": "plumbing", **base, "Flat": col,
                            "Size": nominal(placed["fixtures"][col]["washer"]["drain_size"]), "Material": MATERIAL["cast_iron"],
                            "SizeBasis": "the washer's drain (7a)"}))
+        elif oid == "stair/roof-ladder":
+            continue  # the building's (Addendum 5), not a service
         else:
             out += _equipment(o, D, p)
     # -- Fixtures on the plumbing walls (7a), and each tub's drain down through the floor to where
@@ -992,21 +994,42 @@ def firestop_schedule(ops: list[dict], listed: dict | None = None) -> list[dict]
     return out
 
 
+# The pull (forge `pull`) lands a feeder at most two of its 2 in. voxels (0.10 m) short of its riser's
+# foot and steps the rest square, and its terminal snaps a few centimetres more: end pieces that
+# short together are where the conduit's sweep up starts, not runs of their own.
+SNAP_M = 0.16
+
+
 def conduit_bends(rb: list[dict], p: dict) -> list[dict]:
-    """NEC 352.26 on each feeder's conduit, meter to panel: its routed bends, and a bend at each end
-    where the run under the slab turns up (into the meter's wall and into its riser or the panel
-    above), with no pull point between."""
+    """NEC 352.26 on each feeder's conduit, meter to panel: the degrees it turns along its route (at
+    any angle: forge runs it straight under the slab), and a quarter bend at each end where the run
+    under the slab turns up (into the meter's wall and into its riser or the panel above), with no
+    pull point between. Its straight runs are merged first; pieces at either end shorter than
+    `SNAP_M` together are part of that end's sweep."""
     out = []
     for r in rb:
         if not r["props"].get("Key", "").startswith("run/electrical/feeder/"):
             continue
-        pts = np.asarray(r["sweep"], float)
-        segs = [_dir(a, c) for a, c in zip(pts, pts[1:]) if np.linalg.norm(c - a) > 1e-6]
-        turns = int(r["props"]["Bends"])  # forge's (the short ends to the root and terminal are where it snapped, not bends)
+        pts = [np.asarray(q, float) for q in r["sweep"]]
+        runs: list[list[np.ndarray]] = []  # [start, end] of each straight run
+        for a, c in zip(pts, pts[1:]):
+            if np.linalg.norm(c - a) < 1e-9:
+                continue
+            if runs and np.linalg.norm(np.cross(_dir(*runs[-1]), _dir(a, c))) < 1e-9 and float(_dir(*runs[-1]) @ _dir(a, c)) > 0:
+                runs[-1][1] = c
+            else:
+                runs.append([a, c])
+        for end in (0, -1):
+            dropped = 0.0
+            while len(runs) > 1 and dropped + np.linalg.norm(runs[end][1] - runs[end][0]) < SNAP_M:
+                dropped += float(np.linalg.norm(runs[end][1] - runs[end][0]))
+                runs.pop(end)
+        segs = [_dir(a, c) for a, c in runs]
+        along = sum(math.degrees(math.acos(max(-1.0, min(1.0, float(u @ v))))) for u, v in zip(segs, segs[1:]))
         ends = (0 if _vertical(segs[0]) else 1) + (0 if _vertical(segs[-1]) else 1)
-        deg = 90 * (turns + ends)
-        out.append({"flat": r["props"].get("Flat"), "bends": turns, "end_bends": ends, "degrees": deg,
-                    "ok": deg <= p[S + "conduit_bends_max_deg"] + 1e-9})
+        deg = along + 90 * ends
+        out.append({"flat": r["props"].get("Flat"), "bends": len(segs) - 1, "along_deg": round(along, 1), "end_bends": ends,
+                    "degrees": round(deg, 1), "ok": deg <= p[S + "conduit_bends_max_deg"] + 0.05})
     return sorted(out, key=lambda x: x["flat"])
 
 
@@ -1188,16 +1211,20 @@ def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None
                    ", ".join(f"{w} {pen_ifc[(w, True)]} rated + {pen_ifc[(w, False)]}" for w in ("floor", "top plate", "membrane", "wall"))
                    + f"; and {extra} by the closet bends and tub drains"))
     bends = conduit_bends(rb, p)
-    over = [f"{b['flat']} {b['degrees']}°" for b in bends if not b["ok"]]
+    over = [f"{b['flat']} {b['degrees']:.0f}°" for b in bends if not b["ok"]]
     checks.append((f"every feeder's conduit within NEC 352.26's {p[S + 'conduit_bends_max_deg']:g}° of bends between pull points "
                    "(meter to panel, none between)", not over, ", ".join(over) or f"{len(bends)} feeders"))
     asked = [r for r in sch["firestop"] if r["F"] and "listed" in r["asks"].split(";")[0]]
-    n = {k: sum(r["count"] for r in asked if (r["fit"] or "none") == k) for k in ("fits", "fits if", "partial", "none")}
-    checks.append(("a listed firestop system as tested (IBC 714.2) for every rated opening whose code asks one, its penetrant and "
-                   "walls as listed (each listed in an L500 floor: the authority to accept WIJ-1.1, or the floor so specified)",
-                   n["partial"] + n["none"] == 0,
-                   f"of {sum(n.values())}: {n['fits']} fit, {n['fits if']} fit with a change the schedule gives, {n['partial']} partly "
-                   f"(the maker's engineering judgment), {n['none']} with none found (engineering judgment or a change of route)"))
+    n = {k: sum(r["count"] for r in asked if r["fit"] == k) for k in ("fits", "fits if", "partial", "none")}
+    unknown = [r["condition"] for r in asked if r["fit"] not in n]
+    checks.append(("every rated opening whose code asks a listed firestop system has its route: a listed system as tested, or "
+                   "where none fits, the maker's engineering judgment for the authority's approval (Jon, 2026-11-22); each "
+                   "condition in data/firestop_systems.csv",
+                   not unknown,
+                   f"of {sum(r['count'] for r in asked)}: {n['fits']} listed, {n['fits if']} listed with a change the schedule gives, "
+                   f"{n['partial'] + n['none']} by engineering judgment ({n['partial']} where a listing partly fits, {n['none']} where none "
+                   "was found); the floor systems are tested in UL L500 floors, the walk-up's is AWC's WIJ-1.3"
+                   + (f"; no entry for {unknown}" if unknown else "")))
     written = [path] + write_schedules(sch, out / "schedules")
     return {"checks": checks, "path": path, "written": written, "schedules": sch, "conduit_bends": bends,
             "counts": dict(Counter(r["cls"] for r in rb)), "elements": len(rb), "systems": sorted({r["group"] for r in rb if r["group"]})}
@@ -1236,7 +1263,7 @@ def report(s: dict) -> str:
         if r["listed_system"]:
             lines.append(f"          {r['listed_system']} ({r['fit']}): {r['note']}")
     lines += ["", "Feeder conduits, meter to panel (NEC 352.26): "
-              + ", ".join(f"{b['flat']} {b['degrees']}°" for b in s["conduit_bends"])]
+              + ", ".join(f"{b['flat']} {b['degrees']:.0f}°" for b in s["conduit_bends"])]
     return "\n".join(lines)
 
 
@@ -1252,16 +1279,16 @@ LABELS = {"lengths": "Pipe, duct, conduit and cable lengths, by system, material
           "firestop": "The firestop schedule, by condition (IBC 714)"}
 
 
-def publish(to: Path, issued: str) -> dict:
+def publish(to: Path, issued: str, addendum: int | None = None) -> dict:
     """The services model and its schedules into the published bid set (`to`), only from a run
     whose model checks all passed (`out/pass3/routes-7d.json`: the file whole, where forge routed
     it, schema valid, web-ifc's geometry where it should be). The design's own findings (a check
     of the code it doesn't yet meet) don't stop it: the manifest's note lists them. Returns the
-    manifest's `services` entry."""
+    manifest's `services` entry: preliminary, or issued with `addendum`."""
     import shutil
 
     rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
-    model_checks = [c for c in rec["checks"] if not c[0].startswith(("every feeder's conduit", "a listed firestop system"))]
+    model_checks = [c for c in rec["checks"] if not c[0].startswith(("every feeder's conduit", "every rated opening whose code"))]
     bad = [c[0] for c in model_checks if not c[1]]
     if bad:
         raise SystemExit(f"won't publish the services model: {bad}")
@@ -1277,13 +1304,16 @@ def publish(to: Path, issued: str) -> dict:
     over = [b for b in rec["conduit_bends"] if not b["ok"]]
     if over:
         open_items.append(f"{len(over)} feeder conduits over NEC 352.26's 360° of bends")
-    asked = [r for r in rec["firestop"] if r["F"] and "listed" in r["asks"].split(";")[0] and r["fit"] in ("partial", "none", "")]
-    if asked:
-        open_items.append(f"{sum(r['count'] for r in asked)} rated openings with no listed firestop system that fits as tested")
+    judged = sum(r["count"] for r in rec["firestop"] if r["F"] and "listed" in r["asks"].split(";")[0] and r["fit"] in ("partial", "none"))
+    if any(r["F"] and "listed" in r["asks"].split(";")[0] and not r["fit"] for r in rec["firestop"]):
+        open_items.append("a rated opening's firestop condition with no entry in the table")
     layers = Counter()
     for r in read_back(src):
         layers[r["props"].get("Layer")] += 1
     return {"model": src.name, "frame": f"{REVISION.replace('-', ' ').title()}'s frame", "elements": rec["elements"],
             "layers": dict(sorted(layers.items())), "issued": issued,
             "files": [{"path": f"{sch.name}/{n}.csv", "label": LABELS[n]} for n in PUBLISHED_SCHEDULES],
-            "note": "preliminary, for Addendum 5" + ("; open: " + "; ".join(open_items) if open_items else "")}
+            "status": f"Addendum {addendum}" if addendum else "preliminary",
+            "note": (f"issued with Addendum {addendum}" if addendum else "preliminary, for Addendum 5")
+            + (f"; {judged} rated openings firestopped by the maker's engineering judgment" if judged else "")
+            + ("; open: " + "; ".join(open_items) if open_items else "")}

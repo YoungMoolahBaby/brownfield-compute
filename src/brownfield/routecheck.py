@@ -45,13 +45,21 @@ def _attached(req: dict, owner: str) -> bool:
     return False
 
 
-def _boxes(points: list, half: float, piece: float = 0.25) -> list[tuple[list, list]]:
+DIAG_M = 0.05  # forge's `DIAG_M`: a straight run's diagonal boxed in pieces this long
+
+
+def _boxes(points: list, half: float, piece: float = 0.25, straight: bool = False) -> list[tuple[list, list]]:
     """A branch's runs as boxes: the pipe and its clearance across, end to end along; a sloped run in
-    pieces of `piece` m, each to its own heights."""
+    pieces of `piece` m, each to its own heights; a straight run's diagonal (`straight`, a feeder's
+    conduit under the slab) in pieces of `DIAG_M`, so each box hugs the line."""
     out = []
     for a, c in zip(points, points[1:]):
         run = max(range(3), key=lambda i: abs(c[i] - a[i]))
-        n = max(1, int(np.ceil(abs(c[run] - a[run]) / piece))) if run != 2 and abs(c[2] - a[2]) > 1e-9 else 1
+        skew = sum(1 for i in range(3) if abs(c[i] - a[i]) > 1e-9) > 1
+        if straight and skew:
+            n = max(1, int(np.ceil(float(np.linalg.norm(np.subtract(c, a))) / DIAG_M)))
+        else:
+            n = max(1, int(np.ceil(abs(c[run] - a[run]) / piece))) if run != 2 and abs(c[2] - a[2]) > 1e-9 else 1
         for k in range(n):
             p0 = [a[i] + (c[i] - a[i]) * k / n for i in range(3)]
             p1 = [a[i] + (c[i] - a[i]) * (k + 1) / n for i in range(3)]
@@ -70,7 +78,7 @@ def clash_pairs(body: dict, rt: dict) -> list[tuple[str, str]]:
         r = reqs[rec["id"]]
         half = r["od_m"] / 2 + r.get("clear_m", 0.0)
         for b in rec.get("branches", []):
-            for a, c in _boxes(b["points"], half):
+            for a, c in _boxes(b["points"], half, straight=bool(r.get("straight"))):
                 lo.append(a)
                 hi.append(c)
                 own.append(rec["id"])
