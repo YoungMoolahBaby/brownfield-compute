@@ -261,8 +261,9 @@ def layout(apt: dict, p: dict) -> dict:
                 for j in range(cov["ny"]):
                     xy = (r["lo_m"][0] + (i + 0.5) * (r["hi_m"][0] - r["lo_m"][0]) / cov["nx"],
                           r["lo_m"][1] + (j + 0.5) * (r["hi_m"][1] - r["lo_m"][1]) / cov["ny"])
-                    h = {"room": r["id"], "comp": comp, "xy": xy, "q": cov["q"], "p": cov["p"], "k": cov["k"],
-                         "cell_ft2": cov["cell_ft"][0] * cov["cell_ft"][1], "temp": "intermediate" if use == "utility" else "ordinary"}
+                    h = {"room": r["id"], "comp": comp, "xy": xy, "q": cov["q"], "p": cov["p"], "k": cov["k"], "l_ft": cov["l"],
+                         "cell_ft2": cov["cell_ft"][0] * cov["cell_ft"][1], "cell_ft": list(cov["cell_ft"]),
+                         "temp": "intermediate" if use == "utility" else "ordinary"}
                     heads.append(h)
                     comps.setdefault(comp, []).append(h)
         out[f["name"]] = {"heads": heads, "compartments": comps}

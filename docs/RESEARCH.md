@@ -1259,3 +1259,41 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       fittings.
 
     Manual D's own Appendix 3 is paywalled. A full copy on a personal site was left alone.
+- **Step 7b, the routes and their checks (2026-11-21).** Read from the texts saved in 7a (under
+  `data/raw/pass3g/`, gitignored) unless said.
+  - **APA Z725E (2012), the notes to Table 5** (`dl/apa/z725.txt`):
+    - rule 6: "the distance between adjacent hole edges shall exceed twice the diameter of the
+      largest round hole ... and each hole must be sized and located in compliance with the
+      requirements of Table 5";
+    - rule 9: "A 1-1/2-inch hole or smaller can be placed anywhere in the web provided that it meets
+      the requirements of rule number 6";
+    - rule 11: "Limit three maximum-size holes per span";
+    - rule 12: "A group of round holes at approximately the same location shall be permitted if
+      they meet the requirements for a single round hole circumscribed around them."
+  - **IBC 2021 2308.5.8** (`step7/ibc23.txt`): where a pipe cuts a wall's plates, "a metal tie not
+    less than 0.058 inch (1.47 mm) (16 galvanized gage) and 1 1/2 inches (38 mm) in width shall be
+    fastened to each plate across and to each side of the opening with not less than six 16d
+    nails"; and "Where a partition containing piping runs parallel to the floor joists, the joists
+    underneath such partitions shall be doubled and spaced to permit the passage of pipes".
+  - **IPC 2021** (`dl/upc/ipc7.txt`, `ipc9.txt`):
+    - 704.1 and Table 704.1: horizontal drains "in uniform alignment at uniform slopes", 1/4 in./ft
+      at 2-1/2 in. or less, 1/8 at 3 to 6 in.;
+    - Table 709.1: a lavatory 1 dfu (with step 4's kitchen 2 and washer 2);
+    - Table 710.1(2): a 2 in. horizontal fixture branch takes 6 dfu (1-1/2 in. 3, 3 in. 20);
+    - 905.2: vents "so graded and connected as to drain back to the drainage pipe by gravity" (no
+      figure).
+  - **IMC 2021 307.2.1 and 307.2.2**, Pennsylvania's, read on UpCodes
+    (https://up.codes/viewer/pennsylvania/imc-2021/chapter/3/general-regulations) by a research
+    agent: condensate "shall maintain a minimum horizontal slope in the direction of discharge of
+    not less than 1/8 unit vertical in 12 units horizontal (1-percent slope)"; its pipe "not less
+    than 3/4-inch pipe size". The ICC's own page refused the fetch (403), and UpCodes' page for the
+    international edition wasn't found (404).
+  - **Tyco TFP403 (TY2236)** (`raw/sprinkler/Tyco_TFP403_TY2236_jci.txt`): "The minimum spacing
+    between sprinklers is 8 ft (2,4 m). The maximum spacing between sprinklers cannot exceed the
+    length of the coverage area"; its obstruction criteria are in TFP490 (saved, not yet read).
+  - **Fujitsu DR_AR107ES_02:**
+    - the return collar, 25-9/16 x 10-1/16 in., its bottom 7/8 in. above the unit's (p. 8, a
+      drawing, a research agent's reading);
+    - no drain pump: its text names none for the ARUH12KUAS, among its optional parts or
+      elsewhere (searched).
+

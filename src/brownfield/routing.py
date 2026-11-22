@@ -43,6 +43,7 @@ from .systems import by_flat
 FT = 0.3048
 IN = 0.0254
 FRAME = OUT_DIR / "pass3" / "framing-members-addendum-5.json"
+INPUTS = OUT_DIR / "pass3" / "addendum-5-inputs.json"
 R = "systems.routing."
 
 
@@ -50,19 +51,34 @@ R = "systems.routing."
 
 def hatch_command(apt: dict, p: dict) -> str:
     """forge's command for Addendum 5's frame: Addendum 3's building (the patio doors' width and the
-    continuous insulation from params) with the roof hatch's plan box where step 6 put it (in.)."""
+    continuous insulation from params), with the roof hatch and the soffits from `INPUTS`."""
+    return (f"cargo run --release -- framing-json addendum-5 {p['bidset.addendum_1.patio_door_width_in']:g} "
+            f"{p['systems.addendum_3.ci_in']:g}")
+
+
+def inputs(apt: dict, p: dict) -> dict:
+    """What forge needs from here to frame Addendum 5: the roof hatch's plan box where step 6 put it
+    (`fire.roof_access`) and the soffits the partitions stop under (`soffits`), m."""
     from .fire import roof_access
 
     h = roof_access(apt, p)
-    box = " ".join(f"{v / IN:.4f}" for v in (*h["lo"], *h["hi"]))
-    return (f"cargo run --release -- framing-json addendum-5 {p['bidset.addendum_1.patio_door_width_in']:g} "
-            f"{p['systems.addendum_3.ci_in']:g} {box}")
+    sf = soffits(apt, p, terminations(apt, p))
+    return {"source": "brownfield routes (pass 3g step 7a): for forge's framing-json addendum-5",
+            "hatch_m": [round(v, 6) for v in (*h["lo"], *h["hi"])],
+            "soffits": [{"id": x["id"], "lo": [round(v, 6) for v in x["lo"]], "hi": [round(v, 6) for v in x["hi"]]} for x in sf]}
 
 
 def load_frame(apt: dict, p: dict, path: Path = FRAME) -> dict:
-    """forge's Addendum 5 frame (every member as boxes, m)."""
+    """forge's Addendum 5 frame (every member as boxes, m), built from this module's `inputs`: the
+    inputs are (re)written first, and a frame older than them is refused."""
+    want = json.dumps(inputs(apt, p), indent=1) + "\n"
+    if not INPUTS.exists() or INPUTS.read_text(encoding="utf-8") != want:
+        INPUTS.write_text(want, encoding="utf-8")
+    how = f"run `{hatch_command(apt, p)}` in forge/ (it reads {INPUTS.relative_to(OUT_DIR.parent)})"
     if not path.exists():
-        raise SystemExit(f"no {path.relative_to(OUT_DIR.parent)}: run `{hatch_command(apt, p)}` in forge/ first")
+        raise SystemExit(f"no {path.relative_to(OUT_DIR.parent)}: {how}")
+    if path.stat().st_mtime < INPUTS.stat().st_mtime:
+        raise SystemExit(f"{path.relative_to(OUT_DIR.parent)} is older than its inputs: {how}")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -188,7 +204,7 @@ def fixtures(apt: dict, p: dict, frame: dict) -> dict[str, dict]:
             "dishwasher": {"room": kit["id"], "y": dw_y, "hot_in": p[R + "sink_supply_in"], "drain_in": None, "drain_size": None,
                            "to": "sink"},
             "washer": {"room": util["id"], "y": washer_y, "cold_in": p[R + "washer_box_in"], "hot_in": p[R + "washer_box_in"],
-                       "drain_in": p[R + "washer_box_in"], "drain_size": 2.0},
+                       "drain_in": p[R + "washer_trap_in"], "drain_size": 2.0},
         }
         for f in fx.values():
             f["x"] = face
@@ -225,10 +241,14 @@ def vertical_services(apt: dict, p: dict, frame: dict, fx: dict, sizes: dict | N
     each in a stud bay (between the wall's studs) that is also a joist bay on every upper floor, so
     it passes the floors between joists, never through one. In order: the drain stack in the water
     closet's joist bay (its closet bend runs along that bay); the vent stack beside it (each
-    floor's dry vent must reach one, IPC 2021 905.1); then the hot, hot-return and cold risers, the heating loop's supply and return and
-    the line sets of the column's three mini-splits, nearest the utility closet (the manifold and
-    meters are there). The washer box's bay is kept clear. `sizes` (in., nominal) default to steps
-    3-4's: {cold, hot, return, loop}."""
+    floor's dry vent must reach one, IPC 2021 905.1); then the hot, hot-return and cold risers, the
+    heating loop's supply and return and the line sets of the column's three mini-splits, packed at
+    the wall's far end from the stack, past the last fixture. A riser fills the 2x6 cavity floor to
+    ceiling, so nothing runs along the wall past it: with the risers at the end, every fixture lies
+    between them and the stack and its drain and vent run along the wall to the stacks unhindered,
+    and the water branches leave their risers upward into the ceiling and drop to the fixtures (7b).
+    The washer box's bay is kept clear. `sizes` (in., nominal) default to steps 3-4's: {cold, hot,
+    return, loop}."""
     h = "systems.hot_water."
     sizes = sizes or default_sizes(apt, p)
     ins = lambda n: p[h + ("insulation_in_large" if n >= 1.5 else "insulation_in_small")]  # noqa: E731
@@ -263,12 +283,16 @@ def vertical_services(apt: dict, p: dict, frame: dict, fx: dict, sizes: dict | N
         wy = fx[first]["washer"]["y"]
         hw = (p[R + "washer_box_w_in"] / 2) * IN + gap
         free = _free(free, [(wy - hw, wy + hw)])
-        util = next(r for r in by_flat(apt)[first] if r["use"] == "utility")
-        util_y = (util["lo_m"][1] + util["hi_m"][1]) / 2
+        wc_y = fx[first]["wc"]["y"]
+        far_end = cav[1] if abs(cav[1] - wc_y) > abs(cav[0] - wc_y) else cav[0]
+        near_end = cav[0] if far_end == cav[1] else cav[1]
         placed, taken = [], []
         for key, kind, od in order_c:
             r_ = od * IN / 2
-            target = fx[first]["wc"]["y"] if kind == "drain" else (placed[0]["y"] if kind == "vent" else util_y)
+            # The vent stack beside the drain stack on its far side from the fixtures, so their
+            # drains reach the drain stack along the wall; their vents reach the vent stack over the
+            # ceiling (7b).
+            target = wc_y if kind == "drain" else (placed[0]["y"] - (0.15 if near_end < wc_y else -0.15) if kind == "vent" else far_end)
             best = None
             for a, b in _free(free, taken):
                 lo_, hi_ = a + r_ + gap, b - r_ - gap
@@ -319,12 +343,39 @@ def vertical_checks(apt: dict, p: dict, frame: dict, fx: dict, vs: dict) -> list
             ("every drain stack in its water closet's joist bay", not off, ", ".join(off) or "all four")]
 
 
-def feeder_chase(apt: dict, p: dict, frame: dict) -> dict[str, dict]:
+def soffit_spans(wall: dict, sf: list[dict]) -> list[tuple[float, float]]:
+    """Where along a partition (its length's spans) a soffit runs over it or on both its sides: where
+    forge stops it at the soffit (`framing::under_soffits`, the same rule)."""
+    along = 1 if wall["hi_m"][1] - wall["lo_m"][1] > wall["hi_m"][0] - wall["lo_m"][0] else 0
+    c = 1 - along
+    lo, hi = wall["lo_m"], wall["hi_m"]
+    out = []
+    near = lambda a, b: abs(a - b) < 1e-3  # noqa: E731
+    for x in sf:
+        u0, u1 = max(x["lo"][along], lo[along]), min(x["hi"][along], hi[along])
+        if u1 - u0 < 1e-3:
+            continue
+        if x["lo"][c] < hi[c] - 1e-3 and x["hi"][c] > lo[c] + 1e-3:
+            out.append((u0, u1))
+        elif near(x["hi"][c], lo[c]):
+            for y in sf:
+                if near(y["lo"][c], hi[c]):
+                    w0, w1 = max(u0, y["lo"][along]), min(u1, y["hi"][along])
+                    if w1 - w0 > 1e-3:
+                        out.append((w0, w1))
+    return out
+
+
+def feeder_chase(apt: dict, p: dict, frame: dict, sf: list[dict]) -> dict[str, dict]:
     """Each column's panels and feeder conduits in the partition between hall and bath (step 5's
-    place, `electrical.panel_place`): the panel moved into the stud bay nearest step 5's point (a
-    load centre's box wants a whole bay); the conduits of the flats above (NEC Chapter 9 fill,
-    `electrical.conduit_for`) up neighbouring bays that are joist bays on every floor, the same on
-    every storey. The ground floor's feeder comes up under its own panel."""
+    place, `electrical.panel_place`):
+    - **the panel** in the stud bay nearest step 5's point that is a whole bay (a load centre's box
+      wants one) and has no soffit over it: NEC 2020 110.26(E) keeps the space above a panel's
+      footprint, to 6 ft above it or the structural ceiling, for the electrical installation, and a
+      soffit there carries ducts and pipes;
+    - **the conduits of the flats above** (NEC Chapter 9 fill, `electrical.conduit_for`) up
+      neighbouring bays that are joist bays on every floor, the same on every storey. The ground
+      floor's feeder comes up under its own panel."""
     from .electrical import conduit_for, feeders, panel_place
 
     fd = feeders(apt, p)
@@ -339,7 +390,9 @@ def feeder_chase(apt: dict, p: dict, frame: dict) -> dict[str, dict]:
         stud_bays = [(a[1], b[0]) for a, b in zip(studs, studs[1:])]
         place = panel_place(apt, first)
         y_step5 = place["xy"][1]
-        fits = [(abs((a + b) / 2 - y_step5), (a + b) / 2, (a, b)) for a, b in stud_bays if b - a >= box - 1e-9]
+        covered = soffit_spans(wall, [x for x in sf if x["flat"] == first])
+        fits = [(abs((a + b) / 2 - y_step5), (a + b) / 2, (a, b)) for a, b in stud_bays if b - a >= box - 1e-9
+                and not any(u0 < b and u1 > a for u0, u1 in covered)]
         _, y_panel, pbay = min(fits) if fits else (None, None, (0.0, 0.0))
         cx = (wall["lo_m"][0] + wall["hi_m"][0]) / 2
         free = [bay for bay in stud_bays if bay != pbay]
@@ -361,7 +414,7 @@ def feeder_chase(apt: dict, p: dict, frame: dict) -> dict[str, dict]:
             conduits.append({"id": f"{col}/feeder/{n}", "flat": n, "x": cx, "y": best, **c})
             if best is not None:
                 taken.append((best - r_, best + r_))
-        out[col] = {"panel_y": y_panel, "panel_bay": pbay, "step5_y": y_step5, "x": cx, "conduits": conduits,
+        out[col] = {"panel_y": y_panel, "panel_bay": pbay, "step5_y": y_step5, "x": cx, "conduits": conduits, "covered": covered,
                     "own": {n: conduit_for([fd[n]["size"]] * 3 + [fd[n]["egc"]], p) for n in names}}
     return out
 
@@ -376,37 +429,61 @@ def chase_checks(apt: dict, p: dict, ch: dict) -> list[tuple[str, bool, str]]:
     sched = json.loads((OUT_DIR / "pass3" / "frame.json").read_text(encoding="utf-8"))
     depth = sched["sizes_mm"]["2x4"][1] / 25.4  # the partition's studs (pass 3b's schedule)
     fat = max(k["od_in"] for c in ch.values() for k in c["conduits"])
+    dedicated = all(not any(u0 < c["panel_bay"][1] and u1 > c["panel_bay"][0] for u0, u1 in c["covered"]) for c in ch.values())
+    # Its working space (110.26(A)), in the hall it faces: 30 in. wide about the panel, 36 in. deep.
+    w = "systems.wiring."
+    room_ok, least = True, None
+    for col, c in ch.items():
+        for f in (f for f in apt["flats"] if column(f["name"]) == col):
+            hall = next(r for r in apt["rooms"]["rooms"] if r["id"] == f"{f['name']}/hall")
+            half = p[w + "working_width_in"] * IN / 2
+            deep = hall["hi_m"][0] - hall["lo_m"][0]
+            room_ok &= hall["lo_m"][1] - 1e-6 <= c["panel_y"] - half and c["panel_y"] + half <= hall["hi_m"][1] + 1e-6
+            least = deep if least is None else min(least, deep)
+    room_ok &= least >= p[w + "working_depth_in"] * IN - 1e-9
     return [("every panel in a whole stud bay of its partition", placed, f"moved at most {moved / IN:.1f} in. from step 5's point"),
+            ("no soffit over any panel's footprint: its dedicated space (NEC 2020 110.26(E)) free of ducts and pipes", dedicated, ""),
+            ("every moved panel still faces its hall with 110.26(A)'s working space: 30 in. wide, 36 in. deep", room_ok,
+             f"the halls {least / IN:.1f} in. deep"),
             ("every upper flat's feeder conduit up its column's partition, in a stud bay that is a joist bay on every floor",
              not missing and fat <= depth - 2 * p[R + "cavity_clear_in"], ", ".join(missing) or f"{sum(len(c['conduits']) for c in ch.values())} conduits, at most {fat:g} in. in the 2x4's 3.5 in.")]
 
 
 # ---- 7a: the soffits, the ERV's wall terminations, the roof's outdoor units ----
 
-def ceiling_z(frame: dict, storey: int, apt: dict) -> float:
-    """The underside of the joists over a storey (floor or roof, m), from forge's frame; the ceiling
-    assembly (resilient channel and gypsum, `ceiling_assembly_in`) hangs under it."""
-    kind = "floor joists" if storey < apt["storeys"] else "roof joists"
-    return min(_bounds(m)[0][2] for m in frame["members"] if m["kind"] == kind and m["storey"] == storey)
+def ceiling_z(apt: dict, storey: int) -> float:
+    """The underside of the joists over a storey (floor or roof, m): the next floor less the
+    subfloor and the floor joist (pass 3b's schedule, `out/pass3/frame.json`); the roof joists sit
+    on the same plates. The ceiling assembly (resilient channel and gypsum, `ceiling_assembly_in`)
+    hangs under it."""
+    sched = json.loads((OUT_DIR / "pass3" / "frame.json").read_text(encoding="utf-8"))
+    return storey * apt["storey_m"] - (sched["subfloor_mm"] + sched["floor_joist"]["depth_mm"]) / 1000
 
 
-def soffits(apt: dict, p: dict, frame: dict, terms: list[dict]) -> list[dict]:
+def soffits(apt: dict, p: dict, terms: list[dict]) -> list[dict]:
     """Each flat's soffits, framed under the rated ceiling so no duct pierces it (IBC 2021 717.6.2
     would ask a ceiling radiation damper at every register through it): over the hall (the
     mini-split's indoor unit), the passage, the utility closet (the ERV) and the kitchen, and a
     strip across the living room from the kitchen to the flat's ERV termination (`terminations`)
-    for its two 5 in. ducts (a furred ceiling over less than a third of the room, 1208.2.1). Each
-    is a box (m) `soffit_in` deep under the ceiling's finish."""
+    for its two 5 in. ducts (a furred ceiling over less than a third of the room, 1208.2.1), with
+    a leg to the kitchen's where the termination is past its end. Each is a box (m) `soffit_in`
+    deep under the ceiling's finish; the hall's, the passage's and the closet's
+    `condensate_soffit_drop_in` deeper, for the mini-split's condensate."""
     by_t = {t["flat"]: t for t in terms}
     out = []
     for name, rooms in by_flat(apt).items():
         by = {r["id"].split("/")[1]: r for r in rooms}
         storey = by["hall"]["storey"]
-        top = ceiling_z(frame, storey, apt) - p[R + "ceiling_assembly_in"] * IN
+        top = ceiling_z(apt, storey) - p[R + "ceiling_assembly_in"] * IN
         z0 = top - p[R + "soffit_in"] * IN
+        # The hall's, the passage's and the closet's soffits go `condensate_soffit_drop_in` deeper,
+        # under the mini-split and the ERV (both hung from the top): room for the mini-split's
+        # condensate to fall by gravity, 1%, to the washer's standpipe (Jon, 2026-11-21: gravity
+        # first; its drain port is 1-1/8 in. above the unit's bottom).
+        zd = z0 - p[R + "condensate_soffit_drop_in"] * IN
         for key in ("hall", "passage", "utility", "kitchen"):
             r = by[key]
-            out.append({"id": f"{name}/soffit-{key}", "flat": name, "room": r["id"], "lo": [r["lo_m"][0], r["lo_m"][1], z0],
+            out.append({"id": f"{name}/soffit-{key}", "flat": name, "room": r["id"], "lo": [r["lo_m"][0], r["lo_m"][1], z0 if key == "kitchen" else zd],
                         "hi": [r["hi_m"][0], r["hi_m"][1], top]})
         # The hall's soffit reaches past the hall over the partition and the bath, along the
         # mini-split, by what its width and its two side spaces need beyond the hall's width.
@@ -417,12 +494,20 @@ def soffits(apt: dict, p: dict, frame: dict, terms: list[dict]) -> list[dict]:
             edge = hall["hi_m"][0] if into < 0 else hall["lo_m"][0]
             uy, half = (hall["lo_m"][1] + hall["hi_m"][1]) / 2, p[R + "ms_d_in"] * IN / 2 + p[R + "riser_gap_in"] * IN
             out.append({"id": f"{name}/soffit-hall-reach", "flat": name, "room": by["bath"]["id"],
-                        "lo": [min(edge, edge - into * need), uy - half, z0], "hi": [max(edge, edge - into * need), uy + half, top]})
+                        "lo": [min(edge, edge - into * need), uy - half, zd], "hi": [max(edge, edge - into * need), uy + half, top]})
         liv, kit = by["living"], by["kitchen"]
         w = p[R + "furdown_w_in"] * IN
         y = by_t[name]["y"]
         lo_x, hi_x = (liv["lo_m"][0], kit["lo_m"][0]) if liv["lo_m"][0] < kit["lo_m"][0] else (kit["hi_m"][0], liv["hi_m"][0])
         out.append({"id": f"{name}/soffit-strip", "flat": name, "room": liv["id"], "lo": [lo_x, y - w / 2, z0], "hi": [hi_x, y + w / 2, top]})
+        # Where the termination is past the kitchen's end (the middle storey's, a pier along), a leg
+        # along the kitchen's side of the living room joins the strip to the kitchen's soffit.
+        ky0, ky1 = kit["lo_m"][1], kit["hi_m"][1]
+        lx0, lx1 = (hi_x - w, hi_x) if liv["lo_m"][0] < kit["lo_m"][0] else (lo_x, lo_x + w)
+        if y + w / 2 > ky1:
+            out.append({"id": f"{name}/soffit-strip-leg", "flat": name, "room": liv["id"], "lo": [lx0, ky1 - w, z0], "hi": [lx1, y + w / 2, top]})
+        elif y - w / 2 < ky0:
+            out.append({"id": f"{name}/soffit-strip-leg", "flat": name, "room": liv["id"], "lo": [lx0, y - w / 2, z0], "hi": [lx1, ky0 + w, top]})
     return out
 
 
@@ -431,15 +516,22 @@ def soffit_checks(apt: dict, p: dict, frame: dict, sf: list[dict]) -> list[tuple
     kitchens and laundries; a furred ceiling 7 ft, over at most a third of a room, 1208.2.1), and
     the mini-split's indoor unit inside its soffit."""
     rooms = {r["id"]: r for r in apt["rooms"]["rooms"]}
-    least, worst_share = None, 0.0
+    least, furred = None, {}
     for s in sf:
         r = rooms[s["room"]]
         floor = r["lo_m"][2] + (p["systems.design.finished_floor_upper_in"] * IN if r["storey"] > 1 else 0.0)
         h = s["lo"][2] - floor
         least = h if least is None else min(least, h)
-        if s["id"].endswith("strip"):
-            share = (s["hi"][0] - s["lo"][0]) * (s["hi"][1] - s["lo"][1]) / r["area_m2"]
-            worst_share = max(worst_share, share)
+        if "strip" in s["id"]:
+            # The strip and its leg overlap by their corner: the leg's area less the overlap.
+            a = (s["hi"][0] - s["lo"][0]) * (s["hi"][1] - s["lo"][1])
+            if s["id"].endswith("leg"):
+                st = next(x for x in sf if x["id"] == s["id"][: -len("-leg")])
+                ox = max(0.0, min(s["hi"][0], st["hi"][0]) - max(s["lo"][0], st["lo"][0]))
+                oy = max(0.0, min(s["hi"][1], st["hi"][1]) - max(s["lo"][1], st["lo"][1]))
+                a -= ox * oy
+            furred[r["id"]] = furred.get(r["id"], 0.0) + a
+    worst_share = max((a / rooms[k]["area_m2"] for k, a in furred.items()), default=0.0)
     unit_h = p[R + "minisplit_h_in"]
     fits = p[R + "soffit_in"] >= unit_h + p[R + "unit_hanger_in"]
     need = p["systems.code.room.min_ceiling_service_in"] * IN
@@ -450,7 +542,7 @@ def soffit_checks(apt: dict, p: dict, frame: dict, sf: list[dict]) -> list[tuple
              f"{unit_h:g} + {p[R + 'unit_hanger_in']:g} in. in {p[R + 'soffit_in']:g}")]
 
 
-def terminations(apt: dict, p: dict, frame: dict) -> list[dict]:
+def terminations(apt: dict, p: dict) -> list[dict]:
     """Each flat's ERV wall termination: one factory-built intake and exhaust combination (Broan's
     Tandem transition kit, which its manual names for the BLP120, with 5 in. ducts), so the intake
     needs no separation from its own exhaust (IMC 2021 401.4 item 3).
@@ -479,7 +571,7 @@ def terminations(apt: dict, p: dict, frame: dict) -> list[dict]:
         kc = (kit["lo_m"][1] + kit["hi_m"][1]) / 2
         piers.sort(key=lambda t: abs(t[0] - kc))
         y, a, b = piers[(storey + 1) % 2 if len(piers) > 1 else 0]
-        top = ceiling_z(frame, storey, apt) - p[R + "ceiling_assembly_in"] * IN
+        top = ceiling_z(apt, storey) - p[R + "ceiling_assembly_in"] * IN
         z = top - p[R + "soffit_in"] * IN / 2
         out.append({"id": f"{name}/erv-termination", "flat": name, "x": 0.0 if front else apt["depth_m"], "y": y, "z": z,
                     "face": face, "fixed": [a["id"], b["id"]]})
@@ -787,9 +879,9 @@ def placements(apt: dict, p: dict) -> dict:
     frame = load_frame(apt, p)
     fx = fixtures(apt, p, frame)
     vs = vertical_services(apt, p, frame, fx)
-    ch = feeder_chase(apt, p, frame)
-    terms = terminations(apt, p, frame)
-    sf = soffits(apt, p, frame, terms)
+    terms = terminations(apt, p)
+    sf = soffits(apt, p, terms)
+    ch = feeder_chase(apt, p, frame, sf)
     units = roof_units(apt, p, vs)
     eq = flat_equipment(apt, p, frame, fx, ch, sf)
     plant = annex_equipment(apt, p)

@@ -2074,10 +2074,10 @@ routing:
     conf: low
     source: "judgement until the unit's installation manual is read"
   furdown_w_in:
-    value: 18
+    value: 22
     unit: in., the width of the strip soffit across the living room that carries the ERV's two 5 in. ducts to the facade
     conf: low
-    source: "the design: two 5 in. insulated ducts side by side with their insulation (about 7 in. each) and the strip's framing"
+    source: "the design: two 5 in. ducts in their insulation (8 in. each, oa_insulation_in) side by side, each with 1/2 in. around it (the router's clearance), and room to turn into the Tandem kit"
   stagger_in:
     value: 24
     unit: in., the middle storey's ERV terminations shifted along the facade from those above and below
@@ -2300,3 +2300,410 @@ routing:
     unit: in., kept between floor-standing equipment and a wall
     conf: low
     source: "judgement: room for its piping behind it"
+  # 7b: the router's rules (each from its source) and the routes' ends.
+  apa_saf_in:
+    value: 214
+    unit: in., APA Table 5's span adjustment factor for the 11-7/8 in. PRI-60 (17 ft 10 in.)
+    conf: high
+    source: "APA Z725E (2012) Table 5, 11-7/8 in. PRI-60 row: SAF 17'-10\" (data/apa_z725e_table5_pri60_1178.csv)"
+  apa_min_edge_in:
+    value: 6
+    unit: in., the least a reduced distance may leave from the support's face to the hole's edge
+    conf: high
+    source: "APA Z725E Table 5 note e: 'The reduced distance shall not be less than 6 inches from the face of the support to edge of the hole.'"
+  apa_any_hole_in:
+    value: 1.5
+    unit: in., a hole this size or smaller allowed anywhere in an I-joist's web
+    conf: high
+    source: "APA Z725E, rules for cutting holes, rule 9: 'A 1-1/2-inch hole or smaller can be placed anywhere in the web provided that it meets the requirements of rule number 6'"
+  stud_hole_nonbearing:
+    value: 0.6
+    unit: the most of a nonbearing partition's stud depth a bored hole may take (and its plates')
+    conf: high
+    source: "IBC 2021 2308.5.10 (UpCodes, data/raw/pass3g/step7/ibc23.html): 'The diameter of bored holes in wood studs shall not exceed 60 percent of the stud depth in nonbearing partitions.' The plates taken alike, each cut tied by 2308.5.8's steel strap"
+  stud_hole_bearing:
+    value: 0.4
+    unit: the most of a bearing or exterior wall's stud depth a bored hole may take (and its plates')
+    conf: high
+    source: "IBC 2021 2308.5.10: 'The diameter of bored holes in wood studs shall not exceed 40 percent of the stud depth.'"
+  stud_edge_in:
+    value: 0.625
+    unit: in., the least from a bored hole's edge to the stud's edge
+    conf: high
+    source: "IBC 2021 2308.5.10: 'The edge of the bored hole shall not be closer than 5/8 inch (15.9 mm) to the edge of the stud.'"
+  sawn_hole_frac:
+    value: 0.3333
+    unit: the most of a sawn joist's or rafter's depth a bored hole may take
+    conf: high
+    source: "IBC 2021 2308.4.2.4 (joists) and 2308.7.4 (rafters, ceiling joists): 'the diameter of any such hole shall not exceed one-third the depth'"
+  sawn_hole_edge_in:
+    value: 2
+    unit: in., the least from a hole in a sawn joist to its top or bottom
+    conf: high
+    source: "IBC 2021 2308.4.2.4: 'Holes bored in joists shall not be within 2 inches (51 mm) of the top or bottom of the joist'"
+  hole_clear_in:
+    value: 0.25
+    unit: in., a bored hole's diameter over the pipe's or cable's (with its insulation)
+    conf: low
+    source: "judgement: a hole saw a size up; the hole is what the frame's rules limit"
+  voxel_in:
+    value: 1
+    unit: in., the router's voxel inside the building
+    conf: medium
+    source: "the design: an I-joist's web is 3/8 in., so a voxel no bigger than a stud's 1-1/2 in.; 1 in. keeps a search in a ceiling cavity under 4 million cells"
+  slab_voxel_in:
+    value: 2
+    unit: in., the router's voxel under the slab, where no member is bored
+    conf: medium
+    source: "the design: the trenches' grid; the stem walls are the only member crossed (by a sleeve)"
+  clash_voxel_in:
+    value: 1
+    unit: in., the clash check's voxel
+    conf: medium
+    source: "the design: as the router's"
+  snap_in:
+    value: 8
+    unit: in., the most a route's end may move to find room for the pipe
+    conf: low
+    source: "judgement: a fitting's or a stub's length; each end's move is reported"
+  turn_cost_ft:
+    value: 0.5
+    unit: ft added to a route for each bend
+    conf: low
+    source: "judgement: steers the search to fewer bends; the lengths reported are the routes' own, without it"
+  cross_cost_ft:
+    value: 0.25
+    unit: ft added for each voxel of a member a route bores
+    conf: low
+    source: "judgement: steers the search to fewer holes; not part of the reported lengths"
+  sleeve_cost_ft:
+    value: 3
+    unit: ft added for each voxel of a stem wall a route sleeves through
+    conf: low
+    source: "judgement: a sleeve through a foundation wall is work; not part of the reported lengths"
+  under_slab_top_in:
+    value: 5
+    unit: in. under the slab's top, the trenches' top (the 4 in. slab and its base)
+    conf: low
+    source: "judgement: under the 4 in. slab (forge `apartment`)"
+  under_slab_bottom_in:
+    value: 36
+    unit: in. under the slab's top, the trenches' bottom
+    conf: low
+    source: "judgement: under the spine's footing (16 in. below the slab's top, forge `framing`) with room for the drain's fall"
+  stub_offset_in:
+    value: 5
+    unit: in., a fixture's hot and cold stubs either side of its centre
+    conf: placeholder
+    source: "placeholder: Kohler K-2005's 3/8 in. supplies at 4 in. either side (the research agent's reading of its sheet); fixtures not chosen"
+  fire_entry_in:
+    value: 3
+    unit: in., the sprinkler feed's root inside the flat from the stair wall's face
+    conf: low
+    source: "judgement: where the feed enters the flat's ceiling cavity from the stair"
+  fire_entry_off_in:
+    value: 12
+    unit: in., the fire main's drop from the riser assembly, off the mechanical room's wall to the stair
+    conf: placeholder
+    source: "placeholder until the riser assembly is drawn"
+  drop_pass_in:
+    value: 8
+    unit: in., how far a sprinkler's drop through the rated ceiling into a soffit may stand from the sprinkler (half the square it may use)
+    conf: low
+    source: "judgement: wide enough to always hold a joist bay (16 in. on centre), so the drop comes down between joists and runs in the soffit to the sprinkler; IBC 714.5.2"
+  erv_port_down_in:
+    value: 4.5625
+    unit: in., the ERV's ports' centres below its back (top) face
+    conf: high
+    source: "Broan spec sheet BLP120E80NS-HW rev 1118775D p. 3 (a drawing, the research agent's reading): port centres 4-9/16 from the back face, 5-1/16 from each side edge, 8-9/16 apart"
+  erv_port_sep_in:
+    value: 8.5625
+    unit: in., between the centres of an end's two ports
+    conf: high
+    source: "Broan spec sheet 1118775D p. 3 (above)"
+  oa_duct_in:
+    value: 5
+    unit: in., the ERV's outdoor-air and exhaust ducts to the Tandem termination
+    conf: high
+    source: "Broan EDGE installation manual 2.8: the Tandem kits 'have 5\" diameter ports, BLP120 models shall use 5\" to 4\" reducers with 5\" diameter insulated ducting between the ERV and the Tandem transition'; step 5's preheater takes a 5 in. duct too"
+  oa_insulation_in:
+    value: 1.5
+    unit: in., the outdoor-air and exhaust ducts' insulation (each side)
+    conf: placeholder
+    source: "placeholder: Broan asks insulated ducts on the cold side (manual 2.9); the thickness until the duct is chosen"
+  tandem_sep_in:
+    value: 9
+    unit: in., between the Tandem kit's two ports' centres
+    conf: placeholder
+    source: "placeholder until the kit's sheet (VTYIK1) is read: at least the two insulated ducts' width (8 in. each, so 9 with the router's clearance) where they meet it"
+  ms_supply_up_in:
+    value: 6.53
+    unit: in., the mini-split's supply collar's centre above the unit's bottom
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing, the research agent's reading): the supply collar 8-9/16 in. high, its bottom 2-1/4 in. above the unit's: 2.25 + 8.5625 / 2"
+  ms_pipe_back_in:
+    value: 12
+    unit: in., the mini-split's refrigerant connections back from its supply face
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing): liquid 11 in. back, gas 12-5/8 in."
+  ms_pipe_up_in:
+    value: 7
+    unit: in., the refrigerant connections above the unit's bottom
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing): liquid 8-1/4 in. up, gas 5-11/16 in."
+  ms_drain_up_in:
+    value: 1.125
+    unit: in., the drain port above the unit's bottom
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing): the drain port about 1-1/8 in. up, 11-13/16 in. back"
+  condensate_od_in:
+    value: 1.05
+    unit: in., the condensate drain's outside diameter (3/4 in. PVC)
+    conf: medium
+    source: "the size to its drain port (Fujitsu: 1 in. I.D., 1-1/4 in. O.D. port); 3/4 in. PVC's 1.05 in. outside diameter (Wavin's Schedule 40 sheet)"
+  drain_od_washer_in:
+    value: 2.35
+    unit: in., the washer's 2 in. drain's outside diameter (IPC 406.3 asks 2 in.)
+    conf: low
+    source: "CISPI 301's 2 in. no-hub outside diameter, 2.35 in. (from memory, to confirm)"
+  drain_branch_in:
+    value: 2
+    unit: in., a flat's horizontal branch drain for its lavatory, kitchen sink and washer
+    conf: high
+    source: "IPC 2021 Table 710.1(2): a 2 in. horizontal fixture branch takes 6 dfu; Table 709.1: 'Lavatory | 1 | 1 1/4', the kitchen sink with its dishwasher 2, the washer 2: 5 dfu"
+  drain_od_branch_in:
+    value: 2.35
+    unit: in., the 2 in. branch drain's outside diameter
+    conf: low
+    source: "CISPI 301's 2 in. no-hub outside diameter, 2.35 in. (from memory, to confirm), as the washer's"
+  drain_od_tub_in:
+    value: 1.90
+    unit: in., the tub's 1-1/2 in. drain's outside diameter
+    conf: low
+    source: "CISPI 301, as above"
+  drain_od_building_in:
+    value: 4.38
+    unit: in., the 4 in. building drain's outside diameter (step 4)
+    conf: low
+    source: "CISPI 301's 4 in. no-hub outside diameter, 4.38 in. (from memory, to confirm)"
+  vent_conn_in:
+    value: 54
+    unit: in. above the floor, where a flat's vents join the vent stack
+    conf: medium
+    source: "IPC 2021 905.5: 'not less than 6 inches (152 mm) above the flood level rim of the highest fixture served': the washer's standpipe box at 42 in. (placeholder) plus 6, rounded up a foot"
+  vent_low_in:
+    value: 6
+    unit: in. above the floor, a water closet's or tub's vent take-off in the wall (their drains are below the floor)
+    conf: low
+    source: "judgement: the vent rises from the drain below through the wall's bottom plate"
+  vent_up_in:
+    value: 2
+    unit: in., a vent's take-off above its fixture's drain
+    conf: low
+    source: "judgement: IPC 905.3 joins a dry vent above a horizontal drain's centreline; 909.3 keeps it two diameters from the trap's weir"
+  vent_off_in:
+    value: 0
+    unit: in., a vent's take-off along the wall from its fixture's drain (at its centre, between its supplies)
+    conf: low
+    source: "judgement: the supplies stand stub_offset_in either side"
+  vent_od_in:
+    value: 1.90
+    unit: in., a fixture's 1-1/2 in. vent's outside diameter
+    conf: low
+    source: "IPC 2021 906.2: a vent not less than half its drain's size, nor under 1-1/4 in.; 1-1/2 in. taken for all, cast iron's 1.90 in. (from memory, to confirm)"
+  plant_drop_x_in:
+    value: 24
+    unit: in., where the plant's mains drop through the annex's slab, from the mechanical room's wall to the building
+    conf: placeholder
+    source: "placeholder until the plant's piping is drawn (the mains are routed from there)"
+  underslab_jacket_in:
+    value: 1.0
+    unit: in., the pre-insulated mains' jacket under the slab, each side
+    conf: placeholder
+    source: "placeholder: step 3's 'pre-insulated PEX below the slab'; the product not chosen"
+  sewer_exit_x_in:
+    value: 12
+    unit: in. from the front, where the building drain leaves through the front stem wall
+    conf: placeholder
+    source: "placeholder: the site plan isn't drawn; the street is at the front (step 6's FDC, IBC 912.2.1)"
+  sewer_exit_y_ft:
+    value: 50
+    unit: ft along the building, where the building drain leaves (the stair core's middle)
+    conf: placeholder
+    source: "placeholder until the site plan places the sewer"
+  meter_out_in:
+    value: 6
+    unit: in. out from the annex's wall, where the feeders go down under the meter stack
+    conf: low
+    source: "judgement: the meter stack's depth (11.5 in., Square D) is over it"
+  nm_od_in:
+    value: 0.6
+    unit: in., a branch circuit's cable taken as round (12/2 NM-B's wider side)
+    conf: placeholder
+    source: "placeholder until the cable's sheet is read"
+  far_inset_in:
+    value: 6
+    unit: in., a circuit's far point in from its room's corner
+    conf: low
+    source: "judgement: the last outlet beside the corner"
+  grille_in_in:
+    value: 2
+    unit: in., a duct's end in from the soffit's side where its grille is
+    conf: low
+    source: "judgement"
+  wall_voxel_in:
+    value: 0.5
+    unit: in., the router's voxel in a wall's stud cavity
+    conf: medium
+    source: "the design: a 2x6 wall's cavity is 4-1/4 in. clear of 2308.5.10's 5/8 in. margins; at 1 in. a pipe's cross-section rounds up past it"
+  wall_clear_in:
+    value: 0.125
+    unit: in., kept between services in a wall's cavity and around a bored hole
+    conf: low
+    source: "judgement: in a stud cavity each pipe has its own holes; 1/8 in. keeps them from touching"
+  cable_clear_in:
+    value: 0
+    unit: in., kept around a branch circuit's cable
+    conf: low
+    source: "judgement: NM cable may touch other services' sides (it may not share their holes)"
+  slab_drains_at:
+    value: 0.5
+    unit: of the trench's depth, the ground floor's fixture drains, under the spine's footing
+    conf: low
+    source: "the design: the plumbing walls stand over the spine's thickened footing (forge framing: 35 in. wide, 12 in. deep under the slab), so the bath's drains go down through it in sleeves and run under it"
+  slab_feeders_at:
+    value: 0.35
+    unit: of the trench's depth, the feeders' conduits
+    conf: low
+    source: "judgement"
+  slab_mains_at:
+    value: 0.6
+    unit: of the trench's depth, the water and heating mains and the fire main
+    conf: low
+    source: "judgement"
+  slab_building_drain_at:
+    value: 0.9
+    unit: of the trench's depth, the building drain (lowest; it falls to the sewer)
+    conf: low
+    source: "judgement"
+  clash_tol_in:
+    value: 0.04
+    unit: in., the overlap of two services' solids taken as touching, not clashing
+    conf: low
+    source: "judgement: under the router's voxel's rounding"
+  branch_drop_in:
+    value: 3
+    unit: in. under the joists, where a flat's water branches leave their risers, up through the wall's top plates into the ceiling
+    conf: low
+    source: "judgement: the riser's tee just under the plates"
+  tail_height_in:
+    value: 66
+    unit: in. above the floor, where the heating loop's tails run along the plumbing wall to the closet (over the vents' header)
+    conf: low
+    source: "judgement: above the vent header (vent_conn_in) and the washer box"
+  head_clear_in:
+    value: 4
+    unit: in., a sprinkler moved clear of equipment above it, beyond its edge
+    conf: placeholder
+    source: "placeholder: NFPA 13R's obstruction rules for residential sprinklers not read here (the listing's TFP403 gives them); step 9 to confirm"
+  branch_insulation_in:
+    value: 0.75
+    unit: in., the insulation on a flat's own hot-water branches (R-3)
+    conf: medium
+    source: "PA 2021 IECC R403.5.2 (UpCodes, saved in step 4): 'Insulation for service hot water piping with a thermal resistance, R-value, of not less than R-3 shall be applied to ... Piping 3/4 inch (19.1 mm) and larger in nominal diameter located inside the conditioned space'; R-3 at about 4 per inch (a usual foam pipe insulation, to confirm with the product). The risers and mains keep ASHRAE 90.1's 1 in. and more (hot_water.insulation_in_*), past the code: at 1 in. a flat's 1 in. branch needs a 3-3/8 in. hole, over 2308.5.10's 60% of a 2x6 stud"
+  tail_insulation_in:
+    value: 0
+    unit: in., the insulation on a flat's manifold tails
+    conf: medium
+    source: "PA 2021 IECC R403.4 asks insulation on mechanical piping only over 105 F or under 55 F; the loop's supply is 40.2 C (104.4 F, step 3), and what a tail loses warms the flat it serves"
+  grille_ms_at:
+    value: 0.3
+    unit: of the side a room shares with the soffit, where the mini-split's grille is along it
+    conf: low
+    source: "judgement: the two systems' grilles apart on the same partition (bed-1 shares 19.5 in. with the hall)"
+  grille_erv_at:
+    value: 0.75
+    unit: of the side a room shares with the soffit, where the ERV's grille is along it
+    conf: low
+    source: "judgement, as above"
+  washer_trap_in:
+    value: 12
+    unit: in. above the floor, the washer standpipe's trap (its drain's height)
+    conf: medium
+    source: "IPC 2021 802.4.3 (not read here; its numbers as IPC 406.3 points to them, to confirm): the standpipe 18 to 42 in. above its trap, the trap 6 to 18 in. above the floor; 12 in. taken between"
+  slab_cold_at:
+    value: 0.45
+    unit: of the trench's depth, the cold main (each main at its own depth, to cross under the others)
+    conf: low
+    source: "judgement: below the spine's footing (16 in. under the slab's top)"
+  slab_hot_at:
+    value: 0.55
+    unit: of the trench's depth, the hot main
+    conf: low
+    source: "judgement, as above"
+  slab_hot_return_at:
+    value: 0.65
+    unit: of the trench's depth, the hot return main
+    conf: low
+    source: "judgement, as above"
+  slab_loop_supply_at:
+    value: 0.75
+    unit: of the trench's depth, the heating loop's supply main
+    conf: low
+    source: "judgement, as above"
+  slab_loop_return_at:
+    value: 0.85
+    unit: of the trench's depth, the heating loop's return main
+    conf: low
+    source: "judgement, as above"
+  wall_column_in:
+    value: 3
+    unit: in., half the width of the column a supply or a vent may use in the plumbing wall at its fixture or its riser (straight up and down)
+    conf: low
+    source: "the design: in the 2x6 cavity only vertical runs (supplies down from the ceiling, vents up to it); a horizontal one blocks every other pipe that has to pass it"
+  ms_return_w_in:
+    value: 25.5625
+    unit: in., the mini-split's return collar's width, across the unit's back
+    conf: medium
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing, the research agent's reading): the return collar 25-9/16 x 10-1/16 in."
+  ms_return_up_in:
+    value: 5.9
+    unit: in., the mini-split's return collar's centre above the unit's bottom (at its back), where the ERV's fresh air comes in
+    conf: medium
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing, the research agent's reading): the return collar 25-9/16 x 10-1/16 in., its bottom 7/8 in. above the unit's: 0.875 + 10.0625 / 2"
+  passes:
+    value: 3
+    unit: passes of the router at most, each moving a run that failed one place earlier among its flat's runs
+    conf: medium
+    source: "the design: sequential routing depends on order. Moving the failures to the front of the whole order was tried first (2026-11-21, 4 passes: 402, 378, 386, 374 of 454 routed, fewer each pass); a move within the failure's flat disturbs nothing else"
+  head_min_spacing_ft:
+    value: 8
+    unit: ft, the least distance between two residential sprinklers
+    conf: high
+    source: "Tyco TFP403 (TY2236): 'The minimum spacing between sprinklers is 8 ft (2,4 m). The maximum spacing between sprinklers cannot exceed the length of the coverage area (Table A) being hydraulically calculated'"
+  drain_slope_small_in_ft:
+    value: 0.25
+    unit: in. per ft, the least fall of a horizontal drain 2-1/2 in. or smaller
+    conf: high
+    source: "IPC 2021 704.1 and Table 704.1: '2 1/2 or less | 1/4'; 'Horizontal drainage piping shall be installed in uniform alignment at uniform slopes'"
+  drain_slope_large_in_ft:
+    value: 0.125
+    unit: in. per ft, the least fall of a horizontal drain 3 to 6 in.
+    conf: high
+    source: "IPC 2021 Table 704.1: '3 to 6 | 1/8'"
+  condensate_slope_in_ft:
+    value: 0.125
+    unit: in. per ft, the least fall of the mini-split's condensate drain
+    conf: high
+    source: "IMC 2021 307.2.1 (Pennsylvania's, read on UpCodes, https://up.codes/viewer/pennsylvania/imc-2021/chapter/3/general-regulations): 'Such piping shall maintain a minimum horizontal slope in the direction of discharge of not less than 1/8 unit vertical in 12 units horizontal (1-percent slope).'"
+  condensate_soffit_drop_in:
+    value: 2.5
+    unit: in., how much deeper than `soffit_in` the hall's, passage's and closet's soffits go, under the mini-split and the ERV hung at their tops
+    conf: medium
+    source: "the design (Jon, 2026-11-21: gravity first, rather than a pump; Fujitsu's ARUH12KUAS has none): its drain port 1-1/8 in. above its bottom, the condensate 3/4 in. PVC falling 1% (IMC 307.2.1) over up to about 7 m to the washer's standpipe; the soffits still leave 7 ft under them (IBC 1208.2)"
+  vent_slope_in_ft:
+    value: 0.125
+    unit: in. per ft, the least rise of a vent's level run toward its vent stack
+    conf: medium
+    source: "IPC 2021 905.2: 'Vent and branch vent pipes shall be so graded and connected as to drain back to the drainage pipe by gravity' (no figure given); 1/8 in./ft taken, the least slope the code asks of any drain (Table 704.1, 3 to 6 in.)"
+

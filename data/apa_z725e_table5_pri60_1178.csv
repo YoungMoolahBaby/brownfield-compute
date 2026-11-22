@@ -1,0 +1,19 @@
+# APA Performance Rated I-Joists, Form Z725E (2012), Table 5 "Location of circular holes in PRI joist webs", simple or
+# multiple span, dead loads up to 10 psf and live loads up to 40 psf: the 11-7/8 in. PRI-60 row (the frame's floor joist,
+# out/pass3/frame.json). Minimum distance from the inside face of any support to the centre of a round hole, by its diameter.
+# Source: https://interfor.com/wp-content/uploads/2024/08/APA_Performance_Rated_I-Joists.pdf p. 21 (saved as
+# data/raw/pass3g/dl/apa/z725.pdf), read from its text: "PRI-60 17'-10" 0'-7" 1'-9" 3'-0" 4'-4" 5'-9" 6'-1" 7'-2" 8'-9" 9'-10"",
+# the 11-7/8 in. columns being 2, 3, 4, 5, 6, 6-1/4, 7, 8, 8-5/8 in. (the largest, rule 4: the clear distance between the
+# flanges, 8-7/8 in., less 1/4). Its SAF (span adjustment factor) is 17'-10": for a clear span L under it, the distance may be
+# reduced to D x L / SAF, but not to less than 6 in. from the support's face to the hole's edge (Table 5's note e). Rule 9: a
+# hole of 1-1/2 in. or less anywhere in the web.
+hole_in,min_dist_in
+2,7
+3,21
+4,36
+5,52
+6,69
+6.25,73
+7,86
+8,105
+8.625,118

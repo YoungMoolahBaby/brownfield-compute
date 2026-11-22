@@ -51,7 +51,16 @@ and equipment are placed to it. Found:
 - the floors below the top need a vent stack;
 - the fire service's backflow assembly needs listed shutoff valves of its own.
 
-Next: 7b, the router.
+7b done: forge routes all 430 runs through the frame with no clashes, keeping APA's hole rules and
+the drains' and vents' grades, and the checks, worked again in Python, all pass. Found:
+- APA's hole spacing spreads the runs over each plumbing wall into lanes;
+- each flat's lavatory, sink and washer share one 2 in. drain;
+- the building drain leaves under the front footing's top, which steps down there;
+- each mini-split's condensate drains by gravity, in soffits 2.5 in. deeper (Jon's choice);
+- step 6's hall and study sprinklers stood 6.4 ft apart (8 ft asked);
+- the ERV's fresh air goes through the mini-split (Jon's choice).
+
+Next: 7c, the routed lengths back into steps 3 to 6.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3169,7 +3178,156 @@ test. Then the township brief's ask.
              kcmil a phase. The wording is corrected; no number changes.
            - **The dishwasher's installation manual** cited in step 5 may be the 18 in. models'.
              Its circuit rule is to re-read (Jon: left open for now).
+       - **7b done 2026-11-21 (not yet committed): every service routed through the frame, and
+         checked.**
+         - **The router:**
+           - `forge/src/routing.rs`, run by `routes-json`, with the requests from
+             `src/brownfield/routes.py` (`brownfield routes --requests`). A* runs on a dense voxel
+             grid of each request's zones: 1 in. voxels, 2 in. under the slab. Summed-volume tables
+             make a pipe's clearance one lookup.
+           - Each member is blocked, or crossable only along its bore axis and only where its rule
+             allows the hole: APA Table 5 for the I-joists, IBC 2308 for studs, plates and sawn
+             joists. The footings and the slab are crossed straight down only, in sleeves.
+           - Every hole cut in an I-joist's web keeps later holes there more than twice the larger
+             hole's diameter away, edge to edge (APA's rule 6), the request's own included; a joist
+             with three maximum-size holes takes only smaller ones (rule 11).
+           - Drains fall as they run (1/4 in./ft at 2-1/2 in. and under, 1/8 above, IPC Table
+             704.1; the condensate 1%, IMC 307.2.1) and vents rise toward their stack (1/8 in./ft,
+             IPC 905.2). The search keeps room for the pipe where its grade puts it; a drain's tree
+             grows from its farthest fixture, and a branch joins only where the trunk has fallen at
+             least as far.
+           - Other trees grow from the nearest terminal. A request may join what it comes off
+             anywhere along it (a stack, a riser).
+           - After a pass, a run that failed moves one place earlier among its own flat's runs, and
+             all are routed again (`passes`).
+           - The clash check uses cf-spatial's grid as the broad phase and the boxes as the narrow.
+         - **Known cases** (`routes-check`, all 8 pass):
+           - an empty box routes at its square length;
+           - a wall with one gap routes at the detour's closed form;
+           - a member bored across one axis refuses a pipe along it;
+           - APA's PRI-60 row is reproduced, with its span reduction;
+           - a second hole near a first in a web moves to over twice its diameter away;
+           - a joist with three maximum-size holes refuses a fourth, but not a smaller hole;
+           - a drain falls, and a vent rises, by exactly its slope along every level run.
+         - **Run:** 430 runs, all routed, no clashes, in one pass of about 2-1/2 minutes.
+         - **Checks** (`brownfield routes`, `src/brownfield/routecheck.py`): worked again in Python
+           from the frame and the code's numbers, not from forge's records. All pass:
+           - the boxes overlapped again: no clash;
+           - 2,518 holes in I-joist webs, the largest 96% of what APA's chart allows where it is;
+             rule 6's closest pair 0.08 in. past its limit; no joist with over three maximum-size
+             holes (rule 11);
+           - 18 holes in studs, the largest 79% of IBC 2308.5.10's limit, 1.07 in. to the stud's
+             edge at least; 1,191 in the roof's sawn joists, the largest 95% of 2308.4.2.4's third;
+           - 876 cut plates, each tied with 2308.5.8's 16 ga strap;
+           - every drain and the condensate falling, every vent rising, by its slope;
+           - no duct through a rated ceiling, so no ceiling radiation dampers (IBC 717.6.2);
+           - every wall holding a vertical service runs across the joists under it, so none needs
+             2308.5.8's doubled joists;
+           - the sprinklers moved still cover their cells and stand 8 ft apart.
+         - **Counted for the firestop schedule** (7d), each needing a listed system (IBC 714.5):
+           106 penetrations of the floors between flats, 532 up through walls' top plates into the
+           floor/ceiling space, 39 through the ceilings' membrane (36 of them sprinkler drops) and
+           13 through the party and stair walls (the sprinkler arms into the flats).
+         - **Sleeves for the structural engineer:** 12 through the footings, 12 through the slab,
+           30 through the stem walls.
+         - **Routed lengths** (7c sizes them; 7d prices them): water 548 m, vents 288 m, the flats'
+           drains 106 m and the building drain 43 m, sprinklers 380 m, ducts 320 m, line sets 98 m,
+           the manifolds' tails 174 m, condensate 60 m, branch-circuit cable 1,716 m, feeders 263 m,
+           the mains under the slab 90 m.
+         - **Found** (each now a rule the requests keep):
+           - **The plumbing wall carries no horizontal runs.** A riser fills the 2x6 cavity floor to
+             ceiling, so nothing passes it along the wall.
+             - The risers cluster at the wall's far end, past the last fixture.
+             - In the wall, only straight up and down: supplies from the ceiling, vents to it.
+             - Across, in the ceiling cavity: supplies, and the vents as one header a flat.
+             - Drains go down through the floor and along the joists' space under it, or under the
+               slab on the ground floor, to the stack.
+             - Each vertical stands in a stud bay that is also a joist bay above.
+             - **The joists' space directly over the wall is for the verticals only:** each run
+               keeps out of it but where it goes up or down itself. Runs along the wall's top
+               (the roof's sawn joists allow them) shut the other risers' way.
+             - **Below the top floor, a flat's supplies tee off the riser in the joists' space**,
+               not in the wall, where a branch beside the riser had no room for its own hole.
+           - **APA's hole spacing decides the ceiling's layout.** In the first ~19 in. from the
+             spine the joists take only small holes, and the vents, supplies and drains all ran
+             along the next lane, stacked. Stacked holes count as one hole drawn round them
+             (rule 12), which would need about 5 ft from the support. With rule 6 kept, the runs
+             along the wall spread into lanes about 7 in. apart, and the crossings find room.
+           - **A flat's lavatory, sink and washer drain into one 2 in. branch** (5 dfu; IPC Table
+             710.1(2) gives a 2 in. horizontal branch 6), as a plumber runs it. Three drains side by
+             side had shut the joists' space to the flat below.
+           - **The building drain falls about 7 in.** over its 16.5 m from the far stacks, so it
+             reaches the front wall 40 in. below the slab, under the perimeter footing's top
+             (36 in.). The footing steps down where it leaves (for the structural engineer), and the
+             sewer lateral takes it at that depth (a site item).
+           - **The mini-split's condensate drains by gravity** (Jon, 2026-11-21: "gravity first").
+             The ARUH12KUAS has no pump (Fujitsu lists none among its options), and its drain is
+             1-1/8 in. above its bottom, which was the soffit's floor: no room to fall 1% to the
+             washer's standpipe. So the hall's, the passage's and the closet's soffits go 2.5 in.
+             deeper under the unit and the ERV, both hung from the top. It falls 1% over about 5 m;
+             the soffits still leave 88.3 in. under them (7 ft asked). The other way was a pump
+             beside each unit: twelve more parts that can fail into a ceiling.
+           - **The washer's standpipe** stands in the wall from its trap to the washer box; the
+             washer's vent beside it, the condensate dropping into the box.
+           - **24 sprinklers sat under equipment** (each hall's under the mini-split, each closet's
+             under the ERV) and **8 under the middle storey's strip soffit**. Each moves clear;
+             under the strip, the two in that line shift together so each still covers its cell.
+           - **Step 6 put the hall's and the study's sprinklers 6.4 ft apart in every flat**, in one
+             compartment; Tyco's sheet asks 8 ft. The study's moves 0.36 m, still covering its cell.
+             44 moved in all; step 6's hydraulics rerun in 7c.
+           - **NEC 110.26(E):** no soffit may run over a panel's footprint, since that space is
+             dedicated to the electrical work. The panels move up to 29 in., each still facing its
+             hall with its working space.
+           - **A flat's hot branches at the code's R-3** (IECC R403.5.2), not ASHRAE 90.1's 1 in.:
+             at 1 in. a 1 in. branch needs a 3-3/8 in. hole, over the 60% (3.3 in.) a 2x6 stud
+             allows. The manifold's tails go bare: they run under 105 F (R403.4).
+           - **The partitions stop under the soffits** wherever a soffit runs over or on both sides
+             of one, so ducts cross without boring studs.
+           - **The ERV's outdoor-air and exhaust ducts** are 8 in. with their insulation, so the strip
+             soffit widens to 22 in. The Tandem kit's ports need to sit 9 in. apart (to confirm
+             with its sheet).
+           - **The middle storey's strip needs a leg.** Its termination is a pier past the kitchen's
+             end, so the strip turns an L along the kitchen's side of the living room (11% of the
+             room furred at most, under 1208.2.1's third). Two 8 in. ducts can't cross in a 14 in.
+             soffit, so each keeps its own lane round the corner. The duct behind passes the other's
+             port on the leg's side and takes the inside lane; the kit stays as drawn.
+           - **The mini-split turns:** its return faces the passage, where the ERV's air comes in,
+             and its supply the bedrooms. The ERV's duct taps the return collar at its end away
+             from the living room's grille, so the living room's duct passes beside it.
+         - **Decided (Jon, 2026-11-21: "Through the mini-split"):** the hall can't hold both
+           systems' ducts. The mini-split fills its middle, and the ERV's bedroom supplies couldn't
+           get past it.
+           - So the ERV's fresh air goes into the mini-split's return, at its back, and the
+             mini-split's ducts carry it to every room they serve, both bedrooms included.
+           - Not into the unit's side knockout (4-15/16 in.): there the ERV's duct would cross the
+             mini-split's supplies, and the 14 in. soffit has no room for one over the other.
+           - The mini-split's fan runs on at low speed with the ERV; its energy goes into step 10
+             once the fan's power is read.
+           - The other options were 20 in. soffits (halls at about 7 ft 2 in.) or the supplies in
+             the joists with 16 ceiling radiation dampers.
+         - **Tried and dropped:**
+           - Moving every failed run to the front of the order: fewer routed each pass (402, 378,
+             386, 374 of 454).
+           - A 30 in. band of the ceiling kept for the plumbing alone: the baths' circuits couldn't
+             reach their boxes.
+         - **What we don't know:**
+           - The Tandem kit's port spacing; the return collar's height (read off a drawing).
+           - APA's "maximum-size hole" (rule 11) read strictly: one that needs its location's row of
+             the chart, not only one at the very limit.
+           - The units over finished ceilings and IMC 307.2.3's overflow protection (a second drain
+             pan or a switch that stops the unit): 7c.
+           - Fittings: the bends are counted, not yet weighed (7c, with Manual D's and the pipe
+             tables' equivalent lengths).
+           - The vents' 1/8 in./ft is our figure; IPC 905.2 gives none.
+           - The router rounds each pipe up to whole voxels, so what it routes fits, and some runs
+             it refused might fit by hand. Its order is set in `routes.py`, with the reasons;
+             another order could find shorter runs.
+           - The sprinklers near the soffits against Tyco's obstruction rules (TFP490), and the
+             CPVC drops through the ceiling's membrane against IBC 714.5.2's exceptions: 7c.
+           - The firestop systems themselves: counted here, chosen in 7d.
          - **Found for 7c:**
+           - **The routed lengths, bends and moved sprinklers** go back into steps 3 to 6; the
+             units' overflow protection (IMC 307.2.3); the building drain's depth to the site.
            - **The vent stack** (see Decided).
            - **Step 3's heating loop has one riser pair per side of the stair, serving six flats
              each.** The front and back flats' plumbing walls stand either side of the spine,

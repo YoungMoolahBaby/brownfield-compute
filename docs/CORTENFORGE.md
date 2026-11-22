@@ -138,6 +138,26 @@ the end collects the features this project wanted, with what we built instead.
   voxels with a cost for bends and for crossing framing. Instead: we write A* on its `VoxelGrid`
   (step 7). cf-design's tendon routing (`TendonDef`, mechanism/tendon.rs) and `Solid::pipe` do the
   rest: a route's solid, and its channel carved through the parts it crosses. See Suggestions.
+- **missing / perf** (2026-11-21, pass 3g step 7b, forge/src/routing.rs): `VoxelGrid` is a sparse
+  HashMap (cortenforge-spatial-0.9.0/src/grid.rs:397, its `data` at :405). A routing search needs a dense grid it can index millions of times a run: one per
+  request, up to ~14 million 1 in. cells, each with a class (free, blocked, or crossable along one
+  axis), the largest hole its member allows there, and summed-volume tables so a pipe's whole
+  cross-section is one lookup. Instead: our own dense arrays (`Grid`), using cf-spatial's grid only
+  for coordinates' conventions and the clash check.
+- **works** (2026-11-21, step 7b): `VoxelGrid<Vec<u32>>` as the clash check's broad phase (each
+  routed and placed solid into the voxels its box touches, `world_to_grid`, then the boxes compared
+  exactly), over 430 runs and their pinned neighbours: the same answer as an all-pairs check worked
+  separately in Python (`src/brownfield/routecheck.py`).
+- **missing** (2026-11-21, step 7b): what the search had to know, none of it in the crate:
+  - members crossable only along one axis, and only where a hole that size is allowed;
+  - each hole keeping later ones off (APA's rule 6), and a joist's limit dropping once it has
+    three maximum-size holes (rule 11), so the grid changes as a request routes;
+  - trees: many terminals joining what's routed, grown nearest first, or farthest first for a
+    drain;
+  - grade: a drain's pipe falling as it runs, a vent's rising, with room kept for the pipe where
+    its slope puts it, and a branch joining only where the trunk has fallen as far;
+  - order: sequential routing depends on it, and a run that fails is moved and all rerouted.
+  Instead: all of that in `forge/src/routing.rs` (about 1,250 lines). See Suggestions.
 
 ## Expected gaps (scoping, not yet hit in code)
 
@@ -159,6 +179,12 @@ Listed so they can be confirmed or struck once code meets them:
 ## Suggestions
 
 Nice-to-haves for CortenForge, with what this project built instead.
+
+- **A router in cf-spatial** (2026-11-21, pass 3g step 7b): a dense voxel grid beside the sparse
+  one (classes, per-cell limits, summed-volume tables or distance fields for clearance), and a
+  search on it: A* with costs for bends and for crossing members, crossings allowed along one axis
+  only, multi-terminal trees, grade constraints, and rip-up and reroute. Building services, cable
+  harnesses and tendons are all this problem. Instead: `forge/src/routing.rs` (see cf-spatial).
 
 - **Building physics** (2026-11-15): heat transfer through assemblies and a room-level thermal
   network (RC model), coolant and district heat loops, heat pumps. Instead: an hourly energy

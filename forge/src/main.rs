@@ -22,6 +22,7 @@ mod masonry;
 mod masonry_build;
 mod render;
 mod rooms;
+mod routing;
 mod stair;
 mod scene;
 mod sequence;
@@ -147,9 +148,10 @@ fn framing_json_mode(root: &Path) -> std::io::Result<()> {
     let num = |i: usize| arg(i).and_then(|s| s.parse::<f64>().ok());
     let mut b = apartment::Building::example();
     let rev = arg(2).unwrap_or_else(|| "base".into());
-    // Addendum 5 (pass 3g step 7) frames the inside too, and the roof hatch's opening: its plan box
-    // in inches (x0 y0 x1 y1), which `brownfield routes` works out from params (fire.roof_access).
-    let mut hatch = None;
+    // Addendum 5 (pass 3g step 7) frames the inside too, the roof hatch's opening and the partitions
+    // under the soffits, from `out/pass3/addendum-5-inputs.json` (the hatch's plan box and the
+    // soffits, m), which `brownfield routes` writes from params (fire.roof_access, routing.soffits).
+    let mut a5 = None;
     match rev.as_str() {
         "base" => {}
         "addendum-3" | "addendum-5" => match (num(3), num(4)) {
@@ -158,23 +160,27 @@ fn framing_json_mode(root: &Path) -> std::io::Result<()> {
                 b.addendum_2();
                 b.addendum_3(ci * 25.4);
                 if rev == "addendum-5" {
-                    match (num(5), num(6), num(7), num(8)) {
-                        (Some(x0), Some(y0), Some(x1), Some(y1)) => hatch = Some([x0 * 25.4, y0 * 25.4, x1 * 25.4, y1 * 25.4]),
-                        _ => return Err(std::io::Error::other(
-                            "framing-json addendum-5 <patio door width, in> <continuous insulation, in> <hatch x0 y0 x1 y1, in>: run `uv run brownfield routes`, which prints the command")),
-                    }
+                    let path = root.join("out/pass3/addendum-5-inputs.json");
+                    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).map_err(|e| std::io::Error::other(
+                        format!("{}: {e}: run `uv run brownfield routes` first, which writes it", path.display())))?)?;
+                    let mm = |x: &serde_json::Value| x.as_f64().unwrap_or(0.0) * 1e3;
+                    let h = &v["hatch_m"];
+                    let hatch = [mm(&h[0]), mm(&h[1]), mm(&h[2]), mm(&h[3])];
+                    let soffits: Vec<(Vector3<f64>, Vector3<f64>)> = v["soffits"].as_array().into_iter().flatten().map(|s| (
+                        Vector3::new(mm(&s["lo"][0]), mm(&s["lo"][1]), mm(&s["lo"][2])),
+                        Vector3::new(mm(&s["hi"][0]), mm(&s["hi"][1]), mm(&s["hi"][2])))).collect();
+                    a5 = Some((hatch, soffits));
                 }
             }
-            _ => return Err(std::io::Error::other(format!("framing-json {rev} <patio door width, in> <continuous insulation, in>{}",
-                                                          if rev == "addendum-5" { " <hatch x0 y0 x1 y1, in>" } else { "" }))),
+            _ => return Err(std::io::Error::other(format!("framing-json {rev} <patio door width, in> <continuous insulation, in>"))),
         },
         other => return Err(std::io::Error::other(format!("framing-json: unknown revision {other}: try base, addendum-3 or addendum-5"))),
     }
     let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
     let s = framing::Schedule::from_json(&v);
     let (mut members, _) = framing::build(&b, &s);
-    if let Some(h) = hatch {
-        framing::addendum_5(&b, &rooms::Layout::example(), &s, h, &mut members);
+    if let Some((h, soffits)) = &a5 {
+        framing::addendum_5(&b, &rooms::Layout::example(), &s, *h, soffits, &mut members);
     }
     let mut overlaps = 0;
     let boxes: Vec<(usize, Vector3<f64>, Vector3<f64>)> = members.iter().enumerate()
@@ -703,6 +709,25 @@ fn main() {
         "framing-json" => {
             if let Err(e) = framing_json_mode(root) {
                 eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        // Pass 3g step 7b (D28): the services routed through the frame, and the router's known cases.
+        "routes-json" => {
+            if let Err(e) = routing::run(root) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        "routes-debug" => {
+            let id = std::env::args().nth(2).unwrap_or_default();
+            if let Err(e) = routing::debug(root, &id) {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+        "routes-check" => {
+            if !routing::check() {
                 std::process::exit(1);
             }
         }

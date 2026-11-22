@@ -212,21 +212,22 @@ def flat_circuits(apt: dict, p: dict, name: str) -> list[dict]:
     for side, keys in (("sleeping side", sleep), ("living side", live)):
         n = sum(by[k]["area_m2"] for k in keys) / sum(by[k]["area_m2"] for k in sleep + live)
         add(f"lights-{side.split()[0]}", f"lighting, the {side}" + (" and the smoke alarms" if side.startswith("sleeping") else ""),
-            120, 1, lighting_va * n, p[fp + "lighting_a"], "AFCI", far(keys), "general", load_va=p[fp + "branch_vd_va"])
+            120, 1, lighting_va * n, p[fp + "lighting_a"], "AFCI", far(keys), "general", load_va=p[fp + "branch_vd_va"], rooms=keys)
     for label, keys in rec_keys.items():
         va = rec_va * sum(by[k]["area_m2"] for k in keys) / rec_ft2
         if label == "bath":  # 210.11(C)(3): 20 A, the bathroom's receptacles only; GFCI, 210.8(A)(1)
-            add("bath", "bathroom receptacles (210.11(C)(3))", 120, 1, va, 20, "GFCI", far(keys), "general", load_va=p[fp + "branch_vd_va"])
+            add("bath", "bathroom receptacles (210.11(C)(3))", 120, 1, va, 20, "GFCI", far(keys), "general", load_va=p[fp + "branch_vd_va"],
+                rooms=keys)
             continue
         extra = " and the patio's outdoor receptacle (210.52(E)(2), a GFCI receptacle)" if (label == "living" and ground) else ""
         add(f"rec-{label.split()[0].replace(',', '')}", f"receptacles, {label}{extra}", 120, 1, va, p[fp + "receptacle_a"], "AFCI",
-            far(keys), "general", load_va=p[fp + "branch_vd_va"])
+            far(keys), "general", load_va=p[fp + "branch_vd_va"], rooms=keys)
     # The circuits 210.11(C) requires, at 220.52's 1,500 VA each.
     for i in (1, 2):
         add(f"sa-{i}", f"kitchen small-appliance {i} (210.11(C)(1))", 120, 1, p[e + "small_appliance_va"] / 2, 20, "AFCI+GFCI",
-            far(["kitchen"]), "small appliance", load_va=p[fp + "branch_vd_va"])
+            far(["kitchen"]), "small appliance", load_va=p[fp + "branch_vd_va"], rooms=["kitchen"])
     add("laundry", "the laundry closet's receptacle (210.11(C)(2))", 120, 1, p[e + "laundry_va"], 20, "AFCI+GFCI",
-        far(["utility"]), "laundry", load_va=p[fp + "branch_vd_va"])
+        far(["utility"]), "laundry", load_va=p[fp + "branch_vd_va"], rooms=["utility"])
     # Appliances and equipment, each on its own circuit at its maker's breaker. Every 120 V one is in
     # a room 210.12(A) lists (the kitchen, the laundry closet), so AFCI; GFCI where 210.8 reaches:
     # the dishwasher's outlet (210.8(D)) and the dryer's receptacle in the laundry area
@@ -236,14 +237,14 @@ def flat_circuits(apt: dict, p: dict, name: str) -> list[dict]:
         poles = 2 if volts > 120 else 1
         prot = "+".join(x for x in ("AFCI" if poles == 1 else "", "GFCI" if gfci else "") if x)
         add(key, what, volts, poles, appliance_va(p, key), p[e + f"{key}_breaker_a"], prot, far([room]), "appliance",
-            load_va=appliance_va(p, key))
+            load_va=appliance_va(p, key), rooms=[room])
     # The mini-split's outdoor unit on the roof, at its minimum circuit ampacity and maximum breaker:
     # up the line set's chase from the hall to the roof and across to the unit.
     lvl = next(x for x in apt["levels"] if x["storey"] == flat["floor"])
     up_m = apt["storey_m"] * apt["storeys"] - lvl["elevation_m"] - p["systems.wiring.panel_mid_in"] * IN
     ms_ft = (up_m / FT + p["systems.minisplit.line_set_horizontal_ft"] + p["systems.wiring.branch_vertical_ft"] / 2) * p["systems.wiring.route_slack"]
     add("minisplit", "the mini-split's outdoor unit on the roof (its indoor unit fed from it)", 208, 2, p[e + "cooling_va"],
-        p[e + "minisplit_breaker_a"], MINISPLIT_PROTECTION, ms_ft, "air conditioning", load_va=p[e + "cooling_va"])
+        p[e + "minisplit_breaker_a"], MINISPLIT_PROTECTION, ms_ft, "air conditioning", load_va=p[e + "cooling_va"], rooms=[])
     return c
 
 

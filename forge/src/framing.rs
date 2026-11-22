@@ -636,8 +636,13 @@ fn box_wall(s: &Schedule, storey: usize, zb: f64, stud_len: f64, along_y: bool, 
 ///   the stair walls' inner rows (the hall beyond the centre wall to that wall);
 /// - **the roof hatch's opening** (`hatch`, x0 y0 x1 y1 in plan, mm) in the roof over the stair:
 ///   the joists it cuts replaced by doubled trimmers either side, a doubled header at its far
-///   edge, and tail joists from the header to the far wall (its near edge is the stair wall).
-pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch: [f64; 4], out: &mut Vec<Member>) {
+///   edge, and tail joists from the header to the far wall (its near edge is the stair wall);
+/// - **partitions under the soffits** (`soffits`, boxes in mm): where a soffit runs over a
+///   partition, or on both sides of it, the partition stops at the soffit's underside (its studs
+///   shorter, its plates at the soffit), so the ducts and pipes in the soffit cross it without
+///   boring its studs.
+pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch: [f64; 4], soffits: &[(Vector3<f64>, Vector3<f64>)],
+                  out: &mut Vec<Member>) {
     let (t, w, l) = (b.ext_t, b.depth, b.length);
     let ext_d = s.depth_of(&s.studs[0].0);
     let xf = t - GYP - ext_d;
@@ -677,7 +682,7 @@ pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch:
         out.push(Member::one(Kind::RoofJoist, storey, nom, Vector3::new(x, hy1 + 2.0 * ply, top_roof), Vector3::new(x + rj.width, ty1, top_roof + rj.depth)));
     }
 
-    // The flats' partitions and plumbing walls.
+    // The flats' partitions and plumbing walls; a partition stops at a soffit over it.
     for p in lay.walls(b) {
         let along_y = p.hi.y - p.lo.y > p.hi.x - p.lo.x;
         let (c_lo, c_hi, a) = if along_y { (p.lo.x, p.hi.x, (p.lo.y, p.hi.y)) } else { (p.lo.y, p.hi.y, (p.lo.x, p.hi.x)) };
@@ -689,7 +694,26 @@ pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch:
         } else {
             ("2x4", (c_lo + c_hi) / 2.0 - s.depth_of("2x4") / 2.0)
         };
-        box_wall(s, p.storey, zb, s.stud_len, along_y, c0, a, nominal, vec![], out);
+        let cuts = if p.kind == "partition" { under_soffits(&p, along_y, soffits) } else { vec![] };
+        // Split the wall along its length at the soffits' edges; each piece full height, or to the
+        // soffit's underside (its own end studs either side: a cased opening's).
+        let mut edges = vec![a.0, a.1];
+        for (u0, u1, _) in &cuts {
+            edges.push(u0.max(a.0));
+            edges.push(u1.min(a.1));
+        }
+        edges.sort_by(f64::total_cmp);
+        edges.dedup_by(|x, y| (*x - *y).abs() < 1.0);
+        for w in edges.windows(2) {
+            let (e0, e1) = (w[0], w[1]);
+            if e1 - e0 < 2.0 * s.ply {
+                continue;
+            }
+            let m = (e0 + e1) / 2.0;
+            let top = cuts.iter().filter(|(u0, u1, _)| *u0 <= m && m <= *u1).map(|c| c.2).fold(f64::INFINITY, f64::min);
+            let len = if top.is_finite() { top - zb - 3.0 * s.plate } else { s.stud_len };
+            box_wall(s, p.storey, zb, len, along_y, c0, (e0, e1), nominal, vec![], out);
+        }
     }
 
     // The annex: walls, partition, roof, foundation.
@@ -746,6 +770,37 @@ pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch:
         joists_along_y(fj, Kind::FloorJoist, k, s.spacing, xf + s.rim, hb, ty0, ty1, z0, out);
         joists_along_y(fj, Kind::FloorJoist, k, s.spacing, hb, ha, ty0, c0, z0, out);
     }
+}
+
+/// Where along a partition (its length's spans, mm) a soffit runs over it or on both its sides, and
+/// the soffit's underside there.
+fn under_soffits(p: &crate::apartment::Part, along_y: bool, soffits: &[(Vector3<f64>, Vector3<f64>)]) -> Vec<(f64, f64, f64)> {
+    let (ai, ci) = if along_y { (1, 0) } else { (0, 1) };
+    let (c_lo, c_hi) = (p.lo[ci], p.hi[ci]);
+    let z_in = |lo: &Vector3<f64>, hi: &Vector3<f64>| lo.z < p.hi.z && hi.z > p.lo.z;
+    let along = |lo: &Vector3<f64>, hi: &Vector3<f64>| (lo[ai].max(p.lo[ai]), hi[ai].min(p.hi[ai]));
+    let mut out = Vec::new();
+    for (lo, hi) in soffits.iter().filter(|(lo, hi)| z_in(lo, hi)) {
+        let (u0, u1) = along(lo, hi);
+        if u1 - u0 < 1.0 {
+            continue;
+        }
+        if lo[ci] < c_hi - 1.0 && hi[ci] > c_lo + 1.0 {
+            out.push((u0, u1, lo.z)); // over the partition itself
+            continue;
+        }
+        if (hi[ci] - c_lo).abs() < 1.0 {
+            // abutting its low face: a soffit abutting the high face over the same span?
+            for (lo2, hi2) in soffits.iter().filter(|(lo2, hi2)| z_in(lo2, hi2) && (lo2[ci] - c_hi).abs() < 1.0) {
+                let (v0, v1) = along(lo2, hi2);
+                let (w0, w1) = (u0.max(v0), u1.min(v1));
+                if w1 - w0 > 1.0 {
+                    out.push((w0, w1, lo.z.max(lo2.z)));
+                }
+            }
+        }
+    }
+    out
 }
 
 /// Totals by kind: (count, total length m, volume m3, board feet).
