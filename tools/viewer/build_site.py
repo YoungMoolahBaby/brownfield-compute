@@ -14,7 +14,7 @@ Python. The site (D27, D29):
 - `model.html`: the 3D viewer (tools/viewer/index.html);
 - `vendor/`: only the files the viewer loads from the two pinned packages (tools/viewer's lock), with
   their licences;
-- `models/`: the IFCs the viewer opens (the bid set, each addendum's, the framing model), the
+- `models/`: the IFCs the viewer opens (the bid set, each addendum's, the framing and services models), the
   manifest and what each addendum changed;
 - `files/`: the published bid set (docs/pass3/bidset), to download. The folders on the page are
   the page's; the files keep their published paths, so a link once given keeps working.
@@ -132,6 +132,9 @@ def manifest() -> dict:
     missing += [p for a in m["addenda"] for p in (a["model"], a["changes"], a["rfi"]) if p and not (PUBLISHED / p).exists()]
     if m.get("framing") and not (PUBLISHED / m["framing"]["model"]).exists():
         missing.append(m["framing"]["model"])
+    s = m.get("services")
+    if s:
+        missing += [x for x in [s["model"], *(f["path"] for f in s["files"])] if not (PUBLISHED / x).exists()]
     if missing:
         raise SystemExit(f"addenda.json names files that aren't published: {missing}")
     return m
@@ -157,7 +160,8 @@ def _folder(name: str, rows: list[str], note: str = "", open_: bool = False) -> 
 
 
 def tree(m: dict) -> str:
-    """The bid documents as folders: the bid set's, each addendum's, the RFIs, the framing model."""
+    """The bid documents as folders: the bid set's, each addendum's, the RFIs, the framing model, the
+    services model and its schedules."""
     bid = "".join(_folder(name, [_row(p, label, BID_ISSUED) for p, label in files]) for name, files in BID_FOLDERS)
     adds = "".join(_folder(f"Addendum {a['number']:02d}: {a['title']}", [_row(f["path"], f["label"], a["issued"]) for f in a["files"]],
                            f" · issued {when(a['issued'], False)}") for a in reversed(m["addenda"]))
@@ -176,6 +180,13 @@ def tree(m: dict) -> str:
         out.append(f'<details class="folder top"><summary><span class="fold">04 Framing model</span><span class="n">reference</span></summary>'
                    f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
                    f'{_row(f["model"], label, last["issued"])}</table></details>')
+    s = m.get("services")
+    if s:
+        rows = [_row(s["model"], f"The services, IFC4: {s['elements']:,} elements, routed through {s['frame']} ({s['note']})", s["issued"])]
+        rows += [_row(x["path"], x["label"], s["issued"]) for x in s["files"]]
+        out.append(f'<details class="folder top"><summary><span class="fold">05 Services model</span><span class="n">preliminary</span></summary>'
+                   f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
+                   f'{"".join(rows)}</table></details>')
     return "".join(out)
 
 
@@ -215,6 +226,8 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
             copies[f"models/{a['changes']}"] = PUBLISHED / a["changes"]
     if m.get("framing"):
         copies[f"models/{m['framing']['model']}"] = PUBLISHED / m["framing"]["model"]
+    if m.get("services"):
+        copies[f"models/{m['services']['model']}"] = PUBLISHED / m["services"]["model"]
     copies["models/addenda.json"] = MANIFEST
     missing = [str(src) for src in copies.values() if not src.exists()]
     if missing:

@@ -1,0 +1,51 @@
+system,material,fitting,size_in,count
+Cold water,PEX-a with cold-expansion fittings (Uponor ProPEX EP),elbow,1,64
+Cold water,PEX-a with cold-expansion fittings (Uponor ProPEX EP),tee,1,48
+Cold water,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",elbow,1-1/2,4
+Cold water,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",tee,1-1/2,3
+Drains,"cast iron, no-hub",closet bend,3,12
+Drains,"cast iron, no-hub",combination wye and eighth bend,2,24
+Drains,"cast iron, no-hub",combination wye and eighth bend,4,3
+Drains,"cast iron, no-hub",long sweep (horizontal to horizontal),1-1/2,48
+Drains,"cast iron, no-hub",long sweep (horizontal to horizontal),2,20
+Drains,"cast iron, no-hub",long sweep (horizontal to horizontal),4,4
+Drains,"cast iron, no-hub",long sweep (vertical to horizontal),2,28
+Drains,"cast iron, no-hub",quarter bend (horizontal to vertical),2,18
+Feeders and branch circuits,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",90° elbow (factory),1,26
+Feeders and branch circuits,"rigid PVC conduit, Schedule 40, copper THHN/THWN-2",90° elbow (factory),1-1/4,25
+Hot water and its return,PEX-a with cold-expansion fittings (Uponor ProPEX EP),elbow,1,64
+Hot water and its return,PEX-a with cold-expansion fittings (Uponor ProPEX EP),tee,1,48
+Hot water and its return,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",elbow,2,4
+Hot water and its return,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",elbow,3/4,4
+Hot water and its return,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",tee,2,3
+Hot water and its return,"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",tee,3/4,3
+Sprinklers (NFPA 13R),"CPVC sprinkler pipe, SDR 13.5 (BlazeMaster), solvent-cemented",90° elbow,1-1/2,157
+Sprinklers (NFPA 13R),"CPVC sprinkler pipe, SDR 13.5 (BlazeMaster), solvent-cemented",90° elbow,1-1/4,151
+Sprinklers (NFPA 13R),"CPVC sprinkler pipe, SDR 13.5 (BlazeMaster), solvent-cemented",90° elbow,2-1/2,1
+Sprinklers (NFPA 13R),"CPVC sprinkler pipe, SDR 13.5 (BlazeMaster), solvent-cemented",tee,1-1/2,86
+Sprinklers (NFPA 13R),"CPVC sprinkler pipe, SDR 13.5 (BlazeMaster), solvent-cemented",tee,1-1/4,29
+The building loop (radiant floors),PEX-a with cold-expansion fittings (Uponor ProPEX EP),elbow,1/2,32
+The building loop (radiant floors),"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",elbow,1/2,4
+The building loop (radiant floors),"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",elbow,3/4,4
+The building loop (radiant floors),"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",tee,1/2,4
+The building loop (radiant floors),"PEX-a, pre-insulated under the slab (Uponor ProPEX EP fittings)",tee,3/4,2
+The mini-splits' condensate,PVC Schedule 40,90° elbow,3/4,58
+The mini-splits' ducts,round galvanized steel duct,90° elbow,4,4
+The mini-splits' ducts,round galvanized steel duct,90° elbow,5,10
+The mini-splits' ducts,round galvanized steel duct,90° elbow,6,2
+The mini-splits' ducts,round galvanized steel duct,90° elbow,7,10
+The mini-splits' ducts,round galvanized steel duct,90° elbow,8,40
+The mini-splits' ducts,round galvanized steel duct,boot,4,5
+The mini-splits' ducts,round galvanized steel duct,boot,5,19
+The mini-splits' ducts,round galvanized steel duct,boot,6,12
+The mini-splits' ducts,round galvanized steel duct,boot,8,12
+The mini-splits' ducts,round galvanized steel duct,take-off,5,6
+The mini-splits' ducts,round galvanized steel duct,take-off,6,6
+The mini-splits' ducts,round galvanized steel duct,take-off,7,6
+The mini-splits' ducts,round galvanized steel duct,take-off,8,18
+Ventilation (the ERVs),round galvanized steel duct,90° elbow,4,99
+Ventilation (the ERVs),round galvanized steel duct,90° elbow,5,76
+Ventilation (the ERVs),round galvanized steel duct,boot,4,24
+Ventilation (the ERVs),round galvanized steel duct,take-off,4,12
+Vents,"cast iron, no-hub",quarter bend,1-1/2,200
+Vents,"cast iron, no-hub",tee,1-1/2,46

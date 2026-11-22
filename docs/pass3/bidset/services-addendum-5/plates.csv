@@ -1,0 +1,597 @@
+run,member,kind,edge_in,centred_edge_in,limit_in,rule,plate
+electrical/branch/1-back-left/bath,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/bath,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/dishwasher,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/dishwasher,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/dryer,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/dryer,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/erv,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/erv,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/laundry,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/laundry,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/lights-living,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/lights-living,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/lights-sleeping,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/lights-sleeping,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/microwave,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/microwave,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/preheater,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/preheater,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/range,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/range,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-bed-1,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-bed-1,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-bed-2,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-bed-2,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-living,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-living,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-study,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/rec-study,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/refrigerator,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/refrigerator,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/sa-1,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/sa-1,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/sa-2,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/sa-2,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/washer,1/plates/3671,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-left/washer,1/cap-plates/3676,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/bath,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/bath,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/dishwasher,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/dishwasher,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/dryer,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/dryer,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/erv,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/erv,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/laundry,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/laundry,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/lights-living,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/lights-living,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/lights-sleeping,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/lights-sleeping,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/microwave,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/microwave,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/preheater,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/preheater,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/range,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/range,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-bed-1,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-bed-1,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-bed-2,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-bed-2,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-living,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-living,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-study,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/rec-study,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/refrigerator,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/refrigerator,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/sa-1,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/sa-1,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/sa-2,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/sa-2,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/washer,1/plates/3788,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-back-right/washer,1/cap-plates/3793,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/bath,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/bath,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/dishwasher,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/dishwasher,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/dryer,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/dryer,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/erv,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/erv,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/laundry,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/laundry,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/lights-living,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/lights-living,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/lights-sleeping,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/lights-sleeping,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/microwave,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/microwave,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/preheater,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/preheater,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/range,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/range,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-bed-1,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-bed-1,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-bed-2,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-bed-2,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-living,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-living,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-study,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/rec-study,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/refrigerator,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/refrigerator,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/sa-1,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/sa-1,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/sa-2,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/sa-2,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/washer,1/plates/3461,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-left/washer,1/cap-plates/3466,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/bath,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/bath,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/dishwasher,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/dishwasher,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/dryer,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/dryer,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/erv,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/erv,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/laundry,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/laundry,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/lights-living,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/lights-living,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/lights-sleeping,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/lights-sleeping,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/microwave,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/microwave,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/preheater,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/preheater,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/range,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/range,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-bed-1,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-bed-1,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-bed-2,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-bed-2,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-living,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-living,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-study,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/rec-study,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/refrigerator,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/refrigerator,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/sa-1,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/sa-1,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/sa-2,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/sa-2,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/washer,1/plates/3578,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/1-front-right/washer,1/cap-plates/3583,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/bath,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/bath,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/dishwasher,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/dishwasher,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/dryer,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/dryer,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/erv,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/erv,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/laundry,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/laundry,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/lights-living,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/lights-living,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/lights-sleeping,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/lights-sleeping,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/microwave,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/microwave,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/preheater,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/preheater,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/range,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/range,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-bed-1,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-bed-1,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-bed-2,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-bed-2,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-living,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-living,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-study,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/rec-study,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/refrigerator,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/refrigerator,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/sa-1,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/sa-1,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/sa-2,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/sa-2,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/washer,2/plates/4091,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-left/washer,2/cap-plates/4096,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/bath,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/bath,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/dishwasher,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/dishwasher,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/dryer,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/dryer,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/erv,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/erv,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/laundry,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/laundry,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/lights-living,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/lights-living,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/lights-sleeping,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/lights-sleeping,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/microwave,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/microwave,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/preheater,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/preheater,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/range,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/range,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-bed-1,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-bed-1,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-bed-2,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-bed-2,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-living,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-living,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-study,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/rec-study,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/refrigerator,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/refrigerator,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/sa-1,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/sa-1,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/sa-2,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/sa-2,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/washer,2/plates/4208,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-back-right/washer,2/cap-plates/4213,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/bath,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/bath,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/dishwasher,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/dishwasher,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/dryer,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/dryer,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/erv,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/erv,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/laundry,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/laundry,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/lights-living,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/lights-living,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/lights-sleeping,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/lights-sleeping,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/microwave,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/microwave,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/preheater,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/preheater,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/range,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/range,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-bed-1,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-bed-1,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-bed-2,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-bed-2,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-living,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-living,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-study,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/rec-study,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/refrigerator,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/refrigerator,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/sa-1,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/sa-1,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/sa-2,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/sa-2,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/washer,2/plates/3881,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-left/washer,2/cap-plates/3886,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/bath,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/bath,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/dishwasher,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/dishwasher,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/dryer,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/dryer,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/erv,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/erv,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/laundry,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/laundry,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/lights-living,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/lights-living,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/lights-sleeping,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/lights-sleeping,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/microwave,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/microwave,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/preheater,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/preheater,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/range,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/range,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-bed-1,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-bed-1,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-bed-2,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-bed-2,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-living,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-living,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-study,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/rec-study,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/refrigerator,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/refrigerator,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/sa-1,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/sa-1,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/sa-2,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/sa-2,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/washer,2/plates/3998,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/2-front-right/washer,2/cap-plates/4003,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/bath,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/bath,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/dishwasher,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/dishwasher,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/dryer,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/dryer,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/erv,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/erv,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/laundry,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/laundry,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/lights-living,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/lights-living,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/lights-sleeping,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/lights-sleeping,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/microwave,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/microwave,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/preheater,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/preheater,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/range,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/range,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-bed-1,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-bed-1,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-bed-2,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-bed-2,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-living,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-living,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-study,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/rec-study,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/refrigerator,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/refrigerator,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/sa-1,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/sa-1,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/sa-2,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/sa-2,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/washer,3/plates/4511,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-left/washer,3/cap-plates/4516,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/bath,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/bath,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/dishwasher,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/dishwasher,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/dryer,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/dryer,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/erv,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/erv,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/laundry,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/laundry,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/lights-living,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/lights-living,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/lights-sleeping,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/lights-sleeping,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/microwave,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/microwave,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/preheater,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/preheater,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/range,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/range,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-bed-1,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-bed-1,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-bed-2,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-bed-2,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-living,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-living,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-study,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/rec-study,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/refrigerator,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/refrigerator,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/sa-1,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/sa-1,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/sa-2,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/sa-2,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/washer,3/plates/4628,plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-back-right/washer,3/cap-plates/4633,cap plates,0.82,1.33,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/bath,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/bath,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/dishwasher,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/dishwasher,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/dryer,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/dryer,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/erv,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/erv,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/laundry,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/laundry,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/lights-living,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/lights-living,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/lights-sleeping,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/lights-sleeping,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/microwave,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/microwave,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/preheater,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/preheater,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/range,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/range,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-bed-1,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-bed-1,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-bed-2,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-bed-2,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-living,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-living,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-study,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/rec-study,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/refrigerator,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/refrigerator,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/sa-1,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/sa-1,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/sa-2,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/sa-2,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/washer,3/plates/4301,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-left/washer,3/cap-plates/4306,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/bath,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/bath,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/dishwasher,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/dishwasher,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/dryer,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/dryer,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/erv,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/erv,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/laundry,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/laundry,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/lights-living,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/lights-living,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/lights-sleeping,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/lights-sleeping,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/microwave,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/microwave,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/preheater,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/preheater,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/range,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/range,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-bed-1,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-bed-1,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-bed-2,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-bed-2,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-living,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-living,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-study,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/rec-study,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/refrigerator,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/refrigerator,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/sa-1,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/sa-1,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/sa-2,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/sa-2,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/washer,3/plates/4418,plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+electrical/branch/3-front-right/washer,3/cap-plates/4423,cap plates,0.82,1.32,1.25,NEC 300.4(A)(1),none if bored at the member's centre
+hvac/loop-return-tail/1-back-left,1/cap-plates/3738,cap plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-back-left,1/plates/3719,plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-back-right,1/cap-plates/3843,cap plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-back-right,1/plates/3824,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-front-left,1/cap-plates/3528,cap plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-front-left,1/plates/3509,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-front-right,1/cap-plates/3633,cap plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/1-front-right,1/plates/3614,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-back-left,2/cap-plates/4158,cap plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-back-left,2/plates/4139,plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-back-right,2/cap-plates/4263,cap plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-back-right,2/plates/4244,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-front-left,2/cap-plates/3948,cap plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-front-left,2/plates/3929,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-front-right,2/cap-plates/4053,cap plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/2-front-right,2/plates/4034,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-back-left,3/cap-plates/4578,cap plates,1.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-back-left,3/plates/4559,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-back-right,3/cap-plates/4683,cap plates,1.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-back-right,3/plates/4664,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-front-left,3/plates/4349,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-return-tail/3-front-right,3/plates/4454,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-back-left,1/cap-plates/3738,cap plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-back-left,1/plates/3719,plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-back-right,1/cap-plates/3843,cap plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-back-right,1/plates/3824,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-front-left,1/cap-plates/3528,cap plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-front-left,1/plates/3509,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-front-right,1/cap-plates/3633,cap plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/1-front-right,1/plates/3614,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-back-left,2/cap-plates/4158,cap plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-back-left,2/plates/4139,plates,0.19,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-back-right,2/cap-plates/4263,cap plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-back-right,2/plates/4244,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-front-left,2/cap-plates/3948,cap plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-front-left,2/plates/3929,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-front-right,2/cap-plates/4053,cap plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/2-front-right,2/plates/4034,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-back-left,3/cap-plates/4578,cap plates,1.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-back-left,3/plates/4559,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-back-right,3/cap-plates/4683,cap plates,1.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-back-right,3/plates/4664,plates,0.44,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-front-left,3/plates/4349,plates,0.56,2.31,1.5,IMC 305.5,none if bored at the member's centre
+hvac/loop-supply-tail/3-front-right,3/plates/4454,plates,1.06,2.31,1.5,IMC 305.5,none if bored at the member's centre
+plumbing/hot/1-back-left,1/cap-plates/3738,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/plates/3719,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/cap-plates/3738,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/plates/3719,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/cap-plates/3738,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/plates/3719,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/cap-plates/3738,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/plates/3719,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/cap-plates/3738,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-left,1/plates/3719,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/cap-plates/3843,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/plates/3824,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/cap-plates/3843,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/plates/3824,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/cap-plates/3843,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/plates/3824,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/cap-plates/3843,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/plates/3824,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/cap-plates/3843,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-back-right,1/plates/3824,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/cap-plates/3528,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/plates/3509,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/cap-plates/3528,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/plates/3509,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/cap-plates/3528,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/plates/3509,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/cap-plates/3528,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/plates/3509,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/cap-plates/3528,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-left,1/plates/3509,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/cap-plates/3633,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/plates/3614,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/cap-plates/3633,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/plates/3614,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/cap-plates/3633,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/plates/3614,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/cap-plates/3633,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/plates/3614,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/cap-plates/3633,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/1-front-right,1/plates/3614,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/cap-plates/4158,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/plates/4139,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/cap-plates/4158,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/plates/4139,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/cap-plates/4158,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/plates/4139,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/cap-plates/4158,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/plates/4139,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/cap-plates/4158,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-left,2/plates/4139,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/cap-plates/4263,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/plates/4244,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/cap-plates/4263,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/plates/4244,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/cap-plates/4263,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/plates/4244,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/cap-plates/4263,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/plates/4244,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/cap-plates/4263,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-back-right,2/plates/4244,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/cap-plates/3948,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/plates/3929,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/cap-plates/3948,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/plates/3929,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/cap-plates/3948,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/plates/3929,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/cap-plates/3948,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/plates/3929,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/cap-plates/3948,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-left,2/plates/3929,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/cap-plates/4053,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/plates/4034,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/cap-plates/4053,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/plates/4034,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/cap-plates/4053,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/plates/4034,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/cap-plates/4053,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/plates/4034,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/cap-plates/4053,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/2-front-right,2/plates/4034,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/plates/4559,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/cap-plates/4578,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/cap-plates/4578,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/plates/4559,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/cap-plates/4578,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/plates/4559,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/cap-plates/4578,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/plates/4559,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/cap-plates/4578,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-left,3/plates/4559,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/plates/4664,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/cap-plates/4683,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/cap-plates/4683,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/plates/4664,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/cap-plates/4683,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/plates/4664,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/cap-plates/4683,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/plates/4664,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/cap-plates/4683,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-back-right,3/plates/4664,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/plates/4349,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/cap-plates/4368,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/cap-plates/4368,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/plates/4349,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/cap-plates/4368,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/plates/4349,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/cap-plates/4368,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/plates/4349,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/cap-plates/4368,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-left,3/plates/4349,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/plates/4454,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/cap-plates/4473,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/cap-plates/4473,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/plates/4454,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/cap-plates/4473,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/plates/4454,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/cap-plates/4473,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/plates/4454,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/cap-plates/4473,cap plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre
+plumbing/hot/3-front-right,3/plates/4454,plates,1.06,1.31,1.25,IPC 305.6,none if bored at the member's centre

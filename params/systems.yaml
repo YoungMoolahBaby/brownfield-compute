@@ -2817,3 +2817,93 @@ routing:
     conf: medium
     source: "IPC 2021 905.2: 'Vent and branch vent pipes shall be so graded and connected as to drain back to the drainage pipe by gravity' (no figure given); 1/8 in./ft taken, the least slope the code asks of any drain (Table 704.1, 3 to 6 in.)"
 
+
+# Pass 3g step 7d (D28): the services as IFC, and their schedules.
+services:
+  vent_stack_in:
+    value: 2.0
+    unit: in., nominal, each column's vent stack as 7a placed it (cast iron; `routing.vent_stack_od_in` is its outside diameter)
+    conf: high
+    source: "7a's choice (D28 step 7, Jon approved the plan 2026-11-21); 7c: IPC 2021 Table 906.1 asks 2 in. for the stack's 27 dfu over its 33 ft (data/ipc2021_906_1_vents_3in.csv)"
+  line_set_liquid_in:
+    value: 0.25
+    unit: in., the mini-split's liquid line (copper)
+    conf: high
+    source: "Fujitsu's spec table, as `routing.line_set_od_in` cites it: 'Liquid 1/4, Gas 3/8 in.'"
+  line_set_gas_in:
+    value: 0.375
+    unit: in., the mini-split's gas line (copper)
+    conf: high
+    source: "Fujitsu's spec table, as `routing.line_set_od_in` cites it: 'Liquid 1/4, Gas 3/8 in.'"
+  conduit_bends_max_deg:
+    value: 360
+    unit: degrees, the most bend in a run of rigid PVC conduit between pull points (NEC 352.26)
+    conf: medium
+    source: "secondary sources for NEC 352.26 (the code's own text not opened): Mike Holt, 'Code Q&A: making field bends in PVC conduit', EC&M 2019-05-22: 'the total amount of bends (including offsets) between pull points must not exceed 360 [Sec. 352.26]'; Randy Hunter, 'Raceway systems', IAEI Magazine May/June 2014: 'the maximum will be the equivalent of four quarter bends (360 degrees total) between pull points'"
+  # Fixtures' sizes, for the model's drawing only: no check uses them.
+  wc_w_in:
+    value: 20
+    unit: in., a water closet's width, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a water closet is chosen (its depth is `routing.wc_depth_in`)"
+  wc_h_in:
+    value: 30
+    unit: in., a water closet's height to its tank's top, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a water closet is chosen"
+  lav_w_in:
+    value: 20
+    unit: in., the lavatory's width along the wall, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a lavatory is chosen"
+  lav_d_in:
+    value: 18
+    unit: in., the lavatory's depth from the wall, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a lavatory is chosen"
+  lav_h_in:
+    value: 34
+    unit: in., the lavatory's rim above the floor, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a lavatory is chosen"
+  tub_h_in:
+    value: 18
+    unit: in., the tub's rim above the floor, as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until a tub is chosen (its length and width are `design.tub_length_in` and `design.tub_width_in`)"
+  counter_h_in:
+    value: 36
+    unit: in., the kitchen counter's height (the sink's base cabinet and the dishwasher), as drawn
+    conf: placeholder
+    source: "placeholder for the drawing until the kitchen is detailed"
+  head_draw_in:
+    value: 3
+    unit: in., a sprinkler drawn as a disk this wide and half as deep below its point
+    conf: placeholder
+    source: "placeholder for the drawing; Tyco TFP403 gives the escutcheon's size, not read for this"
+  switch_draw_in:
+    value: 2
+    unit: in., a water-level switch drawn as a cube this size at the condensate's start
+    conf: placeholder
+    source: "placeholder for the drawing until the switch is chosen (IMC 307.2.3 item 4, step 7c)"
+  # Steel plates where a pipe or cable passes a bored or notched wood member near its edge.
+  nec_bore_edge_in:
+    value: 1.25
+    unit: in., the least from a bored hole's edge to the wood member's nearest edge for a cable or raceway; nearer, a 1/16 in. steel plate (NEC 300.4(A)(1))
+    conf: medium
+    source: "a paraphrase, the code's own text not opened: Vince LaPorta, 'NEC 300.4: protection against physical damage', IAEI Magazine Winter 2026 (the 2023 NEC, the rule in the code 'since 1990'): the hole's edge 'must be at least 1-1/4 inches from the nearest edge of the wood'; otherwise the wiring 'must be protected by a steel plate or bushing at least 1/16 inch thick'. Whether rigid PVC conduit is exempt (an exception) isn't confirmed, so the feeders' conduit is plated too"
+  ipc_shield_edge_in:
+    value: 1.25
+    unit: in., the least from the nearest edge of a stud, joist or rafter to a plumbing pipe (not cast iron or galvanized steel) through it; nearer, a 16 ga steel shield plate (IPC 305.6)
+    conf: high
+    source: "IPC 2021 305.6 (Pennsylvania's, UpCodes, saved 2026-11-22 as data/raw/pass3g/step7/ipc3/ipc3_pa.html): 'In concealed locations where piping, other than cast iron or galvanized steel, is installed through holes or notches in studs, joists, rafters or similar members less than 1 1/4 inches (32 mm) from the nearest edge of the member, the pipe shall be protected by steel shield plates. Such shield plates shall have a thickness of not less than 0.0575 inch (1.463 mm) (No. 16 gage).'"
+  imc_shield_edge_in:
+    value: 1.5
+    unit: "in., the same for mechanical piping (not cast iron or steel): the line sets, the loop's tails, the condensate (IMC 305.5)"
+    conf: high
+    source: "IMC 2021 305.5 (Pennsylvania's, UpCodes, data/raw/pass3g/step7/imc/imc3_pa.html): 'In concealed locations where piping, other than cast-iron or steel, is installed through holes or notches in studs, joists, rafters or similar members less than 1 1/2 inches (38 mm) from the nearest edge of the member, the pipe shall be protected by shield plates. Protective steel shield plates having a minimum thickness of 0.0575 inch (1.463 mm) (No. 16 gage)'"
+  nfpa13r_shield_edge_in:
+    value: 1.25
+    unit: in., the same for sprinkler pipe through studs (NFPA 13R 5.2.3.7)
+    conf: medium
+    source: "NFPA 13R 5.2.3.7, the 2019 wording as the 2022 cycle's Second Revision No. 2 prints it (data/raw/pass3g/raw/sprinkler/13R_A2021_SDR.txt, a committee draft): 'Pipe or tube through holes or notches in wood and metal stud walls within 1 1/4 in. (32 mm) of the inside face of the stud shall be protected from mechanical damage'; A.5.2.3.7: 'An example of mechanical protection might consist of nail plates'"

@@ -75,6 +75,9 @@ def test_every_file_the_viewer_loads_or_links_is_in_the_site(site):
     m = json.loads((site / "models" / "addenda.json").read_text(encoding="utf-8"))
     paths += [f"./models/{a[k]}" for a in m["addenda"] for k in ("model", "changes") if a[k]]
     paths += [f"./models/{m['framing']['model']}"]
+    if m.get("services"):  # the services model (pass 3g step 7d) and its layers
+        paths += [f"./models/{m['services']['model']}"]
+        assert all(f'id="opt-{layer}"' in page for layer in ("plumbing", "hvac", "electrical", "sprinklers"))
     assert 'fetch("./models/addenda.json")' in page
     for p in paths:
         assert (site / p).is_file(), p
@@ -143,6 +146,11 @@ def test_the_documents_are_in_folders(site):
     for path in ("bidset.pdf", "apartment.ifc", "drawings/schedule.csv", "bidset.ids", "rfi-001.bcf", "rfi-002.bcf",
                  "apartment-addendum-3.ifc", "framing-addendum-3.ifc"):
         assert f'href="files/{path}"' in page, path
+    m = json.loads((site / "models" / "addenda.json").read_text(encoding="utf-8"))
+    if m.get("services"):  # the services model and every schedule read back from it
+        assert '<span class="fold">05 Services model' in page
+        for path in [m["services"]["model"], *(f["path"] for f in m["services"]["files"])]:
+            assert f'href="files/{path}"' in page, path
 
 
 def test_an_item_doesnt_stop_at_a_decimal_point():

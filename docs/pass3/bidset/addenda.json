@@ -133,5 +133,64 @@
     }
    ]
   }
- ]
+ ],
+ "services": {
+  "model": "services-addendum-5.ifc",
+  "frame": "Addendum 5's frame",
+  "elements": 3124,
+  "layers": {
+   "electrical": 311,
+   "hvac": 867,
+   "plumbing": 1183,
+   "sprinklers": 763
+  },
+  "issued": "2026-11-22T11:48:56-08:00",
+  "files": [
+   {
+    "path": "services-addendum-5/lengths.csv",
+    "label": "Pipe, duct, conduit and cable lengths, by system, material and size"
+   },
+   {
+    "path": "services-addendum-5/fittings.csv",
+    "label": "Fittings, by system, kind and size"
+   },
+   {
+    "path": "services-addendum-5/equipment.csv",
+    "label": "Equipment"
+   },
+   {
+    "path": "services-addendum-5/fixtures.csv",
+    "label": "Plumbing fixtures"
+   },
+   {
+    "path": "services-addendum-5/sprinklers.csv",
+    "label": "Sprinklers"
+   },
+   {
+    "path": "services-addendum-5/air_terminals.csv",
+    "label": "Registers, grilles and wall caps"
+   },
+   {
+    "path": "services-addendum-5/switches.csv",
+    "label": "Water-level switches (IMC 307.2.3)"
+   },
+   {
+    "path": "services-addendum-5/holes.csv",
+    "label": "Holes bored through the frame"
+   },
+   {
+    "path": "services-addendum-5/plates.csv",
+    "label": "Holes near a member's edge (steel plates)"
+   },
+   {
+    "path": "services-addendum-5/openings.csv",
+    "label": "Every opening through an assembly"
+   },
+   {
+    "path": "services-addendum-5/firestop.csv",
+    "label": "The firestop schedule, by condition (IBC 714)"
+   }
+  ],
+  "note": "preliminary, for Addendum 5; open: 7 feeder conduits over NEC 352.26's 360\u00b0 of bends; 345 rated openings with no listed firestop system that fits as tested"
+ }
 }

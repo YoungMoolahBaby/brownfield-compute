@@ -1,0 +1,13 @@
+element,class,storey,Flat,Kind
+"water-level switch, 1-back-left",IfcSensor (LEVELSENSOR),Level 1,1-back-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 1-back-right",IfcSensor (LEVELSENSOR),Level 1,1-back-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 1-front-left",IfcSensor (LEVELSENSOR),Level 1,1-front-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 1-front-right",IfcSensor (LEVELSENSOR),Level 1,1-front-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 2-back-left",IfcSensor (LEVELSENSOR),Level 2,2-back-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 2-back-right",IfcSensor (LEVELSENSOR),Level 2,2-back-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 2-front-left",IfcSensor (LEVELSENSOR),Level 2,2-front-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 2-front-right",IfcSensor (LEVELSENSOR),Level 2,2-front-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 3-back-left",IfcSensor (LEVELSENSOR),Level 3,3-back-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 3-back-right",IfcSensor (LEVELSENSOR),Level 3,3-back-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 3-front-left",IfcSensor (LEVELSENSOR),Level 3,3-front-left,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)
+"water-level switch, 3-front-right",IfcSensor (LEVELSENSOR),Level 3,3-front-right,UL 508 water-level switch to the unit's forced stop (IMC 307.2.3 item 4; Fujitsu function 46-02)

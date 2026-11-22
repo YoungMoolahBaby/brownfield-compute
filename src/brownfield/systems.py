@@ -414,6 +414,9 @@ RFI_002_ANSWER_AFTER_MIN = 30
 # ENERGY STAR's glass, before it went out).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
           4: "2026-11-21T11:41:33-08:00"}
+# When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
+# Addendum 5 to issue.
+SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
 TITLES = {1: "The patio doors: their glass and their width",
           2: "The rooms, the plumbing walls and the service annex",
           3: "The envelope to Pennsylvania's 2021 energy code",
@@ -680,6 +683,13 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("apartment-addendum-4.ifc", "The revised model, IFC4, the glass's U-factor and SHGC on its types"),
             ("drawings-addendum-4/schedule.csv", "The revised window and door schedule, with the glass's U-factor and SHGC")],
     }
+    # The services model (pass 3g step 7d, `brownfield routes --ifc`), when it has been built.
+    from . import servicesifc
+
+    services = None
+    if (servicesifc.OUT / f"services-{servicesifc.REVISION}.ifc").exists():
+        services = servicesifc.publish(to, SERVICES_ISSUED)
+        written += [to / services["model"], to / f"services-{servicesifc.REVISION}"]
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-3.ifc", "revision": "addendum-3", "members": len(frame["members"]),
                             "note": "pass 3b's wood frame on Addendum 3's building; the flats' partitions and plumbing "
@@ -688,10 +698,13 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
                              "model": models[n], "changes": f"changes-addendum-{n}.json",
                              "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None}[n],
                              "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4)]}
+    if services:
+        manifest["services"] = services
     path = to / "addenda.json"
     path.write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
     written.append(path)
     missing = [f["path"] for a in manifest["addenda"] for f in a["files"] if not (to / f["path"]).exists()]
+    missing += [f["path"] for f in (services or {}).get("files", []) if not (to / f["path"]).exists()]
     if missing:
         raise SystemExit(f"addenda.json names files that aren't published: {missing}")
     return written

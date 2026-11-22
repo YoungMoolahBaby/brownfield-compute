@@ -66,6 +66,9 @@ const kinds = {
   IFCWALL: WebIFC.IFCWALL, IFCSLAB: WebIFC.IFCSLAB, IFCOPENINGELEMENT: WebIFC.IFCOPENINGELEMENT,
   IFCWINDOW: WebIFC.IFCWINDOW, IFCDOOR: WebIFC.IFCDOOR,
   IFCSTAIR: WebIFC.IFCSTAIR, IFCSTAIRFLIGHT: WebIFC.IFCSTAIRFLIGHT, IFCRAILING: WebIFC.IFCRAILING,
+  // The services model (pass 3g step 7d): every pipe, duct, conduit, cable, fitting, terminal and
+  // piece of equipment, all subclasses of IfcDistributionElement.
+  IFCDISTRIBUTIONELEMENT: WebIFC.IFCDISTRIBUTIONELEMENT,
 };
 const el = new Map(); // expressID -> record
 for (const [cls, type] of Object.entries(kinds)) {

@@ -73,7 +73,18 @@ the sizes they asked for. Found:
 - the heating pump's head rises from 8.1 to 13.1 ft;
 - two vents needed forge to retry a failed outlet first.
 
-Next: 7d, the services model, its layers in the viewer, and the schedules.
+7d done: the services as an IFC of their own (3,124 elements), checked against forge's routes to
+0.000 mm and read by a second reader; the schedules read back from it; the viewer's Plumbing,
+Heating cooling and air, Wiring and Sprinklers layers live; published to the plan room as
+preliminary. Found:
+- seven feeders' conduits have 450-630° of bends between the meter and the panel, where NEC
+  352.26 allows 360°;
+- of 453 openings through rated assemblies, listed firestop systems fit 68 (40 with the PEX's
+  insulation stopped at the floor), partly fit 25, and none was found for 320 (296 up through top
+  plates, 24 CPVC drops);
+- the top storey's ceiling is unrated in Type V-B, so its 188 openings need fireblocking only.
+
+Next: Jon's call on the feeders and the firestop route (below), then 7e, Addendum 5.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3468,6 +3479,137 @@ test. Then the township brief's ask.
            - The loop's loss, at 66 W a flat, sits at the bottom of Ecosizer's spread.
            - The routes depend on order: the requests', the sizes' growth and the retries. A
              rerun from git reproduces them.
+       - **7d done 2026-11-22: the services as IFC, their schedules and the viewer's layers.**
+         - **How** (`src/brownfield/servicesifc.py`, run by `brownfield routes --ifc`; `--publish`
+           puts it in the plan room):
+           - **The model:** one IFC4 file of its own (`services-addendum-5.ifc`), beside the bid
+             set's and the frame's: 3,124 elements in 11 distribution systems.
+             - Every routed run is cut into its pieces between junctions, each a pipe, duct,
+               conduit or cable along the polyline forge routed.
+             - Each piece's size comes from 7c's designs, edge by edge: the sprinklers' branch
+               lines and feeds, each Manual D duct piece, the mains, each circuit's wire, each
+               feeder's conduit by NEC Chapter 9.
+             - It also holds 7a's risers, stacks and closet bends, the equipment (87), the fixtures
+               (60), the sprinklers where 7b left them (118), a register, grille or wall cap at
+               each duct's end (96), and the 12 water-level switches 7c found IMC 307.2.3 asks.
+             - Each element carries its system, size, material, run, bends and holes through the
+               frame (`BF_Service`).
+           - **Fittings, as each material takes them** (1,588):
+             - CPVC, cast iron, PVC, duct and conduit: a fitting at every bend and tee.
+             - PEX: bent on a support at its turns (812 sweeps), with elbows only where 7c counted
+               them.
+             - Nothing on cable or the copper line sets, which are bent.
+             - The drains' fittings by IPC Table 706.3: a quarter bend from horizontal to vertical,
+               a long sweep otherwise, a sanitary tee where a branch enters a stack, a combination
+               wye and eighth bend elsewhere.
+           - **The schedules,** read back from the file (`out/pass3/services/schedules`, 11
+             published):
+             - lengths by system, material and size: 14,673 ft (plumbing 4,008; heating, cooling
+               and air 2,678; sprinklers 1,319; wiring 6,667);
+             - fittings, equipment, fixtures, sprinklers, registers, the switches;
+             - 4,645 holes through the frame (forge's bores);
+             - the steel plates over pipe and cable near a member's edge (none, bored at the
+               centre);
+             - the firestop schedule: every opening through an assembly and what IBC 714 asks of
+               it.
+           - **The viewer:** Plumbing, Heating cooling and air, Wiring and Sprinklers are live,
+             each filtering the one services model by layer and coloured by system. A click shows
+             a piece's system, size, material, length, bends and holes. URL options: `?plumbing`,
+             `?hvac`, `?wiring`, `?sprinklers`. Seen working in headless Chrome (SwiftShader),
+             clicked through its debugging protocol: a line set's riser, a 1 in. PEX cold-water
+             piece, a 1-1/2 in. cast-iron vent.
+           - **The plan room:** a "05 Services model" folder, preliminary, its open findings in its
+             note.
+         - **Checks,** all passing but the two findings below:
+           - every element once (3,124);
+           - every routed run's pieces where forge routed them and as long (0.000 mm);
+           - every other element where 7a placed it;
+           - schema valid with express rules (0 issues);
+           - web-ifc reads every element and draws each where it should be;
+           - the file's penetrations are forge's own count.
+           - Tests: `tests/test_walkup_services.py`, 8: pieces, fittings by material, IPC Table
+             706.3, IBC 714's rules, a riser as one opening, the feeders' bends, and the model
+             whole on forge's routes.
+         - **Found:**
+           - **Seven feeders break NEC 352.26.** It allows 360° of bends between pull points. Each
+             feeder runs from the meter in the annex under the slab to its riser, turning up at
+             both ends, with no pull point between. As routed, 1-front-left, 1-front-right,
+             2-front-right and 3-front-left reach 630°, 2-front-left and 3-front-right 540°, and
+             2-back-right 450°. The other five are at 270-360°.
+             - The router turns only at right angles. All twelve conduits leave one meter at one
+               depth, so the later ones jog around the earlier.
+             - Under a slab a conduit can run straight at any angle: two bends each (180°).
+             - A pull box can't go under the slab (it must stay accessible).
+             - Open, for Jon (see Next).
+           - **Most rated openings have no listed firestop system that fits as tested.** 453
+             openings pass through rated assemblies: 80 risers through the floor/ceiling, 296 up
+             through partitions' top plates into it, 40 drains down through the subfloor, 24 CPVC
+             sprinkler drops through the ceiling, and 13 sprinkler arms through party and stair
+             walls. From the makers' published system sheets:
+             - **Fit:**
+               - STI F-C-1074 for the cast-iron stacks (16);
+               - STI F-C-2032 for the feeders' PVC conduit (12) and the PEX risers (40). For the
+                 risers, the insulation must stop at each face of the floor, since the system
+                 lists no pipe covering (IBC 714.3).
+             - **Partly:**
+               - STI F-C-8021 for the line sets (12): their 14 AWG control cable is outside its
+                 listed cables;
+               - STI W-L-2816 (BlazeMaster Caulk & Walk Pro) for the CPVC through walls (13): it
+                 is listed in single 2x4 walls, not double-stud ones.
+             - **None found:**
+               - for anything that goes up through top plates and ends in the floor/ceiling's
+                 cavity (cable 144, PEX 112, cast-iron vents 40);
+               - for CPVC through the ceiling's membrane (24).
+             - The International Firestop Council: top-plate penetrations must be protected "as
+               per a tested and listed penetration firestop system".
+             - Every floor system found is listed in a UL L500 floor; ours follows AWC's generic
+               WIJ-1.1. So even the systems that fit ask the authority to accept the floor, or
+               the floor to be specified as an L500 design.
+             - The drains down through the subfloor are iron and need only their annular space
+               protected (714.5.2 exception 1). Hilti F-C-1134 and F-C-1135 list the closet
+               flange and the tub's drain, if a tested system is wanted.
+           - **The top storey's ceiling is unrated.** Type V-B rates no roof/ceiling (Table 601),
+             so the 188 openings there need fireblocking only (718.2.1.4), and so do the stair
+             riser's 3 through the stair's halls. 7b counted them as rated, and it missed 16 rated
+             crossings at the pieces' short ends to their terminals and the top storey's four
+             line-set risers. Its count now takes the ends and marks what's rated. The closet bends
+             and the tubs' drains (16 more), which forge didn't route, are counted from the model.
+           - **714.5.2 exception 7 asks the partitions under a rated ceiling to be sheathed in Type
+             X** and the ceiling tight to their double top plates, so the plates can stand in for
+             the ceiling: a specification item.
+           - **No steel plates are needed if the holes are bored at each member's centre** (NEC
+             300.4(A)(1), IPC 305.6, IMC 305.5, NFPA 13R 5.2.3.7). Forge drew 596 holes nearer an
+             edge than those allow; every one clears bored at the centre. A specification item.
+         - **What we don't know:**
+           - The firestop systems' current revisions: UL Product iQ needs a login, and Lubrizol's
+             BlazeMaster compatibility list wouldn't load. Several STI sheets are old (2011-2015).
+           - NEC 352.26 and 300.4(A)(1) are from secondary sources (EC&M, IAEI), not the code. 300.4
+             may exempt PVC conduit from steel plates; the schedule plates it anyway.
+           - The fixtures' sizes are placeholders for the drawing (no fixture is chosen).
+           - Whether the authority reads IPC Table 706.3's limit on quarter bends onto the 3 in.
+             closet bends.
+           - Not modelled:
+             - the ports that connect each element to the next;
+             - the mechanical room's wall-hung assemblies (the riser assembly, the backflow
+               preventers, the plate exchangers, the pumps, the mixing valve: 7a placed none);
+             - the smoke alarms;
+             - the outlets and switches at the circuits' ends.
+           - A riser that rises through every storey is filed on its lowest one, so the viewer's
+             storey filter shows it on Level 1 only.
+         - **Open, for Jon:**
+           - **The feeders.** Recommended: let the router run straight at any angle under the
+             slab, where nothing but the soil holds a conduit to the lattice. Each feeder then has
+             two bends (180°) and runs shorter. Then reroute and rerun 7b-7d. Not recommended:
+             - a meter stack at each column's riser, which changes step 5's service;
+             - a high cost a turn, which still leaves 360° at best, at the limit.
+           - **The firestop systems.** Recommended:
+             - name one maker's engineering judgments for the conditions with no listed system
+               that fits, submitted for the authority's approval (the usual way in wood-frame
+               flats);
+             - specify the floor as a UL L500 design that matches WIJ-1.1, so the listed systems
+               apply as tested.
+             - Optionally, feed the soffits' sprinklers inside the soffits, which removes the 24
+               CPVC drops through the ceiling.
     8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
        electrician; their comments logged, then taken or answered (Addendum 2).
     9. **The inspection and commissioning plan.**

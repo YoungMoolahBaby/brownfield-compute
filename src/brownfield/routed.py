@@ -252,6 +252,29 @@ class Tree:
     def root(self) -> list[float]:
         return self.branches[0].points[0] if self.branches else self.req["root"]
 
+    def piece(self, n: int) -> list[list[float]]:
+        """Edge `n` as a polyline (m): its part of forge's branch, from where it leaves its trunk (the
+        trunk's point: on a drain or a vent, the drop or rise into it) or the run's root, to its
+        terminal if it ends at one. Its length is the edge's, but for a join off a level run, where
+        forge's branch starts within JOIN_TOL_M of its trunk and the gap isn't counted."""
+        e = self.edges[n]
+        br = self.branches[e.branch]
+        pts = [br.point_at(e.s0)]
+        pts += [list(br.points[k]) for k in range(1, len(br.points) - 1) if e.s0 + 1e-9 < br.cum[k] < e.s1 - 1e-9]
+        pts.append(br.point_at(e.s1))
+        if e.s0 <= 1e-9:
+            if br.parent is not None:
+                pts.insert(0, self.branches[br.parent].point_at(br.at))
+            elif e.branch == 0 and self.lead_m > 0:
+                pts.insert(0, list(map(float, self.req["root"])))
+        if e.terminal is not None:
+            pts.append(list(br.to))
+        out = [pts[0]]
+        for q in pts[1:]:
+            if math.dist(q, out[-1]) > 1e-7:
+                out.append(q)
+        return out
+
 
 @dataclass
 class Routes:
@@ -613,9 +636,10 @@ def report(s: dict) -> str:
                  f"{max(x['need_in'] for x in vt['stacks'].values()):g} in. for {vt['stack_dfu']:g} dfu")
     lines.append(f"  Strip soffits: {ob['strips']}, each side's floor covered by its own sprinklers; the legs' floor {ob['leg_ft2']:.1f} ft2 "
                  f"of shadow each ({lim['shadow_ft2']:g} allowed)")
-    lines.append(f"  The membrane: {pen['membrane']} penetrations of the rated ceilings, the sprinklers' CPVC drops into the soffits "
-                 "among them: no exception of IBC 714.5.2 covers CPVC (1 is metal pipe; 5 a sprinkler's own annular space), so each "
-                 "takes a listed membrane-penetration firestop system (714.5.1.2, F and T 1 hour): 7d")
+    lines.append(f"  The membrane: {pen['rated']['membrane']} penetrations of the rated ceilings (of {pen['membrane']} through any: the "
+                 "top storey's roof/ceiling, unrated in Type V-B, and the stair's halls), the sprinklers' CPVC drops into the soffits among them: "
+                 "no exception of IBC 714.5.2 covers CPVC (1 is metal pipe; 5 a sprinkler's own annular space), so each takes a listed "
+                 "membrane-penetration firestop system (714.5.1.2, F and T 1 hour): 7d's firestop schedule")
     lines.append("  The mini-splits over finished ceilings (IMC 307.2.3): item 4, a UL 508 water-level switch in each unit's drain "
                  f"pan or primary drain, wired to its forced-stop input (Fujitsu: function 46-02, a dry contact): {len(d)}, for 7d's schedule")
     if s["asks"]:

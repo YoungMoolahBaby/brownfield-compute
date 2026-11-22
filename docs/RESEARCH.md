@@ -1374,4 +1374,70 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
   - **NEC 2020 300.14** (6 in. of free conductor at each box) and the 15 in. low reach to an outlet
     (the Fair Housing Act's guidelines, ANSI A117.1) are cited from memory, not read: both small
     allowances on the circuits' lengths, said so in the parameters.
+- **Step 7d, the services model and its schedules (2026-11-22).** Under `data/raw/pass3g/` (gitignored).
+  - **IBC 2021 714, Pennsylvania's** (`raw/ibc9/ch7_all.txt`; 714.5.2's exceptions whole in
+    `firestop/UpCodes_PA-IBC2021_ch7_714.html`):
+    - 714.5.1.2: a through-penetration of a floor takes a listed system "with an F rating/T rating
+      of not less than 1 hour"; exception 1, "Floor penetrations contained and located within the
+      cavity of a wall above the floor or below the floor do not require a T rating"; exception 2,
+      the same for "floor drains, tub drains or shower drains contained and located within the
+      concealed space of a horizontal assembly";
+    - 714.5.1, exception 1: steel, ferrous or copper pipe through a floor with its annular space
+      filled to the cotton-waste test, openings at most 144 in.2 in 100 ft2;
+    - 714.5.2: membrane penetrations as 714.5.1.1 or 714.5.1.2; exception 1, steel, ferrous or
+      copper pipe with its annular space protected (100 in.2 in 100 ft2); exception 7, "The ceiling
+      membrane of a maximum 2-hour fire-resistance-rated horizontal assembly is permitted to be
+      interrupted with the double wood top plate of a wall assembly that is sheathed with Type X
+      gypsum wallboard, provided that all penetrating items through the double top plates are
+      protected in accordance with Section 714.5.1.1 or 714.5.1.2 and the ceiling membrane is
+      tight to the top plates";
+    - 714.3: "Insulation and coverings on or in the penetrating item shall not penetrate the
+      assembly unless the specific material used has been tested as part of the assembly";
+    - 714.4.1.2: a wall's through-penetration, an F rating at least the wall's; 714.4.1's
+      exception for metal pipe; 718.2.1.4, "The integrity of fireblocks shall be maintained."
+  - **Listed firestop systems,** from the makers' own system sheets (a research agent; I checked
+    each quote used against the saved file; `data/firestop_systems.csv` gives each condition's).
+    UL Product iQ needs a login and was not used, so no revision is checked against it:
+    - **STI (Specified Technologies), SpecSeal:** F-C-1074 (iron pipe to 4 in.; "the individual
+      L500 Designs"; a single or double wood-stud chase wall; LCI Sealant or WF300 Caulk);
+      F-C-2032 ("Nom 2 in. ... SDR 9 PEX tubing", "Schedule 40 PVC conduit" to 2 in., no pipe
+      covering; a double top plate); F-C-8021 (copper to 3/4 in. Type L in nominal 1 in. AB/PVC
+      insulation, at most two tubes; "Max two 4 pair No. 18 AWG" cables); W-L-2816 (CPVC SDR 13.5
+      to 2 in., BlazeMaster Caulk & Walk Pro; "nom 2 by 4 in. ... spaced max 16 in. OC" in U300
+      walls); F-C-3057 (NM cable to 3/C No. 8, a 1 or 2 hr rated chase wall); F-C-2357 (CPVC to
+      1 in. in glass-fibre covering, a through-penetration). Files from
+      `files.stifirestop.com` and `api.stifirestop.com`, saved in `firestop/`.
+    - **Hilti,** two copies on its Q&A file host (its own media links now 404): F-C-1134, "CLOSET
+      FLANGE IN WOOD FLOOR/CEILING ASSEMBLY F-RATING = 1-HR. T-RATING = 0-HR", cast iron to 4 in.
+      with its 90 degree elbow, L500; F-C-1135, cast iron to 1-1/2 in. with its P-trap, the tub's.
+    - **Found nowhere** (STI, Hilti, 3M): a system for a penetration up through a wall's top plates
+      that ends in a wood floor/ceiling's cavity; a membrane-penetration system for CPVC through a
+      wood floor/ceiling's ceiling; any wood-floor system with pipe insulation on PEX. The
+      International Firestop Council's FAQ (archived copy, the live page 403): "all penetrations of
+      the top plate of the walls must be protected ... as-tested, meaning as per a tested and listed
+      penetration firestop system."
+    - **BlazeMaster compatibility:** STI's page says Caulk & Walk Pro "is specifically designed to
+      be compatible with BlazeMaster CPVC fire sprinkler pipe"; Lubrizol's own list (a JavaScript
+      finder) returned 403 and its archive holds no data. Lubrizol's 2018 incompatible-products list
+      (FCIA's copy) names Hilti CP 606 and STI SpecSeal Smoke 'N' Sound.
+  - **Steel plates over pipe and cable near a member's edge:**
+    - IPC 2021 305.6 (Pennsylvania's, UpCodes, saved `step7/ipc3/ipc3_pa.html` 2026-11-22):
+      piping "other than cast iron or galvanized steel ... less than 1 1/4 inches (32 mm) from the
+      nearest edge of the member ... shall be protected by steel shield plates" of No. 16 gage;
+    - IMC 2021 305.5 (`step7/imc/imc3_pa.txt`): the same at 1-1/2 in. for mechanical piping other
+      than cast iron or steel;
+    - NFPA 13R 5.2.3.7, the 2019 wording as the 2022 cycle's Second Revision No. 2 prints it
+      (`raw/sprinkler/13R_A2021_SDR.txt`): pipe "within 1 1/4 in. (32 mm) of the inside face of the
+      stud shall be protected from mechanical damage";
+    - NEC 300.4(A)(1), not opened: Vince LaPorta, IAEI Magazine, Winter 2026, paraphrasing the
+      2023 NEC ("since 1990"): the hole's edge at least 1-1/4 in. from the wood's nearest edge, or a
+      steel plate or bushing at least 1/16 in. thick. Whether PVC conduit is exempt isn't
+      confirmed.
+  - **NEC 352.26,** not opened: Mike Holt, EC&M, 2019-05-22, "the total amount of bends (including
+    offsets) between pull points must not exceed 360"; Randy Hunter, IAEI, May/June 2014, "the
+    equivalent of four quarter bends (360 degrees total) between pull points".
+  - **IPC 2021 Table 706.3** (`dl/upc/ipc7.txt`): a quarter bend horizontal to vertical; vertical
+    to horizontal only for a fixture drain of 2 in. or smaller (or a short sweep 3 in. and up); a
+    long sweep, a wye or a combination wye and eighth bend in every direction; a sanitary tee only
+    horizontal to vertical.
 

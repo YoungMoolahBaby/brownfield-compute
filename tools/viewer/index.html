@@ -155,9 +155,11 @@
         <p class="eyebrow">Layers</p>
         <label class="chk"><input type="checkbox" id="opt-rooms"> Rooms, by use (Addendum 2 on)</label>
         <label class="chk"><input type="checkbox" id="opt-frame"> Framing <span class="hint" id="frame-note"></span></label>
-        <label class="chk off"><input type="checkbox" disabled> Plumbing <span class="hint">as it's designed (pass 3g)</span></label>
-        <label class="chk off"><input type="checkbox" disabled> Ducts <span class="hint">as they're designed</span></label>
-        <label class="chk off"><input type="checkbox" disabled> Conduit <span class="hint">as it's designed</span></label>
+        <label class="chk"><input type="checkbox" id="opt-plumbing" data-layer="plumbing"> Plumbing <span class="hint">water, drains, vents, fixtures</span></label>
+        <label class="chk"><input type="checkbox" id="opt-hvac" data-layer="hvac"> Heating, cooling and air <span class="hint">ducts, line sets, the loop</span></label>
+        <label class="chk"><input type="checkbox" id="opt-electrical" data-layer="electrical"> Wiring <span class="hint">feeders, branch circuits, panels</span></label>
+        <label class="chk"><input type="checkbox" id="opt-sprinklers" data-layer="sprinklers"> Sprinklers</label>
+        <p class="hint" id="services-note"></p>
         <label class="chk" id="changes-row" hidden><input type="checkbox" id="opt-changes"> <span id="changes-label">Mark what this addendum changed</span></label>
         <div class="changes" id="changes" hidden></div>
       </section>
@@ -214,9 +216,19 @@
       $("#opt-frame").disabled = true;
       $("#frame-note").textContent = "(not published)";
     }
+    const sv = MANIFEST.services;
+    if (sv) {
+      MODELS.services = { file: `./models/${sv.model}`, label: "Services" };
+      $("#services-note").textContent = `Services: ${sv.elements.toLocaleString()} elements, routed through ${sv.frame} (${sv.note}).`;
+    } else {
+      for (const l of LAYERS) { $(`#opt-${l}`).disabled = true; $(`#opt-${l}`).closest("label").classList.add("off"); }
+      $("#services-note").textContent = "Services: not published.";
+    }
   }
+  const LAYERS = ["plumbing", "hvac", "electrical", "sprinklers"];
   const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null,
-                  rooms: false, frame: false, changes: false };
+                  rooms: false, frame: false, changes: false, layers: { plumbing: false, hvac: false, electrical: false, sprinklers: false } };
+  const anyLayer = () => Object.values(state.layers).some(Boolean);
   const changeSets = {};  // model key: what that addendum changed (models/changes-addendum-N.json)
   const loaded = {};
   let dirty = true;
@@ -391,6 +403,14 @@
   const ROOM_COLOR = { bedroom: 0x6f9fd8, living: 0xe0c27e, study: 0xe0c27e, kitchen: 0x67b98b, bath: 0x67b98b, utility: 0x67b98b,
                        hall: 0xaab2bb, entry: 0xaab2bb, mechanical: 0xe58f6f, electrical: 0xe2c84e };
   const CHANGE = { added: 0x2e9e5b, changed: 0xe8a33b, same: 0xc4c7cb };
+  // The services (BF_Service.System), each system its own colour; their names as the model's systems.
+  const SVC = {
+    sprinkler: [0xd64545, "Sprinklers (NFPA 13R)"], cold: [0x3b82c4, "Cold water"], hot: [0xe07b39, "Hot water and its return"],
+    drain: [0x6b5b4b, "Drains"], vent: [0x9aa0a6, "Vents"], condensate: [0x7fb3d5, "The mini-splits' condensate"],
+    loop: [0xc8559b, "The building loop (radiant floors)"], ventilation: [0x8fb0c4, "Ventilation (the ERVs)"],
+    air: [0xb8c4cc, "The mini-splits' ducts"], refrigerant: [0xb87333, "The mini-splits' line sets"],
+    power: [0xd4b02a, "Feeders and branch circuits"],
+  };
   const SELECT = new THREE.Color(0x1d5fa8);
 
   function applyTheme() {
@@ -403,6 +423,7 @@
 
   function roleOf(e) {
     const c = e.cls, p = e.psets.BF_Opening || {};
+    if (e.psets.BF_Service) return "service";
     if (c === "IFCSPACE") return "room";
     if (c.startsWith("IFCMEMBER")) return "frame";
     if (c.startsWith("IFCBEAM")) return "joist";
@@ -426,13 +447,13 @@
       g.setAttribute("normal", new THREE.Float32BufferAttribute(e.nrm, 3));
       g.setIndex(e.idx);
       const role = roleOf(e), glassy = role === "glass" || role === "room";
-      const mat = new THREE.MeshStandardMaterial({ color: COLOR[role], roughness: glassy ? 0.25 : 0.85, metalness: 0,
+      const mat = new THREE.MeshStandardMaterial({ color: role === "service" ? svcColour(e) : COLOR[role], roughness: glassy ? 0.25 : 0.85, metalness: 0,
                                                    transparent: glassy, opacity: role === "room" ? 0.38 : glassy ? 0.72 : 1,
                                                    depthWrite: role !== "room", side: THREE.DoubleSide });
       const m = new THREE.Mesh(g, mat);
       // Keyed on the GlobalId: unique in a file, and the same unit keeps it across revisions.
       m.userData = { e, role, key: e.gid, unit: data.unit };
-      if (edges && !glassy && role !== "rail" && !(role === "frame" || role === "joist")) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
+      if (edges && !glassy && role !== "rail" && !(role === "frame" || role === "joist" || role === "service")) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat));
       group.add(m);
       byKey.set(m.userData.key, m);
     }
@@ -444,14 +465,22 @@
              radius: Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 1) };
   }
 
+  function svcColour(e) { return (SVC[(e.psets.BF_Service || {}).System] || [COLOR.other])[0]; }
+
   function refresh() {
     const cur = loaded[state.model];
     const chg = state.changes ? changeSets[state.model] : null;
     for (const [k, r] of Object.entries(loaded)) {
-      r.group.visible = k === state.model || (k === "frame" && state.frame);
+      r.group.visible = k === state.model || (k === "frame" && state.frame) || (k === "services" && anyLayer());
       for (const m of r.group.children) {
         const { e, role } = m.userData;
         let show = state.storey === "all" || e.storey === state.storey;
+        if (role === "service") {
+          m.visible = show && !!state.layers[e.psets.BF_Service.Layer];
+          m.material.color.setHex(svcColour(e));
+          m.material.emissive.setHex(0x000000);
+          continue;
+        }
         if (role === "wall" || role === "party") show = show && state.walls;
         if (role === "slab" || role === "roof") show = show && (k === "frame" ? state.frame : state.slabs);
         if (role === "room") show = show && state.rooms;
@@ -477,7 +506,8 @@
     }
     if (cur && state.selected) {
       const key = state.selected.userData.key;
-      state.selected = cur.byKey.get(key) || (state.frame && loaded.frame ? loaded.frame.byKey.get(key) : null) || null;
+      state.selected = cur.byKey.get(key) || (state.frame && loaded.frame ? loaded.frame.byKey.get(key) : null)
+        || (anyLayer() && loaded.services ? loaded.services.byKey.get(key) : null) || null;
       if (state.selected) state.selected.material.emissive.copy(SELECT).multiplyScalar(0.55);
     }
     inspect(state.selected);
@@ -512,8 +542,21 @@
     const p = e.psets.BF_Opening;
     const rows = [];
     let head, extra = "";
-    const room = e.psets.BF_Room, member = e.psets.BF_Member;
-    if (room) {  // a room (Addendum 2 on): its use, flat, floor area, openings and escape window
+    const room = e.psets.BF_Room, member = e.psets.BF_Member, svc = e.psets.BF_Service;
+    if (svc) {  // a pipe, duct, cable, fitting, fixture or piece of equipment of the services model
+      head = `<div class="mark"><b>${esc(svc.Kind || (svc.Size ? `${svc.Size}${/AWG|plenum/.test(svc.Size) ? "" : " in."}` : e.name))}</b><span>${esc(e.clsName)}${e.predefined && !/DEFINED/.test(e.predefined) ? ` (${esc(e.predefined.toLowerCase())})` : ""}</span></div>`;
+      rows.push(["System", (SVC[svc.System] || [0, svc.System])[1]], ["Element", e.name]);
+      if (svc.Size && svc.Kind) rows.push(["Size", svc.Size]);
+      if (svc.Material) rows.push(["Material", svc.Material]);
+      if (svc.Conductors) rows.push(["Conductors", svc.Conductors]);
+      if (svc.Circuit) rows.push(["Circuit", `${svc.Circuit}, ${svc.Breaker} A ${svc.Poles}-pole`]);
+      if (svc.Length != null && svc.Length > 0) rows.push(["Length", ftin(svc.Length)]);
+      if (svc.Bends) rows.push([svc.Sweeps ? "Bends (swept, on supports)" : "Bends", svc.Bends]);
+      if (svc.Holes) rows.push(["Holes through the frame", svc.Holes]);
+      for (const [k, l] of [["Model", "Model"], ["Coverage", "Coverage"], ["Room", "Room"], ["Flat", "Flat"]]) if (svc[k]) rows.push([l, svc[k]]);
+      rows.push(["Storey", e.storey ?? "—"]);
+      if (svc.SizeBasis) rows.push(["Sized by", svc.SizeBasis]);
+    } else if (room) {  // a room (Addendum 2 on): its use, flat, floor area, openings and escape window
       const area = (e.psets.Qto_SpaceBaseQuantities || {}).NetFloorArea;
       head = `<div class="mark"><b>${esc(room.Use)}</b><span>Room</span></div>`;
       rows.push(["Room", e.name], ["Flat", room.Flat], ["Storey", e.storey ?? "—"],
@@ -622,7 +665,8 @@
     if (!r || !down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 5) return;
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), camera);
-    const groups = [r.group, ...(state.frame && loaded.frame ? [loaded.frame.group] : [])];
+    const groups = [r.group, ...(state.frame && loaded.frame ? [loaded.frame.group] : []),
+                    ...(anyLayer() && loaded.services ? [loaded.services.group] : [])];
     const pickable = groups.flatMap((g) => g.children).filter((m) => m.visible && !(state.xray && (m.userData.role === "wall" || m.userData.role === "party")));
     const hits = ray.intersectObjects(pickable, false);
     state.selected = hits.length ? hits[0].object : null;
@@ -725,6 +769,26 @@
     refresh();
   }
 
+  async function setLayer(layer, on) {
+    state.layers[layer] = on;
+    if (on && !loaded.services) {
+      $("#loading").hidden = false;
+      $("#loading").textContent = "Parsing the services model with web-ifc…";
+      try {
+        loaded.services = await (pending.services ??= load("services", { name: MODELS.services.file.split("/").pop(), file: MODELS.services.file }));
+      } catch (err) {
+        $("#loading").textContent = `The services model didn't load: ${err.message}.`;
+        state.layers[layer] = false;
+        $(`#opt-${layer}`).checked = false;
+        return;
+      } finally {
+        delete pending.services;
+      }
+      $("#loading").hidden = true;
+    }
+    refresh();
+  }
+
   $("#models").addEventListener("click", (ev) => {
     const b = ev.target.closest("button[data-model]");
     if (!b) return;
@@ -755,6 +819,7 @@
     $(id).addEventListener("change", (ev) => { state[key] = ev.target.checked; refresh(); });
   }
   $("#opt-frame").addEventListener("change", (ev) => setFrame(ev.target.checked));
+  for (const l of LAYERS) $(`#opt-${l}`).addEventListener("change", (ev) => setLayer(l, ev.target.checked));
   $("#opt-changes").addEventListener("change", (ev) => { state.changes = ev.target.checked; showChanges(); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 
@@ -783,6 +848,10 @@
     const q = new URLSearchParams(location.search);
     for (const [key, id] of [["rooms", "#opt-rooms"], ["xray", "#opt-xray"]]) if (q.has(key)) { state[key] = true; $(id).checked = true; }
     if (q.has("frame") && MODELS.frame) { $("#opt-frame").checked = true; setFrame(true); }
+    // ?plumbing, ?hvac, ?wiring (or ?electrical), ?sprinklers: the services' layers.
+    for (const [key, l] of [["plumbing", "plumbing"], ["hvac", "hvac"], ["wiring", "electrical"], ["electrical", "electrical"], ["sprinklers", "sprinklers"]]) {
+      if (q.has(key) && MODELS.services) { $(`#opt-${l}`).checked = true; setLayer(l, true); }
+    }
     $("#loading").textContent = `Parsing ${MODELS[first].file.split("/").pop()} with web-ifc…`;
     await show(first, { name: MODELS[first].file.split("/").pop(), file: MODELS[first].file });
     if (q.get("storey")) { state.storey = `Level ${q.get("storey")}`; storeyButtons(); refresh(); }

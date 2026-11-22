@@ -299,9 +299,12 @@ def checks(apt: dict, p: dict, body: dict, rt: dict, frame: dict, fresh_sha: str
     out.append(("no duct through a rated ceiling: every flat's ducts in its soffits (no ceiling radiation dampers, IBC 717.6.2)", worst_top <= 1e-6,
                 f"highest duct {-worst_top / IN:.1f} in. under the ceiling"))
     pen = penetrations(apt, p, body, rt)
+    r_ = pen["rated"]
     out.append(("every penetration of a rated floor or wall counted for its firestop system (IBC 714.5)", True,
-                f"{pen['floor']} through the floors, {pen['top plate']} up through walls' top plates into the floors, "
-                f"{pen['membrane']} through the ceilings' membrane, {pen['wall']} through the party and stair walls"))
+                f"{r_['floor']} through the floors, {r_['top plate']} up through walls' top plates into the floors, "
+                f"{r_['membrane']} through the ceilings' membrane, {r_['wall']} through the party and stair walls; unrated (the top "
+                f"storey's roof/ceiling in Type V-B, the stair's halls; fireblocking): {pen['floor'] - r_['floor']} at floors, "
+                f"{pen['top plate'] - r_['top plate']} at top plates, {pen['membrane'] - r_['membrane']} through a membrane"))
 
     # -- Sprinklers.
     ok, worst = heads_covered(apt, body["moved_heads"])
@@ -324,60 +327,109 @@ def checks(apt: dict, p: dict, body: dict, rt: dict, frame: dict, fresh_sha: str
 
 
 def penetrations(apt: dict, p: dict, body: dict, rt: dict) -> dict:
-    """The rated assemblies' penetrations: through each floor between flats (its subfloor, z at the
-    floor); through each ceiling's plane (the joists' underside), at a wall's top plates or through
-    the open ceiling's membrane; and through the party and stair walls, carried up through the
-    joists' space over them to the floor above. By the routed runs and the pinned verticals (stacks,
-    risers, line sets, feeders). Each takes a listed through-penetration firestop system (IBC
-    714.5.1) or a membrane one (714.5.2)."""
+    """The penetrations of the floors, ceilings and party and stair walls (`penetration_hits`) by the
+    routed runs, each piece with its ends, and the pinned verticals (stacks, risers, line sets,
+    feeders): counts by where, all and rated (`rated`), and rows by where, system and outside
+    diameter. A rated one takes a listed firestop system (IBC 714.5.1, 714.5.2) or an exception."""
+    from .routed import Tree
+
     reqs = {r["id"]: r for r in body["requests"]}
+    segs = []
+    for rec in rt["routes"]:
+        r = reqs[rec["id"]]
+        if not rec.get("branches"):
+            continue
+        t = Tree(r, rec)
+        for n in range(len(t.edges)):
+            pts = t.piece(n)
+            for a, c in zip(pts, pts[1:]):
+                segs.append((r["system"], r["od_m"], a, c))
+    for o in body["obstacles"]:
+        if pinned_vertical(o["id"]):
+            c = [(o["lo"][i] + o["hi"][i]) / 2 for i in range(2)]
+            segs.append(("pinned", o["hi"][0] - o["lo"][0], [*c, o["lo"][2]], [*c, o["hi"][2]]))
+    rows: dict[tuple[str, str, float], int] = {}
+    hits = penetration_hits(apt, [(a, c) for _, _, a, c in segs])
+    for h in hits:
+        system, od = segs[h["seg"]][0], segs[h["seg"]][1]
+        key = (h["where"], system, round(od / IN, 2))
+        rows[key] = rows.get(key, 0) + 1
+    tot = {w: sum(1 for h in hits if h["where"] == w) for w in WHERE}
+    rated = {w: sum(1 for h in hits if h["where"] == w and h["rated"]) for w in WHERE}
+    return {**tot, "rated": rated, "rows": [{"where": k, "system": s, "od_in": d, "n": n} for (k, s, d), n in sorted(rows.items())]}
+
+
+WHERE = ("floor", "top plate", "membrane", "wall")
+VERTICALS = ("stack", "vent-stack", "hot", "hot-return", "cold", "loop-supply", "loop-return")
+
+
+def pinned_vertical(oid: str) -> bool:
+    """A pinned vertical service 7a placed (a column's stacks and risers, a line set's or a feeder's
+    riser, the sprinkler riser), not a piece of equipment or a fitting."""
+    _, _, tail = oid.partition("/")
+    return tail in VERTICALS or tail.startswith(("line-set/", "feeder/")) or oid == "stair/fire-riser"
+
+
+def penetration_hits(apt: dict, segs: list[tuple[list, list]]) -> list[dict]:
+    """Each crossing of a straight piece (a, c) with an assembly: {where, seg (its index), storey,
+    at, rated}:
+    - **floor:** through a floor between flats (its subfloor, z at the floor);
+    - **top plate / membrane:** through a ceiling's plane (the joists' underside), at a wall's top
+      plates or through the open ceiling's membrane;
+    - **wall:** through a party or stair wall, carried up through the joists' space over it to the
+      floor above.
+    Each piece is a run's whole piece as 7c reads it (`Tree.piece`: with the short ends to its
+    terminal and from its trunk or root).
+    `rated`: the assembly has a fire-resistance rating, so the penetration takes a listed system
+    (IBC 2021 714) or one of its exceptions; else `unrated` says why. The floors between flats are
+    1 hour (711.2.4.3), and so the ceilings under them; the party walls and the stair's (708.3,
+    1023.2). Unrated: the top storey's ceiling, a roof/ceiling assembly, which Type V-B doesn't rate
+    (Table 601; step 6's type), and the stair's halls and landings inside its enclosure, which
+    separate nothing: through them, fireblocking (718.2) and nothing more."""
     floors = [k * apt["storey_m"] for k in range(1, apt["storeys"])]
-    membranes = [ceiling_z(apt, k) for k in range(1, apt["storeys"] + 1)]
+    membranes = [(k, ceiling_z(apt, k)) for k in range(1, apt["storeys"] + 1)]
     walls = []
     for x in apt["parts"]:
         if x["kind"] == "party_wall":
             k = round(x["lo_m"][2] / apt["storey_m"]) + 1
-            walls.append((x["lo_m"], [x["hi_m"][0], x["hi_m"][1], k * apt["storey_m"]]))
+            walls.append((x["lo_m"], [x["hi_m"][0], x["hi_m"][1], k * apt["storey_m"]], k))
     plates = [(w["lo_m"], w["hi_m"]) for w in apt["rooms"]["walls"]] + [(x["lo_m"], x["hi_m"]) for x in apt["parts"]
                                                                        if x["kind"] in ("party_wall", "exterior_wall")]
-    rows: dict[tuple[str, str, float], int] = {}
-
-    def add(where: str, system: str, od: float) -> None:
-        key = (where, system, round(od / IN, 2))
-        rows[key] = rows.get(key, 0) + 1
 
     def crosses(a: float, b: float, z: float) -> bool:
         return min(a, b) < z < max(a, b)
 
-    segs = []
-    for rec in rt["routes"]:
-        r = reqs[rec["id"]]
-        for b in rec.get("branches", []):
-            for a, c in zip(b["points"], b["points"][1:]):
-                segs.append((r["system"], r["od_m"], a, c))
-    for o in body["obstacles"]:
-        if "/" in o["id"] and o["hi"][2] - o["lo"][2] > apt["storey_m"] * 0.5:
-            c = [(o["lo"][i] + o["hi"][i]) / 2 for i in range(2)]
-            segs.append(("pinned", o["hi"][0] - o["lo"][0], [*c, o["lo"][2]], [*c, o["hi"][2]]))
-    for system, od, a, c in segs:
+    def at_z(a, c, z):
+        t = (z - a[2]) / (c[2] - a[2])
+        return [a[i] + t * (c[i] - a[i]) for i in range(3)]
+
+    core = apt["stair"]["core_y_m"]
+    stair = lambda q: core[0] < q[1] < core[1]  # noqa: E731
+
+    out = []
+    for i, (a, c) in enumerate(segs):
         if not (0 < a[0] < apt["depth_m"] and 0 < a[1] < apt["length_m"]):
             continue
-        for z in floors:
+        for k, z in enumerate(floors, start=1):
             if crosses(a[2], c[2], z):
-                add("floor", system, od)
-        for z in membranes:
+                q = at_z(a, c, z)
+                out.append({"where": "floor", "seg": i, "storey": k, "at": q, "rated": not stair(q),
+                            "unrated": "the stair" if stair(q) else ""})
+        for k, z in membranes:
             if crosses(a[2], c[2], z):
+                q = at_z(a, c, z)
                 on_wall = any(lo[0] - 1e-3 <= a[0] <= hi[0] + 1e-3 and lo[1] - 1e-3 <= a[1] <= hi[1] + 1e-3 and lo[2] < z <= hi[2] + 0.4
                               for lo, hi in plates)
-                add("top plate" if on_wall else "membrane", system, od)
-        for lo, hi in walls:
-            mid = [(a[i] + c[i]) / 2 for i in range(3)]
+                why = "the stair" if stair(q) else "the roof" if k == apt["storeys"] else ""
+                out.append({"where": "top plate" if on_wall else "membrane", "seg": i, "storey": k, "at": q, "rated": not why,
+                            "unrated": why})
+        for lo, hi, k in walls:
+            mid = [(a[j] + c[j]) / 2 for j in range(3)]
             for ax in (0, 1):
                 if hi[ax] - lo[ax] < 0.5 and crosses(a[ax], c[ax], (lo[ax] + hi[ax]) / 2) \
-                        and all(lo[i] <= mid[i] <= hi[i] for i in range(3) if i != ax):
-                    add("wall", system, od)
-    tot = {w: sum(n for (k, _, _), n in rows.items() if k == w) for w in ("floor", "top plate", "membrane", "wall")}
-    return {**tot, "rows": [{"where": k, "system": s, "od_in": d, "n": n} for (k, s, d), n in sorted(rows.items())]}
+                        and all(lo[j] <= mid[j] <= hi[j] for j in range(3) if j != ax):
+                    out.append({"where": "wall", "seg": i, "storey": k, "at": mid, "rated": True, "unrated": ""})
+    return out
 
 
 def quantities(body: dict, rt: dict) -> list[dict]:

@@ -1,0 +1,88 @@
+element,class,storey,Flat,Kind
+"ERV, 1-back-left",IfcAirToAirHeatRecovery,Level 1,1-back-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 1-back-right",IfcAirToAirHeatRecovery,Level 1,1-back-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 1-front-left",IfcAirToAirHeatRecovery,Level 1,1-front-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 1-front-right",IfcAirToAirHeatRecovery,Level 1,1-front-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 2-back-left",IfcAirToAirHeatRecovery,Level 2,2-back-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 2-back-right",IfcAirToAirHeatRecovery,Level 2,2-back-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 2-front-left",IfcAirToAirHeatRecovery,Level 2,2-front-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 2-front-right",IfcAirToAirHeatRecovery,Level 2,2-front-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 3-back-left",IfcAirToAirHeatRecovery,Level 3,3-back-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 3-back-right",IfcAirToAirHeatRecovery,Level 3,3-back-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 3-front-left",IfcAirToAirHeatRecovery,Level 3,3-front-left,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"ERV, 3-front-right",IfcAirToAirHeatRecovery,Level 3,3-front-right,"ERV (Broan EDGE BLP120E80NS-HW, step 3)"
+"dryer, 1-back-left",IfcElectricAppliance (TUMBLEDRYER),Level 1,1-back-left,dryer (stacked over the washer)
+"dryer, 1-back-right",IfcElectricAppliance (TUMBLEDRYER),Level 1,1-back-right,dryer (stacked over the washer)
+"dryer, 1-front-left",IfcElectricAppliance (TUMBLEDRYER),Level 1,1-front-left,dryer (stacked over the washer)
+"dryer, 1-front-right",IfcElectricAppliance (TUMBLEDRYER),Level 1,1-front-right,dryer (stacked over the washer)
+"dryer, 2-back-left",IfcElectricAppliance (TUMBLEDRYER),Level 2,2-back-left,dryer (stacked over the washer)
+"dryer, 2-back-right",IfcElectricAppliance (TUMBLEDRYER),Level 2,2-back-right,dryer (stacked over the washer)
+"dryer, 2-front-left",IfcElectricAppliance (TUMBLEDRYER),Level 2,2-front-left,dryer (stacked over the washer)
+"dryer, 2-front-right",IfcElectricAppliance (TUMBLEDRYER),Level 2,2-front-right,dryer (stacked over the washer)
+"dryer, 3-back-left",IfcElectricAppliance (TUMBLEDRYER),Level 3,3-back-left,dryer (stacked over the washer)
+"dryer, 3-back-right",IfcElectricAppliance (TUMBLEDRYER),Level 3,3-back-right,dryer (stacked over the washer)
+"dryer, 3-front-left",IfcElectricAppliance (TUMBLEDRYER),Level 3,3-front-left,dryer (stacked over the washer)
+"dryer, 3-front-right",IfcElectricAppliance (TUMBLEDRYER),Level 3,3-front-right,dryer (stacked over the washer)
+"hot-water storage tank, annex",IfcTank (STORAGE),Level 1,,"hot-water storage tank (step 4's basis of design, Lochinvar)"
+"load centre, 1-back-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 1,1-back-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 1-back-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 1,1-back-right,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 1-front-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 1,1-front-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 1-front-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 1,1-front-right,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 2-back-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 2,2-back-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 2-back-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 2,2-back-right,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 2-front-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 2,2-front-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 2-front-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 2,2-front-right,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 3-back-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 3,3-back-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 3-back-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 3,3-back-right,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 3-front-left",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 3,3-front-left,"load centre (Square D QO130L125PG, step 5)"
+"load centre, 3-front-right",IfcElectricDistributionBoard (DISTRIBUTIONBOARD),Level 3,3-front-right,"load centre (Square D QO130L125PG, step 5)"
+"mini-split indoor unit, ducted, 1-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 1,1-back-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 1-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 1,1-back-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 1-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 1,1-front-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 1-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 1,1-front-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 2-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 2,2-back-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 2-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 2,2-back-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 2-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 2,2-front-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 2-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 2,2-front-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 3-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-back-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 3-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-back-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 3-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-front-left,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split indoor unit, ducted, 3-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-front-right,"mini-split indoor unit, ducted (Fujitsu ARUH12KUAS, step 3's minisplit_12)"
+"mini-split outdoor unit, on the roof, 1-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,1-back-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 1-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,1-back-right,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 1-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,1-front-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 1-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,1-front-right,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 2-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,2-back-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 2-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,2-back-right,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 2-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,2-front-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 2-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,2-front-right,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 3-back-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-back-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 3-back-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-back-right,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 3-front-left",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-front-left,"mini-split outdoor unit, on the roof"
+"mini-split outdoor unit, on the roof, 3-front-right",IfcUnitaryEquipment (SPLITSYSTEM),Level 3,3-front-right,"mini-split outdoor unit, on the roof"
+"radiant manifold in its cabinet, 1-back-left",IfcPipeFitting (manifold),Level 1,1-back-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 1-back-right",IfcPipeFitting (manifold),Level 1,1-back-right,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 1-front-left",IfcPipeFitting (manifold),Level 1,1-front-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 1-front-right",IfcPipeFitting (manifold),Level 1,1-front-right,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 2-back-left",IfcPipeFitting (manifold),Level 2,2-back-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 2-back-right",IfcPipeFitting (manifold),Level 2,2-back-right,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 2-front-left",IfcPipeFitting (manifold),Level 2,2-front-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 2-front-right",IfcPipeFitting (manifold),Level 2,2-front-right,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 3-back-left",IfcPipeFitting (manifold),Level 3,3-back-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 3-back-right",IfcPipeFitting (manifold),Level 3,3-back-right,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 3-front-left",IfcPipeFitting (manifold),Level 3,3-front-left,radiant manifold in its cabinet
+"radiant manifold in its cabinet, 3-front-right",IfcPipeFitting (manifold),Level 3,3-front-right,radiant manifold in its cabinet
+"swing tank, annex",IfcTank (STORAGE),Level 1,,"swing tank (step 4's basis of design, Bradford White)"
+"washer, 1-back-left",IfcElectricAppliance (WASHINGMACHINE),Level 1,1-back-left,washer (stacked under the dryer)
+"washer, 1-back-right",IfcElectricAppliance (WASHINGMACHINE),Level 1,1-back-right,washer (stacked under the dryer)
+"washer, 1-front-left",IfcElectricAppliance (WASHINGMACHINE),Level 1,1-front-left,washer (stacked under the dryer)
+"washer, 1-front-right",IfcElectricAppliance (WASHINGMACHINE),Level 1,1-front-right,washer (stacked under the dryer)
+"washer, 2-back-left",IfcElectricAppliance (WASHINGMACHINE),Level 2,2-back-left,washer (stacked under the dryer)
+"washer, 2-back-right",IfcElectricAppliance (WASHINGMACHINE),Level 2,2-back-right,washer (stacked under the dryer)
+"washer, 2-front-left",IfcElectricAppliance (WASHINGMACHINE),Level 2,2-front-left,washer (stacked under the dryer)
+"washer, 2-front-right",IfcElectricAppliance (WASHINGMACHINE),Level 2,2-front-right,washer (stacked under the dryer)
+"washer, 3-back-left",IfcElectricAppliance (WASHINGMACHINE),Level 3,3-back-left,washer (stacked under the dryer)
+"washer, 3-back-right",IfcElectricAppliance (WASHINGMACHINE),Level 3,3-back-right,washer (stacked under the dryer)
+"washer, 3-front-left",IfcElectricAppliance (WASHINGMACHINE),Level 3,3-front-left,washer (stacked under the dryer)
+"washer, 3-front-right",IfcElectricAppliance (WASHINGMACHINE),Level 3,3-front-right,washer (stacked under the dryer)
+"water-to-water heat pump, annex",IfcUnitaryEquipment (water-to-water heat pump),Level 1,,"water-to-water heat pump (step 4's basis of design, ClimateMaster Tranquility SW036)"
