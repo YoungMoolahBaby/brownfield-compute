@@ -500,6 +500,8 @@ def tree_ducts(tree, cfm: dict[str, float], esp: float, p: dict, el: dict, commo
     for n, e in enumerate(tree.edges):
         if e.up is not None and pieces[e.up]["plenum"] and e.tee == "run":
             pieces[n]["el_ft"] += el["takeoff"] - el["reducer"]
+        elif e.tee == "root" and plenum_m > 0 and not pieces[n]["plenum"]:
+            pieces[n]["el_ft"] += el["takeoff"]  # one duct out of the plenum before any junction: its starting collar
     com = [{**c_, "tel": c_["ft"] + c_["bends"] * el["elbow"] + c_["el"]} for c_ in common]
     com_tel = sum(c_["tel"] for c_ in com)
     paths = {t: tree.chain(t) for t in tree.terminals()}

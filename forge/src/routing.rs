@@ -435,6 +435,9 @@ struct Request {
     slope: f64,
     /// The flat it serves ("" for the building's).
     flat: String,
+    /// Terminals routed before the rest, in this order: those that failed in an earlier pass (`run`),
+    /// so a branch with little room isn't shut out by its own tree's earlier branches.
+    first: Vec<String>,
 }
 
 impl Request {
@@ -464,6 +467,7 @@ impl Request {
             blocks: boxes(&v["blocks"]),
             slope: v["slope"].as_f64().unwrap_or(0.0),
             flat: v["flat"].as_str().unwrap_or("").to_string(),
+            first: vec![],
         }
     }
 }
@@ -797,8 +801,12 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
             (0..3).map(|k| (a[k] as i64 - b[k] as i64).unsigned_abs()).sum::<u64>()
         }).min().unwrap_or(0);
         // A drain's farthest fixture first: its branch is the trunk, which the nearer ones join where
-        // it has fallen at least as far as they have.
-        let (k, _) = if slope > 0.0 {
+        // it has fallen at least as far as they have. Before either, a terminal that failed in an
+        // earlier pass (`first`).
+        let pick = req.first.iter().find_map(|f| todo.iter().position(|t| &t.0 == f));
+        let (k, _) = if let Some(k) = pick {
+            (k, 0)
+        } else if slope > 0.0 {
             todo.iter().enumerate().map(|(k, t)| (k, near(t.2))).max_by_key(|x| (x.1, std::cmp::Reverse(x.0))).unwrap()
         } else {
             todo.iter().enumerate().map(|(k, t)| (k, near(t.2))).min_by_key(|x| (x.1, x.0)).unwrap()
@@ -896,7 +904,7 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
     }
     let total: f64 = branches.iter().map(|b| b["length_m"].as_f64().unwrap()).sum();
     (json!({"id": req.id, "ok": failed.is_empty(), "branches": branches, "failed": failed, "snaps": snaps, "length_m": total,
-            "voxel_m": g.h, "cells": g.len(), "half_cells": r}), solids, cut)
+            "voxel_m": g.h, "cells": g.len(), "half_cells": r, "first": req.first}), solids, cut)
 }
 
 fn dist(a: V3, b: V3) -> f64 {
@@ -954,11 +962,14 @@ pub fn run(root: &std::path::Path) -> std::io::Result<()> {
     let obstacles: Vec<(String, V3, V3)> = rq["obstacles"].as_array().into_iter().flatten()
         .map(|o| (o["id"].as_str().unwrap().to_string(), v3(&o["lo"]), v3(&o["hi"]))).collect();
     let pinned: Vec<Solid> = obstacles.iter().filter(|o| o.0.contains('/')).map(|o| Solid { owner: o.0.clone(), lo: o.1, hi: o.2 }).collect();
-    let reqs: Vec<Request> = rq["requests"].as_array().into_iter().flatten().map(Request::from_json).collect();
+    let mut reqs: Vec<Request> = rq["requests"].as_array().into_iter().flatten().map(Request::from_json).collect();
     // Up to `passes` passes: after each, each request that failed moves one place earlier among its
     // flat's requests (before the one routed just before it there, which may have shut its way),
-    // and all are routed again; the pass that routes the most is kept. (Sequential routing depends
-    // on order; moving the failures to the front of the whole order made things worse, 2026-11-21.)
+    // and the terminals it failed at go first in its own tree (its earlier branches may have shut
+    // theirs: a vent's header, from its farthest fixture, took the lane a boxed-in water closet's
+    // vent needed, 2026-11-22); all are routed again, and the pass that routes the most is kept.
+    // (Sequential routing depends on order; moving the failures to the front of the whole order made
+    // things worse, 2026-11-21.)
     let passes = rq["passes"].as_u64().unwrap_or(1).max(1) as usize;
     let mut order: Vec<usize> = (0..reqs.len()).collect();
     let mut best: Option<(usize, Vec<Value>, Vec<Solid>)> = None;
@@ -979,6 +990,13 @@ pub fn run(root: &std::path::Path) -> std::io::Result<()> {
         let ok = recs.iter().filter(|r| r["ok"].as_bool() == Some(true)).count();
         println!("pass {}: {ok} of {} routed", pass + 1, reqs.len());
         let failed: Vec<usize> = order.iter().copied().filter(|&k| recs[k]["ok"].as_bool() != Some(true)).collect();
+        for &k in &failed {
+            for f in recs[k]["failed"].as_array().into_iter().flatten().filter_map(|f| f["ref"].as_str()) {
+                if !reqs[k].first.iter().any(|x| x == f) {
+                    reqs[k].first.push(f.to_string());
+                }
+            }
+        }
         if best.as_ref().is_none_or(|b| ok > b.0) {
             best = Some((ok, recs, solids));
         }
@@ -1159,7 +1177,7 @@ pub fn check() -> bool {
     let h = 0.0254;
     let req = |zones: Vec<(V3, V3)>, a: V3, b: V3| Request {
         id: "check".into(), od: 0.02, clear: 0.0, hole_clear: 0.0, h, root: a, terminals: vec![("t".into(), b)], zones, snap: 0.05,
-        attach: HashSet::new(), grade: 0, goals: vec![], blocks: vec![], slope: 0.0, flat: String::new(),
+        attach: HashSet::new(), grade: 0, goals: vec![], blocks: vec![], slope: 0.0, flat: String::new(), first: vec![],
     };
     // 1. An empty box: the route is the square length, with at most two bends.
     let (a, b) = ([0.1, 0.1, 0.1], [0.8, 0.7, 0.5]);

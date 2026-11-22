@@ -124,14 +124,14 @@ class Tree:
         self.far: list[str] = []
         for i, b in enumerate(rec.get("branches", [])):
             br = Branch(b["terminal"], [list(map(float, q)) for q in b["points"]], list(map(float, b["to"])))
-            # Its parent: the earlier branch it tees off (on a graded run, in plan: it meets its trunk
-            # above or below, by the fall each has run).
-            best = None
-            for j, pb in enumerate(self.branches):
-                d, s = pb.where(br.points[0], 2 if graded else 3)
-                if best is None or d < best[0] - 1e-12:
-                    best = (d, j, s)
-            if best is not None and best[0] <= JOIN_TOL_M:
+            # Its parent: the earlier branch it touches; on a graded run, failing that, the one it
+            # meets in plan, above or below it by the fall each has run. (Where it starts on a
+            # vertical piece of its trunk it touches it, and joins it there: in plan alone it would
+            # join at that piece's top and count the piece twice.)
+            best = self._nearest(br.points[0], 3)
+            if best is None and graded:
+                best = self._nearest(br.points[0], 2)
+            if best is not None:
                 br.parent, br.at = best[1], best[2]
                 if graded:
                     br.join_m = abs(br.points[0][2] - self.branches[best[1]].point_at(best[2])[2])
@@ -140,6 +140,16 @@ class Tree:
             self.branches.append(br)
         self.lead_m = math.dist(self.branches[0].points[0], req["root"]) if self.branches and self._at_root(self.branches[0].points[0]) else 0.0
         self._edges()
+
+    def _nearest(self, p: list[float], dims: int) -> tuple[float, int, float] | None:
+        """The earlier branch within JOIN_TOL_M of `p` over `dims` axes, the nearest: (distance,
+        branch, arc length along it)."""
+        best = None
+        for j, pb in enumerate(self.branches):
+            d, s = pb.where(p, dims)
+            if best is None or d < best[0] - 1e-12:
+                best = (d, j, s)
+        return best if best is not None and best[0] <= JOIN_TOL_M else None
 
     def _at_root(self, p: list[float]) -> bool:
         return math.dist(p, self.req["root"]) <= self.req.get("snap_m", 0.2) + 1e-6
@@ -431,8 +441,39 @@ def asks(apt: dict, p: dict, routes, fire_h: dict, water: dict, vt: dict) -> dic
     return out
 
 
+class Incomplete(Exception):
+    """A design reads a run forge didn't finish."""
+
+
+def run_checks(routes: Routes) -> tuple[dict[str, list[str]], list]:
+    """The runs themselves: each routed, answering the requests as they stand, and read back whole.
+    Also the failed runs, by id, with the outlets each failed at."""
+    failed = {k: [f["ref"] for f in r.get("failed", [])] for k, r in routes.recs.items() if not r.get("ok")}
+    return failed, [
+        ("every run routed, answering the requests as they stand (forge routed exactly these)", routes.fresh and not failed,
+         routes.status + "".join(f"; {k} failed: " + ", ".join(v) for k, v in failed.items())),
+        ("every tree read back whole: each branch joins its trunk, a riser or its root",
+         all(not routes.tree(k).far for k in routes.recs), f"{len(routes.recs)} runs"),
+    ]
+
+
 def summary(apt: dict, p: dict, routes: Routes) -> dict:
-    """Step 7c: steps 3-6 on the routes, each beside its square figures, with their checks."""
+    """Step 7c: steps 3-6 on the routes, each beside its square figures, with their checks. Where a
+    run failed, or the routes answer older requests, and a design can't read what it needs, that
+    is said as a failing check beside the runs' own (the designs that could run are not run apart:
+    one report, whole). With every run routed and fresh, an error is a bug, and raised."""
+    failed, runs = run_checks(routes)
+    try:
+        return _designs(apt, p, routes, runs)
+    except (Incomplete, KeyError, StopIteration, ValueError, IndexError) as e:
+        if not failed and routes.fresh:
+            raise
+        why = f"a design reads a run forge didn't finish or routed for older requests ({type(e).__name__}: {e})"
+        return {"checks": runs + [("steps 3-6 run on the routes", False, why)], "asks": {}, "incomplete": why,
+                "stale": [] if routes.fresh else [routes.why]}
+
+
+def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
     from . import electrical, fire, hvac, plumbing
     from .routecheck import penetrations
 
@@ -458,25 +499,26 @@ def summary(apt: dict, p: dict, routes: Routes) -> dict:
     spread = load_params()["systems.hot_water.recirc_w_per_flat"]
     over_fps = [f"{k} {n}" for k in ("cold", "hot") for n in water["paths"][k]["over_fps"]]
     stale = [] if routes.fresh else [routes.why]
-    checks = [
-        ("every run routed, answering the requests as they stand (forge routed exactly these)",
-         routes.fresh and all(r.get("ok") for r in routes.recs.values()),
-         routes.status + "".join(f"; {k} failed: " + ", ".join(f["ref"] for f in r.get("failed", [])) for k, r in routes.recs.items() if not r.get("ok"))),
-        ("every tree read back whole: each branch joins its trunk, a riser or its root",
-         all(not routes.tree(k).far for k in routes.recs), f"{len(routes.recs)} runs"),
+    sp, units = "systems.sprinkler.", {d["unit"] for d in ducts.values()}
+    lim = {"erv_esp": p["systems.erv.esp_inwc"], "ms_esp": p["systems.minisplit.esp_inwc"],
+           "ms_lo": min(p[f"systems.{u}.esp_min_inwc"] for u in units), "ms_hi": max(p[f"systems.{u}.esp_max_inwc"] for u in units),
+           "strip_ft": p[sp + "obstruction_max_w_ft"], "shadow_ft2": p[sp + "shadow_ft2"], "vent_ft": p["systems.routing.vent_upsize_ft"],
+           "fps": {k: p[pl + f"{k}_fps"] for k in ("cold", "hot", "return")},
+           "vd": {k: p[w + f"vd_{k}_max"] for k in ("branch", "feeder", "total")}}
+    checks = runs + [
         ("the street, less its margin, covers every sprinkler design on the routed pipe (13R 7.1.1.3.1: each compartment's "
          "worst four; the stair's six)", fh["ok"],
          f"{fh['worst']['flat']} {fh['worst']['comp']}: {fh['worst']['q_gpm']:.0f} gpm at {fh['worst']['need_psi']:.1f} psi "
          f"against {fh['target_psi']:.0f}"),
-        ("the sprinklers on each side of every strip soffit cover that side (13R 6.4.6.3.6.4; TFP490 Figure 2: up to 4 ft "
-         "wide); the floor under each leg within 13R's 15 ft2 of shadow (6.4.6.3.3.1)", ob["ok"],
+        (f"the sprinklers on each side of every strip soffit cover that side (13R 6.4.6.3.6.4; TFP490 Figure 2: up to "
+         f"{lim['strip_ft']:g} ft wide); the floor under each leg within 13R's {lim['shadow_ft2']:g} ft2 of shadow (6.4.6.3.3.1)", ob["ok"],
          f"{ob['strips']} strips, widest {ob['widest_ft']:.1f} ft, {len(ob['gaps'])} uncovered points, {len(ob['crossed'])} across; "
          f"legs {ob['leg_ft2']:.1f} ft2"),
-        ("every ERV path on its routes within its fan's 0.4 in. w.c. (Manual D's friction rate, Field Controls' fittings), "
-         "no duct larger than routed", erv_ok,
+        (f"every ERV path on its routes within its fan's {lim['erv_esp']:g} in. w.c. (Manual D's friction rate, Field Controls' "
+         "fittings), no duct larger than routed", erv_ok,
          f"worst {max(d[k]['worst_inwc'] for d in ducts.values() for k in ('erv_supply', 'erv_exhaust')):.3f} in. w.c."),
-        ("every mini-split path within a static pressure the unit can be set to (Fujitsu: 0.12-0.80 in. w.c.), no duct "
-         "larger than routed (Southwark's Manual D-style fittings)", ms_ok, f"set {min(esp):.2f}-{max(esp):.2f} in. w.c."),
+        (f"every mini-split path within a static pressure the unit can be set to (Fujitsu: {lim['ms_lo']:.2f}-{lim['ms_hi']:.2f} "
+         "in. w.c.), no duct larger than routed (Southwark's Manual D-style fittings)", ms_ok, f"set {min(esp):.2f}-{max(esp):.2f} in. w.c."),
         ("every mini-split covers its flat's design loads on its routed line set (Fujitsu's derating)",
          all(c["covered"] for c in cool.values()),
          f"line sets {min(c['line_ft'] for c in cool.values()):.0f}-{max(c['line_ft'] for c in cool.values()):.0f} ft"),
@@ -490,20 +532,22 @@ def summary(apt: dict, p: dict, routes: Routes) -> dict:
          f"least: cold {water['paths']['cold']['spare_psi']:.1f} psi ({water['paths']['cold']['flat']}), hot "
          f"{water['paths']['hot']['spare_psi']:.1f} ({water['paths']['hot']['flat']}); street {water['street_need_psi']:.1f} of "
          f"{p[pl + 'street_psi']:.0f}"),
-        ("every water pipe within its velocity (8 ft/s cold, 5 hot, 2 the return)", not over_fps and water["loop"]["return_fps"] <= p[pl + "return_fps"] + 1e-9,
-         ", ".join(over_fps)),
+        (f"every water pipe within its velocity ({lim['fps']['cold']:g} ft/s cold, {lim['fps']['hot']:g} hot, {lim['fps']['return']:g} "
+         "the return)", not over_fps and water["loop"]["return_fps"] <= p[pl + "return_fps"] + 1e-9, ", ".join(over_fps)),
         ("no hot pipe more than 50 ft from the loop to a fixture, on the routes (IPC 607.2)", water["longest_hot_ft"] <= 50,
          f"longest {water['longest_hot_ft']:.1f} ft (square {water['square_longest_hot_ft']:.1f})"),
         (f"the loop's routed loss within Ecosizer's spread ({spread.low:g}-{spread.high:g} W a flat)",
          spread.low - 1e-9 <= water["loop"]["w_per_flat"] <= spread.high + 1e-9, f"{water['loop']['w_per_flat']:.0f} W a flat"),
-        ("every branch vent routed, within 40 ft or a size up over its whole length (IPC 906.2); each vent stack by Table 906.1",
+        (f"every branch vent routed, within {lim['vent_ft']:g} ft or a size up over its whole length (IPC 906.2); each vent stack "
+         "by Table 906.1",
          all(v["routed_in"] >= v["need_in"] - 1e-9 and v["whole"] for v in vt["flats"].values())
          and all(s_["need_in"] <= 2.0 for s_ in vt["stacks"].values()),
          f"longest {max(v['longest_ft'] for v in vt['flats'].values()):.1f} ft; vent stacks "
          f"{max(s_['developed_ft'] for s_ in vt['stacks'].values()):.0f} ft, {max(s_['need_in'] for s_ in vt['stacks'].values()):g} in. asked, 2 in. placed"),
-        ("every branch circuit within 3% and every feeder within 2% on its route", not over_branch and not over_feeder,
-         ", ".join(over_branch + over_feeder)),
-        ("feeder and branch together within 5% at every outlet, on the routes", max(el["total_drop"].values()) <= el["vd_total_max"] + 1e-12,
+        (f"every branch circuit within {lim['vd']['branch']:.0%} and every feeder within {lim['vd']['feeder']:.0%} on its route",
+         not over_branch and not over_feeder, ", ".join(over_branch + over_feeder)),
+        (f"feeder and branch together within {lim['vd']['total']:.0%} at every outlet, on the routes",
+         max(el["total_drop"].values()) <= el["vd_total_max"] + 1e-12,
          f"worst {max(el['total_drop'].values()):.2%} (square {max(sq_el['total_drop'].values()):.2%})"),
         ("nothing routed smaller than the routed designs ask", not want, str(want) if want else ""),
     ]
@@ -514,13 +558,16 @@ def summary(apt: dict, p: dict, routes: Routes) -> dict:
             "square_erv_tel": tel([v[k]["tel_ft"] for v in sq_vent.values() for k in ("supply", "exhaust")]),
             "square_ms_tel": tel([c["ducts"]["tel_ft"] for c in sq_cool.values()]),
             "water": water, "square_water": sq_water, "electrical": el, "square_electrical": sq_el, "vents": vt, "obstructions": ob,
-            "penetrations": pen, "asks": want, "circuits": len(circuits), "stale": stale}
+            "penetrations": pen, "asks": want, "circuits": len(circuits), "stale": stale, "limits": lim}
 
 
 def report(s: dict) -> str:
     """Step 7c in plain text: the checks, then each system square against routed."""
     from .systems import report as checks
 
+    if "incomplete" in s:
+        return "\n".join(["Pass 3g step 7c: steps 3-6 on the routes", "", checks(s["checks"])])
+    lim = s["limits"]
     fs, fh = s["square_fire"], s["fire"]
     sw, w = s["square_water"], s["water"]
     sl, lp = s["square_loop"], s["loop"]
@@ -536,10 +583,12 @@ def report(s: dict) -> str:
                  + (f"; grew from 7b's: " + ", ".join(f"{k} {a} -> {b}" for k, (a, b) in fh["grew"].items()) if fh["grew"] else ""))
     lines.append(f"  The ERVs: effective length {rng([x[k]['tel_ft'] for x in d.values() for k in ('erv_supply', 'erv_exhaust')])} ft "
                  f"(square {s['square_erv_tel']}), worst path {max(x[k]['worst_inwc'] for x in d.values() for k in ('erv_supply', 'erv_exhaust')):.3f} "
-                 "of 0.4 in. w.c.")
+                 f"of {lim['erv_esp']:g} in. w.c.")
+    held = sorted({x["routed_in"]["ms-supply"] for x in d.values()})
     lines.append(f"  The mini-splits: effective length {rng([x['ms']['tel_ft'] for x in d.values()])} ft (square {s['square_ms_tel']}); "
-                 f"set static pressure {rng([x['ms']['esp'] for x in d.values()], '{:.2f}')} in. w.c. (step 3: 0.30); "
-                 f"{sum(x['ms']['capped'] for x in d.values())} pieces held at the routed 8 in.")
+                 f"set static pressure {rng([x['ms']['esp'] for x in d.values()], '{:.2f}')} in. w.c. (step 3: {lim['ms_esp']:.2f}); "
+                 f"{sum(x['ms']['capped'] for x in d.values())} pieces held at their routed "
+                 + "/".join(f"{v:g}" for v in held) + " in.")
     lines.append(f"  Line sets: {rng([c['square_ft'] for c in cool.values()])} ft -> {rng([c['line_ft'] for c in cool.values()])} ft; "
                  f"least capacity left {min(c['sensible_capacity_w'] - c['sensible_w'] for c in cool.values()):.0f} W sensible")
     lines.append(f"  The building loop: pump {sl['pump_ft']:.1f} -> {lp['pump_ft']:.1f} ft ({lp['pump_path']}); risers "
@@ -557,18 +606,18 @@ def report(s: dict) -> str:
     smaller = sorted(n for n in fd1 if fd1[n]["size"] != fd0[n]["size"])
     lines.append(f"  Feeders: {rng([f['ft'] for f in fd0.values()])} -> {rng([f['ft'] for f in fd1.values()])} ft"
                  + (f"; {len(smaller)} a size smaller" if smaller else "")
-                 + f"; worst outlet {max(se['total_drop'].values()):.2%} -> {max(el['total_drop'].values()):.2%} (5%)")
+                 + f"; worst outlet {max(se['total_drop'].values()):.2%} -> {max(el['total_drop'].values()):.2%} ({lim['vd']['total']:.0%})")
     lines.append(f"  Vents: longest branch vent {max(v['longest_ft'] for v in vt['flats'].values()):.1f} ft"
-                 + "; at 2 in. (906.2): " + (", ".join(sorted(n for n, v in vt["flats"].items() if v["routed_in"] >= 2.0)) or "none")
+                 + f"; a size up, over {lim['vent_ft']:g} ft (906.2): " + (", ".join(sorted(n for n, v in vt["flats"].items() if v["routed_in"] >= 2.0)) or "none")
                  + f"; vent stacks {max(x['developed_ft'] for x in vt['stacks'].values()):.0f} ft, Table 906.1 asks "
                  f"{max(x['need_in'] for x in vt['stacks'].values()):g} in. for {vt['stack_dfu']:g} dfu")
     lines.append(f"  Strip soffits: {ob['strips']}, each side's floor covered by its own sprinklers; the legs' floor {ob['leg_ft2']:.1f} ft2 "
-                 "of shadow each (15 allowed)")
+                 f"of shadow each ({lim['shadow_ft2']:g} allowed)")
     lines.append(f"  The membrane: {pen['membrane']} penetrations of the rated ceilings, the sprinklers' CPVC drops into the soffits "
                  "among them: no exception of IBC 714.5.2 covers CPVC (1 is metal pipe; 5 a sprinkler's own annular space), so each "
                  "takes a listed membrane-penetration firestop system (714.5.1.2, F and T 1 hour): 7d")
     lines.append("  The mini-splits over finished ceilings (IMC 307.2.3): item 4, a UL 508 water-level switch in each unit's drain "
-                 "pan or primary drain, wired to its forced-stop input (Fujitsu: function 46-02, a dry contact): 12, for 7d's schedule")
+                 f"pan or primary drain, wired to its forced-stop input (Fujitsu: function 46-02, a dry contact): {len(d)}, for 7d's schedule")
     if s["asks"]:
         lines += ["", "To route again at: " + json.dumps(s["asks"])]
     return "\n".join(lines)

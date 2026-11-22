@@ -1,4 +1,6 @@
 """Pass 3g step 7 (D28): the services placed and routed through the frame (`brownfield.routing`)."""
+import math
+
 import pytest
 
 from brownfield import electrical, fire, routing, systems
@@ -186,6 +188,26 @@ def test_a_routed_tree_reads_back_as_edges_with_their_tees():
     g = _tree([("a", [(0, 0, 0), (4, 0, -0.04)]), ("b", [(2, 0, 0.03), (2, -2, 0.05)])], slope=0.01)
     assert g.branches[1].parent == 0 and g.branches[1].join_m == pytest.approx(0.05)
     assert g.path("b")["m"] == pytest.approx(g.branches[0].cum[-1] / 2 + 0.05 + g.branches[1].length)
+    # A branch starting partway down its trunk's vertical piece joins it there: the piece above the
+    # join is shared, counted once in the tree, and each path's length is unchanged.
+    v = _tree([("a", [(0, 0, 3), (2, 0, 3), (2, 0, 0)]), ("b", [(2, 0, 1), (2, 2, 1.02)])], slope=0.01)
+    assert v.branches[1].parent == 0 and v.branches[1].join_m == pytest.approx(0.0)
+    assert v.path("b")["m"] == pytest.approx(2.0 + 2.0 + math.dist((2, 0, 1), (2, 2, 1.02)))
+    assert v.length_m == pytest.approx(5.0 + math.dist((2, 0, 1), (2, 2, 1.02)))
+
+
+def test_a_failed_or_stale_run_fails_7c():
+    from brownfield.routed import Routes, run_checks
+
+    req = {"id": "vent/x", "root": [0.0, 0.0, 0.0], "snap_m": 0.05, "goals": [], "slope": 0.01}
+    good = {"id": "vent/x", "ok": True, "branches": [{"terminal": "wc", "points": [[0, 0, 0], [1, 0, 0.01]], "to": [1, 0, 0.01]}]}
+    bad = {**good, "ok": False, "failed": [{"ref": "sink", "why": "no path"}]}
+    failed, ch = run_checks(Routes({"requests": [req]}, {"routes": [good]}, True))
+    assert not failed and [ok for _, ok, _ in ch] == [True, True]
+    failed, ch = run_checks(Routes({"requests": [req]}, {"routes": [bad]}, True))
+    assert failed == {"vent/x": ["sink"]} and not ch[0][1] and "vent/x failed: sink" in ch[0][2]
+    _, ch = run_checks(Routes({"requests": [req]}, {"routes": [good]}, False, "requests changed"))
+    assert not ch[0][1] and "stale: requests changed" in ch[0][2]
 
 
 def test_the_tree_hydraulics_reproduce_the_chain_and_split_a_symmetric_tee(P):
@@ -227,6 +249,9 @@ def test_manual_d_on_a_tree_sizes_the_trunk_for_both_and_the_plenum_for_none(P):
     # With a plenum a metre deep, the first piece is the plenum, and both leave it by a take-off.
     q = hvac.tree_ducts(t, {"a": 200.0, "b": 100.0}, 0.5, P, el, plenum_m=1.0)
     assert q["pieces"][0]["in"] is None and [pc["el_ft"] for pc in q["pieces"][1:]] == [35.0 + 30.0, 35.0 + 30.0]
+    # A plenum shorter than the first piece: that one duct leaves it by its starting collar.
+    s = hvac.tree_ducts(t, {"a": 200.0, "b": 100.0}, 0.5, P, el, plenum_m=0.3)
+    assert [pc["el_ft"] for pc in s["pieces"]] == [35.0, 8.0 + 30.0, 35.0 + 30.0]
 
 
 def test_a_strip_soffit_splits_its_rooms_sprinklers_at_its_centreline():

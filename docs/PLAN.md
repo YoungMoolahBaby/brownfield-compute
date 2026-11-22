@@ -60,7 +60,20 @@ the drains' and vents' grades, and the checks, worked again in Python, all pass.
 - step 6's hall and study sprinklers stood 6.4 ft apart (8 ft asked);
 - the ERV's fresh air goes through the mini-split (Jon's choice).
 
-Next: 7c, the routed lengths back into steps 3 to 6.
+7c done: steps 3 to 6 rerun on the routes, every check passing, with all 430 runs routed again at
+the sizes they asked for. Found:
+- the stair's sprinkler riser and the fire main grow to 2-1/2 in., with 0.3 psi to spare on a
+  placeholder street pressure;
+- the living rooms' strip soffits block the sprinklers' spray, so each side gets its own (four
+  more);
+- the mini-splits' fans are set to 0.38-0.80 in. w.c. for their routed ducts, four of them at the
+  unit's most;
+- the water passes only with the PEX bent through its turns, with 0.6 psi to spare at the worst
+  hot shower;
+- the heating pump's head rises from 8.1 to 13.1 ft;
+- two vents needed forge to retry a failed outlet first.
+
+Next: 7d, the services model, its layers in the viewer, and the schedules.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3178,8 +3191,7 @@ test. Then the township brief's ask.
              kcmil a phase. The wording is corrected; no number changes.
            - **The dishwasher's installation manual** cited in step 5 may be the 18 in. models'.
              Its circuit rule is to re-read (Jon: left open for now).
-       - **7b done 2026-11-21 (not yet committed): every service routed through the frame, and
-         checked.**
+       - **7b done 2026-11-21: every service routed through the frame, and checked.**
          - **The router:**
            - `forge/src/routing.rs`, run by `routes-json`, with the requests from
              `src/brownfield/routes.py` (`brownfield routes --requests`). A* runs on a dense voxel
@@ -3332,6 +3344,130 @@ test. Then the township brief's ask.
            - **Step 3's heating loop has one riser pair per side of the stair, serving six flats
              each.** The front and back flats' plumbing walls stand either side of the spine,
              which no pipe may pierce (rooms.rs). So one riser pair a column, four in all.
+       - **7c done 2026-11-22: steps 3 to 6 on the routes.**
+         - **How** (`src/brownfield/routed.py`, run by `brownfield routes` after 7b's checks):
+           - Forge's routes are read back as trees: pieces between junctions, each with its length,
+             its bends and the outlets beyond it. Each design runs on them in place of steps 3-6's
+             square lengths and allowances.
+           - **Sprinklers:** from each flowing sprinkler back to the riser assembly through every
+             tee. Where two ways meet, the one asking more sets the pressure and the other flows
+             more for it. On a single line it gives step 6's figures exactly. Every set of up to
+             four sprinklers in each compartment is tried (13R 7.1.1.3.1); the stair's six all flow.
+           - **Ducts:** Manual D's friction-rate method on each routed tree; a piece two rooms'
+             ducts share carries both rooms' air. Fittings from Field Controls' FC80 manual for the
+             ERVs, and Southwark Metal's Manual D-style guide for the mini-splits.
+           - **Water:** IPC Appendix E along each flat's routed path, from the reducing valve to
+             its shower, with every fitting counted: a sweep where the PEX bends (PPI's guide;
+             Crane's loss for a bend at six diameters), Uponor's elbows and tees where fittings
+             stand. The loop's heat loss is summed piece by piece, and IPC 607.2 checked along each
+             routed hot branch.
+           - **Wiring:** each branch circuit and feeder along its route, with 6 in. of free
+             conductor at each end (NEC 300.14) and the drop down the wall to its outlet.
+           - **The heating loop and the line sets:** the pump's head along each flat's routed path;
+             each mini-split's capacity on its routed line set.
+           - **Sizes only grow.** Where a routed design asks a larger pipe than was routed, the
+             size goes into `data/route_sizes.json` and everything is routed again. The file is kept
+             in git because the routes depend on the order sizes grew in. Where a design asks a
+             smaller size, the smaller is taken: it fits where the larger was routed.
+         - **Run (2026-11-22):** all 430 runs routed on the third pass, no clashes, in 390 s. 7b's
+           checks all pass again on them (2,506 holes in the joists' webs, the largest 96% of what
+           APA's chart allows there). All 16 of 7c's checks pass. 7c's tests: the tree hydraulics
+           equal step 6's on a single line, Manual D sizes a shared piece for both rooms, a strip
+           splits its room's coverage at its centreline, and a failed run fails 7c.
+         - **Square (steps 3-6) against routed:**
+           - the hardest sprinkler design: the stair's, 127 gpm at 40.4 psi, becomes 3-front-left's
+             open area, 56 gpm at 44.7 psi, against the street's 55 psi less a 10 psi margin;
+           - the ERVs' ducts: effective length 165-182 ft becomes 191-260 ft; worst path 0.264 of
+             the fan's 0.4 in. w.c.;
+           - the mini-splits' ducts: 162 ft becomes 222-363 ft; their static pressure is set at
+             0.38-0.80 in. w.c. (step 3 had 0.30);
+           - the line sets: 16-36 ft become 30-51 ft; the least cooling to spare is 33 W sensible
+             (1-front-left);
+           - the heating loop's pump: 8.1 ft of head becomes 13.1 ft;
+           - the hot-water loop's loss: 998 W becomes 793 W (66 W a flat). Its mains under the slab
+             are one branching run each, 58 ft hot and 59 ft return, where the square figure ran a
+             61 ft main to each side of the stair;
+           - the worst shower's path: 132 ft becomes 225 ft (cold) and 226 ft (hot); pressure to
+             spare 11.2 psi becomes 3.0 (cold, 3-front-left), and 8.9 becomes 0.6 (hot,
+             3-front-right);
+           - the street at the peak: 49.5 psi needed becomes 54.4, of 55;
+           - the longest hot pipe to a fixture: 30.5 ft becomes 39.5 ft (IPC 607.2: 50);
+           - the feeders: 79-130 ft become 71-119 ft; the worst outlet's drop 4.72% becomes 4.69%
+             (5%);
+           - the longest branch vent: 32.6 ft (IPC 906.2 takes a vent a size up past 40).
+         - **Found:**
+           - **The stair's riser and the fire main grow from 2 to 2-1/2 in.** On the routes the
+             flats' pipe is longer and turns more, and the hardest design moves into a flat.
+             Growing the riser and the main (two runs, in the stair and under the slab) saves the
+             most; growing every flat's branch lines instead would mean larger holes through every
+             joist they cross. The margin is 0.3 psi, on a street pressure that is a placeholder
+             until the hydrant test.
+           - **The strip soffits are obstructions to the sprinklers' spray.** NFPA 13R
+             6.4.6.3.6.4: "A sprinkler shall be installed on the other side of the obstruction";
+             Tyco's TFP490 (Figure 2) allows sprinklers on both sides of one up to 4 ft wide, each
+             within half its spacing of the centreline. So each side of a strip is covered by its
+             own sprinklers. The middle storey's four living rooms get a third sprinkler (112 in
+             all, from 108). The strips are 1.8 ft wide at most, and the floor under each strip's
+             leg is 13.4 ft² of shadow (13R 6.4.6.3.3.1 allows 15).
+           - **Each mini-split's static pressure is set to its routed ducts,** 0.38 to 0.80 in.
+             w.c. Fujitsu's manual: set it "according to the resistance of the connecting duct".
+             Four flats (1-, 2- and 3-front-right, 2-back-right) need 0.78 to 0.80, the unit's
+             most, with 0.008 in. to spare. There the router ran the ducts as one trunk for about
+             2 ft before they split, so they leave the plenum by one starting collar and two more
+             elbows. The ducts can't grow (the soffits hold them at 8 in.). The fan's extra energy
+             goes into step 10.
+           - **The water passes only because the PEX bends.** With an elbow at every turn, the hot
+             water would need 2 in. mains and risers, and the hot riser has 0.4 in. to spare in
+             its wall. So the specification asks for bend supports at the turns, and elbows only
+             at the fixtures' stub-outs, the risers' feet and where the top flat's branch leaves
+             its riser (PPI: elbows "only when necessary, such as within tight cavities"). The
+             margins are thin: 0.6 psi at the worst hot shower, and 54.4 of the street's 55 psi.
+           - **The hot-water return main near the plant grows from 1/2 to 3/4 in.,** for its
+             routed flow.
+           - **The heating loop's pump head rises from 8.1 to 13.1 ft,** with a riser pair in each
+             column and each flat's tails to its manifold counted.
+           - **Six living rooms' lighting circuits drop from 12 to 14 AWG, and four feeders a
+             size,** on their routed lengths.
+           - **Two middle-storey water closets' vents (2-back-left, 2-front-left) found no path.**
+             A vent's tree grows from its farthest fixture, the sink, so its header came first and
+             crossed the joists 0.20 m from the floor above's drain. APA's rule 6 (holes over
+             twice the larger apart) then left the water closet's vent no lane between them. Now
+             forge routes an outlet that failed first in its own tree on the next pass, and all
+             430 route on the third.
+           - **Forge measured sloped runs along the axes,** overcounting a drain by its fall. It
+             now measures each straight run end to end.
+           - **The code items 7b left open:**
+             - IMC 307.2.3, the mini-splits over finished ceilings: its option 4, a UL 508
+               water-level switch in each unit's drain pan, wired to its forced-stop input
+               (Fujitsu's function 46-02, a dry contact). 12, for 7d's schedule.
+             - IBC 714.5.2: none of its exceptions covers the CPVC sprinkler drops through the
+               rated ceilings (exception 1 is for metal pipe, 5 for a sprinkler's own annular
+               space under a metal escutcheon). Each of the 36 takes a listed membrane-penetration
+               firestop system with F and T ratings of 1 hour (714.5.1.2), chosen in 7d.
+             - IPC Table 906.1 asks for the 2 in. vent stack 7a placed (27 dfu, 33 ft).
+         - **Tried and dropped:**
+           - An elbow at every bend of the water pipe: 230 ft more equivalent length on the worst
+             path, and the pipes grew.
+           - Growing the flats' branch lines and feeds first: to 2 in., with a larger hole through
+             every joist.
+           - One 20 ft sprinkler on the deeper side of each middle-storey strip: it needs 16.7 psi,
+             which would push the riser and the main to 3 in.
+           - The two middle-storey vents at 2 in., when an earlier route ran 54.4 ft (906.2): the
+             water closet's vent found no path. At 1-1/2 in. they now route within 40 ft.
+         - **What we don't know:**
+           - The street's pressure, a placeholder until the hydrant test: the sprinklers need 44.7
+             of the 45 psi after margin, and the water 54.4 of 55.
+           - Duct fittings: ACCA's own table (Manual D Appendix 3) is paid and not opened. The
+             mini-splits' pressures rest on Southwark's 30 ft elbow, at the high end of the
+             published figures (McGill's ASHRAE data make a five-piece elbow about 7 ft).
+           - The mini-split's fan power at each static-pressure setting, not published as a
+             number: step 10.
+           - Read second-hand or not at all: Crane's tables (through python-fluids), NFPA 13R
+             2019's text (the 2022 draft was read), NEC 300.14 and the 15 in. outlet height.
+           - The supply plenum's 12 in. depth is judgement.
+           - The loop's loss, at 66 W a flat, sits at the bottom of Ecosizer's spread.
+           - The routes depend on order: the requests', the sizes' growth and the retries. A
+             rerun from git reproduces them.
     8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
        electrician; their comments logged, then taken or answered (Addendum 2).
     9. **The inspection and commissioning plan.**

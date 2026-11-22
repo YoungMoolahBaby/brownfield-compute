@@ -804,8 +804,9 @@ def cmd_routes(args) -> int:
     s7 = routed.summary(apt, P, routed.load(apt, P, body))
     print(NL + routed.report(s7))
     out = OUT_DIR / "pass3" / "routes-7c.json"
-    out.write_text(json.dumps({k: v for k, v in s7.items() if k in ("checks", "asks", "stale")}
-                              | {"fire": {k: s7["fire"][k] for k in ("sizes", "grew", "worst", "target_psi")}}, indent=1, default=str) + NL,
+    out.write_text(json.dumps({k: v for k, v in s7.items() if k in ("checks", "asks", "stale", "incomplete")}
+                              | ({"fire": {k: s7["fire"][k] for k in ("sizes", "grew", "worst", "target_psi")}} if "fire" in s7 else {}),
+                              indent=1, default=str) + NL,
                    encoding="utf-8")
     print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
     grew = routed.grow(s7["asks"])

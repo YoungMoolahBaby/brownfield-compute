@@ -578,6 +578,9 @@ def routed_system(apt: dict, p: dict, routes) -> dict:
             for t in ft.terminals():
                 i = int(t.rsplit("#", 1)[1])
                 byref[t] = lay[name]["heads"][i]
+            if len(byref) != len(lay[name]["heads"]):  # a sprinkler left off would drop out of every design set
+                from .routed import Incomplete
+                raise Incomplete(f"fire/flat/{name}: {len(byref)} of {len(lay[name]['heads'])} sprinklers routed")
             nodes = _hang(ft, ends[name], lambda e: "branch" if len(e.below) == 1 else "feed", byref)
             heads.update(nodes)
             for t, h in byref.items():
