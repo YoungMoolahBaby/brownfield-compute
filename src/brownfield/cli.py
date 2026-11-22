@@ -878,6 +878,18 @@ def cmd_pdfset(args) -> int:
     return 0 if not failed else 1
 
 
+def cmd_sheets(args) -> int:
+    from . import servicesheets, systems
+
+    P = values(load_params())
+    apt = systems.load(systems.latest_model())
+    s = servicesheets.run(apt, P)
+    print(servicesheets.report(s))
+    print(NL + "wrote " + str(s["path"].relative_to(OUT_DIR.parent)) + " and a PNG of each sheet in "
+          + str((s["path"].parent / "png").relative_to(OUT_DIR.parent)))
+    return 0 if all(ok for _, ok, _ in s["checks"]) else 1
+
+
 def cmd_viewer(args) -> int:
     from . import viewer
 
@@ -1090,6 +1102,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    sub.add_parser("sheets", help="pass 3g step 8a: the services drawn as sheets from the published models (plans of each storey for each trade, the plumbing walls in elevation, the diagrams and schedules), for the installers' round")
     rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked; 7c: steps 3-6 on the routes; 7d with --ifc: the services model and its schedules)")
     rq.add_argument("--requests", action="store_true", help="write out/pass3/route-requests.json for forge's `routes-json` (7b) and stop")
     rq.add_argument("--ifc", action="store_true", help="also 7d: the services as IFC (out/pass3/services), checked, with its schedules")
@@ -1114,7 +1127,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

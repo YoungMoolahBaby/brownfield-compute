@@ -92,7 +92,16 @@ between flats rated. Found and settled:
   UL L500 design matches it, so 345 rated openings take STI's engineering judgment;
 - the floor's IIC under a hard finish (46) is short of 1206.3's 50: flagged for the interiors.
 
-Next: step 8, the installers' round (Jon).
+Step 8 under way, the installers' round: a plumber, an HVAC contractor, an electrician and a
+sprinkler contractor (Jon's choices, 2026-11-22). 8a done: the services drawn as 21 sheets from
+the published models (plans of each storey for each trade, the plumbing walls in elevation, the
+plants, the one-line, the panel schedules, the hydraulic summary), every element of the model on
+a sheet. Found:
+- Addendum 5 left out the fire service's listed, supervised shutoff valves (7a's finding);
+- the house load takes the swing tank's element at 1,747 VA, not its 2.0 kW: 44.9 A on a 45 A
+  breaker, or 47.3 A (a 50 A breaker) if it counts as continuous.
+
+Next: 8b, a question sheet for each trade.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3692,8 +3701,84 @@ test. Then the township brief's ask.
              systems were read from makers' reprints and a 2014 archive, not UL Product iQ (it needs a
              login).
            - NEC 2020 352.26 and 300.4(A)(1) were read through IAEI and EC&M, not NFPA 70's text.
-    8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
-       electrician; their comments logged, then taken or answered (Addendum 2).
+    8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor, an electrician
+       and a sprinkler contractor; their comments logged, then taken or answered (Addendum 6).
+       - **Jon's decisions (2026-11-22),** all four recommendations:
+         - **The sheets first.** The services went out as a model, its schedules and the viewer's
+           layers, and a trade reviews and bids from sheets: sent as they were, the set would
+           likely get no comment or a request for drawings.
+         - **A sprinkler contractor added.** NFPA 13R work is usually a fire-protection
+           contractor's, and the one stair depends on the sprinklers.
+         - **Jon relays the replies.** Each trade gets a PDF packet (its sheets, a question sheet,
+           the plan room's link), and answers by email, a marked-up PDF or a call.
+         - **Each trade is also asked how they'd usually do this building, and roughly what it
+           would cost.** That's step 10's baseline: one contractor's word, low confidence, cited
+           by trade and county with their OK.
+       - **The parts:**
+         - 8a, the sheets;
+         - 8b, a question sheet for each trade, from the items flagged for this round;
+         - 8c, the log and the packets. Each comment is an RFI (a BCF topic, as RFIs 001 and
+           002), by trade and county only; nothing is published without the commenter's OK;
+         - 8d, the round itself (Jon), then Addendum 6 with what's taken.
+       - **8a done 2026-11-22: the services drawn as sheets** (`uv run brownfield sheets`;
+         `src/brownfield/servicesheets.py`; writes `out/pass3/services/sheets/`).
+         - **How:** 21 sheets, 36 x 24 in., drawn from the published files, as pass 3f drew the
+           bid set's sheets from its IFC:
+           - **G-001:** the index, the general notes (Addendum 5's items 4 and 5), what the model
+             doesn't have, and the legend.
+           - **Each trade's plan of each storey** at 1/4" = 1'-0" (P-, M-, E- and FP-101 to 103,
+             and M-104 the roof, all trades):
+             - the building's walls, doors, windows and rooms, cut 4 ft above the floor;
+             - each run tagged with its system and size;
+             - each riser on every storey it passes;
+             - each register with its size and air.
+           - **The four plumbing walls in elevation** at 3/8" = 1'-0" (P-201, P-202): every trade
+             in them, over the frame's studs, plates and joists.
+           - **The diagrams and schedules:**
+             - P-601, the water service and the hot-water plant;
+             - M-601, the building loop, and the flats' heat, cooling and air;
+             - E-601, the one-line and the feeders; E-602, the 12 panel schedules;
+             - FP-601, the fire service and the hydraulic summary.
+
+             Their figures are 7c's designs on the routes, which the model doesn't carry. Each
+             sheet says which it uses.
+           - **A flat's own runs are drawn on its own storey's plan,** wherever in the joist
+             spaces they go. A ceiling's sprinkler pipe runs in the joist space of the floor
+             above, where that floor's drains run too, so drawing by height alone put each
+             storey's sprinklers on the plan above it.
+         - **Run (2026-11-22):** 21 sheets in 59 s.
+           - Every element of the services model is on a sheet but its 1,570 fittings, which are
+             counted in their schedule: 1,548 of 1,548.
+           - The model was built from the routes the figures come from (requests
+             365808aadcbf8ac1).
+           - Every sheet's number reads as text in the PDF.
+           - 1,089 tags placed, 154 left off where they would overlap another. Most of those are
+             on the plumbing plans (P-102: 103 of 140); the plumbing walls' elevations carry all
+             theirs (144 of 144).
+           - Tests: `tests/test_walkup_sheets.py`, 10.
+         - **Found:**
+           - **Addendum 5 left out the fire service's shutoff valves.**
+             - 7a found that Watts lists the LF007 as "UL Classified without shutoff valves
+               only". So the fire service needs listed, supervised shutoff valves of its own,
+               called "an Addendum 5 item".
+             - Addendum 5 doesn't carry it. FP-601 shows the valves; it's an Addendum 6 item.
+           - **The house load takes the swing tank's element at 1,747 VA,** Ecosizer's size. 7a
+             found the tank takes 2.0 kW (Bradford White makes 1.5-6 kW).
+             - At 2.0 kW, counted as step 5 counts it (noncontinuous), the house feeder is
+               44.9 A on its 45 A breaker.
+             - Counted continuous, it's 47.3 A, a 50 A breaker. The element runs about 5 h in
+               the quiet hours, and NEC 215.2(A)(1) takes a continuous load at 125%.
+           - **The annex's rooms hold only the tanks and the heat pump in the model** (known since
+             7d). These are on the diagrams only:
+             - the exchangers, the pumps and the mixing valve;
+             - the backflow assemblies, the riser assembly and the pressure-reducing valve;
+             - the meter stack and the house panel.
+         - **What we don't know:**
+           - Whether a trade reads these sheets as it would a consulting engineer's: the round
+             will say.
+           - Whether the plumbing plans need enlarged plans of the baths, kitchens and utility
+             closets. The sizes left off them are in the elevations, the schedules and the
+             model. A question for this round.
     9. **The inspection and commissioning plan.**
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
