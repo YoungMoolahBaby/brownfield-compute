@@ -307,7 +307,8 @@ def checks(apt: dict, p: dict, body: dict, rt: dict, frame: dict, fresh_sha: str
     ok, worst = heads_covered(apt, body["moved_heads"])
     moved = sum(1 for ms in body["moved_heads"].values() for m in ms if m["from"] != m["to"])
     out.append((f"every sprinkler moved off equipment or a strip soffit still covers its cell ({moved} moved)", ok, f"farthest reach {worst:.2f} ft"))
-    lay = layout(apt, p)
+    from .routing import strip_soffits
+    lay = layout(apt, p, strip_soffits(apt, p))
     least = None
     for name, ms in body["moved_heads"].items():
         comp = [h["comp"] for h in lay[name]["heads"]]

@@ -733,8 +733,9 @@ fn turns(g: &Grid, path: &[usize]) -> Vec<usize> {
     out
 }
 
+/// A polyline's length: each straight run's, end to end (a drain's sloped run along its slope).
 fn length(pl: &[V3]) -> f64 {
-    pl.windows(2).map(|w| (0..3).map(|k| (w[1][k] - w[0][k]).abs()).sum::<f64>()).sum()
+    pl.windows(2).map(|w| dist(w[0], w[1])).sum()
 }
 
 /// Route one request: a tree from its root to its terminals. Returns the JSON record and the

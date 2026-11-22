@@ -175,6 +175,11 @@ def requests(apt: dict, p: dict) -> dict:
     z_drains, z_feed, z_mains, z_bldg = (z_at(p[R + k]) for k in ("slab_drains_at", "slab_feeders_at", "slab_mains_at", "slab_building_drain_at"))
     eqb = {e["id"]: e for e in eq}
     reqs = []
+    # Step 7c's sizes, where the routed designs asked more than steps 3-6 (`routed.grow`): a flat's
+    # vents a size up over 40 ft (IPC 906.2: 2 in., the vent stack's no-hub), the mains, the fire riser.
+    from .routed import grown
+    gs = grown()
+    vent_od = lambda n: p[R + "vent_stack_od_in"] if gs.get("vent_in", {}).get(n, 1.5) >= 2.0 else p[R + "vent_od_in"]  # noqa: E731
 
     def fall(size_in: float) -> float:
         """A horizontal drain's least fall per unit run (IPC 2021 Table 704.1): 1/4 in./ft at
@@ -250,7 +255,8 @@ def requests(apt: dict, p: dict) -> dict:
         block(e["id"], e["lo"], e["hi"])
 
     # -- Sprinklers: the stair's arms into each flat, a storey at a time; each flat's tree.
-    lay = layout(apt, p)
+    from .routing import strip_soffits
+    lay = layout(apt, p, strip_soffits(apt, p))
     feed_od = float(next(r["avg_OD_in"] for r in _cpvc_rows() if r["nominal_in"] == p_size(p, "feed")))
     core = apt["stair"]["core_y_m"]
     stair_parts = {x["id"]: x for x in apt["stair"]["parts"]}
@@ -489,7 +495,7 @@ def requests(apt: dict, p: dict) -> dict:
             if fv["y"] is None:
                 continue
             if fk != "dishwasher":
-                slot[(fk, "vent")] = take_slot(free, fv["y"] + p[R + "vent_off_in"] * IN, cells(p[R + "vent_od_in"] * IN / 2 + wall_clear), taken, 0.0)
+                slot[(fk, "vent")] = take_slot(free, fv["y"] + p[R + "vent_off_in"] * IN, cells(vent_od(name) * IN / 2 + wall_clear), taken, 0.0)
             for kind, od_, sgn in (("cold", cold_od, 1.0), ("hot", hot_od, -1.0)):
                 if f"{kind}_in" in fv:
                     slot[(fk, kind)] = take_slot(free, fv["y"] + sgn * off, cells(od_ * IN / 2 + wall_clear), taken, 0.0)
@@ -571,7 +577,7 @@ def requests(apt: dict, p: dict) -> dict:
             vy = slot[(fk, "vent")]
             vterms.append((fk, [x, vy, low]))
             cols.append(wall_cavity(apt, frame, pw, p, y0=vy - col_w, y1=vy + col_w))
-        add(f"plumbing/vent/{name}", "vent", p[R + "vent_od_in"], [vst["x"], vst["y"], vz], vterms, cols + [ceil],
+        add(f"plumbing/vent/{name}", "vent", vent_od(name), [vst["x"], vst["y"], vz], vterms, cols + [ceil],
             attach=[vst["id"], f"plumbing/drain/{name}/*", f"{name}/wc-bend"], flat=name, role="vent", gap=wall_clear, grade=1,
             slope=p[R + "vent_slope_in_ft"] / 12,
             goals=part_of(vst["id"], fz + p[R + "vent_conn_in"] * IN, ceil["hi"][2]),
@@ -582,6 +588,7 @@ def requests(apt: dict, p: dict) -> dict:
     main_in = {"cold": next(s_["in"] for s_ in pd["paths"]["cold"]["segments"] if "main" in s_["segment"]),
                "hot": next(s_["in"] for s_ in pd["paths"]["hot"]["segments"] if "main" in s_["segment"]),
                "hot-return": pd["loop"]["return_main_in"], "loop-supply": sub["header_in"], "loop-return": sub["header_in"]}
+    main_in = {k: max(v, gs.get("main_in", {}).get(k, 0.0)) for k, v in main_in.items()}
     # Each main at its own depth, so they cross under one another; each joins its risers' feet from
     # below (the risers stand 3-4 in. apart in the wall, too close for mains side by side).
     for kind, n in main_in.items():
@@ -685,9 +692,13 @@ def requests(apt: dict, p: dict) -> dict:
 
 
 def p_size(p: dict, part: str) -> str:
-    """Step 6's sprinkler pipe sizes (the hydraulics' upsized ones)."""
-    from .fire import SIZE_START
-    return _fire_sizes(p).get(part, SIZE_START[part])
+    """Step 6's sprinkler pipe sizes (the hydraulics' upsized ones), or 7c's where larger."""
+    from .fire import SIZE_START, SIZES
+    from .routed import grown
+
+    step6 = _fire_sizes(p).get(part, SIZE_START[part])
+    g = grown().get("fire", {}).get(part)
+    return g if g and SIZES.index(g) > SIZES.index(step6) else step6
 
 
 _FIRE: dict = {}

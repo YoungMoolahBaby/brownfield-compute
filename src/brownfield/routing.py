@@ -511,6 +511,12 @@ def soffits(apt: dict, p: dict, terms: list[dict]) -> list[dict]:
     return out
 
 
+def strip_soffits(apt: dict, p: dict) -> list[dict]:
+    """The living rooms' strip soffits (not their legs, which run along a wall): continuous
+    obstructions at the ceiling to the sprinklers' spray (step 7c)."""
+    return [x for x in soffits(apt, p, terminations(apt, p)) if x["id"].endswith("/soffit-strip")]
+
+
 def soffit_checks(apt: dict, p: dict, frame: dict, sf: list[dict]) -> list[tuple[str, bool, str]]:
     """What's left under each soffit against IBC 2021 1208.2 (7 ft in a dwelling's corridors,
     kitchens and laundries; a furred ceiling 7 ft, over at most a third of a room, 1208.2.1), and

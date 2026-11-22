@@ -362,6 +362,11 @@ plumbing:
     unit: ft/s, the most in the recirculating return
     conf: high
     source: "REHAU PEXa Plumbing Design and Installation Guide 855.739 (09.2023), 5.1.3 Table 5.1, p. 17 (a research agent's reading, 2026-11-21): 'Hot-Water Recirculation Return Piping - Maximum velocity of 2 ft/sec - Maximum operating temperature of 140 F'"
+  pex_sweep_el_d:
+    value: 17
+    unit: pipe diameters of straight PEX, a 90 degree sweep at six diameters' radius (step 7c counts one at each routed bend)
+    conf: medium
+    source: "Crane TP-410M's resistance of 90 degree rounded bends, K / f_T against r / d, as python-fluids reproduces it (fittings.py, bend_rounded_Crane_ratios / _fds: r/d 6 -> 17; saved data/raw/pass3g/step7/pex/fluids_fittings.py): K = 17 f_T, so 17 diameters where f is near f_T. PPI's PEX design guide (3rd ed., Table 3.2) sets the free bending radius at six times the outside diameter, and (ch. 6) 'install directional fittings such as 90-degree elbows only when necessary, such as within tight cavities. The use of sweeps ... will typically reduce ... pressure drop'"
   fittings_factor:
     value: 1.5
     unit: the developed length's multiple for its fittings and valves
@@ -861,6 +866,69 @@ ducts:
     unit: in. w.c., the drop at each supply outlet, return or exhaust grille
     conf: medium
     source: "ACCA Manual D's default as HVAC School's 'Manual D Speedsheet Walkthrough' (https://hvacrschool.com/manual-d-speedsheet-walkthrough/) and a Manual D friction rate worksheet (Green Building Advisor, https://images.greenbuildingadvisor.com/app/uploads/2023/02/19143040/49490_1676835039_Manual-D_FR.pdf) give it: 0.03 IWC for a supply outlet, a return grille and a balancing damper (search summaries; Manual D not opened)"
+  # Step 7c's fittings, each as the equivalent length of straight duct, counted on the routes. The
+  # ERV's (4-5 in. ventilation ducts) from Field Controls' FC80 HRV/ERV installation manual (P/N
+  # 78010018080, 04/19 Rev B, p. 4, 'Fitting equivalent lengths', rigid duct; flex counts double);
+  # the mini-split's from Southwark Metal's 'Airflow dynamics & duct sizing reference guide'
+  # (Manual D-style, residential supply and return fittings). Both saved under
+  # data/raw/pass3g/step7/duct/. ACCA's own table (Manual D Appendix 3) is paid and not opened.
+  erv_elbow_el_ft:
+    value: 10
+    low: 10
+    high: 20
+    unit: ft, a 90 degree elbow in the ERV's ducts
+    conf: medium
+    source: "Field Controls FC80 p. 4: '90 perimeter pipe elbow equivalent length = 10 ft. (3.0 m)'; 'Where flex duct is used to make 90 elbow equivalent length = 20 ft.' (the high)"
+  erv_takeoff_el_ft:
+    value: 50
+    low: 35
+    high: 50
+    unit: ft, where an ERV duct leaves another at a junction
+    conf: medium
+    source: "Field Controls FC80 p. 4: 'Tee take-off equivalent length = 50 ft. (15.24 m)'; 'Y-Side branch equivalent length = 35 ft. (10.7 m)' (the low)"
+  erv_boot_el_ft:
+    value: 30
+    unit: ft, an ERV duct's end at its grille (or the mini-split's return box)
+    conf: medium
+    source: "Field Controls FC80 p. 4: 'Angle boot equivalent length = 30 ft. (9.14 m)'"
+  termination_el_ft:
+    value: 60
+    unit: ft, the ERV's wall termination (Broan's Tandem kit), on its outdoor-air and its exhaust duct each
+    conf: low
+    source: "Field Controls FC80 p. 4: 'Round wall cap spring damper or screen equivalent lengths = 60 ft. (18.29 m)': a wall cap, not Broan's kit, whose own loss isn't published in the manual on hand"
+  reducer_el_ft:
+    value: 8
+    unit: "ft, an increaser or reducer: where a duct runs on past a junction (its air less), and the ERV's 5-to-4 in. reducers at its ports"
+    conf: medium
+    source: "Field Controls FC80 p. 4: 'Increaser/Reducer equivalent length = 8 ft. (2.43 m)'; Southwark gives none, so the mini-split's trunks take it too"
+  ms_elbow_el_ft:
+    value: 30
+    low: 10
+    high: 30
+    unit: ft, a 90 degree round elbow in the mini-split's ducts
+    conf: medium
+    source: "Southwark Metal, 'Airflow dynamics & duct sizing reference guide', round elbows and angles: '90 elbows 30' EL'; Field Controls FC80's rigid elbow, 10 ft, the low"
+  ms_takeoff_el_ft:
+    value: 35
+    low: 20
+    high: 35
+    unit: ft, where a mini-split duct leaves the supply plenum or another duct
+    conf: medium
+    source: "Southwark Metal's guide, round fittings (take-offs): 'No. 97 Round starting collar 35' EL'; 'No. S5 Round to round (adjustable) 20 - 25' EL' (the low)"
+  ms_boot_el_ft:
+    value: 30
+    low: 5
+    high: 50
+    unit: ft, a mini-split duct's end at its high sidewall grille
+    conf: medium
+    source: "Southwark Metal's guide, register boots: 'No. 24R 90 register boot 30' EL'; 'No. 27R Straight register boot 5' EL' (the low), 'No. 28R End register boot 50' EL' (the high)"
+  ms_return_el_ft:
+    value: 55
+    low: 45
+    high: 65
+    unit: "ft, the mini-split's return (its grille, box and collar at the unit; no duct)"
+    conf: medium
+    source: "Southwark Metal's guide, return air system: 'No. 810 Cold air boot, collar, duct 45- 65' EL' (the middle taken)"
   fittings_el_ft:
     value: 70
     low: 40
@@ -1098,6 +1166,16 @@ minisplit:
     unit: in. w.c., the external static pressure the indoor unit is set to
     conf: low
     source: "a design choice inside both units' 0.12-0.80 in. w.c. (Fujitsu submittals); Fujitsu tested capacity at 0.58 in. and ships at 0.18 (manual p. 3 and p. 5)"
+  esp_step_inwc:
+    value: 0.02
+    unit: in. w.c., the step by which 7c raises the set static pressure until the routed ducts are covered
+    conf: medium
+    source: "Fujitsu DR_AR107ES_02 p. 26, 'Fan performance curve_2 (For function setting by remote controller)': 'Normal SP' and SP modes 03 to 20 across the 0.12-0.80 in. range (about 0.04 in. apart, read off the curves); half that so the step never skips a mode"
+  plenum_in:
+    value: 12
+    unit: in., the supply plenum on the indoor unit's supply collar, its take-offs within it
+    conf: low
+    source: "judgement: Fujitsu's ducted units connect to a field-made supply plenum (manual, duct connection); a box about a foot deep over the collar's 27 in. width"
   room_min_w:
     value: 150
     unit: W, the least design sensible load a room has to get its own supply duct
@@ -1217,6 +1295,18 @@ wiring:
     unit: in., the middle of a flat's load centre above its floor
     conf: low
     source: "judgement: a 30-space QO box is 29.86 in. tall, so its top handle stays under 6 ft 7 in. (240.24(A), not read here)"
+  free_conductor_in:
+    value: 6
+    unit: in. of conductor left free at each end of a routed circuit or feeder (step 7c)
+    conf: medium
+    source: "NEC 2020 300.14: at least 6 in. of free conductor at each outlet, junction and switch point (not read here; the panels' terminations taken alike)"
+  outlet_in:
+    value: 15
+    low: 12
+    high: 18
+    unit: in. above the floor, the far outlet a routed branch circuit drops to from the ceiling (step 7c; the longest drop)
+    conf: low
+    source: "judgement: the lowest a receptacle is set where it must be reachable, the Fair Housing Act's and ANSI A117.1's 15 in. low reach (not read here); the NEC sets no height"
   pf:
     value: 0.9
     low: 0.8
@@ -1856,6 +1946,21 @@ sprinkler:
     unit: psi held back from the street's pressure for its seasonal and daily swing
     conf: low
     source: "judgement until the hydrant test: IBC 2021 903.3.5: 'the water supply test used for design of fire protection systems shall be adjusted to account for seasonal and daily pressure fluctuations based on information from the water supply authority'"
+  obstruction_max_w_ft:
+    value: 4
+    unit: ft, the widest continuous obstruction at the ceiling with pendent sprinklers on its two sides (step 7c)
+    conf: high
+    source: "Tyco TFP490 (2024-08) p. 9, Figure 2 (part 1 of 2): 'Pendent sprinklers may be located on opposite sides of an obstruction not exceeding 4 feet in width providing the distance from the centerline of the obstruction to the sprinklers do not exceed one half the maximum sprinkler spacing'"
+  shadow_ft2:
+    value: 15
+    unit: ft2 of floor a sprinkler's spray may leave dry behind an obstruction (step 7c, the strip soffits' legs along a wall)
+    conf: medium
+    source: "NFPA 13R 6.4.6.3.3.1: 'Shadow areas shall be permitted in the protection area of a sprinkler if the cumulative dry area do not exceed 15 ft2 (1.4 m2) per sprinkler', as the 2022 edition's second draft report prints it, unmarked (data/raw/pass3g/raw/sprinkler/13R_A2021_SDR.txt); the 2019 edition's text not on hand"
+  upsize_gain_psi:
+    value: 0.5
+    unit: psi, the least an upsizing must save the governing design (step 7c) for that pipe to grow; else the next pipe is tried
+    conf: low
+    source: "judgement: a larger pipe that saves less than this is not worth its cost and its larger holes"
   party_wall_u:
     value: 0.05
     low: 0.03
@@ -2020,9 +2125,9 @@ routing:
     value: 2.35
     low: 2.26
     high: 2.44
-    unit: in., the outside diameter of the vent stack (2 in. no-hub cast iron) until 7c sizes it by IPC Table 906.1
+    unit: in., the outside diameter of a 2 in. no-hub cast-iron vent (each column's vent stack, and a flat's vents where IPC 906.2 takes them a size up)
     conf: low
-    source: "CISPI 301's 2 in. no-hub outside diameter, 2.35 in. (from memory, to confirm); the size is a placeholder for Table 906.1's"
+    source: "CISPI 301's 2 in. no-hub outside diameter, 2.35 in. (from memory, to confirm); 2 in. is what IPC Table 906.1 asks of the vent stack (step 7c: a 3 in. stack's 27 dfu over its 33 ft)"
   riser_gap_in:
     value: 0.5
     unit: in., kept between neighbouring vertical services and between a service and a stud
@@ -2506,6 +2611,11 @@ routing:
     unit: in., a vent's take-off along the wall from its fixture's drain (at its centre, between its supplies)
     conf: low
     source: "judgement: the supplies stand stub_offset_in either side"
+  vent_upsize_ft:
+    value: 40
+    unit: ft of developed length past which a branch vent is one nominal size larger over its whole length (step 7c)
+    conf: high
+    source: "IPC 2021 906.2 (data/raw/pass3g/dl/upc/ipc9.txt): 'Vents exceeding 40 feet (12 192 mm) in developed length shall be increased by one nominal pipe size for the entire developed length of the vent pipe'; 906.3: measured 'from the farthest point of vent connection to the drainage system to the point of connection to the vent stack'"
   vent_od_in:
     value: 1.90
     unit: in., a fixture's 1-1/2 in. vent's outside diameter

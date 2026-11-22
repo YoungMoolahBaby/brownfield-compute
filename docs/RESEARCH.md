@@ -1296,4 +1296,82 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       drawing, a research agent's reading);
     - no drain pump: its text names none for the ARUH12KUAS, among its optional parts or
       elsewhere (searched).
+- **Step 7c, steps 3-6 on the routes (2026-11-21).** Under `data/raw/pass3g/` (gitignored) unless
+  said.
+  - **Duct fittings' equivalent lengths** (both saved in 7a, `step7/duct/`; ACCA's own Appendix 3
+    is paid and not opened):
+    - **Field Controls FC80** HRV/ERV installation manual (P/N 78010018080, 04/19 Rev B, p. 4), for
+      the ERVs' ducts: a 90 degree rigid elbow 10 ft (flex 20), 45 degree 5 ft, a tee take-off 50
+      ft, a Y's side branch 35 ft, an increaser or reducer 8 ft, an angle boot 30 ft, a round wall
+      cap with damper or screen 60 ft.
+    - **Southwark Metal's "Airflow dynamics & duct sizing reference guide"** (Manual D-style), for
+      the mini-splits': a 90 degree round elbow 30 ft, a round starting collar 35 ft, a round-to-round
+      take-off 20-25 ft, a 90 degree register boot 30 ft (straight 5, end 50), a return's boot,
+      collar and duct 45-65 ft.
+    - **McGill AirFlow's "Duct System Design Guide"** (2003, Table 1.1, from ASHRAE's fitting data),
+      for comparison only: 8 in. 90 degree elbows' loss coefficients 0.11 die-stamped, 0.22
+      five-piece, 0.52 mitered with vanes, 1.24 mitered. At about 34 ft of duct per unit of
+      coefficient (8 in., a Darcy factor near 0.02), a five-piece elbow is about 7 ft: the
+      Manual D-style 30 ft is about four times it, which is why the mini-splits' ducts need more
+      pressure on their routes than step 3 set.
+  - **Fujitsu DR_AR107ES_02** (ARUH12-48KUAS, `fujitsu_dt.txt`):
+    - p. 26, "Fan performance curve_2 (For function setting by remote controller)": "Normal SP" and
+      SP modes 03 to 20 across 0.12-0.80 in. w.c.; "According to the resistance of the connecting
+      duct, perform the setting of the external static pressure with referring 'Fan performance
+      curve_2'". Its fan's power at each mode is not published as a number;
+    - pp. 52, 58-59, external input: the indoor unit's terminal takes a dry contact, and function
+      setting 46-02 makes it "Forced stop" ("When the forced stop is triggered, indoor unit stops").
+  - **IMC 2021 307.2.3**, Pennsylvania's, from UpCodes
+    (https://up.codes/viewer/pennsylvania/imc-2021/chapter/3/general-regulations, saved
+    `step7/imc/imc3_pa.txt`): "where damage to any building components could occur as a result of
+    overflow from the equipment primary condensate removal system, one of the following auxiliary
+    protection methods shall be provided": an auxiliary pan with its own drain, an overflow drain
+    from the equipment's pan, an auxiliary pan with a water-level device, or (4) "A water-level
+    detection device conforming to UL 508 ... that will shut off the equipment served in the event
+    that the primary drain is blocked ... installed in the primary drain line, the overflow drain
+    line, or in the equipment-supplied drain pan".
+  - **IBC 2021 714.5.1 and 714.5.2** (`raw/ibc9/ch7_all.txt`): a membrane penetration of a rated
+    floor/ceiling "shall comply with Section 714.5.1.1 or 714.5.1.2" (tested in the assembly, or a
+    listed firestop system with F and T ratings of 1 hour at least); its exceptions reach "steel,
+    ferrous or copper conduits, pipes, tubes or vents" (1) and "the annular space created by the
+    penetration of a fire sprinkler, provided that it is covered by a metal escutcheon plate" (5),
+    not CPVC pipe.
+  - **IPC 2021** (`dl/upc/ipc9.txt`): 904.4, a vent stack connects at the base of its drainage stack,
+    at or below the lowest horizontal branch; 906.1, Table 906.1, its developed length "measured
+    from the vent connection to the open air"; 906.2, "Vents exceeding 40 feet (12 192 mm) in
+    developed length shall be increased by one nominal pipe size for the entire developed length";
+    906.3, a branch vent's length from its farthest connection to the vent stack; 906.4, a common
+    branch vent sized on the horizontal branch its load would need.
+  - **Tyco TFP490** (2024-08, `raw/sprinkler/Tyco_TFP490_2024-08.txt`, Figure 2 read from p. 9's
+    image): "If a sprinkler water distribution pattern is obstructed, the obstruction is to be
+    considered the maximum distance of coverage for a given sprinkler and additional sprinklers
+    beyond the obstruction will be necessary" (p. 3); "Pendent sprinklers may be located on
+    opposite sides of an obstruction not exceeding 4 feet in width providing the distance from the
+    centerline of the obstruction to the sprinklers do not exceed one half the maximum sprinkler
+    spacing" (Figure 2, part 1).
+  - **NFPA 13R**, from the 2022 edition's second draft report (`13R_A2021_SDR.txt`, its legislative
+    marks interleaved; the 2019 edition's text is not on hand): 6.4.6.3.3.1, shadow areas "if the
+    cumulative dry area do not exceed 15 ft2 (1.4 m2) per sprinkler"; Table 6.4.6.3.6.2, a pendent
+    sprinkler's least distance from a continuous obstruction by how far its deflector sits above
+    the obstruction's bottom (about 7 ft for 14 in.; the marked-up rows read only approximately);
+    6.4.6.3.6.4, "A sprinkler shall be installed on the other side of the obstruction."
+  - **PEX fittings and bends:**
+    - **Uponor's Plumbing Design Assistance Manual** (8th ed., 2025, saved in 7a,
+      `dl_pex/uponor_pdam.pdf`), Appendix C, read from the page images (the text drops the
+      fractions; `data/uponor_propex_ep_fittings.csv`): EP 90 degree elbows 10.4 ft at 1/2 in. to
+      23.2 at 3; same-size tees' run 0.8-3.8 ft and branch 6.3-23.9 ft; "pressure loss at 8
+      ft./sec.";
+    - **PPI's PEX design guide** (3rd ed., `step7/ppi_pex_3rd_full.txt`): Table 3.2, a free bend's
+      radius at least six times the outside diameter (8.3 in. for 1 in.); chapter 6, "install
+      directional fittings such as 90-degree elbows only when necessary, such as within tight
+      cavities. The use of sweeps ... will typically reduce material cost, installation time, and
+      pressure drop";
+    - **Crane TP-410M's 90 degree bends,** as python-fluids reproduces the table (Caleb Bell,
+      `fluids/fittings.py`, https://raw.githubusercontent.com/CalebBell/fluids/master/fluids/fittings.py,
+      saved `step7/pex/fluids_fittings.py`; `bend_rounded_Crane_ratios` / `_fds`): K / f_T 17 at a
+      radius of six diameters. Crane's own book is not on hand. A Debian copy of the same file was
+      not found (404).
+  - **NEC 2020 300.14** (6 in. of free conductor at each box) and the 15 in. low reach to an outlet
+    (the Fair Housing Act's guidelines, ANSI A117.1) are cited from memory, not read: both small
+    allowances on the circuits' lengths, said so in the parameters.
 

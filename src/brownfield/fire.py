@@ -236,13 +236,42 @@ def _cover(lx_ft: float, ly_ft: float, table: list[dict]) -> dict:
     return best
 
 
-def layout(apt: dict, p: dict) -> dict:
+def _sides(r: dict, strips: list[dict]) -> list[tuple[list[float], list[float]]]:
+    """A room's floor (plan, m) as its sprinklers must cover it: whole, or, where a strip soffit
+    crosses it, each side of the strip on its own, up to the strip's centreline (13R 6.4.6.3.6.4:
+    'A sprinkler shall be installed on the other side of the obstruction'; TFP490 Figure 2: on
+    opposite sides of an obstruction up to 4 ft wide, each within half its maximum spacing of the
+    centreline, which a sprinkler at the middle of its half then is)."""
+    parts = [([r["lo_m"][0], r["lo_m"][1]], [r["hi_m"][0], r["hi_m"][1]])]
+    for st in strips:
+        if st["room"] != r["id"]:
+            continue
+        a = 0 if st["hi"][0] - st["lo"][0] < st["hi"][1] - st["lo"][1] else 1  # across the strip
+        out = []
+        for lo, hi in parts:
+            if st["lo"][a] >= hi[a] - 1e-9 or st["hi"][a] <= lo[a] + 1e-9:
+                out.append((lo, hi))
+                continue
+            mid = (st["lo"][a] + st["hi"][a]) / 2
+            if mid > lo[a] + 1e-9:
+                out.append((lo, [mid if k == a else hi[k] for k in range(2)]))
+            if mid < hi[a] - 1e-9:
+                out.append(([mid if k == a else lo[k] for k in range(2)], hi))
+        parts = out
+    return parts
+
+
+def layout(apt: dict, p: dict, strips: list[dict] | None = None) -> dict:
     """Each flat's sprinklers (Tyco TY2236, residential pendent, K 4.9): every room but the bath
     (13R 6.6.2: none needed in a bathroom of 55 ft2 or less); the laundry closet included, its
     sprinkler intermediate-temperature (6.6.4: a closet with a washer or dryer; 6.2.3.3.4: a
     ventless dryer); the passage, a few square feet between the hall and the kitchen, covered by
     theirs. Each sprinkler at its cell's centre. Compartments: the open living area (living,
-    study, kitchen, entry, hall, passage) is one; each bedroom and the closet another (doors)."""
+    study, kitchen, entry, hall, passage) is one; each bedroom and the closet another (doors).
+    `strips` (7c: the living rooms' strip soffits, 14 in. deep, a continuous obstruction at the
+    ceiling): each side of one is covered on its own (`_sides`), by the listing's coverages at its
+    least pressure only (TY2236: up to 16 ft at 7 psi; one 20 ft sprinkler at 16.7 psi on the middle
+    storey's deeper side would push the riser and main to 3 in., where two smaller ones don't)."""
     s = "systems.sprinkler."
     table = listing()
     out = {}
@@ -254,18 +283,19 @@ def layout(apt: dict, p: dict) -> dict:
                 continue
             if key == "passage":
                 continue
-            lx, ly = (r["hi_m"][0] - r["lo_m"][0]) / FT, (r["hi_m"][1] - r["lo_m"][1]) / FT
-            cov = _cover(lx, ly, table)
             comp = "open" if key in SPRINKLERED_OPEN else key
-            for i in range(cov["nx"]):
-                for j in range(cov["ny"]):
-                    xy = (r["lo_m"][0] + (i + 0.5) * (r["hi_m"][0] - r["lo_m"][0]) / cov["nx"],
-                          r["lo_m"][1] + (j + 0.5) * (r["hi_m"][1] - r["lo_m"][1]) / cov["ny"])
-                    h = {"room": r["id"], "comp": comp, "xy": xy, "q": cov["q"], "p": cov["p"], "k": cov["k"], "l_ft": cov["l"],
-                         "cell_ft2": cov["cell_ft"][0] * cov["cell_ft"][1], "cell_ft": list(cov["cell_ft"]),
-                         "temp": "intermediate" if use == "utility" else "ordinary"}
-                    heads.append(h)
-                    comps.setdefault(comp, []).append(h)
+            sides = _sides(r, strips or [])
+            tbl = table if len(sides) == 1 else [x for x in table if x["p"] <= min(y["p"] for y in table) + 1e-9]
+            for lo, hi in sides:
+                cov = _cover((hi[0] - lo[0]) / FT, (hi[1] - lo[1]) / FT, tbl)
+                for i in range(cov["nx"]):
+                    for j in range(cov["ny"]):
+                        xy = (lo[0] + (i + 0.5) * (hi[0] - lo[0]) / cov["nx"], lo[1] + (j + 0.5) * (hi[1] - lo[1]) / cov["ny"])
+                        h = {"room": r["id"], "comp": comp, "xy": xy, "q": cov["q"], "p": cov["p"], "k": cov["k"], "l_ft": cov["l"],
+                             "cell_ft2": cov["cell_ft"][0] * cov["cell_ft"][1], "cell_ft": list(cov["cell_ft"]),
+                             "temp": "intermediate" if use == "utility" else "ordinary", "side": [list(lo), list(hi)]}
+                        heads.append(h)
+                        comps.setdefault(comp, []).append(h)
         out[f["name"]] = {"heads": heads, "compartments": comps}
     return out
 
@@ -429,6 +459,195 @@ def hydraulics(apt: dict, p: dict) -> dict:
 
 
 SIZE_START = {"branch": "1", "feed": "1-1/4", "riser": "2", "main": "2", "backflow": "2"}
+
+
+# ---- 7c: the hydraulics on the routed pipe ----
+
+class HNode:
+    """A point of the routed sprinkler system: its height, the pipes leaving it downstream, and the
+    sprinkler on it, if any."""
+
+    def __init__(self, z: float, head: dict | None = None, ref: str | None = None) -> None:
+        self.z, self.head, self.ref, self.kids = z, head, ref, []
+
+
+class HEdge:
+    """A pipe between two nodes: its length (ft), the size it is sized as (`role`: branch, feed,
+    riser or main), its elbows, and the tee it leaves its upstream node by ("branch", "run" or
+    "none")."""
+
+    def __init__(self, ft: float, role: str, elbows: int, tee: str) -> None:
+        self.ft, self.role, self.elbows, self.tee = ft, role, elbows, tee
+
+
+def _eq_ft(e: HEdge, d: dict) -> float:
+    return e.ft + e.elbows * d["elbow"] + {"branch": d["tee_branch"], "run": d["tee_run"]}.get(e.tee, 0.0)
+
+
+def tree_demand(node: HNode, flowing: set[str], sizes: dict, p: dict, c: float, drop_ft: float = 0.0) -> tuple[float, float] | None:
+    """The pressure (psi) and flow (gpm) at `node` that give every flowing sprinkler below it at
+    least its own need (its listing's pressure, 13R's 7 psi): from each sprinkler back, by
+    Hazen-Williams and the fittings' equivalent feet, adding the height climbed. Where two ways
+    meet, the one asking more sets the junction's pressure and the other flows more for it: a lone
+    sprinkler on its drop exactly as `head_flow` gives, a subtree by its equivalent K (Q
+    sqrt(Pj / Pi), the hand method). On a chain it is `_path_back`. None if nothing flows below."""
+    s = "systems.sprinkler."
+    pipe = cpvc()
+    drop = pipe[DROP_SIZE]
+    parts = []
+    if node.head is not None and node.ref in flowing:
+        h = node.head
+        p_head = max(h["p"], p[s + "min_head_psi"], (h["q"] / h["k"]) ** 2)
+        q = h["k"] * math.sqrt(p_head)
+        # Its outlet: a tee's branch where the pipe runs on past it, an elbow where it ends.
+        eq = drop_ft + (drop["tee_branch"] if node.kids else drop["elbow"])
+        parts.append(("head", p_head + hw_psi_ft(q, drop["id"], c) * eq, q, h, eq))
+    for e, kid in node.kids:
+        sub = tree_demand(kid, flowing, sizes, p, c, drop_ft)
+        if sub is None:
+            continue
+        pk, qk = sub
+        d = pipe[sizes[e.role]]
+        parts.append(("sub", pk + hw_psi_ft(qk, d["id"], c) * _eq_ft(e, d) + 0.433 * (kid.z - node.z) / FT, qk, None, None))
+    if not parts:
+        return None
+    pj = max(x[1] for x in parts)
+    q = 0.0
+    for kind, pi, qi, h, eq in parts:
+        if kind == "head":
+            q += head_flow(pj, h["k"], eq, drop["id"], c) if pi < pj - 1e-12 else qi
+        else:
+            q += qi * math.sqrt(pj / pi)
+    return pj, q
+
+
+def _hang(tree, root: HNode, role_of, heads: dict) -> dict[str, HNode]:
+    """A routed tree (`routed.Tree`) hung under `root`: a node at each edge's far end; each edge
+    sized by `role_of(edge)`; a sprinkler (from `heads`, by terminal) on its terminal's node. The
+    terminals' nodes, by name."""
+    nodes: dict[int, HNode] = {}
+    out = {}
+    for n, e in enumerate(tree.edges):
+        up = root if e.up is None else nodes[e.up]
+        z = tree.point(e.terminal)[2] if e.terminal else e.b[2]
+        kid = HNode(z, heads.get(e.terminal), e.terminal)
+        ft = (e.length + (tree.lead_m if e.up is None else 0.0)) / FT
+        up.kids.append((HEdge(ft, role_of(e), e.bends, {"root": "none"}.get(e.tee, e.tee)), kid))
+        nodes[n] = kid
+        if e.terminal:
+            out[e.terminal] = kid
+    return out
+
+
+def routed_system(apt: dict, p: dict, routes) -> dict:
+    """The sprinkler system as routed (7b): from the riser assembly along the fire main to the
+    riser's foot, up the riser (pinned in the stair) to each storey's arm, each arm's tree to its
+    four flats' doors and its two stair sprinklers, each flat's tree to its sprinklers where they
+    now stand. Every flat's pipe that feeds one sprinkler is a branch line, the rest feed; the
+    stair's arms to its own sprinklers are branch lines. Returns the assembly's node (the top), the
+    nodes of every sprinkler, and each flat's sprinklers by compartment."""
+    from .routing import strip_soffits
+
+    lay = layout(apt, p, strip_soffits(apt, p))
+    assembly_tree = routes.tree("fire/main")
+    top = HNode(assembly_tree.root[2], ref="assembly")
+    foot = _hang(assembly_tree, top, lambda e: "main", {})["riser"]
+    riser = routes.pinned("stair/fire-riser")
+    arms = sorted((routes.tree(k) for k in routes.ids("fire/stair/")), key=lambda t: t.req["storey"])
+    heads, comps = {}, {}
+    # Up the riser: a node at each arm's tee; the arm leaves by the tee's branch, the riser runs on.
+    here = HNode(riser["lo"][2], ref="riser-foot")
+    foot.kids.append((HEdge(0.0, "riser", 1, "none"), here))  # the main turns up: an elbow
+    for k, arm in enumerate(arms):
+        zt = arm.root[2]
+        tee = HNode(zt, ref=f"riser/{arm.req['storey']}")
+        here.kids.append((HEdge((zt - here.z) / FT, "riser", 0, "run" if k > 0 else "none"), tee))
+        here = tee
+        start = HNode(zt, ref=f"arm/{arm.req['storey']}")
+        last = k == len(arms) - 1  # the riser ends in an elbow into the top storey's arm
+        tee.kids.append((HEdge(0.0, "feed", 1 if last else 0, "none" if last else "branch"), start))
+        stair = {t: {"k": p["systems.sprinkler.qr_k"], "q": 0.0, "p": 0.0, "storey": arm.req["storey"]} for t in arm.terminals()
+                 if t.startswith("stair/")}
+        for h in stair.values():
+            h["q"] = next(x["q"] for x in stair_heads(apt, p) if x["storey"] == h["storey"])
+        ends = _hang(arm, start, lambda e: "branch" if all(t.startswith("stair/") for t in e.below) else "feed", stair)
+        heads.update({t: ends[t] for t in stair})
+        for name in [t for t in arm.terminals() if not t.startswith("stair/")]:
+            ft = routes.tree(f"fire/flat/{name}")
+            byref = {}
+            for t in ft.terminals():
+                i = int(t.rsplit("#", 1)[1])
+                byref[t] = lay[name]["heads"][i]
+            nodes = _hang(ft, ends[name], lambda e: "branch" if len(e.below) == 1 else "feed", byref)
+            heads.update(nodes)
+            for t, h in byref.items():
+                comps.setdefault(name, {}).setdefault(h["comp"], []).append(t)
+    return {"top": top, "heads": heads, "compartments": comps}
+
+
+def routed_hydraulics(apt: dict, p: dict, routes) -> dict:
+    """Step 6's hydraulics on the routed pipe (7c): every compartment of every flat, each set of
+    up to four of its sprinklers tried (13R 7.1.1.3.1: those of greatest demand), and the stair's
+    six all flowing; each from the sprinklers to the riser assembly by `tree_demand`, then the
+    underground service, the backflow assembly and the height from the street's main to the
+    assembly, as `supply` has them. The pipe starts at step 6's sizes and grows while the street
+    can't cover the governing case: the riser and the main first (two runs, in the stair and under
+    the slab), the flats' branch lines and feeds only where that no longer helps (every flat's
+    pipe, through the joists, under APA's hole chart)."""
+    from itertools import combinations
+
+    s, pl = "systems.sprinkler.", "systems.plumbing."
+    c = p[s + "c_cpvc"]
+    from .routes import p_size
+
+    sys_ = routed_system(apt, p, routes)
+    top = sys_["top"]
+    target = p[pl + "street_psi"] - p[s + "margin_psi"]
+    start = {k: p_size(p, k) for k in SIZE_START}  # what the pipe was routed at
+
+    def need(flowing: set[str], sizes: dict) -> dict:
+        pt, q = tree_demand(top, flowing, sizes, p, c)
+        under = hw_psi_ft(q, p[s + "underground_id_in"], p[s + "c_underground"]) * (p[s + "underground_ft"] + p[s + "underground_el_ft"])
+        bf = dcva_psi(q, sizes["backflow"])
+        elev = 0.433 * (top.z / FT + p["systems.fire_code.access_road_below_slab_ft"] + p[pl + "main_depth_ft"])
+        return {"q_gpm": q, "p_assembly_psi": pt, "underground_psi": under, "backflow_psi": bf, "elevation_psi": elev,
+                "need_psi": pt + under + bf + elev}
+
+    def cases(sizes: dict) -> list[dict]:
+        out = []
+        for flat, comps in sys_["compartments"].items():
+            for comp, refs in comps.items():
+                n = min(len(refs), int(p[s + "design_heads_max"]))
+                best = max((dict(need(set(sel), sizes), design=list(sel)) for sel in combinations(sorted(refs), n)),
+                           key=lambda x: x["need_psi"])
+                out.append({"flat": flat, "comp": comp, "heads": len(refs), "kind": "flat", **best})
+        stair = {t for t in sys_["heads"] if t.startswith("stair/")}
+        out.append({"flat": "stair", "comp": "stair", "heads": len(stair), "kind": "stair", **need(stair, sizes), "design": sorted(stair)})
+        return out
+
+    sizes = dict(start)
+    for _ in range(12):
+        cs = cases(sizes)
+        worst = max(cs, key=lambda x: x["need_psi"])
+        if worst["need_psi"] <= target:
+            break
+        now = need(set(worst["design"]), sizes)["need_psi"]
+        grown = None
+        for group in (("riser", "main"), ("branch", "feed")):
+            trial = dict(sizes)
+            for k in group:
+                i = SIZES.index(trial[k])
+                if i + 1 < len(SIZES):
+                    trial[k] = SIZES[i + 1]
+            if trial != sizes and need(set(worst["design"]), trial)["need_psi"] < now - p[s + "upsize_gain_psi"]:
+                grown = trial
+                break
+        if grown is None:
+            break
+        sizes = grown
+    grew = {k: (start[k], sizes[k]) for k in sizes if sizes[k] != start[k]}
+    return {"cases": cs, "worst": worst, "sizes": sizes, "start_sizes": start, "grew": grew, "target_psi": target,
+            "ok": worst["need_psi"] <= target, "water_gal": worst["q_gpm"] * p[s + "duration_min"]}
 
 
 def stair_demand(apt: dict, p: dict, sizes: dict) -> dict:

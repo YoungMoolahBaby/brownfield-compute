@@ -395,9 +395,229 @@ def _sides(apt: dict, rs: dict) -> dict[str, list[str]]:
     return out
 
 
-def design(apt: dict, p: dict) -> dict:
+# ---- 7c: the water on its routes ----
+
+def ep_fittings() -> dict[float, dict]:
+    """Uponor's ProPEX EP fittings' equivalent feet of pipe, same-size (`data/uponor_propex_ep_fittings.csv`):
+    a 90 degree elbow, a tee's run and its branch."""
+    from .loads import _table
+
+    return {float(r["size_in"]): {"elbow": float(r["elbow90_ft"]), "run": float(r["tee_through_ft"]), "branch": float(r["tee_branch_ft"])}
+            for r in _table("uponor_propex_ep_fittings.csv")}
+
+
+def _ft(tree, k: int) -> float:
+    from .hvac import FT
+
+    e = tree.edges[k]
+    return (e.length + (tree.lead_m if e.up is None else 0.0)) / FT
+
+
+def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: float, ins, od) -> dict:
+    """The recirculating loop's heat loss on its routes (7c): the hot and return mains under the slab
+    (in ground at the mains' temperature) edge by edge, each the smallest PEX within its velocity for
+    the flow it carries (the hot main the demand of the flats beyond it, the return its share of the
+    loop's flow); and each column's hot and return risers in the heated building, from the main up
+    to the top flat's tee. The returns' sizes and the loop's flow worked to agreement as in `design`."""
+    from .hvac import FT
+    from .loads import hunter_gpm, water
+
+    pl, h = "systems.plumbing.", "systems.hot_water."
+    w = water(apt, p)
+    hot_per = w["per_flat"]["hot"]
+    storeys = apt["storeys"]
+    supply, ret_f = p[h + "distribution_f"], p[h + "return_min_f"]
+    hot_c, ret_c = (supply - 32) / 1.8, (ret_f - 32) / 1.8
+    cols = stacks(apt)
+    hot_main, ret_main = routes.tree("main/hot"), routes.tree("main/hot-return")
+    rise = {}
+    for col, names in cols.items():
+        top = max(routes.tree(f"plumbing/hot/{n}").root[2] for n in names)
+        rise[col] = (top - hot_main.point(col)[2]) / FT
+    n_hot = {k: pex_for(hunter_gpm(len(e.below) * storeys * hot_per), p[pl + "hot_fps"], 1e9, hot_c)[0] for k, e in enumerate(hot_main.edges)}
+    n_rise = pex_for(hunter_gpm(storeys * hot_per), p[pl + "hot_fps"], 1e9, hot_c)[0]
+    n_ret = {k: 0.5 for k in range(len(ret_main.edges))}
+    n_ret_rise = 0.5
+    for _ in range(4):
+        loss = sum(_ft(hot_main, k) * pipe_loss_btuh_ft(od(n_hot[k]), ins(n_hot[k]), t_loop, t_in, p) for k in n_hot)
+        loss += sum(_ft(ret_main, k) * pipe_loss_btuh_ft(od(n_ret[k]), ins(n_ret[k]), t_loop, t_in, p) for k in n_ret)
+        loss += sum(L * (pipe_loss_btuh_ft(od(n_rise), ins(n_rise), t_loop, air_f, p) + pipe_loss_btuh_ft(od(n_ret_rise), ins(n_ret_rise), t_loop, air_f, p))
+                    for L in rise.values())
+        gpm = loss / (60 * RHO_CP * (supply - ret_f))
+        new = {k: pex_for(gpm * len(e.below) / len(cols), p[pl + "return_fps"], 1e9, ret_c)[0] for k, e in enumerate(ret_main.edges)}
+        new_rise = pex_for(gpm / len(cols), p[pl + "return_fps"], 1e9, ret_c)[0]
+        if new == n_ret and new_rise == n_ret_rise:
+            break
+        n_ret, n_ret_rise = new, new_rise
+    fps = max([pex_for(gpm * len(e.below) / len(cols), p[pl + "return_fps"], 1e9, ret_c)[1] for e in ret_main.edges]
+              + [pex_for(gpm / len(cols), p[pl + "return_fps"], 1e9, ret_c)[1]])
+    rows = [{"side": col, "main_ft": hot_main.path(col)["m"] / FT, "hot_main_in": max(n_hot.values()), "hot_riser_in": n_rise, "stacks": [col],
+             "rise_ft": rise[col]} for col in cols]
+    return {"loss": loss, "gpm": gpm, "rows": rows, "return_main_in": max(n_ret.values()), "return_riser_in": n_ret_rise, "return_fps": fps,
+            "hot_main_in": n_hot, "hot_riser_in": n_rise, "main_ft": {"hot": hot_main.length_m / FT, "return": ret_main.length_m / FT},
+            "rise_ft": rise}
+
+
+PEX_SIZES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0)  # hvac.PEX_SIZES_IN
+
+
+def _fps(gpm: float, n: float) -> float:
+    from .hvac import FT, GPM, IN, sdr9_bore_in
+
+    d = sdr9_bore_in(n) * IN
+    return gpm * GPM / (np.pi * d * d / 4) / FT
+
+
+def routed_paths(apt: dict, p: dict, routes, falloff: float, sub, tmv: float, start: dict, limit_psi: float,
+                 all_elbows: bool = False) -> dict:
+    """IPC Appendix E on the routes (7c), for every flat, cold and hot: from the building's reducing
+    valve along the main under the slab to its column, up the riser (in pieces between the flats'
+    tees, each carrying the flats above it) to the flat's tee, and along the flat's branch to its
+    shower; each straight foot and each fitting's in place of the code's 50% for fittings:
+    - **a sweep at each bend** of the route, the PEX bent on a bend support at six diameters' radius
+      (PPI: elbows 'only when necessary, such as within tight cavities'), its loss as Crane's
+      (`pex_sweep_el_d` diameters of pipe);
+    - **an elbow** (Uponor's EP) where the main turns up into the riser, where the top flat's branch
+      leaves the riser's end, and at each fixture's stub-out; **a tee's branch** where a branch leaves
+      the riser or a pipe, **its run** where the pipe goes on past one (Uponor's EP tees).
+    `all_elbows`: every bend an elbow instead (the bound). The budget starts at the lesser of the
+    reducing valve's setting (less its falloff at the peak) and `limit_psi` (what the street gives
+    at the peak past the meter, the tap, the backflow assembly and the lift: Appendix E's line A).
+    The sizes: the flats' branches and the risers stay as routed (`start`, step 4's: they pass
+    through the frame and the plumbing wall's cavity, the hot riser with 0.4 in. to spare), and
+    the mains under the slab grow, each edge the larger of what its velocity asks and one size
+    for all, the least that leaves every flat's shower its pressure. Only if no main will do,
+    Appendix E's own way: every pipe the smallest PEX within its velocity and the tightest flat's
+    friction rate (worked three times, the fittings' feet changing with the sizes)."""
+    from .hvac import FT, pex_psi_per_100ft, sdr9_bore_in
+    from .loads import hunter_gpm, water
+
+    pl, h = "systems.plumbing.", "systems.hot_water."
+    fit = ep_fittings()
+    w = water(apt, p)
+    per = w["per_flat"]
+    storeys = apt["storeys"]
+    cols = stacks(apt)
+    lv = {x["storey"]: x["elevation_m"] for x in apt["levels"]}
+    floor = {f["name"]: f["floor"] for f in apt["flats"]}
+    out = {}
+    for kind in ("cold", "hot"):
+        t_c = ((p[h + "distribution_f"] if kind == "hot" else mains_f(p)["design_f"]) - 32) / 1.8
+        main = routes.tree(f"main/{kind}")
+        legs: dict[str, list[dict]] = {}
+        for col, names in cols.items():
+            tees = {n: routes.tree(f"plumbing/{kind}/{n}").root[2] for n in names}
+            z_top = max(tees.values())
+            for n in names:
+                segs = []
+                for k in main.path(col)["edges"]:
+                    e = main.edges[k]
+                    segs.append({"segment": "main", "key": ("main", k), "gpm": hunter_gpm(len(e.below) * storeys * per[kind]),
+                                 "ft": _ft(main, k), "sweeps": e.bends, "elbows": 0, "tee": e.tee})
+                z0 = main.point(col)[2]
+                for i, z in enumerate(sorted(z_ for z_ in tees.values() if z_ <= tees[n] + 1e-9)):
+                    above = sum(1 for z_ in tees.values() if z_ >= z - 1e-9)
+                    segs.append({"segment": "riser", "key": ("riser", col), "gpm": hunter_gpm(above * per[kind]), "ft": (z - z0) / FT,
+                                 "sweeps": 0, "elbows": 1 if i == 0 else 0, "tee": "run" if i > 0 else "none"})
+                    z0 = z
+                bt = routes.tree(f"plumbing/{kind}/{n}")
+                es = bt.path("tub")["edges"]
+                for j, k in enumerate(es):
+                    e = bt.edges[k]
+                    first = j == 0
+                    segs.append({"segment": "branch", "key": ("branch",), "gpm": hunter_gpm(per[kind]), "ft": _ft(bt, k), "sweeps": e.bends,
+                                 "elbows": (1 if first and tees[n] >= z_top - 1e-9 else 0) + (1 if j == len(es) - 1 else 0),
+                                 "tee": ("branch" if tees[n] < z_top - 1e-9 else "none") if first else e.tee})
+                legs[n] = segs
+        budgets = {}
+        for n in legs:
+            static = (lv[floor[n]] / FT + p[pl + "valve_height_in"] / 12) * 0.433
+            budgets[n] = pressure_budget(min(p[pl + "max_static_psi"] - falloff, limit_psi), {
+                "the shower's valve (Table 604.3)": p[pl + "fixture_psi"],
+                "up to the shower": static,
+                "the flat's meter": sub(hunter_gpm(per[kind])),
+                **({"the master mixing valve": tmv} if kind == "hot" else {}),
+            })
+        most: dict = {}
+        for segs in legs.values():
+            for sg in segs:
+                most[sg["key"]] = max(most.get(sg["key"], 0.0), sg["gpm"])
+        def el(sg: dict, n: float) -> float:
+            if all_elbows:
+                return (sg["sweeps"] + sg["elbows"]) * fit[n]["elbow"] + fit[n].get(sg["tee"], 0.0)
+            return (sg["sweeps"] * p[pl + "pex_sweep_el_d"] * sdr9_bore_in(n) / 12 + sg["elbows"] * fit[n]["elbow"]
+                    + fit[n].get(sg["tee"], 0.0))
+        def spare(size: dict) -> float:
+            return min(budgets[n]["friction_psi"] - sum(pex_psi_per_100ft(sg["gpm"], t_c, sdr9_bore_in(size[sg["key"]]))
+                                                        * (sg["ft"] + el(sg, size[sg["key"]])) / 100 for sg in segs)
+                       for n, segs in legs.items())
+
+        vel = {k: pex_for(q, p[pl + f"{kind}_fps"], 1e9, t_c)[0] for k, q in most.items()}
+        held = {k: max(start[kind][k[0]], vel[k]) for k in most if k[0] != "main"}
+        size, how = None, "mains"
+        for n_main in [n_ for n_ in PEX_SIZES if n_ >= start[kind]["main"] - 1e-9]:
+            trial = {**held, **{k: max(n_main, vel[k]) for k in most if k[0] == "main"}}
+            if spare(trial) >= 0:
+                size = trial
+                break
+        if size is None:
+            how = "every pipe"
+            size = {k: start[kind][k[0]] for k in most}
+            for _ in range(3):
+                dev = {n: sum(sg["ft"] + el(sg, size[sg["key"]]) for sg in segs) for n, segs in legs.items()}
+                rate = min(budgets[n]["friction_psi"] * 100 / dev[n] for n in legs)
+                size = {k: pex_for(q, p[pl + f"{kind}_fps"], rate, t_c)[0] for k, q in most.items()}
+        dev = {n: sum(sg["ft"] + el(sg, size[sg["key"]]) for sg in segs) for n, segs in legs.items()}
+        rate = min(budgets[n]["friction_psi"] * 100 / dev[n] for n in legs)
+        by_flat = {}
+        for n, segs in legs.items():
+            fr = 0.0
+            rows = []
+            for sg in segs:
+                nn = size[sg["key"]]
+                f = pex_psi_per_100ft(sg["gpm"], t_c, sdr9_bore_in(nn))
+                eq = sg["ft"] + el(sg, nn)
+                fr += f * eq / 100
+                rows.append({**sg, "in": nn, "psi_100ft": f, "eq_ft": eq, "fps": _fps(sg["gpm"], nn)})
+            by_flat[n] = {"friction_psi": fr, "spare_psi": budgets[n]["friction_psi"] - fr, "developed_ft": dev[n], "segments": rows,
+                          "budget": budgets[n], "need_psi": budgets[n]["total_psi"] + fr}
+        worst = min(by_flat, key=lambda n: by_flat[n]["spare_psi"])
+        wv = by_flat[worst]
+        # The worst flat's path, its pieces merged by what they are (the main, the riser, the branch).
+        merged = []
+        for what in ("main", "riser", "branch"):
+            ss = [r for r in wv["segments"] if r["segment"] == what]
+            merged.append({"segment": f"{what} ({len(ss)} pieces)", "gpm": max(r["gpm"] for r in ss), "ft": sum(r["ft"] for r in ss),
+                           "eq_ft": sum(r["eq_ft"] for r in ss), "in": max(r["in"] for r in ss), "fps": max(r["fps"] for r in ss),
+                           "psi_100ft": max(r["psi_100ft"] for r in ss)})
+        out[kind] = {"budget": wv["budget"], "developed_ft": wv["developed_ft"], "rate_psi_100ft": rate, "segments": merged,
+                     "friction_psi": wv["friction_psi"], "spare_psi": wv["spare_psi"], "flat": worst,
+                     "by_flat": {n: v["spare_psi"] for n, v in by_flat.items()}, "need_psi": max(v["need_psi"] for v in by_flat.values()),
+                     "sizes": {"main": max(v for k, v in size.items() if k[0] == "main"),
+                               "main_edges": {k[1]: v for k, v in size.items() if k[0] == "main"},
+                               "riser": max(v for k, v in size.items() if k[0] == "riser"), "branch": size[("branch",)]},
+                     "fps_max": max(r["fps"] for v in by_flat.values() for r in v["segments"]), "grown": how,
+                     "over_fps": [n for n, v in by_flat.items() if any(r["fps"] > p[pl + f"{kind}_fps"] + 1e-9 for r in v["segments"])]}
+    return out
+
+
+def routed_hot_lengths(apt: dict, routes) -> dict[str, float]:
+    """IPC 607.2 on the routes: each flat's longest hot pipe (ft) from its riser (the recirculated
+    loop) to a fixture, along its routed branch to the fixture's stub-out."""
+    from .hvac import FT
+
+    out = {}
+    for f in apt["flats"]:
+        t = routes.tree(f"plumbing/hot/{f['name']}")
+        out[f["name"]] = max(t.path(x)["m"] for x in t.terminals()) / FT
+    return out
+
+
+def design(apt: dict, p: dict, routes=None) -> dict:
     """Step 4's water: the plant, the recirculating loop, and every pipe from the street to the
-    highest shower, with what each part costs in pressure."""
+    highest shower, with what each part costs in pressure. With `routes` (7c), the loop's loss, the
+    pressure paths and IPC 607.2 on the routed pipe (`routed_loop`, `routed_paths`,
+    `routed_hot_lengths`); else on lengths taken square."""
     from .hvac import FT
     from .loads import hot_water, water
     from .systems import by_flat
@@ -445,6 +665,11 @@ def design(apt: dict, p: dict) -> dict:
             break
         ret_main, ret_rise = sized[0][0], sized[1][0]
     ret_fps = max(sized[0][1], sized[1][1])
+    square_loss, square_rows = loss, rows
+    if routes is not None:
+        rl = routed_loop(apt, p, routes, t_loop, t_in, air_f, ins, od)
+        loss, loop_gpm, rows = rl["loss"], rl["gpm"], rl["rows"]
+        ret_main, ret_rise, ret_fps = rl["return_main_in"], rl["return_riser_in"], rl["return_fps"]
 
     # -- the plant: Ecosizer's swing tank on the design day (Jon, 2026-11-21). The loop returns to the
     # swing tank, whose element covers its loss only when no hot water is passing through.
@@ -471,7 +696,7 @@ def design(apt: dict, p: dict) -> dict:
     sub = lambda q: _device_psi(q, [(10, p[pl + "submeter_psi_10"]), (13, p[pl + "submeter_psi_13"])])  # noqa: E731
     tmv = _device_psi(demand["the building"]["hot"], [(26, p[pl + "tmv_psi_26"]), (40, p[pl + "tmv_psi_40"])])
     falloff = _device_psi(q_all, [(40, p[pl + "prv_falloff_psi_40"])])
-    far = max(rows, key=lambda r_: r_["main_ft"])
+    far = max(square_rows, key=lambda r_: r_["main_ft"])
     far_stack = far["stacks"][0]
     top_flat = rs[far_stack]["flats"][-1]
     bx = _xy(next(r_ for r_ in by_flat(apt)[top_flat] if r_["use"] == "bath"))
@@ -497,13 +722,27 @@ def design(apt: dict, p: dict) -> dict:
             sized.append({"segment": name, "gpm": q, "ft": L, "in": n, "fps": v, "psi_100ft": f})
         paths[kind] = {"budget": budget, "developed_ft": developed, "rate_psi_100ft": rate, "segments": sized,
                        "friction_psi": friction, "spare_psi": budget["friction_psi"] - friction}
-    # What the street must give at the peak with the reducing valve wide open: the worse path's
-    # needs below the valve, and the meter, the tap, the backflow assembly and the main's depth.
     upstream = {"the main meter": _device_psi(q_all, [(40, p[pl + "meter_psi_40"])]),
                 "the tap in the main (Table E103.3(4))": tap_loss_psi(q_all, p[pl + "tap_in"]),
                 "the double check valve assembly": _device_psi(q_all, [(40, p[pl + "dcva_psi_40"])]),
                 "up from the main": p[pl + "main_depth_ft"] * 0.433}
-    below = max(paths[k]["budget"]["total_psi"] + paths[k]["friction_psi"] for k in paths)
+    limit = p[pl + "street_psi"] - sum(upstream.values())
+    if routes is not None:
+        start = {k: {"main": next(s_["in"] for s_ in paths[k]["segments"] if "main" in s_["segment"]),
+                     "riser": next(s_["in"] for s_ in paths[k]["segments"] if "riser" in s_["segment"]),
+                     "branch": next(s_["in"] for s_ in paths[k]["segments"] if "branch" in s_["segment"])} for k in paths}
+        square_paths = paths
+        paths = {}
+        for k, v in routed_paths(apt, p, routes, falloff, sub, tmv, start, limit).items():
+            paths[k] = v
+        bound = routed_paths(apt, p, routes, falloff, sub, tmv, start, limit, all_elbows=True)
+        for k in paths:
+            paths[k]["all_elbows"] = {"spare_psi": bound[k]["spare_psi"], "sizes": bound[k]["sizes"], "developed_ft": bound[k]["developed_ft"]}
+            paths[k]["square"] = {"spare_psi": square_paths[k]["spare_psi"], "developed_ft": square_paths[k]["developed_ft"]}
+            paths[k]["start_sizes"] = start[k]
+    # What the street must give at the peak with the reducing valve wide open: the worse path's
+    # needs below the valve, and the meter, the tap, the backflow assembly and the main's depth.
+    below = max(paths[k].get("need_psi", paths[k]["budget"]["total_psi"] + paths[k]["friction_psi"]) for k in paths)
     street_need = below + sum(upstream.values())
 
     # IPC 607.2: no hot pipe longer than 50 ft from the loop (the risers) to a fixture: the far
@@ -516,6 +755,9 @@ def design(apt: dict, p: dict) -> dict:
                     a, b = room["lo_m"], room["hi_m"]
                     d = max(abs(x - r["xy"][0]) + abs(y - r["xy"][1]) for x in (a[0], b[0]) for y in (a[1], b[1]))
                     longest = max(longest, d / FT + 4.0)
+    square_longest = longest
+    if routes is not None:
+        longest = max(routed_hot_lengths(apt, routes).values())
     return {"mains": m, "inlet_f": t_in, "day_gal": day_gal, "primary": prim,
             "heater": {"preheat_f": pre_f, "preheat_share": share_pre, "hp_cop": cop, "day_kbtu": day_kbtu,
                        "hp_kwh_day": day_kbtu * (1 - share_pre) / 3.412142 / cop,
@@ -528,13 +770,14 @@ def design(apt: dict, p: dict) -> dict:
                        "dc_per_circuit": (pre_f - t_in) / (dc_in_f - src_f) if dc_in_f > src_f else float("inf"),
                        "cold_end_k": (src_f - t_in) / 1.8,
                        "hp_capacity_ok": p[h + "hp_capacity_btuh"] / 1000 >= prim["capacity_kbtuh"] * (1 - share_pre)},
-            "loop": {"loss_btuh": loss, "w_per_flat": loss / 3.412142 / len(apt["flats"]), "gpm": loop_gpm,
+            "loop": {"loss_btuh": loss, "square_loss_btuh": square_loss, "w_per_flat": loss / 3.412142 / len(apt["flats"]), "gpm": loop_gpm,
                      "return_main_in": ret_main, "return_riser_in": ret_rise, "return_fps": ret_fps,
                      "sides": rows, "rise_ft": rise_ft},
             "tm": {"volume_gal": prim["tm_volume_gal"], "capacity_kbtuh": prim["tm_capacity_kbtuh"], **sday,
                    "kwh_day": sday["element_kbtu"] / 3.412142, "plant_share": 1 - sday["element_kbtu"] / sday["loss_kbtu"]},
             "paths": paths, "falloff_psi": falloff, "street_need_psi": street_need, "upstream": upstream,
-            "street_ok": p[pl + "street_psi"] >= street_need, "longest_hot_ft": longest, "risers": rs}
+            "street_ok": p[pl + "street_psi"] >= street_need, "longest_hot_ft": longest, "square_longest_hot_ft": square_longest,
+            "risers": rs, "routed": routes is not None}
 
 
 # ---- The step as data and as text ----

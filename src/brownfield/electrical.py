@@ -321,10 +321,61 @@ HEATING = ("preheater",)  # fixed electric space heating (Article 424): 220.82(C
 APPLIANCES = tuple(k for k, *_ in APPLIANCE_CIRCUITS if k not in HEATING)
 
 
-def flat_panel(apt: dict, p: dict, name: str) -> dict:
-    """One flat's panel: its circuits sized, its legs, its spaces against the load centre's."""
+# ---- 7c: the circuits and feeders on their routes ----
+
+NO_DROP = ("lights-", "erv", "preheater")  # their far point is at the ceiling (a light's box; the ERV in its soffit)
+
+
+def routed_circuit_ft(apt: dict, p: dict, routes, name: str, circ: dict) -> float:
+    """A branch circuit's length on its route (7c): from its breaker up the panel to the top (half the
+    panel's height), the route up the panel's bay into the joists over the flat and across to the
+    far point of its rooms, down the wall to the outlet there (to `outlet_in` above the floor: the
+    least an outlet stands; none for the lights' and the soffits' circuits), and 300.14's free
+    conductor at each end. The mini-split's runs with its line set (7b: from the hall's soffit to its
+    riser in the plumbing wall, up it and across the roof), from the panel square to the indoor unit."""
+    from .routing import IN as RIN
+
+    w = "systems.wiring."
+    panel = routes.pinned(f"{name}/panel")
+    inside = (panel["hi"][2] - panel["lo"][2]) / 2
+    free = 2 * p[w + "free_conductor_in"] * RIN
+    floor = next(x for x in apt["levels"] if x["storey"] == next(f["floor"] for f in apt["flats"] if f["name"] == name))["elevation_m"]
+    if circ["key"] == "minisplit":
+        ms = routes.pinned(f"{name}/minisplit")
+        mx, my = (ms["lo"][0] + ms["hi"][0]) / 2, (ms["lo"][1] + ms["hi"][1]) / 2
+        px, py = (panel["lo"][0] + panel["hi"][0]) / 2, (panel["lo"][1] + panel["hi"][1]) / 2
+        to_unit = abs(mx - px) + abs(my - py) + (ms["lo"][2] - panel["hi"][2])
+        from .hvac import line_set_m
+        return (inside + to_unit + line_set_m(routes, name) + free) / FT
+    t = routes.tree(f"electrical/branch/{name}/{circ['key']}")
+    drop = 0.0 if circ["key"].startswith(NO_DROP) else max(0.0, t.point("far")[2] - (floor + p[w + "outlet_in"] * RIN))
+    return (inside + t.length_m + drop + free) / FT
+
+
+def routed_feeder_ft(apt: dict, p: dict, routes, name: str) -> float:
+    """A flat's feeder on its route (7c): down the annex's wall from the meter stack's middle into
+    the ground, the route under the slab to the foot of its conduit in the hall's partition, up it
+    to the panel's middle, and 300.14's free conductor at each end."""
+    from .routing import IN as RIN
+
+    w = "systems.wiring."
+    t = routes.tree(f"electrical/feeder/{name}")
+    ms = meter_stack(p, len(apt["flats"]))
+    lvl = next(x for x in apt["levels"] if x["storey"] == next(f["floor"] for f in apt["flats"] if f["name"] == name))
+    z_feed = t.root[2]
+    down = ms["mid_in"] * RIN - z_feed
+    up = lvl["elevation_m"] + p[w + "panel_mid_in"] * RIN - t.point("riser")[2]
+    return (down + t.length_m + up + 2 * p[w + "free_conductor_in"] * RIN) / FT
+
+
+def flat_panel(apt: dict, p: dict, name: str, routes=None) -> dict:
+    """One flat's panel: its circuits sized, its legs, its spaces against the load centre's. With
+    `routes` (7c), each circuit's length on its route (`routed_circuit_ft`), its square one kept."""
     fp = "systems.flat_panel."
-    circuits = [branch_size(c, p) for c in flat_circuits(apt, p, name)]
+    cs = flat_circuits(apt, p, name)
+    if routes is not None:
+        cs = [{**c, "square_ft": c["ft"], "ft": routed_circuit_ft(apt, p, routes, name, c)} for c in cs]
+    circuits = [branch_size(c, p) for c in cs]
     lg = legs(circuits)
     poles = sum(c["poles"] for c in circuits)
     need = math.ceil(poles * (1 + p[fp + "spare_fraction"]))
@@ -394,7 +445,7 @@ def split_load(p: dict, calculated_va: float, cooling_va: float) -> tuple[float,
     return general * share_ll + cooling_va, general * (1 - share_ll) / 2  # the HVAC term is the mini-split, across
 
 
-def feeders(apt: dict, p: dict) -> dict:
+def feeders(apt: dict, p: dict, routed=None) -> dict:
     """Each flat's feeder: its 220.82 load and the leg current it draws; its breaker under the
     meter; copper at 75 C (110.14(C)(1): the load centre's lugs are rated for it; the tenant
     breakers' to confirm in the submittal), at least 83% of the
@@ -402,6 +453,8 @@ def feeders(apt: dict, p: dict) -> dict:
     larger until its drop at that load is within the limit; its equipment grounding conductor."""
     w = "systems.wiring."
     rt = routes(apt, p)
+    if routed is not None:
+        rt = {n: {**v, "square_ft": v["ft"], "ft": routed_feeder_ft(apt, p, routed, n)} for n, v in rt.items()}
     out = {}
     for f in apt["flats"]:
         ld = flat_load(p, f["floor_m2"] / FT2)
@@ -418,7 +471,8 @@ def feeders(apt: dict, p: dict) -> dict:
             if max(d["ll"], d["an"], d["bn"]) <= p[w + "vd_feeder_max"] + 1e-12:
                 break
             i += 1
-        out[f["name"]] = {"ft": rt[f["name"]]["ft"], "floor": f["floor"], "load": ld, "amps": amps, "breaker_a": breaker,
+        out[f["name"]] = {"ft": rt[f["name"]]["ft"], "square_ft": rt[f["name"]].get("square_ft", rt[f["name"]]["ft"]),
+                          "floor": f["floor"], "load": ld, "amps": amps, "breaker_a": breaker,
                           "least_a": least, "size": SIZES[i], "min_size": first, "ampacity": ampacity(SIZES[i], FEEDER_METAL, 75),
                           "drop": d, "va_ll": va_ll, "va_ln": va_ln, "egc": egc_for(breaker)}
     return out
@@ -643,15 +697,15 @@ def ev(p: dict, svc: dict) -> dict:
 REQUIRED = ("sa-1", "sa-2", "laundry", "bath")  # 210.11(C)(1)-(3)
 
 
-def design(apt: dict, p: dict) -> dict:
+def design(apt: dict, p: dict, routes=None) -> dict:
     """Step 5's electrical for the latest revision: every flat's panel and feeder, the house loads,
     the service and its fault current, the meter wall and the electrical room, the roof's PV, the
-    chargers' room."""
+    chargers' room. With `routes` (7c), the circuits and feeders on their routes."""
     from .loads import design_case
 
     w = "systems.wiring."
-    panels = {f["name"]: flat_panel(apt, p, f["name"]) for f in apt["flats"]}
-    fd = feeders(apt, p)
+    panels = {f["name"]: flat_panel(apt, p, f["name"], routes) for f in apt["flats"]}
+    fd = feeders(apt, p, routes)
     svc = service(apt, p)
     # Each circuit's drop with its feeder's: 120 V circuits on the worse leg to neutral, 208 V ones
     # line to line. And the preheater's output at the voltage it gets, against the design hour.

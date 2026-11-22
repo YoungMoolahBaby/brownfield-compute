@@ -1,0 +1,14 @@
+# Uponor ProPEX EP (engineered polymer) fittings' equivalent lengths (feet of PEX pipe), same-size fittings only.
+# Source: Uponor, Plumbing Design Assistance Manual (PDAM), 8th ed. 2025, Appendix C "Fitting equivalent length":
+#   p. 102 "EP tees" (Through, Branch) and p. 104 "90 elbow", read from the page images (the text layer drops the
+#   fractions). Uponor: "All Uponor values represent pressure loss at 8 ft./sec.", tested by NSF International to
+#   ISA-S75.02. Saved under data/raw/pass3g/dl_pex/uponor_pdam.pdf (gitignored).
+size_in,elbow90_ft,tee_through_ft,tee_branch_ft
+0.5,10.4,1.0,6.3
+0.75,10.8,1.5,15.6
+1.0,11.5,1.3,12.7
+1.25,10.0,3.8,8.6
+1.5,11.5,1.8,10.6
+2.0,17.1,0.8,15.5
+2.5,20.0,2.7,22.3
+3.0,23.2,2.8,23.9

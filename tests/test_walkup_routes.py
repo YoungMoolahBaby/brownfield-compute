@@ -163,3 +163,85 @@ def test_every_step_7b_check_passes_on_forges_routes(apt, P):
         pytest.skip("forge's routes answer older requests: rerun `cargo run --release -- routes-json` in forge/")
     ch = routecheck.checks(apt, P, body, rt, routing.load_frame(apt, P), sha)
     assert [label for label, ok, _ in ch if not ok] == []
+
+
+# ---- 7c: steps 3-6 on the routes ----
+
+def _tree(branches, root=(0.0, 0.0, 0.0), slope=0.0):
+    from brownfield.routed import Tree
+
+    req = {"id": "t", "root": list(root), "snap_m": 0.05, "goals": [], "slope": slope}
+    rec = {"ok": True, "branches": [{"terminal": t, "points": [list(q) for q in pts], "to": list(pts[-1])} for t, pts in branches]}
+    return Tree(req, rec)
+
+
+def test_a_routed_tree_reads_back_as_edges_with_their_tees():
+    # A trunk to `a` with a bend; `b` tees off it 2 m out.
+    t = _tree([("a", [(0, 0, 0), (4, 0, 0), (4, 3, 0)]), ("b", [(2, 0, 0), (2, -2, 0)])])
+    assert [round(e.length, 9) for e in t.edges] == [2.0, 5.0, 2.0]
+    assert t.path("a") == {"m": 7.0, "bends": 1, "tee_branch": 0, "tee_run": 1, "edges": [0, 1]}
+    assert t.path("b") == {"m": 4.0, "bends": 0, "tee_branch": 1, "tee_run": 0, "edges": [0, 2]}
+    assert sorted(t.edges[0].below) == ["a", "b"] and t.length_m == pytest.approx(9.0)
+    # On a graded run the branch meets its trunk above it (it has fallen less): that drop is counted.
+    g = _tree([("a", [(0, 0, 0), (4, 0, -0.04)]), ("b", [(2, 0, 0.03), (2, -2, 0.05)])], slope=0.01)
+    assert g.branches[1].parent == 0 and g.branches[1].join_m == pytest.approx(0.05)
+    assert g.path("b")["m"] == pytest.approx(g.branches[0].cum[-1] / 2 + 0.05 + g.branches[1].length)
+
+
+def test_the_tree_hydraulics_reproduce_the_chain_and_split_a_symmetric_tee(P):
+    c = P["systems.sprinkler.c_cpvc"]
+    drop = P["systems.sprinkler.drop_ft"]
+    h = {"k": 4.9, "q": 13.0, "p": 7.0}
+    remote, near = dict(h), dict(h)
+    nodes = [{"head": remote, "seg": {"ft": 10.0, "size": "1", "elbows": 1, "tee_runs": 1}, "next_head": near},
+             {"seg": {"ft": 20.0, "size": "1-1/4", "elbows": 2, "tee_runs": 0, "tee_branches": 1}}]
+    p0, q0 = fire._path_back(nodes, P, c)
+    src = fire.HNode(0.0)
+    n_near = fire.HNode(0.0, near, "near")
+    n_rem = fire.HNode(0.0, remote, "remote")
+    n_rem.kids.append((fire.HEdge(0.0, "branch", 0, "none"), fire.HNode(0.0)))  # the pipe runs on: its outlet a tee's branch
+    src.kids.append((fire.HEdge(20.0, "feed", 2, "branch"), n_near))
+    n_near.kids.append((fire.HEdge(10.0, "branch", 1, "run"), n_rem))
+    p1, q1 = fire.tree_demand(src, {"near", "remote"}, {"branch": "1", "feed": "1-1/4"}, P, c, drop)
+    assert (p1, q1) == pytest.approx((p0, q0), abs=1e-9)
+    # Two equal legs from a junction: each carries half.
+    j = fire.HNode(0.0)
+    one = fire.HNode(0.0)
+    for k in ("x", "y"):
+        j.kids.append((fire.HEdge(8.0, "branch", 1, "branch"), fire.HNode(0.0, dict(h), k)))
+    one.kids.append((fire.HEdge(8.0, "branch", 1, "branch"), fire.HNode(0.0, dict(h), "x")))
+    pj, qj = fire.tree_demand(j, {"x", "y"}, {"branch": "1"}, P, c)
+    p_one, q_one = fire.tree_demand(one, {"x"}, {"branch": "1"}, P, c)
+    assert pj == pytest.approx(p_one) and qj == pytest.approx(2 * q_one)
+
+
+def test_manual_d_on_a_tree_sizes_the_trunk_for_both_and_the_plenum_for_none(P):
+    from brownfield import hvac
+
+    t = _tree([("a", [(0, 0, 0), (1, 0, 0), (3, 0, 0)]), ("b", [(1, 0, 0), (1, 2, 0)])])
+    el = {"elbow": 30.0, "takeoff": 35.0, "reducer": 8.0, "boot": 30.0}
+    r = hvac.tree_ducts(t, {"a": 200.0, "b": 100.0}, 0.5, P, el)
+    assert [pc["cfm"] for pc in r["pieces"]] == [300.0, 200.0, 100.0]
+    assert r["pieces"][0]["in"] >= r["pieces"][1]["in"] >= r["pieces"][2]["in"]
+    assert [pc["el_ft"] for pc in r["pieces"]] == [0.0, 8.0 + 30.0, 35.0 + 30.0]
+    # With a plenum a metre deep, the first piece is the plenum, and both leave it by a take-off.
+    q = hvac.tree_ducts(t, {"a": 200.0, "b": 100.0}, 0.5, P, el, plenum_m=1.0)
+    assert q["pieces"][0]["in"] is None and [pc["el_ft"] for pc in q["pieces"][1:]] == [35.0 + 30.0, 35.0 + 30.0]
+
+
+def test_a_strip_soffit_splits_its_rooms_sprinklers_at_its_centreline():
+    room = {"id": "f/living", "lo_m": [0.0, 0.0, 0.0], "hi_m": [3.0, 8.0, 2.7]}
+    strip = {"room": "f/living", "lo": [0.0, 4.0, 2.3], "hi": [3.0, 4.5, 2.7]}
+    assert fire._sides(room, [strip]) == [([0.0, 0.0], [3.0, 4.25]), ([0.0, 4.25], [3.0, 8.0])]
+    assert fire._sides(room, []) == [([0.0, 0.0], [3.0, 8.0])]
+
+
+@ROUTED
+def test_every_step_7c_check_passes_on_forges_routes(apt, P):
+    from brownfield import routed
+
+    r = routed.load(apt, P)
+    if not r.fresh:
+        pytest.skip(f"forge's routes answer older requests ({r.why}): rerun `brownfield routes --requests` and forge's `routes-json`")
+    s = routed.summary(apt, P, r)
+    assert [label for label, ok, _ in s["checks"] if not ok] == []

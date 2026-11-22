@@ -271,7 +271,63 @@ def stacks(apt: dict) -> dict[str, list[str]]:
     return out
 
 
-def substation(apt: dict, p: dict, alt_covering: bool = False) -> dict:
+def routed_building_loop(apt: dict, p: dict, routes, flats: dict, t_c: float, meters: dict) -> dict:
+    """The building loop on its routes (7c): a riser pair in each column's plumbing wall (7a: the
+    spine between the front and back flats takes no pipe, so one pair a column, not one a side), its
+    three flats' flow; the mains under the slab edge by edge, each carrying the flats beyond it, the
+    smallest PEX within the velocity limit. The pump's head on each flat's path: the supply main to
+    its column, up the riser (in pieces between the flats' tees, each carrying the flats above it)
+    to its tee, its tail to the manifold, its meter and index circuit, and back the same way on the
+    return. Fittings as `plumbing.routed_paths` counts them: a sweep at each bend, an elbow where the
+    main turns up and at the manifold, a tee's branch or run at each junction (Uponor's EP)."""
+    from .plumbing import ep_fittings, stacks as columns
+
+    fit = ep_fittings()
+    sweep = p["systems.plumbing.pex_sweep_el_d"]
+    cols = columns(apt)
+    out_risers, paths = {}, {}
+    for kind in ("supply", "return"):
+        main = routes.tree(f"main/loop-{kind}")
+        for col, names in cols.items():
+            q_col = sum(flats[n]["gpm"] for n in names)
+            n_rise, fps = pipe_for_flow(q_col, p)
+            tees = {n: routes.tree(f"hvac/loop-{kind}-tail/{n}").root[2] for n in names}
+            z_top = max(tees.values())
+            if kind == "supply":
+                out_risers[col] = {"flats": sorted(names), "gpm": q_col, "pipe_in": n_rise, "fps": fps,
+                                   "main_ft": main.path(col)["m"] / FT, "rise_ft": (z_top - main.point(col)[2]) / FT}
+            for n in names:
+                pieces = []
+                for k in main.path(col)["edges"]:
+                    e = main.edges[k]
+                    q = sum(flats[m]["gpm"] for c in e.below for m in cols[c])
+                    pieces.append((q, pipe_for_flow(q, p)[0], (e.length + (main.lead_m if e.up is None else 0.0)) / FT, e.bends, 0, e.tee))
+                z0 = main.point(col)[2]
+                for i, z in enumerate(sorted(z_ for z_ in tees.values() if z_ <= tees[n] + 1e-9)):
+                    q = sum(flats[m]["gpm"] for m, z_ in tees.items() if z_ >= z - 1e-9)
+                    pieces.append((q, n_rise, (z - z0) / FT, 0, 1 if i == 0 else 0, "run" if i > 0 else "none"))
+                    z0 = z
+                tail = routes.tree(f"hvac/loop-{kind}-tail/{n}")
+                es = tail.path("manifold")["edges"]
+                n_tail = pipe_for_flow(flats[n]["gpm"], p)[0]
+                for j, k in enumerate(es):
+                    e = tail.edges[k]
+                    top = tees[n] >= z_top - 1e-9
+                    pieces.append((flats[n]["gpm"], n_tail, (e.length + (tail.lead_m if e.up is None else 0.0)) / FT, e.bends,
+                                   (1 if j == 0 and top else 0) + (1 if j == len(es) - 1 else 0),
+                                   ("none" if top else "branch") if j == 0 else e.tee))
+                psi = 0.0
+                for q, nn, ft, sweeps, elbows, tee in pieces:
+                    eq = ft + sweeps * sweep * sdr9_bore_in(nn) / 12 + elbows * fit[nn]["elbow"] + fit[nn].get(tee, 0.0)
+                    psi += pex_psi_per_100ft(q, t_c, sdr9_bore_in(nn)) * eq / 100
+                paths.setdefault(n, {})[kind] = {"psi": psi, "ft": sum(x[2] for x in pieces),
+                                                 "largest_main_in": max(x[1] for x in pieces[:len(main.path(col)["edges"])])}
+    head = {n: v["supply"]["psi"] + v["return"]["psi"] + meters[n]["psi"] + flats[n]["index_psi"] for n, v in paths.items()}
+    worst = max(head, key=head.get)
+    return {"risers": out_risers, "paths": paths, "head": head, "worst": worst}
+
+
+def substation(apt: dict, p: dict, alt_covering: bool = False, routes=None) -> dict:
     """The building loop at design:
     - **the supply:** the hardest flat's need, held by the plate heat exchanger in the annex's
       mechanical room off the data center's liquid loop (its return, pass 2's supply plus rise),
@@ -315,13 +371,20 @@ def substation(apt: dict, p: dict, alt_covering: bool = False) -> dict:
     side_of = {n: side for side, r in risers.items() for n in r["flats"]}
     path = {n: risers[side_of[n]]["psi"] + meters[n]["psi"] + f["index_psi"] for n, f in flats.items()}
     worst = max(path, key=path.get)
+    square = {"risers": risers, "pump_psi": path[worst], "pump_path": worst}
+    rl = None
+    if routes is not None:
+        rl = routed_building_loop(apt, p, routes, flats, supply - 5, meters)
+        risers, path, worst = rl["risers"], rl["head"], rl["worst"]
+        for r in risers.values():
+            r["psi"] = max(rl["paths"][n]["supply"]["psi"] + rl["paths"][n]["return"]["psi"] for n in r["flats"])
     t_primary_out = t_return + p[s_ + "approach_k"]
     primary_gpm = w / (cp * (t_primary - t_primary_out)) / water_props(t_primary - 5)[0] / GPM
     return {"flats": flats, "supply_c": supply, "return_c": t_return, "w": w, "gpm": gpm, "risers": risers,
             "header_in": header, "header_fps": header_fps, "primary_in_c": t_primary, "primary_out_c": t_primary_out,
             "primary_gpm": primary_gpm, "margin_k": t_primary - supply, "meters": meters,
             "pump_psi": path[worst], "pump_ft": path[worst] * PSI / (rho * 9.80665) / FT, "pump_path": worst,
-            "approach_ok": t_primary - supply >= p[s_ + "approach_k"] - 1e-9}
+            "approach_ok": t_primary - supply >= p[s_ + "approach_k"] - 1e-9, "square": square, "routed_loop": rl}
 
 
 def heat_meter(gpm: float, p: dict) -> dict:
@@ -411,6 +474,134 @@ def size_paths(unit_xy: tuple, branches: dict, esp: float, p: dict, common: tupl
             "worst_inwc": worst, "ok": worst <= esp + 1e-9}
 
 
+def tree_ducts(tree, cfm: dict[str, float], esp: float, p: dict, el: dict, common: list[dict] = (), cap: float | None = None,
+               plenum_m: float = 0.0) -> dict:
+    """Manual D's friction-rate method on a routed duct tree (7c): every piece of duct between two
+    junctions carries the air of the outlets beyond it (`cfm`, by terminal), so where the router
+    ran one room's duct off another's, that shared piece is a trunk, sized for both. Each path's
+    effective length is its measured length and its fittings' equivalent lengths (`el`: an elbow at
+    each bend; where it leaves a junction, a take-off, or a reducer where it runs on past one; a
+    boot at its outlet), and the `common` ducts every path also runs through (each {ft, bends, el
+    (its own fittings), cfm, in (a fixed size, or None)}); the longest sets the friction rate on
+    the fan's pressure less a grille at each end, and each piece is the smallest round duct at or
+    under it, but no larger than it was routed (`cap`, in.). Pieces within `plenum_m` of the root
+    are the supply plenum on the unit's collar (no duct; what leaves them leaves by a take-off).
+    Then each path's pressure at those sizes, against the fan's."""
+    d = "systems.ducts."
+    g = p[d + "grille_inwc"]
+    avail = esp - 2 * g
+    pieces = []
+    for n, e in enumerate(tree.edges):
+        ft = (e.length + (tree.lead_m if e.up is None else 0.0)) / FT
+        reach = sum(tree.edges[k].length for k in _chain_to(tree, n)) + tree.lead_m
+        fit = e.bends * el["elbow"] + {"branch": el["takeoff"], "run": el["reducer"]}.get(e.tee, 0.0) + (el["boot"] if e.terminal else 0.0)
+        pieces.append({"ft": ft, "el_ft": fit, "cfm": sum(cfm[t] for t in e.below), "bends": e.bends, "tee": e.tee,
+                       "terminal": e.terminal, "plenum": reach <= plenum_m + 1e-9 and not e.terminal})
+    for n, e in enumerate(tree.edges):
+        if e.up is not None and pieces[e.up]["plenum"] and e.tee == "run":
+            pieces[n]["el_ft"] += el["takeoff"] - el["reducer"]
+    com = [{**c_, "tel": c_["ft"] + c_["bends"] * el["elbow"] + c_["el"]} for c_ in common]
+    com_tel = sum(c_["tel"] for c_ in com)
+    paths = {t: tree.chain(t) for t in tree.terminals()}
+    tel = {t: sum(pieces[k]["ft"] + pieces[k]["el_ft"] for k in ks if not pieces[k]["plenum"]) + com_tel for t, ks in paths.items()}
+    fr = avail * 100 / max(tel.values())
+    for pc in pieces:
+        if pc["plenum"]:
+            pc.update({"in": None, "fr": 0.0, "fpm": 0.0, "inwc": 0.0, "capped": False})
+            continue
+        size, _, _ = duct_size(pc["cfm"], fr, p)
+        pc["capped"] = cap is not None and size > cap + 1e-9
+        pc["in"] = min(size, cap) if cap is not None else size
+        pc["fr"], pc["fpm"] = duct_inwc_per_100ft(pc["cfm"], pc["in"], p)
+        pc["inwc"] = pc["fr"] * (pc["ft"] + pc["el_ft"]) / 100
+    for c_ in com:
+        if c_.get("in") is None:
+            c_["in"], c_["fr"], c_["fpm"] = duct_size(c_["cfm"], fr, p)
+        else:
+            c_["fr"], c_["fpm"] = duct_inwc_per_100ft(c_["cfm"], c_["in"], p)
+        c_["inwc"] = c_["fr"] * c_["tel"] / 100
+    com_inwc = sum(c_["inwc"] for c_ in com)
+    out = {t: {"cfm": cfm[t], "ft": sum(pieces[k]["ft"] for k in ks) + sum(c_["ft"] for c_ in com), "tel_ft": tel[t],
+               "inwc": sum(pieces[k]["inwc"] for k in ks) + com_inwc + 2 * g, "in": pieces[ks[-1]]["in"]} for t, ks in paths.items()}
+    worst = max(x["inwc"] for x in out.values())
+    sized = [pc["in"] for pc in pieces if pc["in"] is not None]
+    return {"esp": esp, "available": avail, "tel_ft": max(tel.values()), "friction_rate": fr, "pieces": pieces, "paths": out,
+            "common": com, "worst_inwc": worst, "ok": worst <= esp + 1e-9, "largest_in": max(sized),
+            "capped": sum(1 for pc in pieces if pc["capped"])}
+
+
+def _chain_to(tree, n: int) -> list[int]:
+    out = []
+    m = n
+    while m is not None:
+        out.append(m)
+        m = tree.edges[m].up
+    return out
+
+
+def least_esp(tree, cfm: dict[str, float], p: dict, el: dict, common: list[dict], cap: float, plenum_m: float, lo: float,
+              hi: float, step: float) -> dict:
+    """The mini-split's set static pressure for its ducts as routed: the least, from `lo` by `step`
+    up to its maximum `hi`, at which Manual D's sizes (no larger than routed) carry every path
+    within it (Fujitsu: 'According to the resistance of the connecting duct, perform the setting of
+    the external static pressure'). The last tried if none does."""
+    esp = lo
+    while True:
+        r = tree_ducts(tree, cfm, esp, p, el, common, cap, plenum_m)
+        if r["ok"] or esp >= hi - 1e-9:
+            return r
+        esp = min(hi, round(esp + step, 6))
+
+
+def routed_ducts(apt: dict, p: dict, routes) -> dict:
+    """Step 3's ducts on the routes (7c), each flat's:
+    - **the ERV's supply,** through the mini-split (Jon, 2026-11-21): from Broan's Tandem kit along
+      the outdoor-air duct to the unit, then its supply duct to the mini-split's return, its whole
+      airflow; the mini-split's fan carries it on to the rooms. Its pressure in the mini-split's
+      return is taken as nothing (the return's suction would only help);
+    - **the ERV's exhaust:** from the kitchen's and the bath's grilles through the exhaust tree to the
+      unit, then the exhaust duct to the kit;
+    - **the mini-split's supply tree** to its rooms from the plenum on its collar, and its return at
+      the unit (no duct: a grille on the return box); its static pressure set to what they need.
+    The outdoor-air and exhaust ducts stay at Broan's 5 in.; the rest is sized by `tree_ducts`, no
+    larger than routed."""
+    from .loads import ventilation
+
+    d, m = "systems.ducts.", "systems.minisplit."
+    erv_el = {"elbow": p[d + "erv_elbow_el_ft"], "takeoff": p[d + "erv_takeoff_el_ft"], "reducer": p[d + "reducer_el_ft"],
+              "boot": p[d + "erv_boot_el_ft"]}
+    ms_el = {"elbow": p[d + "ms_elbow_el_ft"], "takeoff": p[d + "ms_takeoff_el_ft"], "reducer": p[d + "reducer_el_ft"],
+             "boot": p[d + "ms_boot_el_ft"]}
+    vent = ventilation(apt, p)
+    cool = cooling_ducts(apt, p)
+    out = {}
+    for name, v in vent.items():
+        sup_cfm, exh = sum(v["supply"].values()), v["exhaust"]
+        routed_in = {k: routes.reqs[f"hvac/{k}/{name}"]["od_m"] / IN for k in ("erv-supply", "erv-exhaust", "ms-supply")}
+
+        def outdoor(kind: str, q: float) -> dict:
+            t = routes.tree(f"hvac/erv-{kind}/{name}")
+            # Broan's kit at the wall, and its 5-to-4 in. reducer at the unit (manual 2.8).
+            return {"ft": t.length_m / FT, "bends": sum(e.bends for e in t.edges), "el": p[d + "termination_el_ft"] + p[d + "reducer_el_ft"],
+                    "cfm": q, "in": p["systems.routing.oa_duct_in"], "what": kind}
+
+        supply = tree_ducts(routes.tree(f"hvac/erv-supply/{name}"), {"minisplit": sup_cfm}, p["systems.erv.esp_inwc"], p, erv_el,
+                            [outdoor("oa", sup_cfm)], routed_in["erv-supply"])
+        ex_tree = routes.tree(f"hvac/erv-exhaust/{name}")
+        exhaust = tree_ducts(ex_tree, {t: exh[t] for t in ex_tree.terminals()}, p["systems.erv.esp_inwc"], p, erv_el,
+                             [outdoor("ea", sum(exh.values()))], routed_in["erv-exhaust"])
+        c = cool[name]
+        ms_tree = routes.tree(f"hvac/ms-supply/{name}")
+        q = p[f"systems.{c['unit']}.cfm"]
+        ms = least_esp(ms_tree, {t: c["ducts"]["branches"][t]["cfm"] for t in ms_tree.terminals()}, p, ms_el,
+                       [{"ft": 0.0, "bends": 0, "el": p[d + "ms_return_el_ft"], "cfm": q, "in": None, "what": "return"}],
+                       routed_in["ms-supply"], p[m + "plenum_in"] * IN, p[m + "esp_inwc"], p[f"systems.{c['unit']}.esp_max_inwc"],
+                       p[m + "esp_step_inwc"])
+        out[name] = {"erv_supply": supply, "erv_exhaust": exhaust, "ms": ms, "routed_in": routed_in, "unit": c["unit"],
+                     "in_range": p["systems.erv.cfm_min"] <= v["design_cfm"] <= p["systems.erv.cfm_max"]}
+    return out
+
+
 def _xy(r: dict) -> tuple[float, float]:
     c = _centre(r)
     return c[0], c[1]
@@ -487,6 +678,32 @@ def line_set_ft(apt: dict, hall: dict, p: dict) -> float:
     made up to it."""
     roof_m = apt["storey_m"] * max(f["floor"] for f in apt["flats"])
     return max((roof_m - hall["hi_m"][2]) / FT + p["systems.minisplit.line_set_horizontal_ft"], p["systems.minisplit.line_min_ft"])
+
+
+def line_set_m(routes, name: str) -> float:
+    """A flat's line set as routed (m): the indoor unit to its riser, up the riser in the plumbing
+    wall to the roof, across to the outdoor unit."""
+    inner = routes.tree(f"hvac/line-set/{name}")
+    roof = routes.tree(f"hvac/roof-line-set/{name}")
+    return inner.length_m + (roof.root[2] - inner.root[2]) + roof.length_m
+
+
+def routed_cooling(apt: dict, p: dict, routes) -> dict:
+    """Each flat's mini-split on its routed line set (7c): its capacity at the design dry bulb,
+    derated for the line's length by Fujitsu's table (`unit_capacity`; never under its 16 ft),
+    against the flat's design sensible and total loads."""
+    from .loads import cooling_design
+
+    cool = cooling_design(apt, p)
+    sq = cooling_ducts(apt, p, cool)
+    out = {}
+    for name, c in sq.items():
+        line = max(line_set_m(routes, name) / FT, p["systems.minisplit.line_min_ft"])
+        tot, sen = unit_capacity(p, c["unit"], line)
+        out[name] = {"unit": c["unit"], "square_ft": c["line_ft"], "line_ft": line, "capacity_w": tot, "sensible_capacity_w": sen,
+                     "covered": sen >= c["sensible_w"] and tot >= c["sensible_w"] + c["latent_w"],
+                     "sensible_w": c["sensible_w"], "latent_w": c["latent_w"]}
+    return out
 
 
 def cooling_ducts(apt: dict, p: dict, cool: dict | None = None) -> dict:

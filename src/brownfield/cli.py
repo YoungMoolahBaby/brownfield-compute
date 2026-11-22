@@ -799,7 +799,20 @@ def cmd_routes(args) -> int:
     out.write_text(json.dumps({"checks": ch, "quantities": q, "penetrations": routecheck.penetrations(apt, P, body, rt),
                                "requests_sha": sha}, indent=1) + NL, encoding="utf-8")
     print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
-    return 0 if ok and all(c for _, c, _ in ch) else 1
+    # 7c: steps 3-6 on the routes; what they ask beyond what was routed goes back into the requests.
+    from . import routed
+    s7 = routed.summary(apt, P, routed.load(apt, P, body))
+    print(NL + routed.report(s7))
+    out = OUT_DIR / "pass3" / "routes-7c.json"
+    out.write_text(json.dumps({k: v for k, v in s7.items() if k in ("checks", "asks", "stale")}
+                              | {"fire": {k: s7["fire"][k] for k in ("sizes", "grew", "worst", "target_psi")}}, indent=1, default=str) + NL,
+                   encoding="utf-8")
+    print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
+    grew = routed.grow(s7["asks"])
+    if grew:
+        print("sizes grew (" + json.dumps(grew) + ", data/route_sizes.json): route again: `brownfield routes --requests`, "
+              "`cargo run --release -- routes-json` in forge/, `brownfield routes`")
+    return 0 if ok and all(c for _, c, _ in ch) and all(c for _, c, _ in s7["checks"]) else 1
 
 
 def cmd_addendum(_args) -> int:
@@ -1050,7 +1063,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
-    rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked)")
+    rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked; 7c: steps 3-6 on the routes)")
     rq.add_argument("--requests", action="store_true", help="write out/pass3/route-requests.json for forge's `routes-json` (7b) and stop")
     sub.add_parser("fire", help="pass 3g step 6: sprinklers and alarms: the one stair, NFPA 13R layout and hydraulics, the stair's enclosure, smoke alarms, the roof hatch")
     sub.add_parser("electrical", help="pass 3g step 5: electrical designed: each flat's panel, circuits and feeder, the house loads, the service and its fault current, the meter wall, room for PV and EV")
