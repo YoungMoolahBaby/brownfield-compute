@@ -147,21 +147,35 @@ fn framing_json_mode(root: &Path) -> std::io::Result<()> {
     let num = |i: usize| arg(i).and_then(|s| s.parse::<f64>().ok());
     let mut b = apartment::Building::example();
     let rev = arg(2).unwrap_or_else(|| "base".into());
+    // Addendum 5 (pass 3g step 7) frames the inside too, and the roof hatch's opening: its plan box
+    // in inches (x0 y0 x1 y1), which `brownfield routes` works out from params (fire.roof_access).
+    let mut hatch = None;
     match rev.as_str() {
         "base" => {}
-        "addendum-3" => match (num(3), num(4)) {
+        "addendum-3" | "addendum-5" => match (num(3), num(4)) {
             (Some(w), Some(ci)) => {
                 b.addendum_1(w * 25.4);
                 b.addendum_2();
                 b.addendum_3(ci * 25.4);
+                if rev == "addendum-5" {
+                    match (num(5), num(6), num(7), num(8)) {
+                        (Some(x0), Some(y0), Some(x1), Some(y1)) => hatch = Some([x0 * 25.4, y0 * 25.4, x1 * 25.4, y1 * 25.4]),
+                        _ => return Err(std::io::Error::other(
+                            "framing-json addendum-5 <patio door width, in> <continuous insulation, in> <hatch x0 y0 x1 y1, in>: run `uv run brownfield routes`, which prints the command")),
+                    }
+                }
             }
-            _ => return Err(std::io::Error::other("framing-json addendum-3 <patio door width, in> <continuous insulation, in>")),
+            _ => return Err(std::io::Error::other(format!("framing-json {rev} <patio door width, in> <continuous insulation, in>{}",
+                                                          if rev == "addendum-5" { " <hatch x0 y0 x1 y1, in>" } else { "" }))),
         },
-        other => return Err(std::io::Error::other(format!("framing-json: unknown revision {other}: try base or addendum-3"))),
+        other => return Err(std::io::Error::other(format!("framing-json: unknown revision {other}: try base, addendum-3 or addendum-5"))),
     }
     let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/frame.json"))?)?;
     let s = framing::Schedule::from_json(&v);
-    let (members, _) = framing::build(&b, &s);
+    let (mut members, _) = framing::build(&b, &s);
+    if let Some(h) = hatch {
+        framing::addendum_5(&b, &rooms::Layout::example(), &s, h, &mut members);
+    }
     let mut overlaps = 0;
     let boxes: Vec<(usize, Vector3<f64>, Vector3<f64>)> = members.iter().enumerate()
         .flat_map(|(i, m)| m.boxes.iter().map(move |(lo, hi)| (i, *lo, *hi))).collect();

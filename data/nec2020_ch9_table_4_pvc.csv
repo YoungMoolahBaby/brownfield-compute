@@ -1,0 +1,29 @@
+# NEC Chapter 9 Table 4: dimensions and percent area of conduit, Rigid PVC Conduit Schedule 40 (Articles 352 and 353, "Rigid PVC
+# Conduit (PVC), Schedule 40, and HDPE Conduit (HDPE)") and Schedule 80 (Article 352). Nominal internal diameter (in.), total area
+# 100% and over-2-wires 40% (in.2). Source: NFPA 70-2017, p. 70-683 (Sch 40) and p. 70-682 (Sch 80) (Public.Resource.Org's scan,
+# archive.org gov.law.nfpa.nec.2017), read from the page images by a research agent. Checked: the scan's OCR (Sch 80 rows);
+# PDHonline course E276 "Conduit Fill Calculations" Tables 5 and 6 (every row identical); area_100 = pi/4 x id^2 within 0.0005 and
+# area_40 = 0.4 x area_100 within 0.0005 on every row. Chapter 9 Table 1 (p. 70-679): 1 wire 53%, 2 wires 31%, over 2 wires 40%.
+# The 2020 edition's copy not seen; NFPA's 2020-cycle CMP-8 First Draft (Jan 2018) and Second Draft ballot (Jan 2019) reports
+# revise Table 1's notes, Table 5A and Table 10 but not Table 4. Manufacturers' actual IDs differ from these nominal values.
+trade_size,sched,id_in,area_100_in2,area_40_in2
+1/2,40,0.602,0.285,0.114
+3/4,40,0.804,0.508,0.203
+1,40,1.029,0.832,0.333
+1-1/4,40,1.360,1.453,0.581
+1-1/2,40,1.590,1.986,0.794
+2,40,2.047,3.291,1.316
+2-1/2,40,2.445,4.695,1.878
+3,40,3.042,7.268,2.907
+3-1/2,40,3.521,9.737,3.895
+4,40,3.998,12.554,5.022
+1/2,80,0.526,0.217,0.087
+3/4,80,0.722,0.409,0.164
+1,80,0.936,0.688,0.275
+1-1/4,80,1.255,1.237,0.495
+1-1/2,80,1.476,1.711,0.684
+2,80,1.913,2.874,1.150
+2-1/2,80,2.290,4.119,1.647
+3,80,2.864,6.442,2.577
+3-1/2,80,3.326,8.688,3.475
+4,80,3.786,11.258,4.503

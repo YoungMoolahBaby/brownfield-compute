@@ -1213,3 +1213,49 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - First Alert/BRK 9120B (ionization: the design asks photoelectric).
   - **Not found free:** a worked 13R calculation (a permit portal's sheets refused automated
     fetches); NFPA 13's stair and electrical-room provisions at first hand.
+- **Step 7a, what the routes connect (2026-11-21).** Saved under `data/raw/pass3g/` (gitignored),
+  with steps 3-6's texts and sheets moved there from the session's temporary folder.
+  - **IBC 2021 chapter 23 and IPC 2021 chapter 4, Pennsylvania's:** UpCodes' pages saved whole
+    (`step7/ibc23.html`, `step7/ipc4.html`). Read:
+    - 2308.4.2.4 (sawn joists: holes 2 in. from the edges, a third of the depth);
+    - 2308.4.3 (I-joists: holes only as the maker allows);
+    - 2308.5.8 (pipes in walls: a 16-gauge steel tie wherever a plate is cut);
+    - 2308.5.9 and 2308.5.10 (studs: notches 25% or 40% of the depth, holes 40% or 60%,
+      5/8 in. from the edge);
+    - 2308.7.4 (rafters and ceiling joists);
+    - Table 2308.5.1 (nonbearing studs at 24 in. up to 14 ft);
+    - 405.3.1 (fixture clearances), 406.3 (the washer into a standpipe of 2 in. or more),
+      409.2 (the dishwasher to the sink's tailpiece).
+  - **NEC Chapter 9 Tables 1, 4 and 5:** Public.Resource.Org's scan of NFPA 70-2017
+    (archive.org `gov.law.nfpa.nec.2017`), pp. 70-679 to 70-687, read from its page images by a
+    research agent.
+    - Every Schedule 40, Schedule 80, THHN and XHHW row matches PDHonline course E276's
+      transcription. Areas match pi/4 d^2, and 40% columns 0.4 times the 100% ones.
+    - The 2020 edition: no scan found. NFPA's 2020-cycle records for panel CMP-8 (First Draft,
+      Jan 2018; Second Draft ballot, Jan 2019) revise Table 1's notes, Table 5A, Table 10 and
+      Annex C, but not Table 4 or Table 5.
+  - **Wavin, PVC Schedule 40 conduit submittal (2024):** outside diameters, 1-1/4 in. 1.66 in.,
+    1-1/2 in. 1.90 in.
+  - **Fujitsu DR_AR107ES_02:**
+    - the outdoor unit AOUH12KUBS1's size (24-7/8 x 31-7/16 x 11-7/16 in.);
+    - its installation space: 4 in. behind, 24 in. in front, 10 in. between units, at most three
+      side by side, a high stand where snow falls (read from the pages' text; their drawings not
+      seen);
+    - the indoor unit's size (11-13/16 x 27-9/16 x 27-9/16 in.).
+  - **Broan EDGE installation manual (BLP120E80NS-HW):**
+    - 2.7: for multifamily buildings, the exhaust hood 3 ft from operable openings, the intake 10
+      ft from exhausts, both 18 in. above the ground, and the two hoods 10 ft apart "or use an
+      approved factory-built intake/exhaust combination termination fitting";
+    - 2.8: its Tandem transition kits (VTYIK1, V14695), with 5 in. ducts from a BLP120;
+    - 10 in. in front of the unit, and a 20 x 30 in. access door if it is above a ceiling.
+  - **IMC 2021 401.4** (already on hand): no separation between a dwelling unit's own intake and
+    exhaust with an approved factory-built combination termination, and an intake 3 ft below a
+    contaminant source within 10 ft.
+  - **For 7c, found by the same research agent:**
+    - **Uponor's PEX Design and Installation Manual (8th ed., 2025):** Table C-1 and the ProPEX
+      EP tables, fittings' equivalent lengths up to 2 in.
+    - **Field Controls' FC80 ERV/HRV installation manual:** a fitting equivalent-length table.
+    - **Southwark Metal's duct sizing reference guide:** equivalent lengths for Manual D-style
+      fittings.
+
+    Manual D's own Appendix 3 is paywalled. A full copy on a personal site was left alone.

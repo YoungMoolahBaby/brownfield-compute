@@ -1,0 +1,45 @@
+# NEC Chapter 9 Table 5: dimensions of insulated conductors, approximate diameter (in.) and approximate area (in.2), concentric-
+# lay or solid ("worst-case", Note 10; compact conductors are in Table 5A). THHN/THWN/THWN-2 is the table's "THHN, THWN, THWN-2"
+# rows; XHHW/XHHW-2 is its "XHHW, ZW, XHHW-2, XHH" (14-2) and "XHHW, XHHW-2, XHH" (1-500) rows. Source: NFPA 70-2017,
+# pp. 70-685 (THHN), 70-686 to 70-687 (XHHW) (Public.Resource.Org's scan, archive.org gov.law.nfpa.nec.2017), read from the page
+# images by a research agent. The scan prints XHHW 3/0 and 300 diameters as 0.58 and 0.76. Checked: PDHonline course E276
+# "Conduit Fill Calculations" Table 7 (every row identical); area = pi/4 x dia^2 within 0.0002 on every row. The 2020 edition's
+# copy not seen; NFPA's 2020-cycle CMP-8 First Draft (Jan 2018) and Second Draft ballot (Jan 2019) reports revise Table 5A and
+# Table 10 but not Table 5.
+size,type,dia_in,area_in2
+14,THHN/THWN/THWN-2,0.111,0.0097
+12,THHN/THWN/THWN-2,0.130,0.0133
+10,THHN/THWN/THWN-2,0.164,0.0211
+8,THHN/THWN/THWN-2,0.216,0.0366
+6,THHN/THWN/THWN-2,0.254,0.0507
+4,THHN/THWN/THWN-2,0.324,0.0824
+3,THHN/THWN/THWN-2,0.352,0.0973
+2,THHN/THWN/THWN-2,0.384,0.1158
+1,THHN/THWN/THWN-2,0.446,0.1562
+1/0,THHN/THWN/THWN-2,0.486,0.1855
+2/0,THHN/THWN/THWN-2,0.532,0.2223
+3/0,THHN/THWN/THWN-2,0.584,0.2679
+4/0,THHN/THWN/THWN-2,0.642,0.3237
+250,THHN/THWN/THWN-2,0.711,0.3970
+300,THHN/THWN/THWN-2,0.766,0.4608
+350,THHN/THWN/THWN-2,0.817,0.5242
+400,THHN/THWN/THWN-2,0.864,0.5863
+500,THHN/THWN/THWN-2,0.949,0.7073
+14,XHHW/XHHW-2,0.133,0.0139
+12,XHHW/XHHW-2,0.152,0.0181
+10,XHHW/XHHW-2,0.176,0.0243
+8,XHHW/XHHW-2,0.236,0.0437
+6,XHHW/XHHW-2,0.274,0.0590
+4,XHHW/XHHW-2,0.322,0.0814
+3,XHHW/XHHW-2,0.350,0.0962
+2,XHHW/XHHW-2,0.382,0.1146
+1,XHHW/XHHW-2,0.442,0.1534
+1/0,XHHW/XHHW-2,0.482,0.1825
+2/0,XHHW/XHHW-2,0.528,0.2190
+3/0,XHHW/XHHW-2,0.580,0.2642
+4/0,XHHW/XHHW-2,0.638,0.3197
+250,XHHW/XHHW-2,0.705,0.3904
+300,XHHW/XHHW-2,0.760,0.4536
+350,XHHW/XHHW-2,0.811,0.5166
+400,XHHW/XHHW-2,0.858,0.5782
+500,XHHW/XHHW-2,0.943,0.6984

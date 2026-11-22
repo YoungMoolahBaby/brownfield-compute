@@ -432,6 +432,23 @@ def egc_for(ocpd_a: float) -> str:
     raise ValueError(ocpd_a)
 
 
+def conduit_for(sizes: list[str], p: dict, kind: str = "THHN/THWN/THWN-2", sched: str = "40") -> dict:
+    """The smallest rigid PVC conduit (Schedule `sched`) for these conductors: their areas from NEC
+    Chapter 9 Table 5 against the conduit's from Table 4, at Table 1's fill (`systems.wiring.fill_*`:
+    53% for one, 31% for two, 40% for more); its outside diameter from the maker's sheet
+    (`data/pvc_sched40_od.csv`)."""
+    area = {r["size"]: float(r["area_in2"]) for r in _table_rows("nec2020_ch9_table_5.csv") if r["type"] == kind}
+    need = sum(area[s] for s in sizes)
+    w = "systems.wiring."
+    fill = {1: p[w + "fill_1"], 2: p[w + "fill_2"]}.get(len(sizes), p[w + "fill_over_2"])
+    od = {r["trade_size"]: float(r["od_in"]) for r in _table_rows("pvc_sched40_od.csv")}
+    for r in _table_rows("nec2020_ch9_table_4_pvc.csv"):
+        if r["sched"] == sched and float(r["area_100_in2"]) * fill >= need - 1e-12:
+            return {"trade": r["trade_size"], "od_in": od[r["trade_size"]], "fill": need / float(r["area_100_in2"]),
+                    "conductors_in2": need}
+    raise ValueError(f"{sizes} need more than 4 in. conduit")
+
+
 # ---- 5c: the house loads ----
 
 HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous), across the phases (208 V)?

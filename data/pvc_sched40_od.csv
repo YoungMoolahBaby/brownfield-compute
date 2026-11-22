@@ -1,0 +1,13 @@
+# Rigid PVC conduit, Schedule 40 (UL 651, NEMA TC-2): average outside diameter and minimum wall (in.). Source: Wavin, "PVC
+# Schedule 40 Electrical Conduit, Submittal and Data Sheet" (2024), Dimensional Data (https://blog.wavin.com/hubfs/WA_Conduit%20Schd_40_v2.pdf,
+# saved as data/raw/pass3g/step7/conduit/wavin_sched40.pdf). The internal areas for fill are NEC Chapter 9 Table 4's
+# (data/nec2020_ch9_table_4_pvc.csv); the bell (coupling) end is a little larger than the outside diameter.
+trade_size,od_in,wall_in
+1/2,0.84,0.109
+3/4,1.05,0.113
+1,1.33,0.133
+1-1/4,1.66,0.140
+1-1/2,1.90,0.145
+2,2.375,0.154
+3,3.50,0.216
+4,4.50,0.237

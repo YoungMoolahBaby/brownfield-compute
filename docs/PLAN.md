@@ -40,8 +40,18 @@ chargers at the walk-up: D14 puts them at the mobility hub. Step 6 designed: NFP
 throughout (116) on a separate, monitored fire service (Jon's choice), sized by a hydraulic
 calculation to the street; the one stair holds (it depends on them), no building fire alarm is
 required, smoke alarms in every flat. Found: the annex's walls and its mechanical room's door near
-the stair need fire ratings (IBC 1023.7), an addendum item with the roof hatch. Next: step 7,
-routing in the model.
+the stair need fire ratings (IBC 1023.7), an addendum item with the roof hatch. Step 7 planned in
+five parts (Jon approved); 7a done: forge frames the inside (partitions, plumbing walls, annex, the
+hatch's opening), and the fixtures, risers, feeder chases, soffits, ERV terminations, roof units
+and equipment are placed to it. Found:
+- each water closet must sit in a joist bay;
+- the ERVs' terminations need two fixed living-room windows a flat;
+- the hall is too narrow for the mini-split without its soffit reaching over the bath;
+- the heating loop needs a riser pair a column;
+- the floors below the top need a vent stack;
+- the fire service's backflow assembly needs listed shutoff valves of its own.
+
+Next: 7b, the router.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3037,6 +3047,133 @@ test. Then the township brief's ask.
     7. **In the model and the IFC:** every pipe, duct, riser and piece of equipment; routes
        through the I-joists only where the maker's hole chart allows; a clash check; the
        schedules and the priced item list from the IFC, as the window schedule is.
+       - **Planned 2026-11-21** (Jon: "go ahead with step 7"), in five parts, each reported and
+         committed on its own:
+         - **7a:** what the routes connect, and the frame they go through;
+         - **7b:** the router, written in forge on cf-spatial's voxel grid (it ships no
+           search);
+         - **7c:** the routed lengths back into steps 3-6, whose checks rerun on them;
+         - **7d:** the services as an IFC, with schedules and the viewer's layers;
+         - **7e:** Addendum 5.
+       - **Decided in the plan** (Jon approved it):
+         - the flats' ducts run in soffits under the rated ceiling, not in the joists;
+         - a vent stack per column;
+         - each column's plumbing wall carries its vertical services, the lower flats' line
+           sets among them;
+         - branch circuits are routed too (step 5's worst outlet sits at 4.72% of the 5%
+           limit);
+         - quantities now, prices in step 10.
+       - **7a done 2026-11-21** (`uv run brownfield routes`; writes `out/pass3/routes-7a.json`).
+         Code: `src/brownfield/routing.py`, and forge `framing::addendum_5` (run by `framing-json
+         addendum-5 ...`, which the command prints). Data: `data/nec2020_ch9_table_4_pvc.csv`,
+         `data/nec2020_ch9_table_5.csv`, `data/pvc_sched40_od.csv`. Parameters:
+         `params/systems.yaml` `routing`. Tests: `tests/test_walkup_routes.py`, 6; all 24
+         checks pass.
+         - **Sources:**
+           - **Pennsylvania's 2021 code text from UpCodes:**
+             - **IBC chapter 23:** 2308.4.2.4 (holes in sawn joists), 2308.4.3 (holes in
+               I-joists only as the maker allows), 2308.5.8 (a steel tie wherever a pipe cuts a
+               plate), 2308.5.9 and 2308.5.10 (studs: holes 40% of the depth, 60% in a
+               nonbearing partition, 5/8 in. from the edge), 2308.7.4 and Table 2308.5.1;
+             - **IPC chapter 4:** 405.3.1, 406.3, 409.2.
+           - **NEC Chapter 9 Tables 1, 4 and 5** from Public.Resource.Org's scan of the 2017
+             edition, read from its page images by a research agent. Every row matches PDHonline
+             E276's transcription, and NFPA's 2020-cycle records change neither table.
+           - **Wavin's Schedule 40 PVC conduit submittal,** for outside diameters.
+           - **Fujitsu's design manual,** for the outdoor unit's size and installation space.
+           - **Broan's EDGE installation manual,** for its hoods and its Tandem kit.
+           - **APA Z725E Table 5,** the I-joist hole chart (already on hand).
+           - **The equipment's sizes and service spaces,** from the makers' sheets, by a research
+             agent:
+             - Broan's EDGE spec sheet;
+             - Fujitsu's manual, pages 8, 11 and 12;
+             - ClimateMaster RP3006;
+             - Lochinvar's HP tanks;
+             - Bradford White;
+             - Square D;
+             - Bosch;
+             - REHAU's manifolds and cabinets.
+
+             REHAU's server refused plain downloads, and the agent got its sheets through WebFetch
+             after a retry was refused. Jon accepted that (2026-11-21).
+
+           Every saved text is kept under `data/raw/pass3g/` (gitignored), out of the session's
+           temporary folder.
+         - **The frame:** forge's Addendum 5 has 4,604 members.
+           - It keeps the shell: 3,416 of Addendum 3's 3,418 members, the other two being the roof
+             joists the hatch cuts.
+           - It adds the flats' 84 partitions and plumbing walls (2x4 and 2x6 at 16 in.), the
+             annex (walls with their two doors framed, its roof, its foundation), the stair halls'
+             floors and the hatch's opening (doubled trimmers and header).
+           - No two members overlap.
+         - **Found: each water closet must sit in a joist bay.** The joists bear on the spine just
+           behind the plumbing wall.
+           - There, APA's chart lets no hole bigger than 1½ in. through them: a 2 in. hole needs
+             7 in. from the support, a 4 in. hole 3 ft.
+           - So each closet bend runs along its bay to the stack in the same bay. The water closet
+             is set 21.6 in. from the tub (15 at least), the lavatory 30.9 in. on (30 at least).
+           - The ground floor's water closets stand under the upper floors', one stack a column.
+         - **Each plumbing wall's 10 vertical services** (stack, vent stack, hot, return, cold,
+           the heating loop's two, three line sets):
+           - each sits in a stud bay that is also a joist bay on both upper floors, so none passes
+             through a joist;
+           - the hot riser, 4.6 in. with its insulation, fits the 5½ in. cavity with 0.4 in. to
+             spare.
+         - **The panels move into whole stud bays,** up to 7.3 in. from step 5's point. The upper
+           flats' feeders (1 and 1-1/4 in. PVC by NEC Chapter 9's fill) go up the bays beside
+           them.
+         - **The soffits:** 14 in. under the rated ceiling, over the hall, passage, utility closet
+           and kitchen, plus a strip across the living room to the facade.
+           - They leave at least 90.8 in. under them, against 84.
+           - The strip covers at most 6% of the room, against a third (1208.2.1).
+         - **Found: the ERVs' wall terminations need fixed windows.**
+           - Broan asks 3 ft from an exhaust to any operable opening in a multifamily building.
+             The facade's widest wall between openings is 3.4 ft, and the soffit sits 1.3 ft over
+             the window heads.
+           - So each flat's Tandem termination (one combination fitting, which IMC 401.4 lets
+             skip the intake-exhaust separation) goes between two living-room windows specified
+             fixed: 24 windows, an Addendum 5 item. No bedroom's escape window is among them.
+           - The middle floor's goes one pier along, since stacked storeys are exactly 10 ft
+             apart and 401.4 asks an intake 10 ft from another's exhaust or 3 ft below it.
+         - **The roof:** 12 outdoor units, three to a column (Fujitsu: at most three side by side,
+           10 in. apart), back to back across the spine. They are inside the 4 ft perimeter
+           pathway and clear of the hatch's path.
+         - **The equipment:**
+           - **In each flat:**
+             - the washer and dryer stacked against the plumbing wall;
+             - the ERV in the closet's soffit, over its open floor, with room for Broan's 20 x 30
+               in. access door;
+             - the manifold's cabinet 16 in. up on the closet's wall to the bath;
+             - the load centre flush in its bay.
+           - **Found: the hall is too narrow for the mini-split.** Its 27-9/16 in. width with
+             Fujitsu's 6 and 12 in. side spaces needs 45.6 in., and the hall is 37.5. So the hall's
+             soffit reaches 8.1 in. past it, over the partition and the bath, along the unit. The
+             partition stops at the soffit there (framed in 7b).
+           - **The mechanical room holds the plant** with each piece's service space clear and
+             the door's way in open:
+             - **the storage tank:** Lochinvar HP250G, 250 gal (step 4 needs 238.6), 37 in. across
+               and 97 in. high. Its anodes are on its side, so 36 in. beside it;
+             - **the heat pump:** ClimateMaster SW036, 36 in. in front;
+             - **the swing tank:** Bradford White RE340S6, 24 in. in front.
+             - The tanks and the plate exchangers weren't chosen before; these are the basis of
+               design.
+         - **Found by the equipment's sheets:**
+           - **No 1.75 kW element is made for the swing tank** (Bradford White offers 1.5-6
+             kW), so step 4's element is 2.0 kW.
+           - **The fire service's backflow assembly:** Watts says the LF007 is "UL Classified
+             without shutoff valves only". Step 6 let it be the system's check and control
+             valve, so the fire service takes listed, supervised shutoff valves of its own: an
+             Addendum 5 item, and step 6's tamper switches go on them.
+           - **Step 5's meter stack main** was named as the 400 A module in params. It is the
+             600 A EZM3600CB, the same frame, rated 65 kA, and its lugs take step 5's two 250
+             kcmil a phase. The wording is corrected; no number changes.
+           - **The dishwasher's installation manual** cited in step 5 may be the 18 in. models'.
+             Its circuit rule is to re-read (Jon: left open for now).
+         - **Found for 7c:**
+           - **The vent stack** (see Decided).
+           - **Step 3's heating loop has one riser pair per side of the stair, serving six flats
+             each.** The front and back flats' plumbing walls stand either side of the spine,
+             which no pipe may pierce (rooms.rs). So one riser pair a column, four in all.
     8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor and an
        electrician; their comments logged, then taken or answered (Addendum 2).
     9. **The inspection and commissioning plan.**

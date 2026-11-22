@@ -1176,6 +1176,21 @@ noise:
 # of the 2017 edition where a section didn't change), as a research agent saved them (2026-11-21).
 # The tables live in data/ (nec2020_*.csv, bussmann_c_values.csv).
 wiring:
+  fill_1:
+    value: 0.53
+    unit: the most of a conduit's area one conductor may fill
+    conf: high
+    source: "NEC Chapter 9 Table 1 (NFPA 70-2017 p. 70-679, Public.Resource.Org's scan; unchanged in 2020 by NFPA's CMP-8 records): 1 wire 53%, 2 wires 31%, over 2 wires 40%"
+  fill_2:
+    value: 0.31
+    unit: the most of a conduit's area two conductors may fill
+    conf: high
+    source: "NEC Chapter 9 Table 1 (above)"
+  fill_over_2:
+    value: 0.40
+    unit: the most of a conduit's area more than two conductors may fill
+    conf: high
+    source: "NEC Chapter 9 Table 1 (above)"
   route_slack:
     value: 1.15
     low: 1.05
@@ -1329,19 +1344,19 @@ meter_stack:
     source: "Square D Digest Table 2.38: EZMH314125 'B' 11.19"
   main_width_in:
     value: 18.66
-    unit: in., the 400 A main circuit breaker module (EZM3400CB)
+    unit: in., the 600 A main circuit breaker module (EZM3600CB; step 5's service needs more than 400 A)
     conf: high
-    source: "Square D Digest (above): EZM3400CB, width 18.66 in., H 53.97 / D 11.50 in., 65 kA"
+    source: "Square D Digest 4100CT0701 Table 2.22, 3-phase main devices: '600 OH/UG 600A,Al EZM3600CB — 18.66 (3)3/0–500' (width in., lugs per phase), at '65kA Short Circuit Current Rating (400–1600A Max.)'; H 53.97 / D 11.50 in. as the 400 A module's (Table 2.36, a research agent's reading; the same frame)"
   main_kaic:
     value: 65
     unit: kA, the main breaker's interrupting rating
     conf: high
-    source: "Square D Digest (above): EZM3400CB 65 kA"
+    source: "Square D Digest Table 2.22 (above): main circuit breakers 400-1600 A, '65kA Short Circuit Current Rating'"
   depth_in:
     value: 11.5
     unit: in., the stack's deepest part (the main)
     conf: high
-    source: "Square D Digest (above): EZM3400CB D 11.50 in."
+    source: "Square D Digest (above): the main module's D 11.50 in. (EZM3400CB and EZM3600CB, Table 2.36)"
   bottom_socket_mid_in:
     value: 33
     unit: in., the bottom socket's centre above grade
@@ -1907,3 +1922,381 @@ sprinkler:
     unit: ft2, past which (or above one storey) a 13R building needs a fire department connection
     conf: high
     source: "NFPA 13R-2019 6.11.1: 'At least one fire department connection shall be provided for buildings, accessible by a fire department, that exceed 2000 ft2 (185 m2) or are more than a single story.' 6.11.4: an automatic drip where freezing"
+
+# Pass 3g step 7 (D28): the services placed and routed in the model. 7a, what the routes connect.
+routing:
+  fixture_side_in:
+    value: 15
+    unit: in., the least from a water closet's or lavatory's centre to a side wall or obstruction
+    conf: high
+    source: "IPC 2021 405.3.1 (UpCodes, Pennsylvania's 2021 IPC, saved 2026-11-21, data/raw/pass3g/step7/ipc4.html): 'A water closet, urinal, lavatory or bidet shall not be set closer than 15 inches (381 mm) from its center to any side wall, partition, vanity or other obstruction.'"
+  fixture_spacing_in:
+    value: 30
+    unit: in., the least between adjacent fixtures' centres with no partition between
+    conf: high
+    source: "IPC 2021 405.3.1 (above): 'Where partitions or other obstructions do not separate adjacent fixtures, fixtures shall not be set closer than 30 inches (762 mm) center to center between adjacent fixtures.'"
+  wc_front_in:
+    value: 21
+    unit: in., clear in front of a water closet or lavatory to any wall, fixture or door
+    conf: high
+    source: "IPC 2021 405.3.1 (above): 'There shall be not less than a 21-inch (533 mm) clearance in front of a water closet, urinal, lavatory or bidet to any wall, fixture or door.'"
+  wc_rough_in_in:
+    value: 12
+    low: 10
+    high: 14
+    unit: in., the water closet's outlet centre from the finished wall behind it
+    conf: placeholder
+    source: "placeholder: the usual US rough-in until a water closet is chosen"
+  wc_depth_in:
+    value: 29
+    low: 27
+    high: 31
+    unit: in., the water closet's depth from the wall
+    conf: placeholder
+    source: "placeholder until a water closet is chosen"
+  closet_bend_od_in:
+    value: 3.30
+    low: 3.21
+    high: 3.39
+    unit: in., the outside diameter of a 3 in. no-hub cast-iron closet bend (step 4's stacks are cast iron)
+    conf: low
+    source: "CISPI 301's 3 in. no-hub outside diameter, 3.30 in. (from memory, to confirm against the standard or a maker's sheet)"
+  bend_clear_in:
+    value: 0.5
+    unit: in., kept between the closet bend and a joist's flange each side (its coupling and hanger)
+    conf: low
+    source: "judgement: a no-hub coupling is a little larger than the pipe; to confirm with the coupling's sheet"
+  lav_supply_in:
+    value: 21
+    unit: in. above the finished floor, the lavatory's supply stubs
+    conf: placeholder
+    source: "placeholder until a lavatory is chosen"
+  lav_drain_in:
+    value: 18
+    unit: in. above the finished floor, the lavatory's trap arm into the wall
+    conf: placeholder
+    source: "placeholder until a lavatory is chosen"
+  wc_supply_in:
+    value: 8
+    unit: in. above the finished floor, the water closet's supply stub
+    conf: placeholder
+    source: "placeholder until a water closet is chosen"
+  tub_valve_in:
+    value: 30
+    unit: in. above the finished floor, the tub's valve (both supplies)
+    conf: placeholder
+    source: "placeholder until a tub and valve are chosen"
+  tub_drain_out_in:
+    value: 4
+    unit: in., the tub's drain from the wall at its drain end (the plumbing wall)
+    conf: placeholder
+    source: "placeholder until a tub is chosen"
+  sink_supply_in:
+    value: 20
+    unit: in. above the finished floor, the kitchen sink's (and the dishwasher's) supply stubs
+    conf: placeholder
+    source: "placeholder until the sink is chosen"
+  sink_drain_in:
+    value: 17
+    unit: in. above the finished floor, the kitchen sink's trap arm into the wall
+    conf: placeholder
+    source: "placeholder until the sink is chosen"
+  sink_base_in:
+    value: 33
+    unit: in., the sink's base cabinet along the wall
+    conf: placeholder
+    source: "placeholder: a usual sink base until the kitchen is drawn"
+  dw_width_in:
+    value: 24
+    unit: in., the dishwasher's width along the counter
+    conf: placeholder
+    source: "placeholder: a standard 24 in. dishwasher (step 2's Bosch SHX53DM5N; its sheet to read)"
+  washer_box_in:
+    value: 42
+    unit: in. above the floor, the washer box's centre (its supplies and standpipe)
+    conf: placeholder
+    source: "placeholder until a washer box is chosen; IPC 406.3 sends the washer through an air break into a standpipe (802.4.3, not read) of at least 2 in."
+  vent_stack_od_in:
+    value: 2.35
+    low: 2.26
+    high: 2.44
+    unit: in., the outside diameter of the vent stack (2 in. no-hub cast iron) until 7c sizes it by IPC Table 906.1
+    conf: low
+    source: "CISPI 301's 2 in. no-hub outside diameter, 2.35 in. (from memory, to confirm); the size is a placeholder for Table 906.1's"
+  riser_gap_in:
+    value: 0.5
+    unit: in., kept between neighbouring vertical services and between a service and a stud
+    conf: low
+    source: "judgement: room for a clamp and a hand; to confirm in the installers' round (step 8)"
+  cavity_clear_in:
+    value: 0.25
+    unit: in., kept between a vertical service and each face of the wall's cavity
+    conf: low
+    source: "judgement: the drywall's screws on either face"
+  cold_insulation_in:
+    value: 0.5
+    unit: in., the cold riser's insulation (against condensation in summer)
+    conf: placeholder
+    source: "placeholder: the code asks none on cold water; a usual 1/2 in. for condensation"
+  loop_insulation_in:
+    value: 0.5
+    unit: in., the heating loop's risers' insulation
+    conf: placeholder
+    source: "placeholder: at 40.2 C (104.4 F) supply the loop sits just under the 105 F above which PA 2021 IECC R403.4 asks R-3; insulated anyway so the risers' heat reaches the manifolds"
+  line_set_od_in:
+    value: 2.75
+    unit: in., a mini-split's line set (1/4 and 3/8 in. copper, each insulated, and its cable) taken as one round bundle
+    conf: placeholder
+    source: "placeholder until Fujitsu's insulation thickness is read; the tube sizes are its spec table's (Liquid 1/4, Gas 3/8 in.)"
+  washer_box_w_in:
+    value: 8.5
+    unit: in., the washer box's width in the wall
+    conf: placeholder
+    source: "placeholder until a washer box is chosen"
+  ceiling_assembly_in:
+    value: 1.125
+    unit: in., the rated ceiling hung under the joists (1/2 in. resilient channel and 5/8 in. Type X gypsum)
+    conf: medium
+    source: "the floor-ceiling assembly pass 3 took for sound and fire (AWC DCA 3 WIJ-1.1, docs/RESEARCH.md): resilient channels and 5/8 in. Type X; the channel's depth a usual 1/2 in."
+  soffit_in:
+    value: 14
+    unit: in., the soffits' depth under the rated ceiling
+    conf: medium
+    source: "the design: the mini-split's indoor unit, 11-13/16 in. high (Fujitsu ARUH12KUAS, Design & Technical Manual DR_AR107ES_02 p. 2, 'Net 11-13/16 x 27-9/16 x 27-9/16'), with its hangers and the soffit's own gypsum"
+  minisplit_h_in:
+    value: 11.8125
+    unit: in., the mini-split's indoor unit's height
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12KUAS specifications (p. 2): 'Dimensions (H x W x D) Net in (mm) 11-13/16 x 27-9/16 x 27-9/16 (300 x 700 x 700)'"
+  unit_hanger_in:
+    value: 1.5
+    unit: in., kept above the indoor unit for its hanging bolts' nuts and the soffit's gypsum below it
+    conf: low
+    source: "judgement until the unit's installation manual is read"
+  furdown_w_in:
+    value: 18
+    unit: in., the width of the strip soffit across the living room that carries the ERV's two 5 in. ducts to the facade
+    conf: low
+    source: "the design: two 5 in. insulated ducts side by side with their insulation (about 7 in. each) and the strip's framing"
+  stagger_in:
+    value: 24
+    unit: in., the middle storey's ERV terminations shifted along the facade from those above and below
+    conf: medium
+    source: "the design: a storey is 10 ft, so terminations stacked straight would put an intake exactly 10 ft above another flat's exhaust; IMC 2021 401.4 item 3 asks 10 ft or 3 ft below"
+  ou_h_in:
+    value: 24.875
+    unit: in., the outdoor unit's height
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, AOUH12KUAS1 / AOUH12KUBS1 specifications (p. 102): 'Net in (mm) 24-7/8 x 31-7/16 x 11-7/16 (632 x 799 x 290)' (H x W x D)"
+  ou_w_in:
+    value: 31.4375
+    unit: in., the outdoor unit's width
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 102 (above)"
+  ou_d_in:
+    value: 11.4375
+    unit: in., the outdoor unit's depth
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 102 (above)"
+  ou_rear_in:
+    value: 4
+    unit: in., kept behind each outdoor unit (to the unit across the spine, back to back)
+    conf: medium
+    source: "Fujitsu DR_AR107ES_02 p. 109, installation space, single unit, obstacles at rear: '4 (100) or more'; read from the page's text, its drawing not seen"
+  ou_between_in:
+    value: 10
+    unit: in., between outdoor units side by side
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 110: 'Provide at least 10 in (250 mm) of space between the outdoor units if multiple units are installed' and 'No more than 3 units must be installed side by side'"
+  ou_front_in:
+    value: 24
+    unit: in., kept open in front of each outdoor unit
+    conf: medium
+    source: "Fujitsu DR_AR107ES_02 p. 109: obstacles at front '24 (600) or more'"
+  stand_in:
+    value: 18
+    unit: in., the outdoor units' stand above the roof, for the snow
+    conf: placeholder
+    source: "placeholder: Fujitsu asks a high stand where snow falls heavily (p. 111, caution); the height to set from the site's snow depth"
+  hatch_path_ft:
+    value: 4
+    unit: ft, the clear pathway around the roof hatch
+    conf: high
+    source: "IFC 2021 1205.3.2(3), as the PV design reads it (systems.pv.hatch_zone_ft2): 'A pathway not less than 4 feet (1219 mm) wide around roof access hatches'"
+  termination_clear_ft:
+    value: 3
+    unit: ft, the least from an ERV's exhaust to an operable opening in the building
+    conf: high
+    source: "Broan EDGE installation manual (BLP120E80NS-HW), 2.7 Exterior hoods, 'For multifamily buildings only: Make sure exhaust hood is located at least 3 feet away from any of the following: Property lines; Operable openings into buildings (door, window)' (data/raw/pass3g/broan_install.txt)"
+  panel_box_w_in:
+    value: 14.25
+    unit: in., a flat's load centre's box width, flush in a stud bay
+    conf: placeholder
+    source: "placeholder: a usual Square D QO box, until its sheet (raw/equipment/lc_qo130l125pg_spec) is read"
+  nonbearing_stud_max_in:
+    value: 24
+    unit: in. on centre, the most a nonbearing wall's 2x4 or 2x6 studs may be spaced
+    conf: high
+    source: "IBC 2021 Table 2308.5.1 (UpCodes, Pennsylvania's 2021 IBC chapter 23, saved 2026-11-21, data/raw/pass3g/step7/ibc23.html): nonbearing walls, 2x4, laterally unsupported stud height 14 ft, spacing 24 in."
+  nonbearing_height_max_ft:
+    value: 14
+    unit: ft, the most a nonbearing 2x4 wall's studs may stand laterally unsupported
+    conf: high
+    source: "IBC 2021 Table 2308.5.1 (above)"
+  # Equipment as boxes (in.), from the makers' sheets a research agent read (2026-11-21,
+  # data/raw/pass3g/step7/equipment/); "not chosen" marks a basis of design the repo picks here.
+  erv_l_in:
+    value: 23.875
+    unit: in., the ERV's body between its port ends (Broan EDGE BLP120E80NS-HW)
+    conf: high
+    source: "Broan spec sheet BLP120E80NS-HW rev 1118775D, p. 3, Dimensions (a drawing): body 23-7/8 between the port ends, 28-1/8 over the collars"
+  erv_w_in:
+    value: 18.625
+    unit: in., the ERV's door face width
+    conf: high
+    source: "Broan spec sheet 1118775D p. 3 (above): 18-5/8"
+  erv_h_in:
+    value: 9.875
+    unit: in., the ERV's thickness, door face to back (it hangs door down)
+    conf: high
+    source: "Broan spec sheet 1118775D p. 3 (above): 9-7/8"
+  erv_collar_in:
+    value: 2.125
+    unit: in., each port collar beyond the body
+    conf: high
+    source: "Broan spec sheet 1118775D p. 3 (above): (28-1/8 - 23-7/8) / 2"
+  erv_front_in:
+    value: 10
+    unit: in., kept in front of (under) the ERV for service
+    conf: high
+    source: "Broan EDGE installation manual 1115155WEB-A, p. 3 item 13: 'Keep a clearance of at least 10\" in front of the unit for maintenance and servicing'"
+  erv_door_w_in:
+    value: 20
+    unit: in., the ceiling access door under the ERV, its short side
+    conf: high
+    source: "Broan EDGE installation manual p. 4: 'If the unit is installed above a ceiling access door*, select an access door model with 20\" x 30\" minimum dimensions'"
+  erv_door_l_in:
+    value: 30
+    unit: in., the access door's long side
+    conf: high
+    source: "Broan EDGE installation manual p. 4 (above)"
+  ms_w_in:
+    value: 27.5625
+    unit: in., the mini-split indoor unit's width (across its airflow)
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 2: ARUH12KUAS 'Net 11-13/16 x 27-9/16 x 27-9/16' (H x W x D), D along the airflow"
+  ms_d_in:
+    value: 29.5625
+    unit: in., the indoor unit's depth along its airflow with its 1 in. front and rear collars
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 8 (a drawing): 27-9/16 body and 1 (25) collars front and rear"
+  ms_side_piping_in:
+    value: 12
+    unit: in., kept on the indoor unit's piping side
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 11, installation space: 12 (300) on the piping side, 6 (150) on the other, 1 (20) above and below"
+  ms_side_other_in:
+    value: 6
+    unit: in., kept on the indoor unit's other side
+    conf: high
+    source: "Fujitsu DR_AR107ES_02 p. 11 (above)"
+  panel_box_h_in:
+    value: 29.86
+    unit: in., a flat's load centre's box height (Square D QO130L125PG, box 9)
+    conf: high
+    source: "Square D catalogue 1100CT0501 Rev. 03, Table 52, box 9: W 14.25 x H 29.86 x D 3.75 in."
+  panel_box_d_in:
+    value: 3.75
+    unit: in., the load centre's box depth
+    conf: high
+    source: "Square D catalogue 1100CT0501 Table 52 (above)"
+  manifold_cab_w_in:
+    value: 31.7
+    unit: in., the radiant manifold's surface cabinet for six to eight loops (REHAU PRO-BALANCE 28W), not chosen
+    conf: medium
+    source: "REHAU PS249 (2013, French), surface-mount cabinets: 28W 'Up to 8', 31.7 x 28.7 x 5.1 in. outside; step 3 gives 5-7 loops a flat. Not chosen: a basis of design. A research agent fetched REHAU's sheets through WebFetch after REHAU refused a plain download (Jon accepted that, 2026-11-21)"
+  manifold_cab_h_in:
+    value: 28.7
+    unit: in., the manifold cabinet's height
+    conf: medium
+    source: "REHAU PS249 (above)"
+  manifold_cab_d_in:
+    value: 5.1
+    unit: in., the manifold cabinet's depth off the wall
+    conf: medium
+    source: "REHAU PS249 (above)"
+  manifold_floor_in:
+    value: 16
+    unit: in., the least from the finished floor to the manifold's bottom
+    conf: medium
+    source: "REHAU PRO-BALANCE 1 in. stainless manifold instructions 855.663, p. 7: 'Minimum clearance is 16 in (40 cm) between the bottom of the manifold and the top of the finished floor' (fetched as above, accepted)"
+  wd_stack_w_in:
+    value: 23.5
+    unit: in., the stacked washer and dryer's width (Bosch WGB24600UC on WQB245B0UC)
+    conf: high
+    source: "Bosch WGB24600UC specification (5/26) p. 2: '33 1/4\" x 23 1/2\" x 25 1/2\"'; WQB245B0UC (9/26) p. 2: '33 1/4\" x 23 1/2\" x 26\"', stack height 67-3/4"
+  wd_stack_d_in:
+    value: 26
+    unit: in., the stack's depth (the dryer's)
+    conf: high
+    source: "Bosch WQB245B0UC specification p. 2 (above)"
+  wd_stack_h_in:
+    value: 67.75
+    unit: in., the stack's height
+    conf: high
+    source: "Bosch WQB245B0UC specification p. 2 (above): stack height 67-3/4"
+  tank_dia_in:
+    value: 37
+    unit: in., the hot-water storage tank's diameter (Lochinvar HP250G, 250 gal; step 4 needs 238.6), not chosen
+    conf: medium
+    source: "Lochinvar HPT-Sub-03 (11/25) p. 1: 'HP250G 250 97-5/16\" 37\" 93-3/8\" 54-5/16\" 18-13/16\" 1530' (gal, A to the top tapping, B diameter, C jacket, D return, E cold, shipping lb). Not chosen: a basis of design (two 119 gal tanks would fall a gallon short)"
+  tank_h_in:
+    value: 97.3125
+    unit: in., the tank's height to its top tapping
+    conf: medium
+    source: "Lochinvar HPT-Sub-03 (above): A 97-5/16"
+  tank_anode_in:
+    value: 36
+    unit: in., kept clear at the tank's side anodes
+    conf: high
+    source: "Lochinvar HP150-1000 IOM Rev B p. 6: 'Recommended service clearances: 36 inches around the magnesium anode rod(s); 24 inches around the manway'; p. 19: 'Anodes are installed in threaded tappings along the side of the tank'"
+  hp_w_in:
+    value: 25.4
+    unit: in., the water-to-water heat pump's front (ClimateMaster SW036), its connections and service panel on it
+    conf: high
+    source: "ClimateMaster catalogue RP3006 (rev. 2026-09-23) p. 38, Dimensional Data: A 27.5 (depth), B 25.4 (width, the front), C 27.0 (height)"
+  hp_d_in:
+    value: 27.5
+    unit: in., the heat pump's depth
+    conf: high
+    source: "ClimateMaster RP3006 p. 38 (above)"
+  hp_h_in:
+    value: 27.0
+    unit: in., the heat pump's height
+    conf: high
+    source: "ClimateMaster RP3006 p. 38 (above)"
+  hp_service_in:
+    value: 36
+    unit: in., kept in front of the heat pump
+    conf: high
+    source: "ClimateMaster RP3006 p. 38: 'Required Service Access 3 feet' (front); side access optional: 'All components may be serviced from the front access panel if side access is not available'"
+  swing_dia_in:
+    value: 22
+    unit: in., the swing tank's diameter (Bradford White RE340S6, 40 gal), not chosen
+    conf: medium
+    source: "Bradford White spec 1201-0926 p. 2: RE340S6, 22 in. diameter, 47-3/16 in. high, 49-7/16 to the top of its fittings; elements 'Minimum 1500 / Maximum 6000' W, so step 4's 1.75 kW is taken as 2.0 kW. Not chosen: a basis of design"
+  swing_h_in:
+    value: 49.4375
+    unit: in., the swing tank's height over its fittings
+    conf: medium
+    source: "Bradford White spec 1201-0926 (above)"
+  swing_front_in:
+    value: 24
+    unit: in., kept in front of the swing tank
+    conf: high
+    source: "Bradford White I&O 238-44422-00 p. 5: 'at least 18 inches ... from the Top, and 24 inches ... from the Front'"
+  wall_gap_in:
+    value: 2
+    unit: in., kept between floor-standing equipment and a wall
+    conf: low
+    source: "judgement: room for its piping behind it"

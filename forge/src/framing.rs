@@ -312,6 +312,12 @@ impl Line<'_> {
 }
 
 fn wall(line: &Line, s: &Schedule, storey: usize, zb: f64, panel: Option<usize>, out: &mut Vec<Member>) {
+    wall_h(line, s, storey, zb, s.stud_len, panel, out);
+}
+
+/// `wall` with its own stud length (the annex's walls are a storey of their own height).
+#[allow(clippy::too_many_arguments)]
+fn wall_h(line: &Line, s: &Schedule, storey: usize, zb: f64, stud_len: f64, panel: Option<usize>, out: &mut Vec<Member>) {
     let (c0, c1) = (line.c0, line.c0 + line.depth);
     let nom = Some(line.nominal);
     let (ply, plate) = (s.ply, s.plate);
@@ -322,7 +328,7 @@ fn wall(line: &Line, s: &Schedule, storey: usize, zb: f64, panel: Option<usize>,
         out.push(m);
     };
     let stud0 = zb + plate;
-    let stud1 = stud0 + s.stud_len;
+    let stud1 = stud0 + stud_len;
     // Openings: rough opening, then jacks and kings either side, the header on the jacks.
     struct Hole { ro0: f64, ro1: f64, out0: f64, out1: f64, bottom: f64, top: f64, door: bool }
     let mut holes = Vec::new();
@@ -586,6 +592,160 @@ pub fn build(b: &Building, s: &Schedule) -> (Vec<Member>, Vec<Panel>) {
         }
     }
     (out, panels)
+}
+
+/// Joists `width` wide between `x0` and `x1` (the first and last flush with the ends), spanning
+/// y from `y0` to `y1` at height z0.
+#[allow(clippy::too_many_arguments)]
+fn joists_along_y(j: &Joist, kind: Kind, storey: usize, spacing: f64, x0: f64, x1: f64, y0: f64, y1: f64, z0: f64, out: &mut Vec<Member>) {
+    let mut xs = vec![x0];
+    let mut c = x0 + spacing;
+    while c + j.width / 2.0 < x1 - j.width {
+        xs.push(c - j.width / 2.0);
+        c += spacing;
+    }
+    xs.push(x1 - j.width);
+    for x in xs {
+        out.push(joist_member(j, kind, storey, Vector3::new(x, y0, z0), Vector3::new(x + j.width, y1, z0 + j.depth), false));
+    }
+}
+
+/// A wall framed from a plan box: studs `nominal` deep from `c0` across it (along y when
+/// `along_y`), from `a.0` to `a.1` along it, `stud_len` long, with the cap plate in one piece.
+#[allow(clippy::too_many_arguments)]
+fn box_wall(s: &Schedule, storey: usize, zb: f64, stud_len: f64, along_y: bool, c0: f64, a: (f64, f64),
+            nominal: &str, openings: Vec<&Opening>, out: &mut Vec<Member>) {
+    let depth = s.depth_of(nominal);
+    let line = Line { along_y, c0, depth, a0: a.0, a1: a.1, nominal, spacing: s.spacing, openings };
+    wall_h(&line, s, storey, zb, stud_len, None, out);
+    let top = zb + 3.0 * s.plate + stud_len;
+    let (lo, hi) = line.bx(a.0, a.1, c0, c0 + depth, top - s.plate, top);
+    out.push(Member::one(Kind::CapPlate, storey, Some(nominal), lo, hi));
+}
+
+/// Addendum 5 (pass 3g step 7, D28): what the services are routed through, framed onto the
+/// shell `build` gives (appended after it, so the shell's members keep their order):
+/// - **the flats' partitions** (2x4 at the schedule's spacing, centred in the 4.5 in. wall) and
+///   **plumbing walls** (2x6 against the wall's spine side, the room side's gypsum in front), each
+///   a storey's height under the floor or roof above, like the shell's walls;
+/// - **the service annex:** its three walls (the facades' studs, the inner face's gypsum inside
+///   them, its two doors framed with jacks, kings and headers from the schedule), the partition
+///   between its rooms, a roof of the roof joist spanning across it between rims, and its
+///   foundation (footings to the shell's frost depth, stem walls, the slab);
+/// - **the stair halls' floors** on storeys 2-3, the floor joist spanning across the core between
+///   the stair walls' inner rows (the hall beyond the centre wall to that wall);
+/// - **the roof hatch's opening** (`hatch`, x0 y0 x1 y1 in plan, mm) in the roof over the stair:
+///   the joists it cuts replaced by doubled trimmers either side, a doubled header at its far
+///   edge, and tail joists from the header to the far wall (its near edge is the stair wall).
+pub fn addendum_5(b: &Building, lay: &crate::rooms::Layout, s: &Schedule, hatch: [f64; 4], out: &mut Vec<Member>) {
+    let (t, w, l) = (b.ext_t, b.depth, b.length);
+    let ext_d = s.depth_of(&s.studs[0].0);
+    let xf = t - GYP - ext_d;
+    let (s0, s1) = (b.flat_len, l - b.flat_len);
+    let cx = w / 2.0;
+    let ply = s.ply;
+
+    // The roof hatch: out with the over-stair roof joists it touches (trimmer room included).
+    let [hx0, _hy0, hx1, hy1] = hatch;
+    let (ty0, ty1) = (s0 + 0.5 * IN, s1 - 0.5 * IN);
+    let rj = &s.roof_joist;
+    let top_roof = (b.storeys - 1) as f64 * b.storey + 3.0 * s.plate + s.stud_len;
+    let over_stair = |m: &Member| m.kind == Kind::RoofJoist && m.storey == b.storeys && (m.bounds().0.y - ty0).abs() < 1.0
+        && (m.bounds().1.y - ty1).abs() < 1.0;
+    let mut tails = Vec::new();
+    out.retain(|m| {
+        if !over_stair(m) {
+            return true;
+        }
+        let (lo, hi) = m.bounds();
+        let cut = hi.x > hx0 - 2.0 * ply && lo.x < hx1 + 2.0 * ply;
+        if cut && lo.x >= hx0 && hi.x <= hx1 {
+            tails.push(lo.x);
+        }
+        !cut
+    });
+    let storey = b.storeys;
+    let nom = rj.nominal.as_deref();
+    for k in 0..2 {
+        for x in [hx0 - (k + 1) as f64 * ply, hx1 + k as f64 * ply] {
+            out.push(Member::one(Kind::RoofJoist, storey, nom, Vector3::new(x, ty0, top_roof), Vector3::new(x + ply, ty1, top_roof + rj.depth)));
+        }
+        out.push(Member::one(Kind::Header, storey, nom, Vector3::new(hx0, hy1 + k as f64 * ply, top_roof),
+                             Vector3::new(hx1, hy1 + (k + 1) as f64 * ply, top_roof + rj.depth)));
+    }
+    for x in tails {
+        out.push(Member::one(Kind::RoofJoist, storey, nom, Vector3::new(x, hy1 + 2.0 * ply, top_roof), Vector3::new(x + rj.width, ty1, top_roof + rj.depth)));
+    }
+
+    // The flats' partitions and plumbing walls.
+    for p in lay.walls(b) {
+        let along_y = p.hi.y - p.lo.y > p.hi.x - p.lo.x;
+        let (c_lo, c_hi, a) = if along_y { (p.lo.x, p.hi.x, (p.lo.y, p.hi.y)) } else { (p.lo.y, p.hi.y, (p.lo.x, p.hi.x)) };
+        let zb = (p.storey - 1) as f64 * b.storey;
+        let (nominal, c0) = if p.kind == "plumbing_wall" {
+            let d = s.depth_of("2x6");
+            // Studs against the spine side; the gypsum is on the room side.
+            if c_hi <= cx { ("2x6", c_hi - d) } else { ("2x6", c_lo) }
+        } else {
+            ("2x4", (c_lo + c_hi) / 2.0 - s.depth_of("2x4") / 2.0)
+        };
+        box_wall(s, p.storey, zb, s.stud_len, along_y, c0, a, nominal, vec![], out);
+    }
+
+    // The annex: walls, partition, roof, foundation.
+    let parts: std::collections::HashMap<String, crate::apartment::Part> = lay.annex_parts(b).into_iter().map(|p| (p.id.clone(), p)).collect();
+    let (lw, rw, bw, pt, roof) = (&parts["annex-left"], &parts["annex-right"], &parts["annex-back"], &parts["annex-partition"], &parts["annex-roof"]);
+    let zw = lw.hi.z;
+    let a_len = zw - 3.0 * s.plate;
+    let d6 = s.depth_of("2x6");
+    let (yl_in, yr_in, xb_in) = (lw.hi.y - GYP, rw.lo.y + GYP, bw.lo.x + GYP); // the studs' inner faces
+    let x_out = xb_in + d6; // the back wall's studs' outer face
+    let doors: Vec<Opening> = lay.annex_doors(b).iter().map(|d| Opening {
+        face: d.face, along: if d.face == Face::Back { (d.lo.y + d.hi.y) / 2.0 } else { (d.lo.x + d.hi.x) / 2.0 },
+        sill: 0.0, width: d.width, height: d.height, glazed: false,
+    }).collect();
+    let on = |f: Face| doors.iter().filter(|o| o.face == f).collect::<Vec<_>>();
+    box_wall(s, 1, 0.0, a_len, false, yl_in - d6, (lw.lo.x, x_out), "2x6", on(Face::Left), out);
+    box_wall(s, 1, 0.0, a_len, false, yr_in, (rw.lo.x, x_out), "2x6", on(Face::Right), out);
+    box_wall(s, 1, 0.0, a_len, true, xb_in, (yl_in, yr_in), "2x6", on(Face::Back), out);
+    let d4 = s.depth_of("2x4");
+    box_wall(s, 1, 0.0, a_len, true, (pt.lo.x + pt.hi.x) / 2.0 - d4 / 2.0, (pt.lo.y, pt.hi.y), "2x4", vec![], out);
+    let (ry0, ry1) = (yl_in - d6, yr_in + d6); // the walls' studs' outer faces
+    let rim_nom = s.rim_name.as_deref();
+    for (y0, y1) in [(ry0, ry0 + s.rim), (ry1 - s.rim, ry1)] {
+        out.push(Member::one(Kind::Rim, 1, rim_nom, Vector3::new(lw.lo.x, y0, zw), Vector3::new(x_out, y1, zw + rj.depth)));
+    }
+    joists_along_y(rj, Kind::RoofJoist, 1, s.spacing, lw.lo.x, x_out, ry0 + s.rim, ry1 - s.rim, zw, out);
+    debug_assert!(zw + rj.depth <= roof.hi.z + 1.0);
+    // Its foundation as the shell's: footings at frost depth under 8 in. stem walls, the annex's
+    // own footings from the edge of the building's back footing out; the slab inside the stems.
+    let (grade, frost, stem_t) = (-8.0 * IN, 36.0 * IN, 8.0 * IN);
+    let (fb, ft) = (grade - frost, grade - frost + s.footing_t);
+    let fw = s.facade_footing;
+    let x_foot = w - stem_t / 2.0 + fw / 2.0; // the building's back footing's far edge
+    let (ax1, ay0, ay1) = (lw.hi.x, lw.lo.y, rw.hi.y);
+    let foot = |out: &mut Vec<Member>, kind, lo: Vector3<f64>, hi: Vector3<f64>| out.push(Member::one(kind, 0, None, lo, hi));
+    for (y0, y1) in [(ay0, ay0 + stem_t), (ay1 - stem_t, ay1)] {
+        let yc = (y0 + y1) / 2.0;
+        foot(out, Kind::Footing, Vector3::new(x_foot, yc - fw / 2.0, fb), Vector3::new(ax1 - stem_t / 2.0 + fw / 2.0, yc + fw / 2.0, ft));
+        foot(out, Kind::Stem, Vector3::new(w, y0, ft), Vector3::new(ax1, y1, 0.0));
+    }
+    let xc = ax1 - stem_t / 2.0;
+    foot(out, Kind::Footing, Vector3::new(xc - fw / 2.0, ay0 + stem_t / 2.0 + fw / 2.0, fb), Vector3::new(xc + fw / 2.0, ay1 - stem_t / 2.0 - fw / 2.0, ft));
+    foot(out, Kind::Stem, Vector3::new(ax1 - stem_t, ay0 + stem_t, ft), Vector3::new(ax1, ay1 - stem_t, 0.0));
+    foot(out, Kind::Slab, Vector3::new(w, ay0 + stem_t, -4.0 * IN), Vector3::new(ax1 - stem_t, ay1 - stem_t, 0.0));
+
+    // The stair halls' floors: the floor joist across the core, on the stair walls' inner rows;
+    // past the hall's end, to the centre wall.
+    let fj = &s.floor_joist;
+    let st = crate::stair::Stair::example();
+    let (ha, hb) = st.hall_end(b);
+    let c0 = st.parts(b).iter().find(|p| p.id == "floor-2-hall-a").map(|p| p.hi.y).expect("a hall beyond the centre wall");
+    for k in 1..b.storeys {
+        let z0 = (k - 1) as f64 * b.storey + 3.0 * s.plate + s.stud_len;
+        joists_along_y(fj, Kind::FloorJoist, k, s.spacing, xf + s.rim, hb, ty0, ty1, z0, out);
+        joists_along_y(fj, Kind::FloorJoist, k, s.spacing, hb, ha, ty0, c0, z0, out);
+    }
 }
 
 /// Totals by kind: (count, total length m, volume m3, board feet).
