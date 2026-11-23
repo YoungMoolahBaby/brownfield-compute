@@ -2771,3 +2771,100 @@ tariff:
     unit: Mcf a year, where an SGS account's customer charge steps up
     conf: high
     source: "Peoples Supp 26 p. 45 (above)"
+# Pass 3g step 10d (D28): noise and comfort, each walk-up side by side. Only what a maker
+# publishes, a study measured or a standard sets; no scores or weights.
+comfort:
+  ashrae55_floor_min_c:
+    value: 19
+    unit: C, the least floor surface temperature in the occupied zone
+    conf: high
+    source: "ASHRAE 55-2010 Addendum f (published, ashrae.org standards addenda: data/raw/pass3g/step10/comfort/ashrae55_2010_f.pdf), 5.2.4.4 Floor Surface Temperature: 'When representative occupants are seated with feet in contact with the floor, floor surface temperatures within the occupied zone shall be 19-29 C (66.2-84.2 F)'; its informative appendix: 'based on people wearing lightweight indoor shoes'. The addendum moved the informative words to that appendix and kept the range as the requirement"
+  ashrae55_floor_max_c:
+    value: 29
+    unit: C, the most floor surface temperature in the occupied zone
+    conf: high
+    source: "ASHRAE 55-2010 Addendum f, 5.2.4.4 (as ashrae55_floor_min_c); EN 1264's 29 C (pass3.radiant.max_floor_c) is the same"
+  lav_gpm:
+    value: 2.2
+    unit: gpm, a lavatory faucet's flow (the federal most, at 60 psi)
+    conf: high
+    source: "10 CFR 430.32(o) (eCFR, read 2026-11-23, data/raw/pass3g/step10/comfort/ecfr_430_32.xml): 'when measured at a flowing water pressure of 60 pounds per square inch ... Lavatory faucets 2.2 gpm (8.3 L/min)'. A faucet that flows less waits longer, in proportion, in every walk-up alike"
+  sink_gpm:
+    value: 2.2
+    unit: gpm, a kitchen faucet's flow (the federal most, at 60 psi)
+    conf: high
+    source: "10 CFR 430.32(o) (as lav_gpm): 'Kitchen faucets 2.2 gpm (8.3 L/min)'"
+  shower_gpm:
+    value: 2.5
+    unit: gpm, the tub's showerhead (the federal most, at 80 psi)
+    conf: high
+    source: "10 CFR 430.32(p) (as lav_gpm): 'The maximum water use allowed for any showerheads manufactured after January 1, 1994, shall be 2.5 gallons per minute (9.5 liters per minute) when measured at a flowing pressure of 80 pounds per square inch gage'"
+  door_closed_drop:
+    value: 0.25
+    low: 0.0
+    high: 0.5
+    unit: share of a bedroom's outdoor air lost with its door closed, under exhaust-only ventilation
+    conf: low
+    source: "Hales, Eklund, Kunkle, Lubliner, Banks and Stevens (WSU Energy Program, for NEEA), 'A Field Study of Ventilation System Effectiveness in Low Air Leakage Residences', ACEEE Summer Study 2014, paper 1-309 (data/raw/pass3g/step10/comfort/aceee2014_1-309.pdf): the master bedroom by CO2 tracer decay in 26 homes, 'Closing the door causes ... almost a 25% drop in the exhaust only median value and a 47% increase in the HRV median effective ACH'. Single-family homes in the Pacific Northwest, one tracer for every zone (its authors' caveat); low and high judgement"
+  ms_indoor_dba_quiet:
+    value: 24
+    unit: dBA, the ducted mini-split's indoor unit at its Quiet fan (sound pressure, cooling or heating)
+    conf: high
+    source: "Fujitsu Design & Technical Manual DR_AR107ES_02, ARUH12KUAS specifications (data/raw/pass3g/fujitsu_dt.txt): 'Sound pressure level ... Cooling HIGH dB (A) 35 MED 30 LOW 27 QUIET 24 Heating HIGH 35 MED 30 LOW 27 QUIET 24'; '* 4: Sound pressure level: Measured values in manufacturer's anechoic chamber ... the sound levels measured in actual installation conditions might be higher than the specified values'; its check point (6-2) with the unit ducted, '(Set the static pressure as rating in this area)'"
+  ms_indoor_dba_high:
+    value: 35
+    unit: dBA, the ducted mini-split's indoor unit at its High fan
+    conf: high
+    source: "Fujitsu DR_AR107ES_02, ARUH12KUAS (as ms_indoor_dba_quiet)"
+  ms_cfm_quiet:
+    value: 300
+    unit: cfm, the ducted mini-split's airflow at its Quiet fan
+    conf: high
+    source: "Fujitsu DR_AR107ES_02, ARUH12KUAS: 'Airflow rate ... Heating HIGH 500 (850) MED 400 (680) LOW 347 (590) QUIET 300 (510)'"
+  ms_cfm_high:
+    value: 500
+    unit: cfm, the ducted mini-split's airflow at its High fan
+    conf: high
+    source: "Fujitsu DR_AR107ES_02, ARUH12KUAS (as ms_cfm_quiet)"
+  ms_outdoor_cool_dba:
+    value: 48
+    unit: dBA, the mini-split's outdoor unit cooling (sound pressure at 1 m)
+    conf: high
+    source: "Fujitsu DR_AR107ES_02, AOUH12KUAS1 and AOUH12KUBS1 specifications: 'Sound pressure level*1 Cooling dB (A) 48 ... Heating 49'; 'Measured values in manufacturer's semi-anechoic chamber'; check point (9-2) '40 in (1 m)'"
+  ms_outdoor_heat_dba:
+    value: 49
+    unit: dBA, the mini-split's outdoor unit heating (sound pressure at 1 m)
+    conf: high
+    source: "Fujitsu DR_AR107ES_02, AOUH12KUBS1 (as ms_outdoor_cool_dba)"
+  ac_lw_dba:
+    value: 74.0
+    unit: dBA, the gas walk-up's air conditioner's outdoor unit, its sound rating (A-weighted sound power)
+    conf: medium
+    source: "Goodman GLXS4BA1810A (spec SS-GLXS4B-R32, 03/26, data/raw/pass3g/step10/equipment/): 'Decibels (dBA) 74.0'. The sheet doesn't say how it was measured. An outdoor unit's sound rating is A-weighted sound power under AHRI 270, as Lennox's sound data sheet (ehb_sounddata_r454b_2610, data/raw/pass3g/step10/comfort/) says of its own: 'Tested according to AHRI Standard 270 test conditions. Sound rating Number is the overall A-Weighted Sound Power Level, (LWA), dB'. So it isn't Fujitsu's sound pressure at 1 m"
+  ac_btuh:
+    value: 18000
+    unit: Btu/h, the gas walk-up's air conditioner's nominal cooling (single-stage)
+    conf: high
+    source: "Goodman GLXS4BA1810A (above): 'Nominal Cooling (BTU/h) 18,000'; 'Stage Single'"
+  furnace_rise_min_f:
+    value: 25
+    unit: F, the least the gas furnace warms its air (its rated temperature rise)
+    conf: high
+    source: "Goodman GR9S960403AN (spec SS-GR9S96_GD9S96-R32, 08/26): 'Temperature Rise Range (F) 25-55'"
+  furnace_rise_max_f:
+    value: 55
+    unit: F, the most the gas furnace warms its air
+    conf: high
+    source: "Goodman GR9S960403AN (as furnace_rise_min_f)"
+  bath_fan_sone:
+    value: 0.4
+    low: 0.3
+    high: 0.4
+    unit: sone, the usual flats' bath fan at its 50 cfm setting, running all year
+    conf: high
+    source: "Panasonic FV-0511VQ1 submittal (data/raw/pass3g/step10/equipment/): '50-80-110 CFM and no more than <0.3/<0.3/<0.3 sone as certified by the Home Ventilating Institute (HVI) at 0.1 static pressure ... no less than 53-83-111 CFM and no more than 0.4/0.6/0.9 sone as certified by HVI at 0.25 w.g.' (10c takes its watts at 0.25)"
+  circulator_dba:
+    value: 43
+    unit: dBA, the most a circulator (Grundfos ALPHA2, P-1 and P-2) is heard (sound pressure)
+    conf: high
+    source: "Grundfos ALPHA2/ALPHA3 installation and operating instructions (data/raw/pass3g/raw/equipment/grundfos_5564454.pdf): 'The sound pressure level of the pump is lower than 43 dB(A)'"

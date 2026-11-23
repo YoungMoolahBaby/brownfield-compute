@@ -205,8 +205,20 @@ gets the savings.
   loss: 14.3 MWh a year.
 - Its house meter lands on Penelec's GS-Medium, with a demand charge of about $68 a flat a year.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10d,
-noise and comfort side by side.
+10d done: noise and comfort side by side, from the makers' and the studies' figures.
+- Quieter where the design chose to be. A neighbour's flush is 25 dBA through cast iron, against
+  33 through the usual walk-ups' PVC, which is CMHC's limit. In winter the roof's outdoor units run only
+  in the fallback, against about 4,200 hours a year in the electric and central walk-ups.
+- Not quieter in summer: the engineered flats' units run longer (5,135 hours against 3,948).
+- The engineered bedrooms get about twice the outdoor air a person, ducted and at 16.5 C or warmer.
+  The floors heat (20.9-26.2 C, inside ASHRAE 55), where the usual flats blow warm air.
+- Hot water: a heater in each flat does as well or better, except at the lavatory. The engineered
+  tub waits 10 s at worst, against 5.
+- Found: the supply pipes' sleeves, which step 4d's quiet takes, aren't in the bid documents or the
+  prices (for Addendum 9). The ERV's sound isn't published.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10e,
+who gets the savings.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4875,6 +4887,135 @@ test. Then the township brief's ask.
            - GS-Medium's demand and its ratchet;
            - the tie price;
            - more fallback hours moving only the engineered design.
+       - **10d done 2026-11-23: noise and comfort, each walk-up side by side** (Jon: "proceed with
+         10d"; `uv run brownfield baseline`, now 10a-10d; `src/brownfield/comfort.py`; params
+         `baseline.comfort`; writes `out/pass3/comfort.md|json`).
+         - **How:** only what a maker publishes, a study measured or a standard sets, and what the
+           model computes from them; no scores and no weights.
+           - **The pipes:** CMHC's drain measurements (`plumbing.noise`); Warnock and Morin's
+             relative levels for the supply pipes: the usual walk-ups' PEX clamped rigidly at the
+             street's pressure, the engineered design's sleeved behind its 60 psi valve.
+           - **The machines:** each maker's level, and the hours a year each runs. The inverter heat
+             pumps run whenever their flat needs them (10c's hourly model, each hour alone, so at
+             most). The gas walk-up's single-stage furnace and air conditioner run for their output's
+             share of the year.
+           - **The plant room:** whether any flat's room shares its walls, from the model.
+           - **Bedrooms:** the ERV's ducted supply, against what leaks in through the bedroom's own
+             walls under the usual flats' bath fan. The leakage is spread by exterior area, as the
+             heat loads spread it. With the door closed it is a quarter less, from WSU's field study
+             (Hales et al., ACEEE 2014: "almost a 25% drop in the exhaust only median value").
+           - **The air that heats:** the mini-split carrying each usual flat's design heat at its
+             Quiet and High airflows; the furnace at its rated rise.
+           - **Floors:** the radiant floors' surfaces at the design hour, against ASHRAE 55's 19-29 C.
+           - **The hot water's wait:** each fixture's pipe volume (C404.5's PEX table) over the
+             federal maximum flow (10 CFR 430.32: faucets 2.2 gpm, showerheads 2.5).
+             - The engineered flats' figures are from their loops on the routes.
+             - A flat's own heater's are from 10a's rule (`flat_hot_rule`, now per fixture).
+         - **Noise** (a flat, or its unit on the roof):
+
+           | | engineered | electric | gas | central |
+           |---|---|---|---|---|
+           | a neighbour's flush through a stack (dBA; CMHC's limit 33) | 25 | 33 | 33 | 33 |
+           | supply pipes, relative dB, at the street's 55 psi | 47.9 | 61.0 | 61.0 | 61.0 |
+           | the same at 80 psi, the code's most without a valve | 48.3 | 63.1 | 63.1 | 63.1 |
+           | the fan running all year (sone) | the ERV: not published | 0.4 | 0.4 | 0.4 |
+           | indoor unit (dBA) | 24-35 | 24-35 | the furnace: not published | 24-35 |
+           | outdoor unit at 1 m (dBA) | 48-49 | 48-49 | about 66 | 48-49 |
+           | hours a year heating | at most 168 (the fallback) | 4,229 | 249 (furnace) | 4,229 |
+           | hours a year cooling | 5,135 | 3,948 | 570 | 3,948 |
+
+           - The gas walk-up's 66 dBA is Goodman's 74.0 sound power over half a sphere's spreading,
+             a far-field rule used at 1 m, so rough.
+           - **The plant room** is in the annex behind the stair, and no flat's room shares its walls.
+             The nearest, 1-back-left's living room, is 0.29 m away at a corner.
+             - HP-1's maker (ClimateMaster) publishes no sound level.
+             - The circulators are under 43 dBA (Grundfos).
+         - **Comfort:**
+           - **Outdoor air to each bedroom, cfm a person** (the year's average):
+             - engineered: 15.3-15.8, by duct, at 16.5 C or warmer;
+             - usual: 6.0-9.1 with the door open, 4.5-6.8 with it closed. It comes through the
+               bedroom's own walls at the outdoor temperature, -16.3 C at the design hour.
+             - A usual flat's whole outdoor air is 53.1 cfm, but its bedrooms get only their share.
+               Phius asks 15 cfm a person, to every bedroom.
+           - **The air that heats, at the design hour:**
+             - engineered: none, since the floors heat. The ERV supplies at 16.5 C.
+             - electric and central: the mini-split's 28-37 C, from the ceiling's ducts;
+             - gas: the furnace's 35-52 C.
+           - **Floors:** the engineered flats' 52 heated rooms are 20.9-26.2 C at the design hour,
+             inside ASHRAE 55's 19-29 C. The usual flats' floors aren't heated.
+           - **The hot water's wait,** fl oz and seconds at the federal maximum flow:
+
+             | | engineered and central (the loops) | electric and gas (a heater in each flat) |
+             |---|---|---|
+             | lavatory, worst flat | 0 (on its loop) | 10 oz, 2 s |
+             | kitchen sink, worst | 21 oz, 4 s | 23 oz, 5 s |
+             | tub's shower, worst | 53 oz, 10 s | 25 oz, 5 s |
+             | tub's shower, mean flat | 45 oz, 8 s | 23 oz, 4 s |
+
+         - **So:**
+           - The engineered design is quieter where it chose to be:
+             - a neighbour's flush is 8 dB under the usual walk-ups' 33 dBA, which sits on CMHC's
+               limit;
+             - the supply pipes are 13-15 dB quieter, if their sleeves are built (below);
+             - in winter the roof's twelve outdoor units run only in the fallback, against about
+               4,200 hours a year in the electric and central walk-ups.
+           - **It is not quieter in summer.** Its outdoor units run longer, 5,135 hours against
+             3,948, because the ERV and the tight walls keep the cool night air out (10c's finding).
+           - **Its bedrooms get about twice the outdoor air a person,** ducted and tempered. The usual
+             flats' comes through the walls at the outdoor temperature, and less with the door shut.
+           - **It heats without moving air:** warm floors, under ASHRAE 55's limit. The usual flats
+             blow air at 28-37 C (mini-split) or 35-52 C (furnace).
+           - **On hot water, a heater in each flat does as well or better,** except at the lavatory.
+             - The heater stands on the plumbing wall, a few feet from every fixture.
+             - The engineered tub waits twice as long, 10 s at worst. Its pipe is longer (22 ft off the
+               loop against 12 from the heater, in the worst flats) and larger (3/4 in., sized at
+               5 ft/s for quiet).
+             - The usual drops are 1/2 in., up to 6.6 ft/s, within REHAU's 8.
+             - Every wait is short. The loops are C404.5's price for a central plant, as the central
+               walk-up shows: it waits the same.
+         - **Found:**
+           - **The supply pipes' sleeves aren't in the bid documents.** Step 4d's quiet pipes take
+             closed-cell sleeves at every support (Warnock and Morin's 49.1 against 62.3 clamped
+             rigidly). No drawing, note or section asks for them, and 10b didn't price them.
+             Without them the engineered PEX is the usual walk-up's, quieter only by the valve's 0-1.7
+             dB. For Addendum 9, with the round's outcomes, and a line in 10f's prices.
+           - **The ERV's sound isn't published.** Broan's sheet and CSI section give none, and HVI's
+             directory rates ERVs for energy and airflow only. The engineered flats swap a 0.4-sone
+             bath fan for a unit nobody has rated. A section could ask the maker for a rating, or a
+             test in a built flat could measure it.
+           - **10c's cooling model leaves out the slab edge.** It does so as `loads.room_cooling` does,
+             so 168 hours a year in the engineered flats, and 86 in the usual ones, need both heat and
+             cooling. 10d counts them as heating; 10c counts both.
+         - **What we don't know:**
+           - **The usual bedrooms' air is an upper bound.** Some of the bath fan's make-up air comes
+             from the neighbours and the stair, not outdoors; the model has only outdoor leakage.
+             WSU's quarter less with the door shut is from single-family houses.
+           - **The makers' levels are from test chambers.** Fujitsu says installed levels "might be
+             higher". CMHC's drain figures are trade-sponsored and from a reverberation chamber.
+           - **Unpublished:** the ERV, HP-1, the furnace's blower, the central gas heater.
+           - **The heat pumps' hours** count each hour alone, so they are at most. The cooling hours
+             assume the windows stay shut all year.
+           - **The fixtures' flows** are the federal maximums. Low-flow fixtures wait longer, in
+             proportion, in every walk-up.
+           - **Not compared:** airborne sound between flats and the windows' surfaces, alike in every
+             walk-up; humidity; the kitchen hood.
+         - **Checks:** 9, all pass:
+           - Warnock and Morin's pressure term gives their own 5 dB from 40 to 100 psi;
+           - the engineered worst fixture is step 9's 52.5 fl oz;
+           - each usual flat's farthest fixture is 10a's IPC 607.2 path, 11.9 ft at most;
+           - every engineered bedroom gets Phius's 15 cfm a person by duct;
+           - every heated floor is within ASHRAE 55 at the design hour;
+           - the ERV supplies at least PHI's 16.5 C;
+           - no flat's room shares a wall with the plant room;
+           - a flat's hours heating and cooling fit in the year;
+           - the furnace's hours give 10c's blower energy.
+         - Tests: `tests/test_walkup_comfort.py`, 9. Among them:
+           - the pressure term, the wait, sound power at 1 m;
+           - a shared wall found and a corner not;
+           - the valve quieting the engineered pipes only above its setting;
+           - a closed door taking air from the usual bedrooms and none from the ducts;
+           - more fallback hours running only the engineered heat pumps longer;
+           - the central walk-up waiting as the engineered design.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

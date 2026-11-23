@@ -1346,6 +1346,11 @@ noise:
     unit: dB (A-weighted, relative), a 13 mm plastic supply pipe in 13 mm closed-cell elastomeric sleeves (Armaflex), the same wall and source
     conf: high
     source: "Warnock and Morin NRCC-35548 (1990), Table 5: 'Plastic Armaflex 49.1' (13 mm); plastic clamped rigidly 62.3"
+  supply_plastic_rigid_db:
+    value: 62.3
+    unit: dB (A-weighted, relative), a 13 mm plastic supply pipe clamped rigidly to wood studs, the same wall and source (the usual walk-up's PEX)
+    conf: high
+    source: "Warnock and Morin NRCC-35548 (1990), Table 5: 'plastic clamped rigidly 62.3' (13 mm), beside 'Plastic Armaflex 49.1' and 'Cu 3 clamps 73.4'"
   usual_pressure_psi:
     value: 80
     unit: psi, the usual building's static pressure for the comparison (the code's most without a reducing valve)

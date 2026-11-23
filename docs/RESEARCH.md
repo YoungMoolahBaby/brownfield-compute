@@ -1800,3 +1800,36 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       - Pennsylvania residential electricity 20.90 c/kWh, commercial 13.56 (EIA-861M);
       - residential gas $20.06/Mcf as a simple mean, $15.96 weighted by volume. The summer months'
         prices sit on little gas, so the tariff is the better input.
+  - **10d, noise and comfort (2026-11-23).** Saved under `data/raw/pass3g/step10/comfort/`
+    (gitignored), with the makers' sheets already saved for 10a-10c; each param in
+    `params/baseline.yaml` (`comfort`) quotes its source.
+    - **ASHRAE 55-2010, Addendum f** (published free in ASHRAE's standards addenda): 5.2.4.4, "When
+      representative occupants are seated with feet in contact with the floor, floor surface
+      temperatures within the occupied zone shall be 19-29 C (66.2-84.2 F)", "based on people
+      wearing lightweight indoor shoes". The addendum moved the informative words to a new appendix
+      and kept the range as the requirement. The current edition wasn't read.
+    - **10 CFR 430.32** (eCFR, current): (o) lavatory and kitchen faucets 2.2 gpm at 60 psi; (p)
+      showerheads 2.5 gpm at 80 psi. The most a fixture may flow, so the least wait.
+    - **Hales, Eklund, Kunkle, Lubliner, Banks and Stevens,** "A Field Study of Ventilation System
+      Effectiveness in Low Air Leakage Residences", ACEEE Summer Study 2014, paper 1-309 (WSU Energy
+      Program for NEEA):
+      - 29 homes, 26 tracer-decay tests; master bedroom, ventilation on: door open, medians 0.28-0.36
+        ACH; door closed, "almost a 25% drop in the exhaust only median value and a 47% increase in
+        the HRV median";
+      - its limits: single-family, the Pacific Northwest, one tracer for every zone.
+    - **The makers' sound levels:**
+      - Fujitsu ARUH12KUAS (ducted indoor unit): 35/30/27/24 dBA at High/Med/Low/Quiet, in an
+        anechoic chamber; its airflows 500/400/347/300 cfm;
+      - Fujitsu AOUH12KUBS1 (outdoor): 48 dBA cooling, 49 heating, at 1 m, semi-anechoic;
+      - Goodman GLXS4BA1810A: "Decibels (dBA) 74.0", the method not stated. An outdoor unit's
+        rating is sound power under AHRI 270, as Lennox's sound data sheet (ehb_sounddata_r454b_2610)
+        says of its own: "Sound rating Number is the overall A-Weighted Sound Power Level, (LWA)";
+      - Goodman GR9S960403AN: temperature rise 25-55 F, no sound level;
+      - Panasonic FV-0511VQ1: "<0.3" sone at 0.1 in. w.g. and 0.4 sone at 0.25 in. w.g., 50 cfm,
+        HVI-certified;
+      - Grundfos ALPHA2: "lower than 43 dB(A)";
+      - **not published:** the Broan EDGE ERV (its spec sheet and CSI specification give no sound
+        level; HVI's directory rates ERVs for energy and airflow only), ClimateMaster's Tranquility
+        SW (catalogue RP3006), A. O. Smith's BTH-120.
+    - **Warnock and Morin** (NRCC-35548, 1990), Table 5 again: plastic pipe clamped rigidly 62.3,
+      in Armaflex sleeves 49.1, copper clamped rigidly 73.4 (relative dB, an ISO noise source).

@@ -341,7 +341,7 @@ def flat_hot_rule(apt: dict, p: dict, routes) -> dict[str, dict]:
     the plumbing wall, its outlet at the tank's top; a trunk along the wall at that height spanning
     the flat's hot fixtures (the engineered flat's hot terminals: lavatory, tub, sink, dishwasher,
     washer), and a drop to each. The trunk 3/4 in., the drops 1/2 in. (`baseline.usual`). The
-    longest path is IPC 607.2's."""
+    longest path is IPC 607.2's; each fixture's own trunk and drop give its wait (10d)."""
     u = "baseline.usual."
     rooms = {x["id"]: x for x in apt["rooms"]["rooms"]}
     out = {}
@@ -359,7 +359,8 @@ def flat_hot_rule(apt: dict, p: dict, routes) -> dict[str, dict]:
         paths = {k: abs(xyz[1] - y_h) + drops[k] for k, xyz in terms.items()}
         far = max(paths, key=paths.get)
         out[n] = {"trunk_ft": trunk / FT, "drops_ft": sum(drops.values()) / FT, "longest_ft": paths[far] / FT, "farthest": far,
-                  "heater_y_m": y_h}
+                  "heater_y_m": y_h,
+                  "fixtures": {k: {"trunk_ft": abs(xyz[1] - y_h) / FT, "drop_ft": drops[k] / FT} for k, xyz in terms.items()}}
     return out
 
 
