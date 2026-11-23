@@ -185,8 +185,17 @@ gets the savings.
 - The usual flats need up to 29.7 kW at design against 19.4. The same heat pump still heats each
   one.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10b
-(both priced, and the fee) runs alongside.
+10b done: both walk-ups priced item by item from free sources, 121 prices.
+- A flat's systems: the engineered design $59,100, the usual walk-up $27,800 all-electric, $37,900 gas
+  and $29,800 with central hot water.
+- The engineered design costs $31,300 a flat more than the electric walk-up, 17.7% of the building's
+  construction cost. Up front, with the fee's extra ($2,200) and the heat network's share ($9,800 at
+  pass 3 §4's base case), the premium is about $43,000 a flat.
+- The biggest piece is the space heat from the data center's water ($12,000). Then come cast iron
+  for quiet ($4,900), the hot-water plant and its loops ($4,700), the ERVs ($3,900) and PV ($2,600).
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10c
+(the running costs a year) runs alongside.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4475,7 +4484,7 @@ test. Then the township brief's ask.
              low-rise multifamily. So both walk-ups are built up item by item and checked against:
              - NAHB's single-family shares (plumbing 6.3%, electrical 6.4%, HVAC 6.3%, *Cost of
                Constructing a Home 2024*);
-             - HUD's 2024 Johnstown walk-up construction cost, $162,308 for a 2-bedroom flat.
+             - HUD's 2024 Johnstown walk-up construction cost for a 2-bedroom flat, $161,169 (a first read gave $162,308; 10b read the table again).
            - **Equipment installed:** REMDB (NREL, CC BY 4.0), with ENERGY STAR MFNC v1.3's
              incremental costs as a consistency check.
            - **Labour:** BLS OEWS May 2025 wages for Indiana County's area (plumbers $29.51,
@@ -4631,6 +4640,96 @@ test. Then the township brief's ask.
            - a lost run and an untraced item caught;
            - the usual flats' heat;
            - the services' swapped loads.
+       - **10b done 2026-11-23: both walk-ups priced, item by item, and the fee**
+         (`uv run brownfield baseline`, now 10a and 10b; `src/brownfield/pricing.py`; prices and
+         hours in `params/baseline.yaml`; writes `out/pass3/pricing.md|json`).
+         - **How:**
+           - Each of 10a's items is priced by its class, 121 prices in all, from four research agents'
+             saved pages (`data/raw/pass3g/step10/prices/`, gitignored):
+             - materials and equipment at a named seller's price, dated and ranged;
+             - REMDB, LBNL's PV data, the utilities' tariffs, PennDOT's and townships' bids for the rest.
+           - **The labour:** hours a unit by trade, stated (no free source of labour units: each a
+             placeholder, half to twice), at BLS OEWS May 2025 wages for Indiana County's area times
+             ECEC's burden (1.341 on OEWS's wage, which already holds paid leave).
+           - **The markups:** the trade's 21% (VAAR's change-order rule) on its own; the builder's per
+             PHFA's caps (general requirements, overhead and profit 14%, contingency 5%).
+           - **Book and list prices:** a distributor's book or a maker's list (28 classes) is taken at
+             0.75 of it, a placeholder for the trade discount no free source gives. The agents' own pairs
+             ran from about half (an electric tank $1,806 book, a near model $991 online) to near par.
+           - The fixtures and appliances, every walk-up's alike, aren't priced. 10a's lists grow to 254 items: each usual
+             flat's own hot-pipe fittings, and the shared items the NAHB check asked for (below).
+         - **A flat's systems** (2026 dollars, all markups):
+           - the engineered design $59,149;
+           - the usual walk-ups: electric $27,814, gas $37,887, central $29,843.
+         - **The engineered design's premium, a flat:**
+           - $31,335 over the electric walk-up (17.7% of HUD's construction cost, $2.13M for the
+             building);
+           - $21,262 over gas (12.0%);
+           - $29,305 over central (16.5%).
+         - **What it buys** (over the electric walk-up, a flat):
+           - space heat from the data center's water $12,016 (the radiant tubing and its topping, the
+             manifolds, the loop, the slab's insulation, the heat meters);
+           - cast iron drains and vents for quiet $4,860;
+           - the hot-water plant and its loops $4,702;
+           - the ERVs $3,869;
+           - PV $2,550;
+           - the water and fire services kept apart and supervised $1,395;
+           - airtightness to Phius $860;
+           - the water submeters $848;
+           - the reducing valve $205.
+         - **Beside the systems:**
+           - **the heat network's share** (pass 3 §4, an apartment's): $9,844 a flat at §4's base case
+             (200 homes on 1.5 km; the main from the campus $8,250 of it), $2,144 on its dense one
+             (1,000 homes on 0.5 km);
+           - **the fee:**
+             - PHFA's cap for a walk-up already buys MEP drawings: 6.94% at $2M, $147,644;
+             - its "Complex Development" band, for a building with central heating or hot water, is
+               7.13%, about $3,900 more;
+             - Washington's public-works fee is 10.08%, $214,445, its MEP share $53,611 at a placeholder
+               25% (no free source splits it);
+             - the engineered design's extra, half of that: $26,806, $2,234 a flat.
+           - Up front, then: about $43,400 a flat over the electric walk-up at §4's base case, $35,700 on
+             its dense one.
+         - **Checks:** 5, all pass:
+           - every item priced but the fixtures and appliances;
+           - **NAHB:** the usual electric walk-up's plumbing $7,212, electrical $7,242 and HVAC $8,276 a
+             flat, 0.64-0.74 of NAHB's single-family shares of HUD's Johnstown cost (a factor of 2 either
+             way);
+           - **NFSA:** the sprinklers alone $2.97 a ft2 against its $1.35 for a 13D house (a floor);
+           - **ENERGY STAR:** REMDB's heat-pump water heater increment $1,384 against MFNC's $1,161;
+           - **REMDB:** each piece of equipment, built up from its list price, hours and markup, at
+             0.59-1.99 of REMDB's installed cost. The mini-split, ERV, furnace and AC come out about 0.6
+             (REMDB's national installed prices against Indiana County's wages).
+         - **Found and fixed along the way:**
+           - **A size parser read 1-1/2 in. fittings as large ones** (a decimal size it didn't know).
+           - **The NAHB check first failed:** plumbing 0.46, electrical 0.39. The lists had no fixture
+             rough-in or setting, no outlets and switches, smoke alarms, meter sockets or house panel.
+             They are added as shared items (allowances, said so), alike in every walk-up, so the
+             differences didn't move.
+           - **The design's mixing valve:** the agent had priced Leonard's larger TM-186-1520B. MV-1 is
+             the TM-186-820B, $7,545 on Leonard's list.
+           - **Gas:** Peoples Natural Gas, which serves the town, asks a service line for each flat that
+             controls its own gas, the owner's to install. So the gas walk-up has twelve, $4,309 a flat
+             of its $6,487 in gas.
+         - **What we don't know:**
+           - Every labour hour is stated. The NAHB check, at 0.64-0.74, suggests they're low if anything,
+             which understates the engineered design's labour-heavy items (cast iron, the radiant floors)
+             more than the usual walk-up's.
+           - The trade discount off book and list prices.
+           - The heat meter (no US price found), the plant's controls (none chosen), the topping (no
+             source for 1-1/2 in.), a second water connection's cost, and the gas lines' installed price:
+             placeholders.
+           - The MEP share of a fee, and how much of it the engineered design adds.
+           - Prices change, and many rest on one seller; each is dated and its range carries the rest.
+             10f's Monte Carlo runs them all.
+         - Tests: `tests/test_walkup_pricing.py`, 10. Among them:
+           - sizes parsed either way;
+           - a feeder as its conduit and its copper;
+           - book against street prices;
+           - where each markup falls;
+           - the fee's arithmetic;
+           - the shared items cancelling and the purposes adding up;
+           - a dearer engineered-only item moving only the engineered design.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

@@ -171,3 +171,2278 @@ usual:
     unit: share of a tank's storage drawn at temperature before its outlet cools
     conf: placeholder
     source: "judgement (the common rule of thumb for a tank's usable storage), to source"
+
+  devices_per_flat:
+    value: 40
+    low: 25
+    high: 60
+    unit: outlets and switches a flat
+    conf: placeholder
+    source: "judgement: NEC 210.52's receptacles (every 12 ft of wall, each counter space, the bath, the laundry, the outdoors), a switch at each room's door; step 5 sized the circuits, not the devices"
+  service_ft:
+    value: 30
+    low: 15
+    high: 60
+    unit: ft of service conductors from the transformer's pad to the meter stack (each conductor)
+    conf: placeholder
+    source: "judgement until a site plan places the pad"
+# The labour a unit of each priced class takes, by the trade `pricing.CLASSES` names (10b).
+hours:
+  pex_a_0.5:
+    value: 0.03
+    low: 0.015
+    high: 0.06
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_0.75:
+    value: 0.035
+    low: 0.0175
+    high: 0.07
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_1:
+    value: 0.04
+    low: 0.02
+    high: 0.08
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_1.25:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_1.5:
+    value: 0.07
+    low: 0.035
+    high: 0.14
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_fitting_small:
+    value: 0.15
+    low: 0.075
+    high: 0.3
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_a_fitting_large:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_preins_small:
+    value: 0.15
+    low: 0.075
+    high: 0.3
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pex_preins_large:
+    value: 0.2
+    low: 0.1
+    high: 0.4
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_nohub_1.5:
+    value: 0.12
+    low: 0.06
+    high: 0.24
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_nohub_2:
+    value: 0.13
+    low: 0.065
+    high: 0.26
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_nohub_3:
+    value: 0.17
+    low: 0.085
+    high: 0.34
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_nohub_4:
+    value: 0.2
+    low: 0.1
+    high: 0.4
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_fitting_small:
+    value: 0.4
+    low: 0.2
+    high: 0.8
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ci_fitting_large:
+    value: 0.6
+    low: 0.3
+    high: 1.2
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_dwv_1.5:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_dwv_2:
+    value: 0.07
+    low: 0.035
+    high: 0.14
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_dwv_3:
+    value: 0.09
+    low: 0.045
+    high: 0.18
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_dwv_4:
+    value: 0.11
+    low: 0.055
+    high: 0.22
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_fitting_small:
+    value: 0.2
+    low: 0.1
+    high: 0.4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_fitting_large:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_sch40_0.75:
+    value: 0.05
+    low: 0.025
+    high: 0.1
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_fitting_condensate:
+    value: 0.1
+    low: 0.05
+    high: 0.2
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  pvc_sch40_2:
+    value: 0.08
+    low: 0.04
+    high: 0.16
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  gas_csst_0.75:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  insul_1in_small:
+    value: 0.04
+    low: 0.02
+    high: 0.08
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  insul_15in_large:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  insul_05in:
+    value: 0.03
+    low: 0.015
+    high: 0.06
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_insul_15:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  caleffi_116:
+    value: 0.75
+    low: 0.375
+    high: 1.5
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  leonard_tm186:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  grundfos_alpha2:
+    value: 3
+    low: 1.5
+    high: 6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  lochinvar_hp150g:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  bradford_re340s6:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  aosmith_dre52:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  climatemaster_sw036:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  bphe_50kw:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  exp_tank_hydronic:
+    value: 1.5
+    low: 0.75
+    high: 3
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  exp_tank_dhw_small:
+    value: 1
+    low: 0.5
+    high: 2
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  exp_tank_dhw_large:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  plant_controls:
+    value: 40
+    low: 20
+    high: 80
+    unit: "hours a unit (lot: the controller, six sensors and a flow switch, two modulating valves, wired and set up)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  aosmith_bth120:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  central_vent:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  kamstrup_403:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  badger_eseries_34:
+    value: 1
+    low: 0.5
+    high: 2
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  radiant_pex_0.5:
+    value: 0.012
+    low: 0.006
+    high: 0.024
+    unit: "hours a unit (ft, clipped to its panels before the topping)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  radiant_manifold:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each, with its cabinet)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  xps_r5:
+    value: 0.01
+    low: 0.005
+    high: 0.02
+    unit: "hours a unit (ft2)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  watts_lfn45b_2:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  domestic_service:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  fire_service:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  combined_service:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  supervision:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each: the panel and its two tamper switches, wired and programmed)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  alarm:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  fdc:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  cpvc_1.25:
+    value: 0.08
+    low: 0.04
+    high: 0.16
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  cpvc_1.5:
+    value: 0.09
+    low: 0.045
+    high: 0.18
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  cpvc_2.5:
+    value: 0.12
+    low: 0.06
+    high: 0.24
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  cpvc_fitting:
+    value: 0.2
+    low: 0.1
+    high: 0.4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  head_ty2236:
+    value: 0.5
+    low: 0.25
+    high: 1
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  head_qr_k56:
+    value: 0.5
+    low: 0.25
+    high: 1
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  preheater_1kw:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_round_4:
+    value: 0.06
+    low: 0.03
+    high: 0.12
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_round_5:
+    value: 0.07
+    low: 0.035
+    high: 0.14
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_round_6:
+    value: 0.08
+    low: 0.04
+    high: 0.16
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_round_7:
+    value: 0.09
+    low: 0.045
+    high: 0.18
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_round_8:
+    value: 0.1
+    low: 0.05
+    high: 0.2
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_elbow_small:
+    value: 0.25
+    low: 0.125
+    high: 0.5
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_elbow_large:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_boot:
+    value: 0.4
+    low: 0.2
+    high: 0.8
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  duct_takeoff:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  register_supply:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  grille_exhaust:
+    value: 0.3
+    low: 0.15
+    high: 0.6
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  wallcap_5_hood:
+    value: 1.5
+    low: 0.75
+    high: 3
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  wallcap_usual:
+    value: 1
+    low: 0.5
+    high: 2
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  lineset_14_38:
+    value: 0.1
+    low: 0.05
+    high: 0.2
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  level_switch:
+    value: 0.5
+    low: 0.25
+    high: 1
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  bath_fan_panasonic:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  nmb_14:
+    value: 0.015
+    low: 0.0075
+    high: 0.03
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  nmb_12:
+    value: 0.017
+    low: 0.0085
+    high: 0.034
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  nmb_10:
+    value: 0.02
+    low: 0.01
+    high: 0.04
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  nmb_8:
+    value: 0.025
+    low: 0.0125
+    high: 0.05
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  feeder_1:
+    value: 0.1
+    low: 0.05
+    high: 0.2
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  feeder_1.25:
+    value: 0.12
+    low: 0.06
+    high: 0.24
+    unit: "hours a unit (ft)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  conduit_elbow_1:
+    value: 0.25
+    low: 0.125
+    high: 0.5
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  qo130l125pg:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  service_600:
+    value: 24
+    low: 12
+    high: 48
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  service_400:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  plant_circuits:
+    value: 40
+    low: 20
+    high: 80
+    unit: "hours a unit (lot: the plant's six circuits from the house panel, BK-1's the largest)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  central_circuits:
+    value: 8
+    low: 4
+    high: 16
+    unit: "hours a unit (lot)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  minisplit_fujitsu_12_ducted:
+    value: 16
+    low: 8
+    high: 32
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  erv_broan_blp120:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  aosmith_ent50:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  rheem_prog40_pdv:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  furnace_goodman_40k:
+    value: 10
+    low: 5
+    high: 20
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ac_goodman_15ton:
+    value: 8
+    low: 4
+    high: 16
+    unit: "hours a unit (each, set, connected and started)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  fixture_roughin:
+    value: 3
+    low: 1.5
+    high: 6
+    unit: "hours a unit (each fixture, its rough-in parts set and the fixture set and connected)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  device:
+    value: 0.4
+    low: 0.2
+    high: 0.8
+    unit: "hours a unit (each device, its box, wire made up, device and plate)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  smoke_alarm:
+    value: 0.5
+    low: 0.25
+    high: 1
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  ezmh314125:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours a unit (each module)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_P-1:
+    value: 8
+    low: 4
+    high: 16
+    unit: "hours, test P-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_P-2:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test P-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_P-3:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours, test P-3 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_P-4:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test P-4 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_P-5:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test P-5 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_HW-1:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test HW-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_HW-2:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test HW-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_HW-3:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours, test HW-3 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_HW-4:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test HW-4 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_HW-5:
+    value: 8
+    low: 4
+    high: 16
+    unit: "hours, test HW-5 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_H-1:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours, test H-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_H-2:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test H-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_H-3:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours, test H-3 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_H-4:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test H-4 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_R-1:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours, test R-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_R-2:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours, test R-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_R-3:
+    value: 3
+    low: 1.5
+    high: 6
+    unit: "hours, test R-3 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_V-1:
+    value: 12
+    low: 6
+    high: 24
+    unit: "hours, test V-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_F-1:
+    value: 3
+    low: 1.5
+    high: 6
+    unit: "hours, test F-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_F-2:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours, test F-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_F-3:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test F-3 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_F-4:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test F-4 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_F-5:
+    value: 2
+    low: 1
+    high: 4
+    unit: "hours, test F-5 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_G-1:
+    value: 0
+    low: 0
+    high: 0
+    unit: "hours, test G-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_G-2:
+    value: 4
+    low: 2
+    high: 8
+    unit: "hours, test G-2 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  test_EL-1:
+    value: 6
+    low: 3
+    high: 12
+    unit: "hours, test EL-1 of 01 45 00 as a whole (P-4 each assembly)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+
+# Labour: each trade's mean wage (BLS OEWS May 2025, the Southwestern Pennsylvania nonmetropolitan
+# area, which holds Indiana County; series OEUM4200004000000<SOC>03, from BLS's API), its low the
+# least of that and the Johnstown MSA's, its high Davis-Bacon's base wage for building work in
+# Indiana County (PA20260055 modification 6, 2026-11-12); times the burden.
+labour:
+  plumber_usd_h:
+    value: 29.51
+    low: 29.51
+    high: 40.02
+    unit: USD an hour, plumbers, pipefitters and steamfitters (SOC 47-2152)
+    conf: high
+    source: "BLS OEWS May 2025 (API): 'OEUM420000400000047215203 2025 A01 Annual 29.51'; Johnstown 30.10, Pittsburgh 36.26; Davis-Bacon PA20260055 mod 6 plumber base 40.02 + fringe 26.55"
+  sprinkler_usd_h:
+    value: 29.51
+    low: 29.51
+    high: 49.75
+    unit: USD an hour, sprinkler fitters (in SOC 47-2152 with plumbers and pipefitters)
+    conf: medium
+    source: "BLS OEWS May 2025 (as plumber_usd_h, SOC 47-2152 includes sprinkler fitters); Davis-Bacon PA20260055 mod 6 sprinkler fitter base 49.75 + fringe 30.26"
+  electrician_usd_h:
+    value: 34.41
+    low: 30.93
+    high: 49.11
+    unit: USD an hour, electricians (SOC 47-2111)
+    conf: high
+    source: "BLS OEWS May 2025 (API), SW PA nonmetro 34.41; Johnstown 30.93, Pittsburgh 36.22; Davis-Bacon PA20260055 mod 6 electrician base 49.11 + fringe 36.79"
+  hvac_usd_h:
+    value: 28.08
+    low: 26.34
+    high: 48.15
+    unit: USD an hour, HVAC mechanics and installers (SOC 49-9021)
+    conf: high
+    source: "BLS OEWS May 2025 (API), SW PA nonmetro 28.08; Johnstown 26.34, Pittsburgh 31.07; Davis-Bacon PA20260055 mod 6 HVAC pipefitter base 48.15 + fringe 29.17"
+  sheetmetal_usd_h:
+    value: 25.41
+    low: 25.41
+    high: 46.75
+    unit: USD an hour, sheet metal workers (SOC 47-2211)
+    conf: high
+    source: "BLS OEWS May 2025 (API), SW PA nonmetro 25.41 (Johnstown not published), Pittsburgh 30.27; Davis-Bacon PA20260055 mod 6 sheet metal base 46.75 + fringe 35.93"
+  insulator_usd_h:
+    value: 33.15
+    low: 30.60
+    high: 36.70
+    unit: USD an hour, mechanical insulation workers (SOC 47-2132)
+    conf: medium
+    source: "BLS OEWS May 2025, not published for SW PA nonmetro or Johnstown; Pittsburgh MSA 33.15, Pennsylvania 36.70; Davis-Bacon PA20260055 mod 6 non-industrial mechanical insulator (survey) base 30.60 + 17.16"
+  laborer_usd_h:
+    value: 23.69
+    low: 23.58
+    high: 26.82
+    unit: USD an hour, construction laborers (SOC 47-2061)
+    conf: high
+    source: "BLS OEWS May 2025 (API), SW PA nonmetro 23.69; Johnstown 23.58, Pittsburgh 26.09; Davis-Bacon PA20260055 mod 6 laborer base 26.82 + fringe 19.39"
+  tab_usd_h:
+    value: 28.08
+    low: 26.34
+    high: 48.15
+    unit: USD an hour, the people who test, balance and commission (taken at the HVAC mechanics' wage)
+    conf: low
+    source: "as hvac_usd_h; no local wage for testing, adjusting and balancing technicians was found"
+  tab_billing_usd_h:
+    value: 101.44
+    low: 45.6
+    high: 163.59
+    unit: USD an hour, a testing, adjusting and balancing firm's billed rate
+    conf: low
+    source: 'GSA MAS price lists: General & Mechanical Services 47QSHA22D0002; ENVIROS GS-21F-0102Y; Penn Air Control GS-21F-0191W: ''Testing & Balancing Technician | Customer_Facility | HR | 101.44 [GMS];
+      Balance Technician - Normal Hours 7am to 3:30pm | Customer_Facility | HR | 104.8362 [GMS]; TAB Technician I | Customer_Facility | HR | 163.59 [ENVIROS]; TAB Technician '' (https://catalog-library-prod.s3-fips.us-east-1.amazonaws.com/pricelist/GS-21F-0102Y/pricelist_GS-21F-0102Y.xlsx,
+      read 2026-11-23); Fully burdened federal ceiling rates (wage, fringe, overhead, G&A, profit, plus the 0.75% GSA fee); maximums, not local market rates; travel billed separately. Cells from each spreadsheet''s
+      Price List sheet joined with '' | ''. Rate years: GMS from 10/8/2026, EN; GSA ceiling rates (maxima); low the HVAC mechanic''s wage x burden x the trade''s markup, 28.08 x 1.341 x 1.21'
+  burden:
+    value: 1.341
+    low: 1.341
+    high: 1.442
+    unit: employer cost over the hourly wage, construction (OEWS's wage includes paid leave, which ECEC counts as a benefit)
+    conf: high
+    source: "BLS ECEC June 2026 (released 2026-09-09) Table 4, construction: 'Total compensation 51.96; Wages and salaries 36.13; Paid leave 2.63', so 51.96 / (36.13 + 2.63) = 1.341 on OEWS's wages; 51.96 / 36.13 = 1.438 (1.436-1.442 over Q1 2025 to Q2 2026) toward the high"
+
+# Markups: the trade's on its own material and labour, then the builder's on the whole (PHFA's).
+markup:
+  trade_op:
+    value: 0.21
+    low: 0.1025
+    high: 0.30
+    unit: the trade subcontractor's overhead and profit, a share of its own material and labour
+    conf: low
+    source: "VAAR 48 CFR 852.243-70 (construction contract changes): 10% overhead and 10% profit, compounding to 21% on the first $20,000 and 10.25% over $50,000; PennDOT Publication 408/2026 110.03(d)7: 30% on direct labour (a highway rule). Change-order rules, not bid markups: no free source of the latter was found"
+  book_to_net:
+    value: 0.75
+    low: 0.55
+    high: 1.0
+    unit: what a contractor pays for an item priced at a distributor's book or a maker's list, a share of that price
+    conf: placeholder
+    source: "judgement: no free source of trade discounts found; the agents' own pairs ran from about half (an electric tank $1,806 book, a near model $991 online; a 4 in. DCVA $7,985 book, $4,095 online) to near par"
+  general_requirements:
+    value: 0.06
+    unit: the builder's general requirements, a share of the hard cost
+    conf: high
+    source: "PHFA 2025 Underwriting Application, Tab 07 Development Cost Limits (rev. 1-17-25): general requirements 6%"
+  overhead:
+    value: 0.02
+    unit: the builder's overhead, a share of the hard cost
+    conf: high
+    source: "PHFA Tab 07 (as above): builder's overhead 2%"
+  profit:
+    value: 0.06
+    unit: the builder's profit, a share of the hard cost
+    conf: high
+    source: "PHFA Tab 07 (as above): builder's profit 6%; general requirements, overhead and profit together 14% of the hard cost"
+  contingency:
+    value: 0.05
+    low: 0.05
+    high: 0.10
+    unit: construction contingency, a share of the improvement cost
+    conf: high
+    source: "PHFA Tab 07 (as above): 5% for new construction (10% for rehabilitation, the high)"
+
+# The engineering fee (PLAN D28 step 10's decision: a difference in depth).
+fee:
+  hud_hcc_flat:
+    value: 161169
+    unit: USD, HUD's 2024 housing construction cost for a 2-bedroom walk-up flat, Johnstown market
+    conf: high
+    source: "HUD PIH 2024 Unit Total Development Cost Limits, Johnstown PA, walkup, 2 bedrooms: HCC 161,169, TDC 282,045 (a cap, not a survey; read against the PDF's text positions)"
+  hcc_to_2026:
+    value: 1.10
+    low: 1.08
+    high: 1.138
+    unit: factor from 2024 to 2026 dollars for a construction cost with its labour
+    conf: low
+    source: "the materials by BLS PPI inputs to new multifamily construction (WPUIP231120), 2024 average 150.799 to Oct 2026 171.564 (preliminary), 1.138, the high; the labour about 4% a year (pass 4's 1.08, the low); the value a blend of the two, judgement"
+  phfa_pct:
+    value: 0.0694
+    low: 0.0657
+    high: 0.0731
+    unit: PHFA's most for a walk-up's architect, design and construction administration with full MEP drawings, a share of construction cost
+    conf: high
+    source: "PHFA Tab 07, Regular Development (a townhouse, walk-up flat): 7.31% at $1,000,000, 6.57% at $3,000,000, interpolated at $2M as PHFA requires; 'Full architectural, structural, mechanical and electrical drawings' within it"
+  phfa_complex_pct:
+    value: 0.07125
+    low: 0.0672
+    high: 0.0753
+    unit: PHFA's most for a Complex Development (a building with central heating or hot water), a share of construction cost
+    conf: high
+    source: "PHFA Tab 07, Complex Development: 7.53% at $1M, 6.72% at $3M, interpolated at $2M"
+  ofm_pct:
+    value: 0.1008
+    low: 0.0863
+    high: 0.1154
+    unit: Washington's public-works basic services fee (architecture, structure, civil, mechanical, electrical) for apartments, a share of construction cost
+    conf: high
+    source: "Washington OFM 2027-29 budget instructions, chapter 8, Schedule B (apartment buildings), design-bid-build: 10.08% at $2M (Schedules C and A, 8.63% and 11.54%, the range); basic services 'include normal architectural, structural, civil, mechanical, and electrical engineering services'"
+  mep_share:
+    value: 0.25
+    low: 0.15
+    high: 0.35
+    unit: the mechanical, plumbing, fire and electrical engineering's share of a building's A/E fee
+    conf: placeholder
+    source: "none found free (Washington OFM, Utah DFCM, Virginia DGS, PHFA, Wisconsin DFD, Michigan DTMB checked; Massachusetts and Maine returned 403); judgement"
+  extra_of_mep:
+    value: 0.5
+    low: 0.0
+    high: 1.0
+    unit: the share of that MEP fee the engineered design adds over the usual walk-up's (whose MEP drawings PHFA's cap already buys)
+    conf: placeholder
+    source: "PLAN D28 step 10's decision, from about nothing (the usual walk-up's drawings, made full) to the whole MEP share; the middle, judgement"
+
+# The known cases' figures and bands.
+check:
+  nahb_plumbing_share:
+    value: 0.06347
+    unit: plumbing except fixtures, a share of a new house's construction cost
+    conf: high
+    source: "NAHB, Cost of Constructing a Home-2024 (January 2025): plumbing (except fixtures) $27,180 of $428,215"
+  nahb_electrical_share:
+    value: 0.06395
+    unit: electrical except fixtures, a share of a new house's construction cost
+    conf: high
+    source: "NAHB 2024 (as above): electrical (except fixtures) $27,383 of $428,215"
+  nahb_hvac_share:
+    value: 0.06291
+    unit: HVAC, a share of a new house's construction cost
+    conf: high
+    source: "NAHB 2024 (as above): HVAC $26,938 of $428,215"
+  nahb_factor:
+    value: 2.0
+    unit: how far the usual walk-up's systems may sit from NAHB's single-family shares, either way
+    conf: placeholder
+    source: "judgement: single-family shares on a walk-up, and the outlets and luminaires outside our lists"
+  nfsa_13d_ft2:
+    value: 1.35
+    low: 0.81
+    high: 2.47
+    unit: USD a ft2, an NFPA 13D house's sprinklers (a floor for 13R)
+    conf: medium
+    source: "National Fire Sprinkler Association, 'The True Cost to Install a Residential Fire Sprinkler System' (2020): 'about $1.35 per square foot' (one- and two-family dwellings; range $0.81-2.47)"
+
+# The heat network's dense case beside pass 3 §4's base case (pass3.block.homes, main_km).
+network:
+  dense_homes:
+    value: 1000
+    unit: homes on the block, pass 3 §4's dense case
+    conf: high
+    source: "pass 3 §4 (docs/pass3/README.md): '1,000 apartments on a 0.5 km main', its case where the loop comes out cheapest"
+  dense_main_km:
+    value: 0.5
+    unit: km of main from the campus, pass 3 §4's dense case
+    conf: high
+    source: "pass 3 §4 (as above)"
+
+# Prices (10b), from the research agents' CSVs under data/raw/pass3g/step10/prices/ (each source saved there).
+price:
+  ac_goodman_15ton:
+    value: 2526.0
+    low: 2432.0
+    high: 2727.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Got Ductless (condenser $1,797.00 + coil $729.00): ''$1797.00 (condenser); Regular price $729.00 (coil)'' (https://gotductless.com/products/goodman-glxs4ba1810-1-5-ton-air-conditioner-condenser-r32,
+      read 2026-11-23); Sum of two items. Condenser GLXS4BA1810: low/typical $1,797.00 (Got Ductless and SupplyHouse), high HVACDirect ''Special Price $1,877.00'' (saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_glxs4ba1810.html).
+      Coil CAPTA2422A3: low The AC Outlet $635'
+  airseal_ft2:
+    value: 0.24
+    low: 0.24
+    high: 1.5
+    unit: USD a ft2 of gross floor, air sealing to Passive House beyond the base design
+    conf: low
+    source: 'The Passive House Network, Safe at Home (2023), Finch Cambridge cost comparison table; GFA from MassCEC ACEEE 2022 paper, Table 3: ''Air sealing $614,412 $641,536 $27,124'' (https://buildingdecarb.org/wp-content/uploads/Passive-House-Network-Summer-2023-Report-Safe-at-Home.pdf.pdf,
+      read 2026-11-23); Columns: Base case estimate / Passive House design / Difference. $27,124 / 111,450 ft2 GFA = $0.243/ft2 = $277 per unit. Base design = IECC 2015 + MA Stretch Code. Podium building,
+      not a wood walk-up; ~2018-2021 MA dollars. Enclosure area not published, so no ; high: AeroBarrier''s $1.00-2.00/ft2 of floor (DOE), typical $1.50; REMDB''s retrofit air sealing 0.33-1.42 $/ft2 for
+      comparison'
+  aosmith_bth120:
+    value: 8808.0
+    low: 8808.0
+    high: 8808.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$8,808.00 / ea'' (https://www.consolidatedsupply.com/Product/1434454, read 2026-11-23); Item 100234868 is the BTH-120
+      (A. O. Smith''s product page URL .../bth-120-300/100234868.html). BTH-120A (ASME) at the same seller shows sign-in pricing. One seller; book price. Price is what the distributor''s public product
+      page shows anonymously (loaded from '
+    note: book
+  aosmith_dre52:
+    value: 2901.15
+    low: 2901.15
+    high: 3080.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Keller Supply (kellersupply.com, distributor public web price): ''$2,901.15 / ea'' (https://www.kellersupply.com/Product/1362309, read 2026-11-23); NOT FOUND for DRE-52-12 (SupplyHouse/First
+      Supply need login). high = Bradford White LE250LN3-3NCZZ 50-gal 6 kW 3-ph commercial electric, PEX Universe $3,080 (pu_le250ln3.html). DRE-52-12 is a heavier-duty 12 kW unit, likely above this range.
+      Price is what the'
+    note: book
+  aosmith_ent50:
+    value: 1806.0
+    low: 990.95
+    high: 1806.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$1,806.00 / ea'' (https://www.consolidatedsupply.com/Product/1434482, read 2026-11-23); Only priced listing for
+      the exact model is this distributor book price. low = PEX Universe A. O. Smith PNT-50 ProLine 50-gal electric (10-yr) $990.95 (pu_pnt50.html); ENT-40 is $840.95 there. Price is what the distributor''s
+      public product page shows anonymousl'
+    note: book
+  badger_eseries_34:
+    value: 337.68
+    low: 279.4
+    high: 464.2
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$337.68 / ea'' (https://www.consolidatedsupply.com/Product/1399990, read 2026-11-23); NOT FOUND for Badger E-Series
+      (Ferguson needs certification; no public price elsewhere). low = Consolidated Badger M25 5/8 x 3/4 in. positive-displacement direct read $279.40; high = Badger M25 5/8 x 3/4 in. with HR-E register
+      $464.20 (cs_badger_m25.json). Pri'
+    note: book
+  bath_fan_panasonic:
+    value: 172.15
+    low: 153.2
+    high: 212.03
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Faucet Depot: ''Price : $172.15 List Price : $259.38'' (https://faucetdepot.com/product/834456/index.php, read 2026-11-23); Saved data/raw/pass3g/step10/prices/hvac_electrical/faucetdepot_fv0511vq1.html.
+      Low: Jackson Systems ''$ 153.20 MSRP: $ 176.18'' (data/raw/pass3g/step10/prices/hvac_electrical/jackson_fv0511vq1.html). High: Gerrie ''$212.03 / Each Regular Price: $275.92'' (data/ra'
+  bdt_unit:
+    value: 350
+    low: 200
+    high: 750
+    unit: USD a flat's blower door test
+    conf: medium
+    source: 'PNNL (R. Hart, M. Tyler), Envelope Air Tightness for Sleeping and Dwelling Units, Technical Brief PNNL-28337, Dec 2018: ''Air barrier contractors commonly report that the cost of individual
+      unit air leakage testing is about $350. For residential units using a 20% sampling method, that translates to $70 per unit.'' (https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-28337.pdf,
+      read 2026-11-23); 2018 $. Basis of the 2021 IECC commercial-code dwelling-unit test (0.30 cfm/ft2 enclosure at 50 Pa). Its rule tests ''the greater of seven units or 20 percent'': 12 units -> 7 x
+      $350 = $2,450 = $204/unit, not $70. A 3-storey walk-up falls under the residential I; low HomeGuide $200-250 (single-family); high a New York City price list $750'
+  bdt_whole:
+    value: 0.466
+    low: 0.15
+    high: 0.5
+    unit: USD a ft2 of floor, a whole-building blower door test
+    conf: medium
+    source: 'PNNL (R. Hart et al.), Envelope Air Tightness for Commercial Buildings, Technical Brief PNNL-28367, Dec 2018: ''$0.50 to $0.15 per square foot for buildings between 5000 and 50,000 square feet
+      | Building Floor Area, ft2 3,000 5,000 10,000 25,000 50,000 100,000 ... Testing cost $/ft2 of floor area $0.117 $0.070 $0.466 $0.247 $0.154 $0.095'' (https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-28367.pdf,
+      read 2026-11-23); From ''a survey of professional commercial building air barrier testing companies''. Base charge + per-area adder, so $/ft2 falls with size. typical = PNNL''s value at 10,000 ft2
+      = $4,660 per test (~a 12-flat walk-up); at 25,000 ft2 $0.247 = $6,175. Under 5,000 f'
+  bphe_50kw:
+    value: 275.0
+    low: 210.0
+    high: 315.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":275'' (https://www.pexuniverse.com/5x12-50-plate-brazed-heat-exchanger-1-1-4-mnpt, read 2026-11-23); PEX Universe''s 5x12 line starts at 50 plates
+      (no 40-plate 5x12). low = 4-1/4 x 12 in. 40-plate BT4x12-40 $210; high = 5x12 60-plate $315. Seller''s max ratings (e.g. 450,000 Btu/h for the 4x12-40) are generous; size to the duty, not to these.
+      One seller.'
+  bradford_re340s6:
+    value: 914.95
+    low: 753.0
+    high: 2030.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":914.95'' (https://www.pexuniverse.com/bradford-white-re340s6-electric-water-heater, read 2026-11-23); low = Keller Supply ERE340S6-1NCWW-CTA $753.00;
+      high = Keller RE340S6-1NCWW $2,030.00 (ks_re340s6.json). Consolidated Supply $1,680.00 (cs_re340s6.json).'
+  caleffi_116:
+    value: 384.0
+    low: 381.0
+    high: 448.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Keller Supply (kellersupply.com, distributor public web price): ''$384.00 / ea'' (https://www.kellersupply.com/Product/1426069, read 2026-11-23); high = Keller 116441AC-109 1/2 in. sweat unions
+      with isolation valves $448.00; low = Consolidated Supply 116451AC-006 3/4 in. press unions with gauge $381.00 (cs_thermosetter.json). Price is what the distributor''s public product page shows anonymously
+      (loaded '
+    note: book
+  central_circuits:
+    value: 300.0
+    low: 150.0
+    high: 600.0
+    unit: 'USD a lot of material: the central heater''s and its pump''s circuits'
+    conf: placeholder
+    source: judgement
+  central_vent:
+    value: 600.0
+    low: 300.0
+    high: 1200.0
+    unit: USD, the central heater's 3 in. PVC vent and combustion air with their terminations
+    conf: placeholder
+    source: 'judgement: about 40 ft of 3 in. PVC and a concentric termination'
+  ci_coupling_large:
+    value: 3.9
+    low: 2.6
+    high: 16.45
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":3.9'' (https://www.pexuniverse.com/matco-norca-4-no-hub-coupling, read 2026-11-23); low = 3 in. and 4 in. NSF couplings NHC300NSF / NHC400NSF
+      $2.60; 3 in. Matco $3.45; high = Mission C400HW 4 in. heavy-duty $16.45 (pu_nohub_couplings.html). Consolidated: Husky HD2000 3 in. $33.68, SD4000 4 in. $42.95 (cs_ci_coup.json).'
+  ci_coupling_small:
+    value: 2.7
+    low: 1.7
+    high: 11.95
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":2.7'' (https://www.pexuniverse.com/matco-norca-2-no-hub-coupling, read 2026-11-23); Standard band couplings. low = 1-1/2 in. NSF coupling NHC112NSF
+      $1.70; high = Mission C200HW 2 in. heavy-duty $11.95 (pu_nohub_couplings.html). Consolidated lists Anaco-Husky SD4000 1-1/2 in. $29.97 and HD2000 2 in. $29.15 (heavy/super-duty, book price, cs_ci_'
+  ci_fitting_large:
+    value: 55.8
+    low: 37.8
+    high: 80.4
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$55.80 / ea'' (https://www.consolidatedsupply.com/Product/13616, read 2026-11-23); low = 3 in. 1/4 bend 006862
+      $37.80; 3 in. wye 008231 $50.20; high = 4 in. wye 008262 $80.40. Walmart.com marketplace lists Charlotte NH-4 4 in. 1/4 bend at $45.77 (wm_charlotte_nh4qb.html). Price is what the distributor''s public
+      product page shows anonymously '
+    note: book
+  ci_fitting_small:
+    value: 27.1
+    low: 24.8
+    high: 37.3
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$27.10 / ea'' (https://www.consolidatedsupply.com/Product/17326, read 2026-11-23); Class mixes 1/4 bends, wyes
+      and san tees 1-1/2 to 2 in.; typical uses the 2 in. 1/4 bend. low = 1-1/2 in. 1/4 bend 006848 $24.80; 2 in. wye 008217 $34.40; high = 2 in. sanitary tee 007579 $37.30. Charlotte not publicly priced.
+      Price is what the distributor''s p'
+    note: book
+  ci_nohub_1.5:
+    value: 18.27
+    low: 17.36
+    high: 18.27
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$18.27 / ft'' (https://www.consolidatedsupply.com/Product/13008, read 2026-11-23); Charlotte no-hub pipe not found
+      with a public price (Home Depot, Lowe''s, SupplyHouse, Ferguson block automated reads or need login); Tyler is the equivalent. low = Keller Supply AB&I 00156 1-1/2 in. x 10 ft no-hub pipe $173.60
+      / ea (ks_ci_pipe.json). Distribut'
+    note: book
+  ci_nohub_2:
+    value: 18.31
+    low: 18.31
+    high: 18.31
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$18.31 / ft'' (https://www.consolidatedsupply.com/Product/23694, read 2026-11-23); Charlotte no-hub pipe not found
+      with a public price (Home Depot, Lowe''s, SupplyHouse, Ferguson block automated reads or need login); Tyler is the equivalent. One seller. Distributor book price; contractor net is usually lower.
+      Price is what the distributor''s p'
+    note: book
+  ci_nohub_3:
+    value: 25.32
+    low: 25.32
+    high: 25.32
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$25.32 / ft'' (https://www.consolidatedsupply.com/Product/1061, read 2026-11-23); Charlotte no-hub pipe not found
+      with a public price (Home Depot, Lowe''s, SupplyHouse, Ferguson block automated reads or need login); Tyler is the equivalent. One seller. Distributor book price; contractor net is usually lower.
+      Price is what the distributor''s p'
+    note: book
+  ci_nohub_4:
+    value: 32.86
+    low: 32.86
+    high: 32.86
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$32.86 / ft'' (https://www.consolidatedsupply.com/Product/622, read 2026-11-23); Charlotte no-hub pipe not found
+      with a public price (Home Depot, Lowe''s, SupplyHouse, Ferguson block automated reads or need login); Tyler is the equivalent. One seller. Distributor book price; contractor net is usually lower.
+      Price is what the distributor''s p'
+    note: book
+  climatemaster_sw036:
+    value: 11193.0
+    low: 11193.0
+    high: 11760.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'ClimateMaster residential price guide RP103 (eff. Oct 28 2026): ''$11,193'' (https://files.climatemaster.com/rp103.pdf, read 2026-11-23); Maker''s guide price (saved as climatemaster_rp103.pdf,
+      ''SW Pricing'', p. 38). high = with refrigerant detection system (voltage option J) $11,760. Options (HWG/pumps) extra. One source.'
+    note: book
+  conduit_elbow_1:
+    value: 2.59
+    low: 2.53
+    high: 3.1
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Reading Lumber: ''Regular Price $ 2.59 EA'' (https://readinglumber.com/p/diameter-pvc-electrical-conduit-elbow-schedule-degree-088700153547, read 2026-11-23); Three sellers saved: Hardware
+      World Our Price $2.53 (MSRP $4.99) (el_ell1_hww.html); Reading Lumber $2.59 (el_ell1_reading.html); Boulevard Hardware Regular Price $3.10 (el_ell1_blvd.html). Typical = median.'
+  cpvc_1.25:
+    value: 3.09
+    low: 3.09
+    high: 3.09
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$3.09 (per foot)'' (https://firealarm.com/product/viking-plastics-114pipe/, read 2026-11-23); Viking''s listed CPVC sprinkler pipe (BlazeMaster compound class, SDR 13.5); Tyco/Spears-branded
+      BlazeMaster not publicly priced (Ferguson, Federal Merchants need login). Seller states price is per foot. One seller.'
+  cpvc_1.5:
+    value: 4.59
+    low: 4.59
+    high: 4.59
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$4.59 (per foot)'' (https://firealarm.com/product/viking-plastics-112pipe/, read 2026-11-23); Viking''s listed CPVC sprinkler pipe (BlazeMaster compound class, SDR 13.5); Tyco/Spears-branded
+      BlazeMaster not publicly priced (Ferguson, Federal Merchants need login). Seller states price is per foot. One seller.'
+  cpvc_2.5:
+    value: 13.19
+    low: 13.19
+    high: 13.19
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$13.19 (per foot)'' (https://firealarm.com/product/viking-plastics-212pipe/, read 2026-11-23); Viking''s listed CPVC sprinkler pipe (BlazeMaster compound class, SDR 13.5);
+      Tyco/Spears-branded BlazeMaster not publicly priced (Ferguson, Federal Merchants need login). Seller states price is per foot. One seller.'
+  cpvc_fitting:
+    value: 7.79
+    low: 5.29
+    high: 11.29
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$7.79'' (https://firealarm.com/product/viking-plastics-v5011-012/, read 2026-11-23); low = 1-1/4 in. 90 elbow V5007-012 $5.29; 1-1/2 in. elbow V5007-015 $7.49; high = 1-1/2
+      in. tee V5011-015 $11.29. One seller.'
+  dcva_4_osy:
+    value: 4095.15
+    low: 3900.14
+    high: 7985.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'WebstaurantStore (webstaurantstore.com): ''$4,095.15'' (https://www.webstaurantstore.com/watts-0111512-757-osy-4-double-check-valve-backflow-preventer-assembly-with-os-y-valves/74A0111512.html,
+      read 2026-11-23); low = BackflowPartsUSA 757-OSY 4 in. $3,900.14 MAP (bpu_757osy4.html); high = Consolidated Supply 0111512 $7,985.00 book (cs_watts757.json). Also FireAlarm.com Wilkins 350ASTOSY
+      4 in. $4,110.00; KSC Ames 2000SS-OSY 4 in. $6,687.94.'
+  duct_boot:
+    value: 17.75
+    low: 11.97
+    high: 34.79
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Zoro (Imperial GV0626-C): ''$17.75'' (https://www.zoro.com/imperial-30-ga-4-x-10-x-6-90-degree-angle-register-boot-gv0626-c/i/G621868123/, read 2026-11-23); Imperial GV0626-C is 30 ga (another
+      Zoro page $18.99). Low: Home Depot Master Flow RB10X4X6 universal register box ''$11.97''. High: Speedi-Boot SBS-4106 with hanger ''$34.79'' (Zoro). Pre-insulated R-6 GreenBoot DTB10X4X6 $30.09 (HD).
+      All search extracts, see dat'
+  duct_elbow_large:
+    value: 9.98
+    low: 9.71
+    high: 13.19
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Home Depot (Master Flow 2690E8): ''$9.98'' (https://homedepot.com/p/Master-Flow-8-in-26-Gauge-90-Degree-Round-Adjustable-Elbow-2690E8/202191792, read 2026-11-23); Low: SupplyHouse same item
+      ''$9.71 each''. High: Zoro same item ''$13.19 each''. HVACDirect Precision Duct ELBOW-26-GA-08 ''$26.93'' and ELBOW-26-GA-07 ''$25.43'' (saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_precisionduct_fittings.html).
+      HD/SupplyHo'
+  duct_elbow_small:
+    value: 8.68
+    low: 8.29
+    high: 26.93
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Home Depot (Master Flow 26B90E6): ''$8.68'' (https://www.homedepot.com/p/Master-Flow-6-in-26-Gauge-90-Degree-Round-Adjustable-Elbow-26B90E6/100137549, read 2026-11-23); Low: Zoro Greenseam
+      6 in. 26 ga ''$8.29 each''. High: HVACDirect Precision Duct ELBOW-26-GA-06 ''$26.93'' (4 in. also $26.93, 5 in. $25.43), saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_precisionduct_fittings.html.
+      HD Supply shows $7.69 and $14.1'
+  duct_insul_15:
+    value: 4.2
+    low: 3.96
+    high: 4.2
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'HVACquick (Master Flow F6DS8): ''F6DS8 ... R-6. Insulates duct pipe up to 8 inch diameter. ... In-stock $20.99'' (https://www.hvacquick.com/products/residential/Bathroom-Ventilation/Duct-Accessories/GAF-Master-Flow-5-Foot-Long-R-6-Duct-Sleeves,
+      read 2026-11-23); Per ft = $20.99 / 5 ft. Saved data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_masterflow_r6_sleeves.html. Low: Home Depot Master Flow F8DS5 (5 in. x 5 ft, R-8) ''$19.80''
+      (the R-6 F6DS5 page showed no price). Wrap alternative: Master Flow INSWRP60 R-6, 6'
+  duct_round_4:
+    value: 3.69
+    low: 3.23
+    high: 8.09
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Zoro (Greenseam GR60SPBGP4GA26): ''$92.15/pk 5, $18.43/ea'' (https://www.zoro.com/greenseam-round-rigid-ducts-4-in-duct-dia-galvanized-steel-26-ga-ga-60-l-gr60spbgp4ga26/i/G2386307/, read 2026-11-23);
+      Per ft = price per 5 ft piece / 5. Low: Home Depot Master Flow CP4X60 ''$16.13'' but 30 ga (lighter than spec). High: HVACDirect Precision Duct SNAPLOCK-26GA-04 ''$40.43'' (26 ga), saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_snaplock_4in.html.
+      Z'
+  duct_round_5:
+    value: 4.2
+    low: 3.18
+    high: 9.29
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Zoro (Greenseam GR60SPBGP5GA26): ''$104.99 (pack of 5)'' (https://www.zoro.com/i/G3555745/, read 2026-11-23); Per ft = $21.00 per 5 ft piece / 5. Low: Home Depot Master Flow CP5X60 ''$15.89''
+      (30 ga). High: HVACDirect SNAPLOCK-26GA-05 ''$46.43'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_snaplock_5in.html. Zoro/HD from search extracts, see data/raw/pa'
+  duct_round_6:
+    value: 4.92
+    low: 3.28
+    high: 9.89
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Zoro (Greenseam GR60SPBGP6GA26): ''$122.99 pack of 5, $24.60 each'' (https://www.zoro.com/greenseam-round-rigid-ducts-6-in-duct-dia-galvanized-steel-26-ga-ga-60-l-gr60spbgp6ga26/i/G3133225,
+      read 2026-11-23); Per ft = $24.60 / 5. Low: Home Depot Master Flow CP6X60 ''$16.40'' (30 ga). High: HVACDirect SNAPLOCK-26GA-06 ''$49.43'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_snaplock_6in.html.
+      Zoro/HD from search extracts, see data/raw/pass3g/step10/pri'
+  duct_round_7:
+    value: 5.36
+    low: 3.36
+    high: 11.99
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Zoro (Greenseam GR60SPBGP7GA26): ''$133.99 per pack of 5, or $26.80 each'' (https://zoro.com/greenseam-round-snap-lock-pipe-7-in-duct-dia-galvanized-steel-26-ga-7-in-w-60-l-7-in-h-gr60spbgp7ga26/i/G3523046,
+      read 2026-11-23); Per ft = $26.80 / 5. Low: Home Depot Master Flow CP7X60 ''$16.78'' (30 ga). High: HVACDirect SNAPLOCK-26GA-07 ''$59.93'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_snaplock_7in.html.
+      Zoro/HD from search extracts, see data/raw/pass3g/step10/pri'
+  duct_round_8:
+    value: 5.76
+    low: 3.93
+    high: 12.89
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Zoro (Greenseam GR60SPBGP8GA26): ''$143.99 per pack of 5, or $28.80 each'' (https://www.zoro.com/greenseam-round-snap-lock-pipe-8-in-duct-dia-galvanized-steel-26-ga-60-l-gr60spbgp8ga26/i/G1908487/,
+      read 2026-11-23); Per ft = $28.80 / 5. Low: Home Depot Master Flow CP8X60 ''$19.67'' (30 ga). High: HVACDirect SNAPLOCK-26GA-08 ''$64.43'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_snaplock_8in.html.
+      Zoro/HD from search extracts, see data/raw/pass3g/step10/pri'
+  duct_takeoff:
+    value: 22.89
+    low: 21.03
+    high: 31.92
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Zoro (Speedi-Collar SC-06D): ''$22.89 each'' (https://www.zoro.com/speedi-boot-duct-starttake-off-collar-6-duct-dia-sc-06d/i/G2337876/, read 2026-11-23); Low: Home Depot Master Flow LSCD6 ''$21.03''
+      (SupplyHouse $21.81, out of stock). High: Home Depot Master Flow DSCFD6 ''$31.92'' (Zoro $32.55). Search extracts, see data/raw/pass3g/step10/prices/hvac_electrical/blocked_pages_search_extracts.txt'
+  erv_broan_blp120:
+    value: 949.0
+    low: 849.0
+    high: 949.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'HVACquick: ''BLP120E80NS-HW ... In-stock $949.00'' (https://www.hvacquick.com/products/residential/Indoor-Air-Quality/Residential-ERV/Broan-Edge-BLP120-and-BLP130-Series-Energy-Recovery-Ventilators-ERV-With-Side-Ports,
+      read 2026-11-23); Two sellers. Sylvane ''Regular price $849.00'' (low; search extract, Sylvane answers our fetch with 429). The 5 in.-port BLP130E80NS-PC is $989.00 at HVACquick. Saved: data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_blp120.html'
+  exp_tank_dhw_large:
+    value: 83.95
+    low: 83.95
+    high: 742.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":83.95'' (https://www.pexuniverse.com/amtrol-st-12-therm-x-trol-expansion-tank, read 2026-11-23); ST-30V (14 gal) is $385.95 at PEX Universe; high =
+      Consolidated Supply ST-30V 143N273 $742.00 book; Consolidated ST-12 141N43 $193.00 (cs_thermx.json).'
+  exp_tank_dhw_small:
+    value: 62.95
+    low: 62.95
+    high: 144.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":62.95'' (https://www.pexuniverse.com/amtrol-st-5-therm-x-trol-expansion-tank, read 2026-11-23); high = Consolidated Supply 140N43 (ST-5) $144.00 book
+      (cs_thermx.json).'
+  exp_tank_hydronic:
+    value: 120.95
+    low: 60.95
+    high: 412.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":120.95'' (https://www.pexuniverse.com/amtrol-extrol-60-expansion-tank, read 2026-11-23); low = Extrol #30 4.4 gal $60.95; Extrol #90 14 gal $218.95
+      (PEX Universe); high = Consolidated Supply Extrol 112-1 (#90) 14 gal $412.00 book; Consolidated #60 103-1 $248.00 (cs_extrol.json).'
+  ezm3400cb:
+    value: 2361.14
+    low: 2361.14
+    high: 6620.0
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'RSP Supply: ''$ 2833.37 Sale Price $ 2361.14'' (https://rspsupply.com/p-651684-schneider-electric-ezm3400cb-square-d-ez-meter-pak.aspx, read 2026-11-23); Saved: RSP Supply Sale Price $2,361.14,
+      36% of list (el_ezm3400_rsp.html); Schneider list 6,620.00 USD (el_ezm3400_se.html). Only one seller saved plus the maker list (high = list). Search listings (not saved): Steiner Your Cost $2,466.77/ea,
+      Crescent $8,935.0'
+  ezm3600cb:
+    value: 3935.9
+    low: 3935.9
+    high: 10247.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'RSP Supply: ''$ 4723.08 Sale Price $ 3935.90'' (https://rspsupply.com/p-651637-schneider-electric-ezm3600cb-meter-stack-600-amp-208y120-vac-240120-vac-delta-nema-3r.aspx, read 2026-11-23);
+      Saved: RSP Supply Sale Price $3,935.90, 38% of list (el_ezm3600_rsp.html); Standard Electric $10247.00 / Each (el_ezm3600_standardelec.html), which equals Schneider list 10,247.00 USD (el_ezm3600_se.html).
+      Search listings (not saved): Steiner $3,818.28/ea, Cre'
+  facp_potter:
+    value: 407.49
+    low: 407.49
+    high: 555.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$407.49'' (https://firealarm.com/product/potter-pfc-6006/, read 2026-11-23); high = Potter PFC-6006-R $555.00, same site. One seller.'
+  fdc:
+    value: 379.5
+    low: 379.5
+    high: 824.9
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$379.50 / ea'' (https://www.consolidatedsupply.com/Product/8436, read 2026-11-23); Keller Supply FPPI 09-000 straight
+      single clapper siamese $380.89; high = Keller FPPI 09-121 straight double clapper $824.90 (ks_siamese.json). Price is what the distributor''s public product page shows anonymously (loaded from the
+      site''s own pricing call; save'
+    note: book
+  flow_switch:
+    value: 233.49
+    low: 233.49
+    high: 324.99
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$233.49'' (https://firealarm.com/product/potter-vsr-4/, read 2026-11-23); high = Reliable (Potter-made) VSR 3 in. $324.99, same site. Potter VSR 2-1/2 in. shows no price (out
+      of stock). Keller Supply Potter VSR 5 in. 1144405 $380.31 (ks_vsr.json).'
+  furnace_goodman_40k:
+    value: 1775.0
+    low: 1749.0
+    high: 1828.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Budget Heating: ''Product #90211: $1,775.00'' (https://www.budgetheating.com/goodman-96-single-stage-40k-btu-gas-furnace-gr9s960403an/, read 2026-11-23); Saved data/raw/pass3g/step10/prices/hvac_electrical/budgetheating_gr9s960403an.html.
+      High: HVACDirect ''Was $2,285.00 Your Low Price Special Price $1,828.00'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_gr9s960403an.html. Low: SupplyHouse ''$1'
+  gas_csst_0.75:
+    value: 13.1
+    low: 4.21
+    high: 15.74
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$13.10 / ft'' (https://www.consolidatedsupply.com/Product/952003, read 2026-11-23); high = TracPipe CounterStrike
+      3/4 in. cut length FGP-CS-750 $15.74 / ft; 50-ft reel $14.46 / ft. low = PEX Universe ProFlex arc-resistant 3/4 in. x 75 ft PFARCT-3475 $315.95 (different brand; pu_proflex_3475.html). Distributor
+      book vs online retail differ ~3x.'
+    note: book
+  gas_meter:
+    value: 0
+    low: 0
+    high: 0
+    unit: USD a gas meter set (the first on each service line)
+    conf: high
+    source: 'Peoples Natural Gas Tariff Gas-PA PUC No. 48, Rule 4, First Revised Page No. 22: ''Meters will be installed at the Company''s expense only upon request and subject to the following conditions:
+      a) The Company will install one (1) meter per customer service line ... additional meters will be set by the Company, provided the '' (https://peoples-gas.com/sites/default/files/2026-09/retail_tariff_no_48-_supplement_no._26_-_october_1_2026_quarterly.pdf,
+      read 2026-11-23); Effective Sept 27, 2024. First meter on each service line costs the owner nothing; extra meters on a single service are at customer cost, amount not published (high blank). Running
+      cost: Rate RS ''Customer Charge per meter per month $16.80'' (First Revised Page '
+  gas_service_ft:
+    value: 60.0
+    low: 35.0
+    high: 90.0
+    unit: USD a ft of gas service line, trenched and laid, the owner's
+    conf: low
+    source: 'no installed price found (Peoples Natural Gas Tariff 48: the owner installs the service line); a rural Pennsylvania 2 in. water service as the proxy: Franklin Twp bids 2025-07-14 $50-145/LF
+      (typical $90), Southwestern PA Water Authority 2021 $35-65/LF (typical $44.50)'
+  grille_exhaust:
+    value: 19.09
+    low: 13.0
+    high: 23.6
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Zoro (Fantech MGE 4): ''$19.09/ea'' (https://zoro.com/fantech-exhaust-grille-metal-white-4-in-dia-mge-4/i/G7534633, read 2026-11-23); Low: Home Depot VENTS-US A 100 VRF 4 in. diffuser ''$13.00''
+      (search extract). High: HVACquick Fantech DG 4 plastic grille with metal collar ''In-stock $23.60'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_fantech_round_grilles.html (with
+      backdra'
+  grundfos_alpha2:
+    value: 230.95
+    low: 230.95
+    high: 375.95
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":230.95'' (https://www.pexuniverse.com/grundfos-alpha-15-55-f-circulator-pump-59896877, read 2026-11-23); high = ALPHA2 15-55SF stainless (99163937)
+      $375.95, same site. Keller Supply lists the newer ALPHA 15-58F at $353.00 (ks_alpha2.json).'
+  gypcrete_15:
+    value: 5.81
+    low: 3.38
+    high: 12.0
+    unit: USD a ft2, gypsum concrete topping 1-1/2 in., installed
+    conf: placeholder
+    source: 'conf: placeholder. Derived from gypcrete_075_thepricer, no direct source: ''Increasing a pour from 0.75 inch to 1.5 inches doubles the material volume.'' (https://www.thepricer.org/the-cost-of-gypcrete/,
+      read 2026-11-23); PLACEHOLDER: no free source with a 1-1/2 in. installed $/ft2 found. = 3/4 in. values x 1.5 (3.50x1.5, 5.50x1.5, 8.00x1.5), assuming material is about half the installed price at
+      3/4 in. - an unsourced assumption. Maxxon Gyp-Crete Basic TDS (Jan 2026): dry dens; the mean of dgfloors'' $2.25 (1 in., contractor) and thepricer''s $5.50 (3/4 in., cost guide), x1.5; range 2.25
+      x 1.5 to 8.00 x 1.5'
+  head_qr_k56:
+    value: 23.89
+    low: 13.85
+    high: 36.49
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$23.89'' (https://firealarm.com/product/tyco-77-371-9-175-sprinkler-ty-frb-pendent-1-2-k80-79c-chrome-qr/, read 2026-11-23); Escutcheon not included. low = PEX Universe Tyco
+      RFII concealed QR K5.6 pendent 517921155 $13.85 (cover plate extra, $6.85) (pu_rfii_qr.html); high = TY-FRB white 135F 77-371-4-135 $36.49. Standard-response TY-B K5.6 chrome pendent is $8.45 at PEX
+      Universe (pu'
+  head_ty2236:
+    value: 9.69
+    low: 9.69
+    high: 9.69
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$9.69'' (https://firealarm.com/product/tyco-512124155-lfii-residential-pendant-sprinkler-1-2-4-9k-155f-white/, read 2026-11-23); Escutcheon NOT included and not priced. QRFS
+      lists it but blocks automated reads. One seller, so low=high=typical.'
+  horn_strobe:
+    value: 88.13
+    low: 88.13
+    high: 99.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'JMAC Supply (jmac.com): ''$88.13'' (https://jmac.com/System_Sensor_P2RK_p/SYSTEM-SENSOR-P2RK.htm, read 2026-11-23); high = JMAC P2RHK (high-candela outdoor) $99.00. jemsystems P2RHK-120 $95.70.
+      FireAlarm.com lists P2RHK at $346.99 and P2RK with no price; that $346.99 is an outlier and is not used for the range.'
+  insul_05in:
+    value: 0.77
+    low: 0.77
+    high: 2.36
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":4.6 per 6 ft'' (https://www.pexuniverse.com/7-8-id-x-1-2-wall-self-seal-pipe-insulation, read 2026-11-23); typical = $4.60 per 6-ft length; 1 in. ID
+      x 1/2 in. FLK12100 $5.15 / 6 ft (pu_foam_flk12100.html). high = Consolidated Supply Nomaco/Imcoa Imcolock 6IL048078 3/4 in. CTS x 1/2 in. wall $2.36 / ft (book price, cs_fgins.json). Elastomeric (Armaflex)
+      seen at Kell'
+  insul_15in_large:
+    value: 5.17
+    low: 4.58
+    high: 5.17
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":185.95 per 36 ft'' (https://www.pexuniverse.com/1-5-8-id-x-1-1-2-wall-semi-slit-pipe-insulation, read 2026-11-23); No 1-1/2 in. wall fiberglass found
+      online; nearest is 1-1/2 in. wall foam for 1-1/2 in. CTS. low = Micro-Lok fiberglass 1-7/8 in. ID (1-1/2 in. IPS) x 1 in. wall $13.75 / 3 ft (thinner wall; pu_fiberglass_insul.html). 1-3/8 in. ID
+      x 1-1/2 in. foam is $165.95 /'
+  insul_1in_small:
+    value: 3.3
+    low: 1.82
+    high: 3.45
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":9.9 (3-ft section)'' (https://www.pexuniverse.com/fiberglass-pipe-insulation, read 2026-11-23); typical = $9.90 per 3-ft section. high = 1-1/8
+      in. ID x 1 in. $10.35 / 3 ft; 5/8 in. ID x 1 in. $10.05 / 3 ft (pu_fiberglass_insul.html). low = polyethylene foam 7/8 in. ID x 1 in. wall FSM10078 $10.90 / 6 ft (foam, not fiberglass or elastomeric;
+      pu_foam_fsm10'
+  kamstrup_403:
+    value: 600.0
+    low: 300.0
+    high: 1200.0
+    unit: USD a dwelling's heat meter (Kamstrup MULTICAL 403, qp 0.6)
+    conf: placeholder
+    source: no US seller shows a public price for it or a comparable dwelling heat meter (plumbing.csv); judgement
+  leonard_tm186:
+    value: 7545
+    low: 5305
+    high: 8180
+    unit: USD a unit (each), material only
+    conf: medium
+    source: "Leonard Valve list price sheet, June 2025 (saved as leonard_list_price_sheet.pdf; https://a-us.storyblok.com/f/1021193/x/f437ebe717/leonard-list-price-sheet.pdf, read 2026-11-23), p. 9: 'TM-186-820B-LF 1 1-1/4 73 $7,545.00 $8,180.00' (the design's MV-1; $8,180.00 another finish, the high); the bare TM-820B-LF-DT valve '$5,305.00', the low. A maker's list: contractors buy below it (book_to_net). The research agent had priced the larger TM-186-1520B-LF ($8,515.00)"
+    note: book
+  level_switch:
+    value: 34.9
+    low: 30.36
+    high: 38.49
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Jackson Systems: ''SKU: 97637 $ 34.90'' (https://jacksonsystems.com/product/rectorseal-ss2-safe-t-switch/, read 2026-11-23); Saved data/raw/pass3g/step10/prices/hvac_electrical/jackson_ss2.html.
+      Low: Build.com SS2 ''$30.36'' (search extract; Zoro $32.55). High: HVACDirect RectorSeal SS1 ''Special Price $38.49'' (was $51.45), saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect'
+  lineset_14_38:
+    value: 4.63
+    low: 2.97
+    high: 7.8
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'SupplyHouse (1/4 x 3/8 x 50 ft, 1/2 in. insulation): ''$231.31 each'' (https://www.supplyhouse.com/1-4-x-3-8-x-50-ft-Line-Sets-35143000, read 2026-11-23); Per ft = $231.31 / 50 (search extract;
+      3/8 in. insulation version $217.13). Low: Home Depot VEVOR 50 ft ''$148.40'' (off-brand). High: HVACDirect 1/4 x 3/8 with flares, 50 ft ''+ $389.99'', saved data/raw/pass3g/step10/prices/hvac_electrical/hvacdirect_lineset_fla'
+  lochinvar_hp150g:
+    value: 5788.0
+    low: 5788.0
+    high: 5788.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Keller Supply (kellersupply.com, distributor public web price): ''$5,788.00 / ea'' (https://www.kellersupply.com/Product/725973, read 2026-11-23); NOT FOUND for HP150G (Thermal-Stor 150-gal
+      heat pump tank): no public price anywhere checked. Nearest Lochinvar storage tank with a public price; one seller. Price is what the distributor''s public product page shows anonymously (loaded from
+      the site''s own pric'
+    note: book
+  minisplit_fujitsu_12_ducted:
+    value: 3345.44
+    low: 3345.44
+    high: 3354.57
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'Got Ductless: ''Regular price $3,345.44'' (https://gotductless.com/products/fujitsu-aruh12kuas-aouh12kuas1-12-000-btu-19-1-seer2-mid-static-ducted-heat-pump-system-r32, read 2026-11-23); Only
+      one public seller found (Fujitsu limits online sales); page says ''call for best price''. ARUH12KUAS is Fujitsu''s mid-static ducted unit, not the slim-duct ADUH line. Sold also as separate units:
+      ARUH12KUAS ''Regular price $1,739.67'' (saved data/raw/pass3g/s'
+  nmb_10:
+    value: 1.24
+    low: 1.24
+    high: 1.795
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Landmark Supply: ''Southwire 10/2 Solid Romex SIMpull CU NM-B W/G Wire, 250 ft ... $309.99'' (https://www.landmsupply.com/southwire-10-2-solid-romex-simpull-cu-nm-b-w-g-wire-250-ft, read 2026-11-23);
+      10/2: $309.99/250 ft. High: Hardware World $448.70/250 ft = $1.795/ft. Cut-to-length: WCYW $1.48/ft. 10/3 for comparison (250 ft, 63948555): Landmark $399.99 = $1.60/ft (el_nmb10_3_landm.html); Hardware
+      World $649.75 = $2.599/ft (el_nmb10_3_hww.html); WCYW cut'
+  nmb_12:
+    value: 0.752
+    low: 0.752
+    high: 1.068
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Landmark Supply: ''Southwire Type NM-B Romex 12/2 W/G - 250 ft ... $187.99'' (https://landmsupply.com/southwire-type-nm-b-romex-12-2-w-g-250-ft-28828255, read 2026-11-23); $187.99/250 ft. High:
+      Hardware World $266.88/250 ft = $1.068/ft (el_nmb12_hww.html). Cut-to-length: WCYW $0.85/ft. Search listings (not saved): SupplyHouse $176.00, HD Supply $179.00, Shell Lumber $189.99 per 250 ft, so
+      the typical sits in that cluster. Saved '
+  nmb_14:
+    value: 0.5
+    low: 0.5
+    high: 0.678
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Landmark Supply: ''Southwire Romex SIMpull Cable w/Ground, White, 14/2 Awg, - 250 ft ... $124.99'' (https://www.landmsupply.com/southwire-romex-simpull-cable-w-ground-white-14-2-awg-250-ft,
+      read 2026-11-23); $124.99/250 ft. High: Hardware World $169.52/250 ft = $0.678/ft (el_nmb14_hww.html). Cut-to-length (not a roll, not used for range): Wire & Cable Your Way $0.58/ft (el_nmb_wcyw.html).
+      Search-engine listings (pages blocked to curl, not saved) showed Home Depot '
+  nmb_8:
+    value: 3.83
+    low: 3.5
+    high: 4.99
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Hardware World: ''Our Price: $ 478.74 MSRP: $ 549.99'' (https://www.hardwareworld.com/p9w7avk/Romex-SIMpull-NMB-Cable-With-Ground-8-3-125-Ft, read 2026-11-23); $478.74/125 ft = $3.830/ft, the
+      only coil price found. Low: WCYW 8/3 cut-to-length $3.50/ft (el_nmb_wcyw.html). High: Landmark Supply 8/3 stranded sold per foot $4.99/ft (el_nmb8_3_landm.html). No 250 ft 8/3 coil found. Saved as
+      el_nmb8_3_hww.html.'
+  ostamper:
+    value: 166.49
+    low: 166.49
+    high: 241.45
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'FireAlarm.com: ''$166.49'' (https://firealarm.com/product/potter-osysu-1/, read 2026-11-23); high = Keller Supply Potter 1010102 OSYSU-1 $241.45 (ks_osysu.json). Reliable-branded OSYSU-1 is
+      $218.99 at FireAlarm.com.'
+  pex_a_0.5:
+    value: 0.995
+    low: 0.8
+    high: 1.09
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$99.50 / rl'' (https://www.consolidatedsupply.com/Product/236899, read 2026-11-23); typical = $99.50 per 100-ft
+      coil. low = Walmart.com (seller SIM Supply) $79.75 per 100-ft coil (wm_aquapex12_936493382.html); high = 20-ft straight F1930500 $1.09 / ft (Consolidated 83420). Price is what the distributor''s public
+      product page shows anonymously '
+    note: book
+  pex_a_0.75:
+    value: 1.72
+    low: 1.35
+    high: 1.9
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$172.00 / rl'' (https://www.consolidatedsupply.com/Product/237220, read 2026-11-23); typical = $172.00 per 100-ft
+      coil. low = Walmart.com (seller Voomi Supply) $134.64 per 100-ft coil (wm_aquapex34_980946983.html); high = 20-ft straight F1930750 $1.90 / ft. Price is what the distributor''s public product page
+      shows anonymously (loaded from the '
+    note: book
+  pex_a_1:
+    value: 3.13
+    low: 3.13
+    high: 3.45
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$313.00 / rl'' (https://www.consolidatedsupply.com/Product/236079, read 2026-11-23); One seller with public prices
+      for this size; range is coil vs 20-ft straight F1921000 ($3.45 / ft). Price is what the distributor''s public product page shows anonymously (loaded from the site''s own pricing call; saved as cs_aquapex.json);
+      reads as book/list pr'
+    note: book
+  pex_a_1.25:
+    value: 7.25
+    low: 7.25
+    high: 7.55
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$725.00 / rl'' (https://www.consolidatedsupply.com/Product/130118, read 2026-11-23); One seller; range is coil
+      vs 20-ft straight F1921250 ($7.55 / ft). Price is what the distributor''s public product page shows anonymously (loaded from the site''s own pricing call; saved as cs_aquapex.json); reads as book/list
+      price.'
+    note: book
+  pex_a_1.5:
+    value: 9.5
+    low: 9.5
+    high: 9.8
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$950.00 / rl'' (https://www.consolidatedsupply.com/Product/130117, read 2026-11-23); One seller; range is coil
+      vs 20-ft straight F1921500 ($9.80 / ft). Price is what the distributor''s public product page shows anonymously (loaded from the site''s own pricing call; saved as cs_aquapex.json); reads as book/list
+      price.'
+    note: book
+  pex_a_fitting_large:
+    value: 43.77
+    low: 26.08
+    high: 131.4
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$33.90 / ea (tee); $3.29 / ea (ring)'' (https://www.consolidatedsupply.com/Product/282640, read 2026-11-23); Rings
+      EXTRA, added in. typical = $33.90 + 3 x $3.29. low = 1-1/4 in. elbow Q4761250 $20.90 + 2 rings Q4691250 @ $2.59; high = 2 in. tee Q4752000 $111.00 + 3 rings Q4692000 @ $6.80. Sizes 1-1/4 in. and up
+      are PPSU ProPEX (not the EP polymer). Price is what the '
+    note: book
+  pex_a_fitting_small:
+    value: 8.9
+    low: 4.57
+    high: 17.09
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$5.75 / ea (tee); $1.05 / ea (ring)'' (https://www.consolidatedsupply.com/Product/86564, read 2026-11-23); Rings
+      are EXTRA and are added into these numbers. typical = $5.75 + 3 x $1.05. low = 1/2 in. EP elbow Q4760500 $3.51 + 2 rings Q4690512 @ $0.53; high = 1 in. EP tee Q4751010 $10.40 + 3 rings Q4691000 @
+      $2.23. Walmart marketplace lists Q4751010 at $18.57 (wm_aq'
+    note: book
+  pex_preins_large:
+    value: 33.8
+    low: 33.8
+    high: 33.8
+    unit: USD a unit (ft), material only
+    conf: low
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$33.80 / ft'' (https://www.consolidatedsupply.com/Product/1274641, read 2026-11-23); NOT FOUND for the exact item:
+      Ecoflex Thermal Single 1-1/4, 1-1/2 and 2 in. (5015513, 5016915, 5016920) show $0 / sign-in on Consolidated, Pace and First Supply (cs_ecoflex_ids.json). Search-engine snippets of the Consolidated
+      pages read $46.00 / ft (1-1/4) an'
+    note: book
+  pex_preins_small:
+    value: 12.5
+    low: 6.1
+    high: 12.5
+    unit: USD a unit (ft), material only
+    conf: low
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$12.50 / ft'' (https://www.consolidatedsupply.com/Product/1254221, read 2026-11-23); 1 in. Ecoflex single (5015510,
+      5012710) shows sign-in pricing only. low = Uponor Pre-Insulated AquaPEX 3/4 in. F6040750 (thin jacket, not Ecoflex) $610.00 per 100-ft coil; its 1 in. F6041000 is $755.00 per 100 ft. Price is what
+      the distributor''s public product'
+    note: book
+  plant_circuits:
+    value: 1500.0
+    low: 800.0
+    high: 3000.0
+    unit: 'USD a lot of material: the plant''s six circuits from the house panel, BK-1''s 60 A the largest'
+    conf: placeholder
+    source: judgement
+  plant_controls:
+    value: 4000.0
+    low: 2000.0
+    high: 8000.0
+    unit: 'USD a lot: the plant controller, six sensors, a flow switch and two modulating valves (to select)'
+    conf: placeholder
+    source: 'judgement: none chosen yet (sequence.POINTS, ''to select'')'
+  preheater_1kw:
+    value: 726.85
+    low: 590.4
+    high: 726.85
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'SupplyHouse (LifeBreath 99-163): ''$726.85 each'' (https://www.supplyhouse.com/LifeBreath-99-163-6-In-Line-Duct-Heater-1-kW-120V, read 2026-11-23); WEAK: no US public price for the exact Ouellet
+      ODHR0501002. Ouellet''s own sheet (FC_ODHR_EN_0726, en-CA) lists ODHR0501002 ''1000 120 6,8 15 50 598.00'', a Canadian list price in CAD (en-US sheet has no prices); saved data/raw/pass3g/step10/prices/hvac_electrica'
+  pv_commercial_per_w:
+    value: 3.2
+    low: 2.5
+    high: 4.3
+    unit: USD a W DC, installed, small non-residential rooftop PV (2024 dollars)
+    conf: medium
+    source: 'LBNL, Distributed Solar & Storage: 2025 Data Update (successor to Tracking the Sun): ''2024$/WDC Residential Small Non-Resid. Large Non Resid. 20th Percentile $3.0 $2.5 $1.9 Median $4.0 $3.2
+      $2.4 80th Percentile $5.2 $4.3 $3.3'' (https://emp.lbl.gov/sites/default/files/2025-10/Distributed%20Solar%20%26%20Storage-2025%20Data%20Update.pdf, read 2026-11-23); Installed price, not material
+      only. Up-front price before incentives, 2024 dollars per WDC. Segment: small non-residential (<=100 kWDC), host-owned (no third-party owned), stand-alone (no storage), 2024 installs. Low/high are
+      the 20th/80th percentiles. The med'
+  pvc_conduit_1:
+    value: 1.063
+    low: 1.059
+    high: 1.299
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Stine Home + Yard: ''Price $10.63'' (https://www.stinehome.com/home-improvement/electrical/boxes-fittings-and-conduit/conduit/cantex-1-in.-d-x-10-ft.-l-pvc-40-schedule-electrical-conduit-for-rigid/33202.html,
+      read 2026-11-23); $10.63/10 ft. Four sellers saved: Sutherlands JM Eagle $10.59/EA ($9.00 at 20+) = $1.059/ft (el_pvc1_sutherlands.html); Stine $10.63 (el_pvc1_stine.html); DIY Home Center Regular
+      Price $11.99 (el_pvc1_diyhome.html); Majors Hardware (Hope IN) Regular Price $12.'
+  pvc_conduit_1.25:
+    value: 1.499
+    low: 1.449
+    high: 1.899
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Stine Home + Yard: ''Price $14.99'' (https://www.stinehome.com/home-improvement/electrical/boxes-fittings-and-conduit/conduit/cantex-1-1-4-in.-d-x-10-ft.-l-pvc-40-schedule-electrical-conduit-for-rigid/33203.html,
+      read 2026-11-23); $14.99/10 ft. Four sellers saved: Sutherlands JM Eagle $14.49/EA ($12.31 at 20+) (el_pvc125_sutherlands.html); Stine $14.99 (el_pvc125_stine.html); Mack and Sons (OH) Regular Price
+      $16.99 (el_pvc125_mackandsons.html); Klem''s (MA) Regular Price $18.99 EA (el_pv'
+  pvc_dwv_1.5:
+    value: 1.11
+    low: 0.9
+    high: 1.29
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":11.1 (10-ft length)'' (https://www.pexuniverse.com/1-1-2-inch-x-10ft-foam-core-pvc-pipe-dwv, read 2026-11-23); typical = $11.10 per 10-ft length
+      (pu_pvc_pipe.html). low = Consolidated Supply cellular core 1-1/2 in. x 10 ft $0.90 / ft (Product/1679, cs_cellcore.json); high = PEX Universe solid core PVC-112-10 $12.90 per 10 ft (pu_pvc_pipe.html).'
+  pvc_dwv_2:
+    value: 1.53
+    low: 1.13
+    high: 1.92
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":15.3 (10-ft length)'' (https://www.pexuniverse.com/2-inch-x-10ft-foam-core-pvc-pipe-dwv, read 2026-11-23); typical = $15.30 per 10-ft length (pu_pvc_pipe.html).
+      low = Consolidated Supply cellular core 2 in. x 10 ft $1.13 / ft (Product/12651, cs_cellcore.json); high = PEX Universe solid core PVC-200-10 $19.15 per 10 ft (pu_pvc_pipe.html).'
+  pvc_dwv_3:
+    value: 3.06
+    low: 2.2
+    high: 3.76
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":30.6 (10-ft length)'' (https://www.pexuniverse.com/3-inch-x-10ft-foam-core-pvc-pipe-dwv, read 2026-11-23); typical = $30.60 per 10-ft length (pu_pvc_pipe.html).
+      low = Consolidated Supply cellular core 3 in. x 10 ft $2.20 / ft (Product/401, cs_cellcore.json); high = PEX Universe solid core PVC-300-10 $37.55 per 10 ft (pu_pvc_pipe.html).'
+  pvc_dwv_4:
+    value: 4.31
+    low: 3.24
+    high: 5.01
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"sell_price":43.1 (10-ft length)'' (https://www.pexuniverse.com/4-inch-x-10ft-foam-core-pvc-pipe-dwv, read 2026-11-23); typical = $43.10 per 10-ft length (pu_pvc_pipe.html).
+      low = Consolidated Supply cellular core 4 in. x 10 ft $3.24 / ft (Product/8627, cs_cellcore.json); high = PEX Universe solid core PVC-400-10 $50.05 per 10 ft (pu_pvc_pipe.html).'
+  pvc_fitting_condensate:
+    value: 1.5
+    low: 0.8
+    high: 3.0
+    unit: USD a 3/4 in. PVC fitting
+    conf: placeholder
+    source: judgement (a 3/4 in. Schedule 40 elbow, big-box shelf price)
+  pvc_fitting_large:
+    value: 11.15
+    low: 7.3
+    high: 22.15
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":11.15'' (https://www.pexuniverse.com/spears-p300-040-pvc-dwv-4-90-elbow, read 2026-11-23); low = 3 in. 1/4 bend P300-030 $7.30; 3 in. san tee P400-030
+      $7.55; 3 in. wye P600-030 $12.45; 4 in. san tee P400-040 $17.75; high = 4 in. wye P600-040 $22.15. One seller.'
+  pvc_fitting_small:
+    value: 2.25
+    low: 1.6
+    high: 4.75
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":2.25'' (https://www.pexuniverse.com/spears-p300-020-pvc-dwv-2-90-elbow, read 2026-11-23); Class mixes 1/4 bends, wyes, san tees 1-1/2 to 2 in.; typical
+      uses the 2 in. 1/4 bend. low = 1-1/2 in. 1/4 bend P300-015 $1.60; 1-1/2 in. san tee P400-015 $2.70; 2 in. san tee P400-020 $3.95; high = 2 in. wye P600-020 $4.75. One seller. Consolidated''s DWV fitt'
+  pvc_sch40_0.75:
+    value: 0.76
+    low: 0.52
+    high: 0.76
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":7.6 per 10 ft'' (https://www.pexuniverse.com/3-4-inch-x-10ft-pvc-pipe-sch-40, read 2026-11-23); low = Consolidated Supply Cresline 42810 3/4 in. Sch
+      40 pressure pipe ASTM D1785 $0.52 / ft (cs_pvc40_34b.json).'
+  pvc_sch40_2:
+    value: 1.92
+    low: 1.65
+    high: 1.92
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'PEX Universe (pexuniverse.com): ''"price":19.15 per 10 ft'' (https://www.pexuniverse.com/2-inch-x-10ft-pvc-pipe-sch-40-dwv, read 2026-11-23); low = Consolidated Supply Cresline 50830 2 in.
+      Sch 40 solid core, ASTM D2665/D1785, $1.65 / ft (cs_pvc40.json).'
+  qo130l125pg:
+    value: 105.95
+    low: 105.95
+    high: 609.38
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Standard Electric Supply: ''$105.95 / Each Typical price: $585.00 / Each'' (https://www.standardelectricsupply.com/Square-D-QO130L125PG-Qo-Main-Lug-Loadcenter, read 2026-11-23); Saved: Standard
+      Electric $105.95 (el_qo130_standardelec.html); RSP Supply $731.26, Sale Price $609.38 (el_qo130_rsp.html), which is above maker list; Schneider list 585.00 USD, ''Price is List Price and may be subject
+      to a trade discount'' (el_qo130_se.html). Hi'
+  radiant_cabinet:
+    value: 494.0
+    low: 494.0
+    high: 540.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$494.00 / ea'' (https://www.consolidatedsupply.com/Product/285106, read 2026-11-23); REHAU PS249 not found with
+      a public price; nearest Uponor cabinet is 30-1/2 in. wide (no ~28 in. size listed). high = 39 in. W A2603539 $540.00. One seller. Price is what the distributor''s public product page shows anonymously
+      (loaded from the site''s own prici'
+    note: book
+  radiant_manifold:
+    value: 1120.0
+    low: 1050.0
+    high: 1290.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$1,120.00 / ea'' (https://www.consolidatedsupply.com/Product/1922673, read 2026-11-23); REHAU PRO-BALANCE not found
+      with a public price. low = 6 loops A3700600 $1,050.00; high = 8 loops A3700800 $1,290.00. A non-brand 6-branch stainless manifold set (PEX Universe SSM206) is $225.95 (pu_ssm206.html). Price is what
+      the distributor''s public product '
+    note: book
+  radiant_pex_0.5:
+    value: 1.68
+    low: 1.65
+    high: 1.71
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Consolidated Supply (consolidatedsupply.com, distributor public web price): ''$505.00 / rl'' (https://www.consolidatedsupply.com/Product/15265, read 2026-11-23); typical = $505.00 per 300-ft
+      coil. low = 1000-ft coil A1220500 $1,650.00; high = 100-ft coil A1140500 $171.00. One seller (range is coil length). Price is what the distributor''s public product page shows anonymously (loaded
+      from the site''s own pricing call; sa'
+    note: book
+  register_supply:
+    value: 12.97
+    low: 7.96
+    high: 17.99
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Home Depot (Everbilt E102M10X04): ''$12.97'' (https://homedepot.com/p/Everbilt-10-in-x-4-in-2-Way-Steel-Wall-Ceiling-Register-in-White-E102M10X04/300539627, read 2026-11-23); Low: Home Depot
+      EZ-FLO 61609 ''$7.96''. High: Ace Tru Aire 10x4 2-way ''Sale $17.99''. 4x10 floor registers $12.49-$12.97 at HD. Search extracts, see data/raw/pass3g/step10/prices/hvac_electrical/blocked_pages_search_extracts.txt'
+  rheem_prog40_pdv:
+    value: 2844.37
+    low: 1624.95
+    high: 3459.62
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'PartsSource (partssource.com): ''Your price: $3,459.62 each'' (https://www.partssource.com/parts/rheem/PROG4040NRH67PDV, read 2026-11-23); Only exact-model price that could be saved; likely
+      high (page data also carries an outrightListPrice of 2844.37; a Zoro search snippet showed $2,148.99 but Zoro blocks automated reads). low = HVACDirect PROG40-40N RH67 PV (power vent, NOT direct vent)
+      $1,624.9; typical the saved page''s own outrightListPrice 2844.37 (its sale price $3,459.62 the high)'
+  service_250kcmil:
+    value: 10.64
+    low: 10.64
+    high: 11.21
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Wire & Cable Your Way: ''250 MCM THHN/THWN-2 Building Wire ... Price $10.64 /ft.'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23); Two sellers only: WCYW $10.64/ft (el_thhn_wcyw.html);
+      Pro Wire and Cable 250 MCM Price Now $11.21/ft (el_250_prowire.html). Typical = lower of two. Copper price; aluminum service conductor would be far cheaper.'
+  service_600kcmil:
+    value: 26.6
+    low: 26.6
+    high: 28.03
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Wire & Cable Your Way: ''600 MCM THHN/THWN-2 Building Wire ... Price $26.60 /ft.'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23); Two sellers only: WCYW $26.60/ft (el_thhn_wcyw.html);
+      Pro Wire and Cable 600 MCM Price Now $28.03/ft (el_600_prowire.html). Typical = lower of two.'
+  tap_fire_second:
+    value: 5000.0
+    low: 2000.0
+    high: 15000.0
+    unit: USD, a second connection for a separate fire line, at the utility's actual cost
+    conf: placeholder
+    source: 'Pennsylvania American Water: a fire line as a second connection is billed at the company''s actual cost, no schedule published (installed.csv tap_4in_fire); judgement until the utility quotes
+      it'
+  tap_first:
+    value: 30
+    low: 30
+    high: 30
+    unit: USD, the water utility's first connection to a building (activation; no tapping fee)
+    conf: high
+    source: 'Pennsylvania-American Water Co., Tariff Water-PA P.U.C. No. 5: Rule 3.2 (Third Revised Page 45); Rule 2.18 (Fourth Revised Page 43); Rule 5.1 (Third Revised Page 48); Miscellaneous Fees (Third
+      Revised Page 39): ''Upon receipt of the proper application, the Company will install a street service connection and will maintain the same at its expense ... Each applicant shall be entitled to receive
+      one street service connection free of charge. | 5.1: The '' (https://www.amwater.com/paaw/resources/pdf/rates/pennsylvania-american-water-water-tariff.pdf, read 2026-11-23); Rule 3.2 page effective
+      Aug 7, 2024. Indiana District = ''The Borough of Indiana and the Township of White'' (Sixth Revised Page 13). Free connection runs main to curb control valve and box (Rule 2.18); no size limit stated
+      - confirm for 2 in. No tapping or capa'
+  thhn_2:
+    value: 3.46
+    low: 2.956
+    high: 3.56
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Wire & Cable Your Way: ''2 AWG THHN/THWN-2 Building Wire – Cut to Length ... Price $3.46 /ft.'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23); Three sellers saved: Hardware
+      World Southwire SIMpull 500 ft reel Our Price $1,478.15 = $2.956/ft (MSRP $3,995.00) (el_thhn2_hww.html); WCYW $3.46/ft cut (el_thhn_wcyw.html); Pro Wire and Cable Price Now $3.56/ft (el_thhn2_prowire.html).
+      Typical = median; full'
+  thhn_3:
+    value: 2.8
+    low: 2.79
+    high: 2.83
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Wire & Cable Your Way: ''3 AWG THHN/THWN-2 Wire (By-the-foot) ... Price $2.80 /ft.'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23); Three sellers saved: Global Cable & Wire
+      Current price $2.79 /ft, 25 ft minimum (el_thhn3_globalcw.html); WCYW $2.80/ft (el_thhn_wcyw.html); Pro Wire and Cable Price Now $2.83/ft (el_thhn3_prowire.html). Typical = median.'
+  thhn_8:
+    value: 0.93
+    low: 0.93
+    high: 1.035
+    unit: USD a unit (ft), material only
+    conf: medium
+    source: 'Pro Wire and Cable: ''Price Now $0.93/ft'' (https://prowireandcable.com/8-awg-stranded-thhn-thwn-2-black/, read 2026-11-23); Three sellers saved: Pro Wire and Cable $0.93/ft stranded (el_thhn8_prowire.html);
+      WCYW 8 AWG THHN/THWN-2 Price $0.93 /ft. (OD 0.213 in., consistent with stranded) (el_thhn_wcyw.html); Hardware World Southwire SIMpull stranded 500 ft Our Price $517.62 = $1.035'
+  ug_2in:
+    value: 90
+    low: 44.5
+    high: 262.5
+    unit: USD a ft, 2 in. water service, trenched and installed
+    conf: low
+    source: 'Franklin Twp (Greene Co. PA) WLE 25-1 Rebid, Bankson Engineers bid tab: ''10 f 0 L.F. 2" Copper Service Installed by Open Cut Method $4.00 $0.00 $95.00 $0.00 $54.00 $0.00 $50.00 $0.00 | ...
+      $50.00 ... $90.00 ... $140.00 ... $90.00 | ... $120.00 ... $145.00 ... $85.00'' (https://www.banksonengineers.com/Files/Admin/Bid%20Tabs%202025/FranklinTwp%2DHill%2DSchool%2DHouse%2DRoad%2DWLE%2D25%2D1%2DRebid%2DFull%2DBid%2DTab%2Epdf,
+      read 2026-11-23); Bids 2025-07-14, 11 bidders. Estimated quantity is 0 LF, so bidders priced it loosely. low excludes Subrick''s $4.00 outlier. typical = median of all 11 = $90. Same tab, 2 in. copper
+      by trenchless method: $35-$450, median $78. Rural, earth. File: ug_bankson_fra; low SPWA Greene Co. 2021 $44.50 (2021 dollars); high PennDOT 2 in. items $120-284/LF (a ceiling)'
+  ug_4in:
+    value: 167.75
+    low: 62.8
+    high: 376
+    unit: USD a ft, 4 in. water service, trenched and installed
+    conf: low
+    source: 'Borough of Kennett Square, Contract KSB-2023-01 tabulation of bids (Pennoni, certified): ''6 4" C900 PVC Water Main 11 L.F. $225.00 $2,475.00 $150.00 $1,650.00 $154.23 $1,696.53 $167.75 $1,845.25
+      $330.00 $3,630.00'' (https://cms8.revize.com/revize/kennettsquarepa/Item%2012a.E%20South%20St%20Water%20Main%20Replacement.pdf, read 2026-11-23); E. South St. water main replacement, Chester Co. PA.
+      Bids opened 2023-03-29. 5 bidders; low Barrasso $1,040,337. Only 11 LF. Pavement restoration (items 29-31) and misc. excavation are separate items. Same tab, 8 in. C900 at 1,590 LF: $148/$163.30/$310.
+      typica; low a rural 8 in. main''s bid (Franklin Twp, $62.80/LF, a long run); high PennDOT 4 in. DI items $177-376/LF (small utility items in highway jobs, a ceiling)'
+  wallcap_4:
+    value: 27.6
+    low: 16.69
+    high: 44.48
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'HVACquick (Artis Metals SDWVG4): ''SDWVG4 ... In-stock $27.60 $24.40'' (https://hvacquick.com/products/residential/Ventilation-Accessories/Discharge-Caps/wall-hoods-galvanized-steel, read 2026-11-23);
+      Galvanized hood with bug screen and damper; $27.60 for 1-4 units, $24.40 for 5+. Saved data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_wallhoods_galv.html. Low: Home Depot Lambro 34400G 26
+      ga with damper ''$16.69''. High: Home Depot Master Flow HDWV4W ''$'
+  wallcap_5_hood:
+    value: 32.9
+    low: 25.19
+    high: 32.9
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'HVACquick (Artis Metals SDWVG5): ''SDWVG5 ... In-stock $32.90 $29.70'' (https://hvacquick.com/products/residential/Ventilation-Accessories/Discharge-Caps/wall-hoods-galvanized-steel, read 2026-11-23);
+      Galvanized, 5 in. collar, #8 bug screen and backdraft damper; $29.70 for 5+. Saved data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_wallhoods_galv.html. Low: Staples Lambro 1060 aluminum hood
+      with 5 in. tail and spring damper ''$25.19'' (no screen listed;'
+  wallcap_6:
+    value: 34.0
+    low: 32.9
+    high: 36.99
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'Home Depot (Broan 639, 3-1/4x10): ''$34.00'' (https://www.homedepot.com/p/Broan-NuTone-3-1-4-in-x-10-in-Steel-Wall-Cap-in-Black-639/202913050, read 2026-11-23); Low: HVACquick Artis SDWVG6
+      6 in. galvanized with screen and damper ''$32.90'' ($29.70 for 5+), saved data/raw/pass3g/step10/prices/hvac_electrical/hvacquick_wallhoods_galv.html. High: Home Depot Lambro 3460G-11 6 in. 26 ga
+      ''$36.99''. Also Master Flow WVA6SD $34.'
+  watts_lf007_2:
+    value: 1850.0
+    low: 868.06
+    high: 2169.0
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'BackflowPartsUSA (backflowpartsusa.com): ''$1,850.00'' (https://backflowpartsusa.com/backflow-devices/watts/2-inch/lf007m1-2, read 2026-11-23); LF007M1-QT 2 in. is discontinued (Watts/SupplyHouse
+      say replaced by the -FZ freeze-sensor model). Price is a manufacturer''s advertised price. low = PlumbersStock 2 in. 007M1-QT $868.06 (NOT lead-free, not for potable use; ps_007m1qt2.html); high =
+      Consolidated'
+  watts_lfn45b_2:
+    value: 1536.63
+    low: 924.0
+    high: 1614.54
+    unit: USD a unit (each), material only
+    conf: medium
+    source: 'KSC Direct (kscdirect.com): ''"price":1536.63'' (https://kscdirect.com/itemDetail/4780370/2-lfn45b, read 2026-11-23); Read $1,536.63 today (a search snippet showed $1,785.51 earlier). high
+      = Industrial Stores 0009523 $1,614.54 (ist_lfn45b2.html); low = BackflowPartsUSA 2 in. LFN45B-L-DU-S (double-union sweat variant) $924.00 MAP (bpu_lfn45b_dus2.html).'
+  xps_r5:
+    value: 0.82
+    low: 0.82
+    high: 0.99
+    unit: USD a ft2, XPS 1 in. (R-5), material
+    conf: medium
+    source: 'K&K Hardware & Lumber, Bettendorf IA (independent retailer) product page: ''4x8x1" Foam Board SKU #096811 UPC #748232100012 Regular Price $ 26.16 EA'' (https://kkhardware.com/p/foamular-4x8x1-r-5-748232100012,
+      read 2026-11-23); Page describes it as Owens Corning FOAMULAR 150, 1 in. x 4 ft x 8 ft XPS, R-5, 15 psi; ''57 In Stock''. $26.16 / 32 ft2 = $0.8175/ft2. Iowa, not PA. File: xps_kkhardware_bettendorf_ia_foamular150_1in_4x8_2026-11-23.html;
+      high: Superarbor $0.99/ft2'
+  fixture_roughin:
+    value: 120.0
+    low: 60.0
+    high: 250.0
+    unit: USD a fixture, its rough-in and setting parts (stops, supplies, trap, tailpiece; the closet flange and wax ring; the tub's pressure-balance valve; the washer box), averaged
+    conf: placeholder
+    source: "judgement, to price item by item (not in the services model; added after 10b's NAHB check found the plumbing short of it)"
+  device:
+    value: 8.0
+    low: 4.0
+    high: 15.0
+    unit: USD an outlet or switch with its box and plate (tamper-resistant receptacles; the GFCI and AFCI devices in the panel's breakers)
+    conf: placeholder
+    source: "judgement, to price (not in the services model; added after 10b's NAHB check found the electrical short of it)"
+  smoke_alarm:
+    value: 30.0
+    low: 20.0
+    high: 50.0
+    unit: USD a hardwired photoelectric smoke alarm with its battery backup and interconnect
+    conf: placeholder
+    source: "judgement, to price (step 6 chose the kind, not the model)"
+  ezmh314125:
+    value: 2474.0
+    low: 2474.0
+    high: 2474.0
+    unit: USD a unit (each), material only
+    conf: low
+    source: 'Schneider Electric (list price): ''2,474.00 USD ... Price is List Price and may be subject to a trade discount'' (https://www.se.com/us/en/product/EZMH314125/branch-unit-ez-meterpak-125a-4-x-5-jaw-sockets-208y-120vac-horn-bypass-ringless-800a-al-busbar/,
+      read 2026-11-23); ONLY the maker''s list price was saved (el_ezmh314125_se.html), so low = high = typical = list. That overstates street price. Sibling EZM314125 (ringed, no bypass) sells at RSP for
+      Sale Price $781.27 against Schneider lis'
+    note: book
+remdb:
+  remdb_ewh_50:
+    value: 1256.0
+    low: 1107.0
+    high: 1427.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Water Heater | Electric Storage | 2023$ | metric1 UEF Unitless coef
+      L/M/H 571.423/10549.5/19231 bounds 0.92-0.95 | metric2 Nominal volume gallons coef L/M/H 12.8571/17.0571/22.2759 bounds 27-55 | Int L/M/H -425.281/-9666.09/-17743.2 | Insta'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23);  NC installed = retail*NC multiplier + NC adder. L: (571.423*0.92 + 12.8571*50 + -425.281) = 743.29 retail; *1 + 364.12 = 1,107.40; M: (10549.5*0.92 + 17.0571*50 + -9666.09) = 892.30
+      retail; *1 + 364.12 = 1,256.42; H: (19231*0.92 + 22.2759*50 + -17743.2) = 1,0'
+  remdb_hpwh_50:
+    value: 2640.0
+    low: 2322.0
+    high: 3246.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Water Heater | HP Tank | 2023$ | metric1 UEF Unitless coef L/M/H 102.326/248.326/888.755
+      bounds 3-4.07 | metric2 Nominal volume gallons coef L/M/H 28.8136/19.3314/8.39056 bounds 40-80 | Int L/M/H 5.29573/286.451/-801.897 | Installation Mult'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); Plain HP Tank row (no gas capping / new 240 V wiring). NC installed = retail*NC multiplier + NC adder. L: (102.326*3.5 + 28.8136*50 + 5.296) = 1,804.12 retail; *1 + 518.19 = 2,322.31;
+      M: (248.327*3.5 + 19.3314*50 + 286.451) = 2,122.16 retail; *1 + 518.19 = 2,6'
+  remdb_gwh_40:
+    value: 1613.0
+    low: 1236.0
+    high: 2189.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Water Heater | Gas Storage | 2023$ | metric1 UEF Unitless coef L/M/H
+      5190.14/8799.42/13355.3 bounds 0.58-0.75 | metric2 Nominal volume gallons coef L/M/H 13.0935/13.652/32.7106 bounds 38-98 | Int L/M/H -3147.37/-5066.56/-8122.8 | Installati'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); Venting/gas piping beyond REMDB''s adder not itemised. NC installed = retail*NC multiplier + NC adder. L: (5190.14*0.63 + 13.0935*40 + -3147.36) = 646.16 retail; *1 + 589.78 = 1,235.94;
+      M: (8799.42*0.63 + 13.652*40 + -5066.56) = 1,023.16 retail; *1 + 589.78 = 1'
+  remdb_furnace_40k:
+    value: 3699.0
+    low: 3417.0
+    high: 4274.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Furnaces | Gas Furnace | 2023$ | metric1 Heating Capacity BTU/Hr coef
+      L/M/H 0.004744/0.00645/0.01105 bounds 30000-156250 | metric2 AFUE Unitless coef L/M/H 3309.83/4325/4862.69 bounds 0.8-0.97 | Int L/M/H -2009.22/-2780/-2910.15 | Installat'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); AFUE entered as 0.97 (metric bounds 0.8-0.97). NC installed = retail*NC multiplier + NC adder. L: (0.0047*40000 + 3309.83*0.97 + -2009.22) = 1,391.07 retail; *1 + 2025.6 = 3,416.67;
+      M: (0.0065*40000 + 4325*0.97 + -2780) = 1,673.25 retail; *1 + 2025.6 = 3,698.8'
+  remdb_ac_15ton:
+    value: 4959.0
+    low: 2845.0
+    high: 7074.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Air Conditioner | Centrally ducted | 2023$ | metric1 Cooling Capacity
+      Tons coef L/M/H 196.966/328.277/459.588 bounds 1.5-5 | metric2 SEER1 Unitless coef L/M/H 356.844/594.74/832.636 bounds 13-24 | Int L/M/H -3533.36/-5888.94/-8244.51 | Inst'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); SEER2 14.3 entered as SEER1 15 (EPA''s conversion; see es_hp_upgrade_cz5). Row notes say low/high +/-30% but the coefficients are 0.6x/1.4x mid. NC installed = retail*NC multiplier
+      + NC adder. L: (196.966*1.5 + 356.844*15 + -3533.36) = 2,114.75 retail; *1.5 + -'
+  remdb_ducted_minisplit_1ton:
+    value: 6628.0
+    low: 3824.0
+    high: 9433.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Air Source Heat Pump | Non-ducted, multi-zone | 2023$ | metric1 Cooling
+      Capacity Tons coef L/M/H 1878.05/3130.08/4382.11 bounds 1.5-5 | metric2 SEER1 Unitless coef L/M/H 96.248/160.413/224.579 bounds 16-23 | Int L/M/H -806/-1343.33/-1880.67'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); Row 10 (multi-zone, covers compact-ducted indoor units) - REMDB has no single-zone ducted class; SEER1 18 is our assumption for a slim-duct unit. NC installed = retail*NC multiplier
+      + NC adder. L: (1878.05*1 + 96.248*18 + -806) = 2,804.51 retail; *1.5 + -383.1'
+  remdb_erv_120cfm:
+    value: 2073.0
+    low: 1467.0
+    high: 3155.0
+    unit: USD installed, new construction, 2023 dollars (REMDB 2024.12.23, 10th-90th percentiles)
+    conf: medium
+    source: 'NREL REMDB 2024 machine-readable file (REMDB_2024.12.23.xlsx, sheet ''Machine Read''), CC BY 4.0, OEDI submission 8336: ''Mechanical Ventilation | ERV/HRV | 2023$ | metric1 Sensible Recovery
+      Efficiency Unitless coef L/M/H 270.136/-841.455/-3099.82 bounds 0.54-0.88 | metric2 Max Airflow CFM coef L/M/H 3.53701/5.33036/13.9583 bounds 35.3-700 | Int L/M/H 197.213/'' (https://data.openei.org/files/8336/REMDB_2024.12.23.xlsx,
+      read 2026-11-23); Metric 2 is MAX airflow, so 120 cfm max used for a ~45-50 cfm continuous flat unit; SRE 0.75 assumed. NC installed = retail*NC multiplier + NC adder. L: (270.136*0.75 + 3.537*120
+      + 197.213) = 824.26 retail; *1.7795 + 0 = 1,466.78; M: (-841.455*0.75 + 5.3304*12'
+  energy_star_hpwh_extra:
+    value: 1160.61
+    low: 1160.61
+    high: 1160.61
+    unit: USD a flat, a 2.5 UEF heat-pump water heater over a 0.93 UEF electric one (2024 dollars)
+    conf: medium
+    source: 'EPA, ENERGY STAR MFNC National v1.3 (Rev. 05) Cost & Savings Estimates, 2026-10-09: ''Exhibit 19 (CZ 5, Whole Building, Electric), p.23: Water Heater | 0.93 UEF Electric DHW, 40 Gallons | 2.5
+      UEF HPWH, 60 Gallons | $1,160.61 | 18 | Water Heater | $20,891'' (https://www.energystar.gov/sites/default/files/2026-10/ENERGY%20STAR%20LRMF%20Version%201.3%20Cost%20%20Savings%20Summary%20v1%202026-07-16_508.pdf,
+      read 2026-11-23); Sec. 9C: REMDB v4.0.0 HP-tank mid regression + NC multipliers, costed at UEF 2.80. Our REMDB 2024.12.23 arithmetic for the same pair gives ~1,468 (2023$) - not reproduced; method
+      detail unknown. Prototype: 3-storey low-rise MF, 18 units (6/floor, two rows on a'
+  to_2026:
+    value: 1.1599
+    low: 1.08
+    high: 1.1638
+    unit: factor from 2023 to 2026 dollars (inputs to new multifamily construction)
+    conf: medium
+    source: 'BLS PPI inputs to industries, BLS Public Data API v2 (saved bls_ppi_api*.json); series labels from AGC PPI Tables 2026_10 (saved agc_PPI_Tables_2026_10.pdf): ''WPUIP231120 2023 M13 147.913;
+      2025 M13 154.382; 2026 M10 171.564 (P: Preliminary). WPUIP2300001 2023 M13 318.772; 2026 M10 365.137 (P). WPUIP230000 2023 M13 149.052; 2026 M10 173.464 (P). AGC table row: ''WPUIP231120 Multifamily
+      18.7 11.6 -2'' (https://api.bls.gov/publicAPI/v2/timeseries/data/, read 2026-11-23); typical = WPUIP231120 (inputs to new multifamily residential construction, goods+services, excl. capital investment,
+      labor and imports) 171.564/147.913. low = WPUIP2300001 (inputs to construction industries, goods) 1.1454; high = WPUIP230000 (inputs to constru; low about 4% a year for an installed price''s labour'
+  factor:
+    value: 2.0
+    unit: how far a built-up installed cost may sit from REMDB's, either way
+    conf: placeholder
+    source: 'judgement: REMDB''s national regressions against one basis-of-design model''s list price and stated hours'
+

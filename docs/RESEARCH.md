@@ -1610,7 +1610,8 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       plumbing "$27,180" (6.3%), electrical "$27,383" (6.4%), HVAC "$26,938" (6.3%), A&E "$6,480"
       (1.5%) of $428,215.
     - **HUD 2024 Unit TDC Limits:** Johnstown, PA, walk-up, 2 bedrooms: housing construction cost
-      $162,308, total development cost $284,039.
+      $161,169, total development cost $282,045 (as pass 4 has them; the agent's first read, $162,308
+      and $284,039, took the wrong row of the PDF's text, corrected in 10b).
     - **REMDB** (NREL, now the National Laboratory of the Rockies), `REMDB_2024.12.23.xlsx` on
       OEDI (submission 8336), CC BY 4.0, 2023 dollars. Installed-cost regressions with
       new-construction multipliers. Its own words: "not intended to provide specific cost estimates
@@ -1680,3 +1681,68 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       backflow preventer" needs "a thermal expansion control device".
     - PA 2021 IECC R403.5.2: R-3 on "Piping 3/4 inch (19.1 mm) and larger in nominal diameter
       located inside the conditioned space".
+  - **10b, the prices (2026-11-23).** Four research agents, each saving the pages they read under
+    `data/raw/pass3g/step10/prices/` (gitignored). Each price's param (`params/baseline.yaml`,
+    `price`) carries its seller, page, date and quote.
+    - **Materials and equipment:**
+      - supply houses and distributors' public pages (PEX Universe, HVACquick, Got Ductless,
+        Budget Heating, Landmark Supply, Wire & Cable Your Way, RSP Supply and others);
+      - distributors' book prices shown to anonymous visitors (Consolidated Supply, Keller Supply):
+        they read high, so they're taken at `book_to_net`;
+      - makers' lists (Leonard's June 2025 sheet, ClimateMaster RP103 effective 2026-10-28,
+        Schneider's).
+      - Home Depot, Lowe's, SupplyHouse, Zoro, Ferguson and Grainger refused a plain user-agent. A
+        few prices from them were read from search results and are marked so.
+    - **REMDB** (NREL, now the National Laboratory of the Rockies; `REMDB_2024.12.23.xlsx`, CC BY
+      4.0; 2023 dollars):
+      - new-construction installed costs: electric tank 50 gal $1,256, heat-pump water heater $2,640,
+        gas tank 40 gal $1,613, furnace 40k $3,699, AC 1.5 ton $4,959, a 1-ton multi-zone ducted
+        mini-split $6,628, ERV 120 cfm $2,073;
+      - its metric is SEER1, taken from SEER2 by EPA's pairing.
+    - **ENERGY STAR MFNC v1.3 Cost & Savings** (Rev. 05, 2026): climate zone 5, a heat-pump water
+      heater over an electric one $1,160.61 (2024 dollars). It gives no price for an ERV against
+      exhaust, nor for air sealing, in zone 5 (its baseline and its spec are the same there).
+    - **PV:** LBNL, *Distributed Solar & Storage: 2025 Data Update*, small non-residential systems
+      (100 kW DC or less, owner-owned, 2024 installs): $3.2/W DC (20th-80th percentile $2.5-4.3),
+      2024 dollars.
+    - **Passive House:**
+      - the premium: MassCEC's seven certified LIHTC buildings 1-4.1% (mean 2.2%); PHFA's rounds
+        -3.3% to 5.8% (1.6%); NYSERDA's built projects 0.3-7.0% (median 2.0%);
+      - air sealing: a Finch Cambridge cost comparison, $27,124 on 111,450 ft2 of floor, $0.24/ft2;
+        AeroBarrier $1-2/ft2 (DOE).
+    - **Blower door tests:** PNNL (2018) $350 a dwelling unit; a whole building $0.466/ft2 of floor
+      at 10,000 ft2 ($0.15-0.50).
+    - **Testing and balancing:** GSA CALC+ ceiling rates, a TAB technician $101-211 an hour (fully
+      burdened maxima).
+    - **Utilities:**
+      - Peoples Natural Gas Tariff 48 (effective 2024-09-27): it serves Indiana Borough and White
+        Township; the owner installs the service line (to 100 ft); the first meter on each line is
+        free; each dwelling that controls its own gas has its own service line;
+      - Pennsylvania American Water Rule 3.2: a first connection $30, no tapping fee; a second (a fire
+        line) at the company's actual cost, unpublished.
+    - **Underground water service:**
+      - 4 in.: Kennett Square's 2023 bids, $150-330/LF (typical $167.75);
+      - 2 in.: Franklin Township's 2025 bids, $50-145/LF ($90);
+      - PennDOT's item price history ($120-376/LF for small water items in highway jobs) as a ceiling.
+    - **Labour:** BLS OEWS May 2025 (the API) for the Southwestern Pennsylvania nonmetropolitan area:
+      plumbers, pipefitters and steamfitters $29.51, electricians $34.41, HVAC mechanics $28.08, sheet
+      metal $25.41, laborers $23.69 an hour. Mechanical insulation isn't published there, so
+      Pittsburgh's $33.15 is used.
+    - **Burden:** BLS ECEC June 2026, Table 4, construction: total compensation $51.96, wages $36.13,
+      paid leave $2.63, so 1.341 on OEWS's wages.
+    - **Davis-Bacon** PA20260055 mod 6 (2026-11-12), Indiana County building work, as the high end:
+      plumber $40.02 + $26.55, electrician $49.11 + $36.79, sprinkler fitter $49.75 + $30.26.
+    - **Markups:**
+      - PHFA Tab 07 (rev. 1-17-25): general requirements 6%, overhead 2%, profit 6%, contingency 5%;
+        the architect's fee cap, Regular (walk-up) 7.31% at $1M to 6.57% at $3M, Complex (central
+        heating or hot water) 7.53% to 6.72%, full MEP drawings within it;
+      - VAAR 852.243-70: a trade's 10% overhead and 10% profit on changes;
+      - Washington OFM 2027-29, Schedule B: 10.08% at $2M, MEP inside basic services.
+      - No free source splits an A/E fee by discipline.
+    - **Escalation:** BLS PPI, inputs to new multifamily construction (WPUIP231120): 2023 147.913,
+      2024 150.799, Oct 2026 171.564 (preliminary).
+    - **The checks' figures:**
+      - NAHB *Cost of Constructing a Home-2024*: plumbing $27,180, electrical $27,383, HVAC $26,938
+        of $428,215;
+      - HUD 2024 TDC limits, Johnstown walk-up, 2 bedrooms: HCC $161,169;
+      - NFSA's "about $1.35 per square foot" for NFPA 13D.

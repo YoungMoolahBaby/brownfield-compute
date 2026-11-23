@@ -311,7 +311,8 @@ def model_items(rb: list[dict]) -> tuple[dict, dict]:
                  f"the services model, {role}", "model", system, size=size, role=words, run=True)
             if system in ("drain", "vent"):
                 _add(items, ("run", system, PVC_DWV, size, words), f"{PVC_DWV}, {_size(size)}: {words}", "ft", _q(USUAL, ft),
-                     f"the services model's cast iron run for run (IPC 2021 Tables 702.1-702.4 list PVC DWV), {role}", "rule", system)
+                     f"the services model's cast iron run for run (IPC 2021 Tables 702.1-702.4 list PVC DWV), {role}", "rule", system,
+                     size=size, role=words)
         elif cls.endswith("Fitting") and "manifold" not in p.get("Kind", ""):
             seen["fittings"] += 1
             kind = p.get("Kind", r["pre"])
@@ -367,7 +368,7 @@ def _per_flat(routes, prefix: str, flats: list[str]) -> dict[str, float]:
     return {n: routes.tree(f"{prefix}/{n}").length_m / FT for n in flats}
 
 
-def design_items(apt: dict, p: dict, s7: dict, its: list[dict]) -> dict:
+def design_items(apt: dict, p: dict, s7: dict, its: list[dict], fixtures: int) -> dict:
     """The engineered design's items the services model doesn't hold, and those the walk-ups share
     or swap there, from the design's own parameters and runs."""
     from . import acceptance
@@ -434,10 +435,12 @@ def design_items(apt: dict, p: dict, s7: dict, its: list[dict]) -> dict:
     # R402.4.1.2, or Phius's compartment test); the engineered design also seals to Phius's limit and
     # tests the whole building.
     lk = acceptance.leakage(apt, p)
-    _add(items, ("envelope", "air sealing"), f"air sealing to Phius's {lk['rate_cfm50_ft2']:g} cfm50/ft2, beyond the code's 3.0 ACH50",
-         "ft2", _q(ENG, lk["area_ft2"]), "Addendum 8, E-1 (the gross enclosure)", "design", "envelope")
-    _add(items, ("envelope", "whole-building test"), "blower door test, the whole building (Phius, multi-point, both ways)", "each",
-         _q(ENG, 1), "Addendum 8, E-1", "design", "envelope")
+    # Priced by the building's gross floor, as the cost sources give them.
+    gfa = (apt["length_m"] * apt["depth_m"] * apt["storeys"]) / FT2 + annex_floor_ft2(apt)
+    _add(items, ("envelope", "air sealing"), f"air sealing to Phius's {lk['rate_cfm50_ft2']:g} cfm50/ft2 of enclosure, beyond the code's "
+         "3.0 ACH50 (the building's gross floor)", "ft2", _q(ENG, gfa), "Addendum 8, E-1; the gross floor", "design", "envelope")
+    _add(items, ("envelope", "whole-building test"), "blower door test, the whole building (Phius, multi-point, both ways; its gross floor)",
+         "ft2", _q(ENG, gfa), "Addendum 8, E-1; the gross floor", "design", "envelope")
     _add(items, ("envelope", "flat tests"), "blower door test, each flat (the code's, or Phius's compartment test)", "each", _q(ALL, flats),
          "IECC R402.4.1.2; Addendum 8, E-1", "design", "envelope")
     # The tests and inspections (01 45 00), each in the walk-ups it applies to: the codes' own where
@@ -451,6 +454,23 @@ def design_items(apt: dict, p: dict, s7: dict, its: list[dict]) -> dict:
         what = TEST_WORDS.get(it["id"], it["what"])
         _add(items, ("test", it["id"]), f"test {it['id']}: {what}", "each", {**_q(walk, 1), **n},
              f"acceptance.items ({it['basis']})", "design", "tests")
+    # Every walk-up's alike, not in the services model, and in NAHB's "except fixtures" systems (added
+    # after 10b's NAHB check found the lists short of them): each fixture's rough-in and setting, the
+    # outlets and switches, the smoke alarms (step 6's count), the meter stack's sockets, the house panel.
+    from .electrical import meter_stack
+    from .fire import smoke_alarms
+
+    _add(items, ("shared", "fixture rough-in"), "each fixture's rough-in and setting: its stops, supplies, trap and tailpiece, the "
+         "closet flange, the tub's valve, the washer box", "each", _q(ALL, fixtures),
+         "the services model's fixtures schedule and its washers (every fixture the plumber sets)", "rule", "drain")
+    _add(items, ("shared", "devices"), "outlets and switches with their boxes and plates", "each",
+         _q(ALL, flats * p["baseline.usual.devices_per_flat"]), "baseline.usual.devices_per_flat (a rule, judgement)", "rule", "power")
+    _add(items, ("shared", "smoke alarms"), "smoke alarms, photoelectric, interconnected, on the building wiring with a battery", "each",
+         _q(ALL, smoke_alarms(apt, p)["total"]), "fire.smoke_alarms (step 6: a bedroom's each and the hall)", "design", "power")
+    _add(items, ("shared", "meter sockets"), "the meter stack's socket columns (Square D EZMH314125)", "each",
+         _q(ALL, meter_stack(p, flats)["columns"]), "electrical.meter_stack (step 5)", "design", "power")
+    _add(items, ("shared", "house panel"), "the house panel (Square D QO130L125PG)", "each", _q(ALL, 1), "systems.house_panel (step 5)",
+         "design", "power")
     # The house panel's circuits to the plant (the annex's wiring isn't in the services model).
     _add(items, ("electrical", "plant circuits"), "the house panel's circuits to the plant: HP-1, BK-1, ST-2's element, the pumps and PC-1",
          "lot", _q(ENG, 1), "electrical.house_loads (step 5; 9a)", "design", "power")
@@ -466,6 +486,12 @@ TEST_WALKUPS = {  # 01 45 00's items that not every walk-up has (the rest are ev
 TEST_WORDS = {  # where a test reads differently in the usual walk-ups
     "V-1": "each flat's ventilation flows (IECC R403.6.3: the engineered design's ERVs, the usual walk-ups' bath fans)",
 }
+
+
+def annex_floor_ft2(apt: dict) -> float:
+    """The annex's floor (ft2), from its slab."""
+    slab = next(x for x in apt["rooms"]["annex"]["parts"] if x["kind"] == "annex_slab")
+    return (slab["hi_m"][0] - slab["lo_m"][0]) * (slab["hi_m"][1] - slab["lo_m"][1]) / FT2
 
 
 def insulation_items(model: dict, p: dict) -> dict:
@@ -523,6 +549,9 @@ def usual_items(apt: dict, p: dict, routes, rule: dict) -> dict:
          "flat_hot_rule", "rule", "hot")
     _add(items, ("own", "drops"), f"{pex}, {p[u + 'drop_in']:g} in.: each flat's hot fixtures' pipe from its trunk", "ft", _q(OWN_HEATER, drops),
          "flat_hot_rule", "rule", "hot")
+    fixtures = sum(len(routes.reqs[f"plumbing/hot/{n}"]["terminals"]) for n in names)
+    _add(items, ("own", "fittings"), f"{pex}: fittings on each flat's own hot pipe, a tee and two elbows a fixture", "each",
+         _q(OWN_HEATER, 3 * fixtures), "flat_hot_rule (judgement: a tee off the trunk and two elbows down to each fixture)", "rule", "hot")
     _add(items, ("own", "trunk insulation"), f"insulation {p[u + 'trunk_insulation_in']:g} in. (R-3) on each flat's hot trunk "
          "(IECC R403.5.2)", "ft", _q(OWN_HEATER, trunk), "flat_hot_rule", "rule", "hot")
     _add(items, ("own", "heater electric"), f"electric water heater, {p[u + 'heater_gal']:g} gal, {p[u + 'heater_va']:g} W at 208 V, in each flat's utility closet "
@@ -544,9 +573,15 @@ def usual_items(apt: dict, p: dict, routes, rule: dict) -> dict:
     _add(items, ("gas", "vents"), "PVC vent and combustion-air pipe, 2 in., the furnace's and the heater's, to the facade", "ft",
          _q(("gas",), 2 * (sum(ea.values()) + sum(oa.values()))), "their reach the ERVs' ducts' to the facade (a proxy), two pipes each",
          "rule", "gas")
-    _add(items, ("gas", "meters"), "gas meters, a bank by the meter wall, one a flat", "each", _q(("gas",), flats), "one a flat", "rule", "gas")
-    _add(items, ("gas", "meter central"), "gas meter, the central plant's", "each", _q(("central",), 1), "one", "rule", "gas")
-    _add(items, ("gas", "service"), "gas service from the street, its regulator", "each", _q(("gas", "central"), 1), "one", "rule", "gas")
+    # Peoples Natural Gas (Tariff 48): a flat that controls its own gas has its own service line, which
+    # the owner installs; the first meter on each line is the utility's.
+    run = p["systems.sprinkler.underground_ft"]
+    _add(items, ("gas", "meters"), "gas meters, one a flat, each on its own service line (the utility's)", "each", _q(("gas",), flats),
+         "Peoples Natural Gas Tariff 48", "rule", "gas")
+    _add(items, ("gas", "meter central"), "gas meter, the central plant's (the utility's)", "each", _q(("central",), 1), "one", "rule", "gas")
+    _add(items, ("gas", "service"), "gas service lines from the street, the owner's to install: one a flat in the gas walk-up, one for the "
+         "central plant", "ft", {**_q(("gas",), flats * run), "central": run},
+         "Peoples Natural Gas Tariff 48; each line the water service's run (systems.sprinkler.underground_ft, a placeholder)", "rule", "gas")
     _add(items, ("gas", "lines"), "gas pipe from the meter bank to each flat", "ft", _q(("gas",), sum(feeder.values())),
          "its reach each flat's routed feeder's, from the meter wall (a proxy)", "rule", "gas")
     _add(items, ("gas", "branches"), "gas pipe in each flat, to its furnace and its heater", "ft", _q(("gas",), flats * p[u + "gas_branch_ft"]),
@@ -689,7 +724,8 @@ def items(apt: dict, p: dict, s7: dict, routes, its: list[dict]) -> dict:
     rb = read_back(SERVICES)
     model, seen = model_items(rb)
     rule = flat_hot_rule(apt, p, routes)
-    out = {**model, **insulation_items(model, p), **design_items(apt, p, s7, its), **usual_items(apt, p, routes, rule)}
+    fixtures = seen["fixtures"] + sum(1 for r in rb if r["props"].get("Kind", "").startswith("washer"))
+    out = {**model, **insulation_items(model, p), **design_items(apt, p, s7, its, fixtures), **usual_items(apt, p, routes, rule)}
     return {"items": list(out.values()), "seen": seen, "rule": rule}
 
 
@@ -765,6 +801,7 @@ def run(apt: dict | None = None, p: dict | None = None) -> dict:
     s7 = routed.summary(apt, p, routes)
     its = acceptance.items(p, s7)
     r = items(apt, p, s7, routes, its)
+    r["s7"] = s7
     r["practice"] = usual_practice()
     r["heat"] = heat_check(apt, p, s7)
     r["closet"], r["hood"], r["central"] = closet_check(apt, p), hood_check(apt, p, routes), central_check(p, s7)
