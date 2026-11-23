@@ -86,8 +86,8 @@ def test_every_file_the_viewer_loads_or_links_is_in_the_site(site):
 
 @ready
 def test_the_plan_room_counts_are_the_models(site):
-    # As of the latest addendum (Addendum 7, which changes no element of the building: Addendum 5's),
-    # the documents as they stand.
+    # As of the latest addendum (Addendum 8, which like 6 and 7 changes no element of the building:
+    # Addendum 5's), the documents as they stand.
     apt, _ = bidset.load("apartment-addendum-5.json")
     p = load_params()
     facts = {label: int(n.replace(",", "")) for n, label in
@@ -100,7 +100,7 @@ def test_the_plan_room_counts_are_the_models(site):
     assert facts[f"windows, in {w_types} types"] == len(windows)
     assert facts[f"doors, in {d_types} types"] == len(apt["openings"]) - len(windows)
     assert facts["openings the code calls for safety glass in"] == len(hazards)
-    assert facts["addenda; counts as of Addendum 7"] == 7
+    assert facts["addenda; counts as of Addendum 8"] == 8
 
 
 @ready
@@ -137,8 +137,8 @@ def test_the_addenda_are_the_manifests_and_the_runs(site):
     assert m["addenda"][3]["items"] == systems.addendum_4_words(load_params())["items"]
     raw5 = systems.load(systems.OUT_DIR / "pass3" / "apartment-addendum-5.json")
     assert m["addenda"][4]["items"] == systems.addendum_5_words(load_params(), raw5)["items"]
-    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in range(1, 8)]
-    # Addenda 6 and 7 change no element of the building: no model of their own, nothing to mark in
+    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in range(1, 9)]
+    # Addenda 6 to 8 change no element of the building: no model of their own, nothing to mark in
     # its 3D; each one's items its text's. Addendum 7's changes to the services are marked on the
     # services' layers, from the file the manifest names.
     for a in m["addenda"][5:]:
@@ -150,7 +150,7 @@ def test_the_addenda_are_the_manifests_and_the_runs(site):
     assert "svcchanges" in page and m["services"]["model"] == "services-addendum-7.ifc"
     # Each addendum names the services model it issued (5 and 7), copied for the viewer, which shows
     # each addendum with the building and the services as they stood; it opens at the latest.
-    assert [a.get("services_model") for a in m["addenda"]] == [None] * 4 + ["services-addendum-5.ifc", None, "services-addendum-7.ifc"]
+    assert [a.get("services_model") for a in m["addenda"]] == [None] * 4 + ["services-addendum-5.ifc", None, "services-addendum-7.ifc", None]
     assert all((site / "models" / a["services_model"]).is_file() for a in m["addenda"] if a.get("services_model"))
     assert f'href="model.html#addendum-{len(m["addenda"])}"' in page
 
@@ -160,13 +160,14 @@ def test_the_documents_are_in_folders(site):
     page = _page(site)
     for folder in ("01 Bid documents", "02 Addenda", "03 RFIs", "04 Framing model", "Drawings", "Model", "Schedules",
                    "Requirements", "Addendum 01:", "Addendum 02:", "Addendum 03:", "Addendum 04:", "Addendum 05:", "Addendum 06:",
-                   "Addendum 07:"):
+                   "Addendum 07:", "Addendum 08:"):
         assert f'<span class="fold">{folder}' in page, folder
     # Every published bid document and addendum file is listed once at least.
     for path in ("bidset.pdf", "apartment.ifc", "drawings/schedule.csv", "bidset.ids", "rfi-001.bcf", "rfi-002.bcf",
                  "apartment-addendum-3.ifc", "apartment-addendum-5.ifc", "framing-addendum-5.ifc", "addendum-6.md",
                  "services-sheets-addendum-6.pdf", "services-addendum-5.ifc", "addendum-7.md", "services-addendum-7.ifc",
-                 "services-sheets-addendum-7.pdf", "spec-23-09-93-sequence.md", "spec-01-45-00-tests.md"):
+                 "services-sheets-addendum-7.pdf", "spec-23-09-93-sequence.md", "spec-01-45-00-tests.md", "addendum-8.md",
+                 "spec-01-45-00-tests-addendum-8.md", "services-sheet-g-002-addendum-8.pdf"):
         assert f'href="files/{path}"' in page, path
     m = json.loads((site / "models" / "addenda.json").read_text(encoding="utf-8"))
     if m.get("services"):  # the services model and every schedule read back from it

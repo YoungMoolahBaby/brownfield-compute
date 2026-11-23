@@ -1585,3 +1585,50 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       68.6" (gal, litres, A, B, C in in. and cm). The text doesn't say which of B and C is the
       diameter. The drawing puts B across the base, but it can't be read here (no PDF renderer on
       this machine), so the box takes the larger, 27 in., each way.
+  - **Addendum 8, the air-leakage tests (2026-11-23).**
+    - Phius 2024 Certification Guidebook v26.1.2 (`dl/phius/gb.txt`, as step 0 saved it), read for
+      its tests:
+      - 1.3.3.2: "A whole-building test for airtightness must be performed"; Table 1.3.3.2.0, "All
+        other buildings 0.06 CFM50/ft2" (0.08 at 75 Pa). Gross enclosure is "measured at the
+        exterior of the thermal boundary and includes surfaces in contact with the ground".
+      - 1.5.2.3, the final test: "Conducted in both pressurization and depressurization", "a
+        minimum of a 5-point multipoint test" by ANSI/RESNET/ICC 380-2022 or ASTM E779, accuracy
+        within 10%, correlation 0.95 or better.
+      - Compartmentalization: "Individual dwelling unit compartmentalization testing shall be
+        performed to test the air barrier integrity of each dwelling unit", unguarded (RESNET's
+        Test 1). "The test threshold shall be 0.3 CFM50 / sq ft of unit Shell/Envelope".
+        Sampling only with RESNET's Chapter 6 and the QA provider's agreement.
+      - Its limits: Phius's own certification protocol, not a code. The design takes it as D28's
+        rule for airtightness.
+    - PA 2021 IECC R402.4.1.2 (`dl/upc/iecc_re4.txt`, as before), its exception: "When testing
+      individual dwelling units, an air leakage rate not exceeding 0.30 cubic feet per minute per
+      square foot ... of the dwelling unit enclosure area ... shall be permitted in all climate zones
+      for: Attached single and multiple-family building dwelling units". So Phius's per-flat test
+      also meets the code.
+  - **Step 10's free cost sources (2026-11-23, a research agent; to be read first-hand when used).**
+    - **NAHB,** *Cost of Constructing a Home-2024* (Jan 2025), single-family, 41 builders:
+      plumbing "$27,180" (6.3%), electrical "$27,383" (6.4%), HVAC "$26,938" (6.3%), A&E "$6,480"
+      (1.5%) of $428,215.
+    - **HUD 2024 Unit TDC Limits:** Johnstown, PA, walk-up, 2 bedrooms: housing construction cost
+      $162,308, total development cost $284,039.
+    - **REMDB** (NREL, now the National Laboratory of the Rockies), `REMDB_2024.12.23.xlsx` on
+      OEDI (submission 8336), CC BY 4.0, 2023 dollars. Installed-cost regressions with
+      new-construction multipliers. Its own words: "not intended to provide specific cost estimates
+      for a specific project". The browsing site, remdb.nrel.gov, no longer resolves.
+    - **ENERGY STAR Multifamily New Construction v1.3,** Cost & Savings Estimates (Rev. 05,
+      2026-10-09): a 3-storey, 18-flat prototype; incremental costs per flat, partly REMDB's.
+    - **BLS OEWS May 2025,** Southwestern Pennsylvania nonmetropolitan area (Indiana County's):
+      electricians $34.41, plumbers $29.51, HVAC mechanics $28.08, sheet metal $25.41 an hour.
+    - **Davis-Bacon:**
+      - PA20260055 (building, Indiana County): plumber $40.02 + $26.55 fringe, sprinkler fitter
+        $49.75 + $30.26, as the high end. Its latest revision is to pull.
+      - PA20260038 (residential, apartments to 4 storeys): a 1999 survey (plumber $14.69), unusable.
+    - **PHFA** 2025 development cost limits:
+      - general requirements 6%, builder's overhead 2% and profit 6% of hard cost, contingency 5%;
+      - its architect fee cap for a walk-up includes "Full architectural, structural, mechanical
+        and electrical drawings".
+    - **Washington OFM,** Chapter 08 (2027-29), Schedule B, apartments, design-bid-build: 10.08% at
+      $2M.
+    - **Not found free:** a total MEP cost per flat or per ft2 for low-rise multifamily (Cumming,
+      JLL, NMHC, NAHB multifamily; Craftsman is paid; RLB has no PA city and no MEP split), a
+      neutral NFPA 13R cost per ft2 (NFSA's $1.35 is 13D), and the MEP share of an A/E fee.

@@ -1,9 +1,14 @@
-"""Pass 3g step 9c (D28): the walk-up's tests and inspections, for Addendum 7.
+"""Pass 3g step 9c (D28): the walk-up's tests and inspections, for Addendum 7, revised by Addendum 8.
 
 Each item says what is tested, who does it, when, what passes and on what it rests: a code's own
 test, quoted from the copy saved under `data/raw/` (`checks` finds every quotation there), or one of
 the design's claims, with its figure from the design itself. Written as specification section
-01 45 00 (`out/pass3/acceptance.md`)."""
+01 45 00 (`out/pass3/acceptance.md`).
+
+Addendum 8 (step 10's scoping found it): Addendum 7's E-1 held each flat to the energy code's 3.0
+air changes an hour and said the heat loads assume it, but they take Phius's whole-building limit
+(`loads.design_case`), four to ten times tighter. E-1 is now Phius's two tests, and `checks` holds
+its limit to the leakage the loads take (`leakage_checks`)."""
 
 from __future__ import annotations
 
@@ -23,7 +28,46 @@ SRC = {
     "13R": (RAW / "raw" / "sprinkler" / "13R_A2021_SDR.txt", "NFPA 13R, the 2022 edition's second draft (NFPA's public report)"),
     "USFA": (RAW / "raw" / "sprinkler" / "USFA_sm_0263.txt", "USFA/NFA, Commercial Fire Sprinkler System Plans Review (2023)"),
     "UCC": (RAW / "step9" / "pa" / "s403_45.txt", "34 Pa. Code 403.45 (Inspections, commercial construction)"),
+    "PHIUS": (RAW / "dl" / "phius" / "gb.txt", "Phius 2024 Certification Guidebook v26.1.2"),
 }
+FT2 = 0.09290304
+
+
+def leakage(apt: dict, p: dict) -> dict:
+    """E-1's whole-building limit (cfm at 50 Pa): Phius's rate on the building's gross enclosure
+    (`loads.enclosure`), and each flat's compartment threshold."""
+    from .loads import enclosure
+
+    e = enclosure(apt)
+    rate = p["systems.phius.airtight_cfm50_ft2"]
+    return {"rate_cfm50_ft2": rate, "area_ft2": e["gross_m2"] / FT2, "building_cfm50": rate * e["gross_m2"] / FT2,
+            "flat_cfm50_ft2": p["systems.phius.compartment_cfm50_ft2"], "enclosure": e}
+
+
+def leakage_checks(apt: dict, p: dict, its: list[dict], case: dict | None = None) -> list[tuple[str, bool, str]]:
+    """The test and the heat loads can't part again (Addendum 8): E-1's whole-building limit, per
+    ft2 of the enclosure it's on, is the leakage `design_case` gives every flat; and that enclosure's
+    main block, by the flats as the loads take them and the stair, is the building's outline."""
+    from .loads import CFM_M3H, design_case, enclosure
+
+    e1 = next(it for it in its if it["id"] == "E-1")
+    lim = e1.get("limits") or {}
+    case = case or design_case(apt, p, preheat=True)
+    e = enclosure(apt)
+    n = p["pass3.air.n_factor"]
+    rates = {name: c["infil_m3h"] / CFM_M3H * n / (e["flats"][name] / FT2) for name, c in case["flats"].items()}
+    stated = lim.get("building_cfm50", float("nan")) / lim["area_ft2"] if lim.get("area_ft2") else float("nan")
+    worst = max(rates, key=lambda k: abs(rates[k] - stated))
+    off = abs(rates[worst] - stated) / stated if stated == stated else float("inf")
+    gap = abs(e["parts_main_m2"] - e["main_m2"]) / e["main_m2"]
+    return [
+        ("E-1's whole-building limit is the leakage the heat loads take, flat by flat", off < 1e-3,
+         f"E-1 {lim.get('building_cfm50', float('nan')):,.0f} cfm50 on {lim.get('area_ft2', float('nan')):,.0f} ft2 = {stated:.3f} a ft2; "
+         f"the loads {min(rates.values()):.3f}-{max(rates.values()):.3f} (worst {worst})"),
+        ("the enclosure E-1's limit is on adds up: the flats as the loads take them and the stair are the building's outline",
+         gap < 1e-3, f"{e['parts_main_m2']:,.1f} against {e['main_m2']:,.1f} m2, the annex {e['annex_m2']:.1f} m2 added, "
+                     f"{e['covered_m2']:.1f} m2 of back wall behind it taken off"),
+    ]
 
 
 def _norm(s: str) -> str:
@@ -40,6 +84,7 @@ def items(p: dict, s7: dict) -> list[dict]:
     h, c, pl = "systems.hot_water.", "systems.controls.", "systems.plumbing."
     w, L, fh, ducts = s7["water"], s7["loop"], s7["fire"], s7["ducts"]
     apt = load(latest_model())
+    lk = leakage(apt, p)
     v = ventilation(apt, p)
     cfm = max(x["design_cfm"] for x in v.values())
     imc = max(x["imc_cfm"] for x in v.values())
@@ -143,13 +188,31 @@ def items(p: dict, s7: dict) -> list[dict]:
          "passes": "not required: every flat's ducts and units are inside the building's thermal envelope",
          "basis": "IECC R403.3.5, exception 1",
          "quotes": [("IECC-R", "A duct air-leakage test shall not be required where the ducts and air handlers are located entirely within the building thermal envelope")]},
-        {"id": "E-1", "area": "Envelope", "what": "each flat's air leakage (blower door)", "who": "an approved third party where the code official asks",
-         "when": "with the flat's envelope complete, before occupancy",
-         "passes": f"at most {p['pass3.air.ach50']:g} air changes an hour at 50 Pa, by ANSI/RESNET/ICC 380, ASTM E779 or E1827, a signed report "
-                   "to the code official. The heat loads assume it; the code's 0.30 cfm/ft2 for attached flats would pass a leakier one",
-         "basis": "IECC R402.4.1.2, R402.4.1.3",
-         "quotes": [("IECC-R", "3.0 air changes per hour in Climate Zones 3 through 8"),
-                    ("IECC-R", "reported at a pressure of 0.2 inch w.g. (50 Pascals)")]},
+        # Addendum 8: the whole building to Phius's limit, which the heat loads take, and each flat on
+        # its own (Addendum 7 held each flat to the code's 3.0 ACH50, four to ten times leakier).
+        {"id": "E-1", "area": "Envelope", "what": "air leakage (blower door): the whole building, and each flat on its own",
+         "who": "a RESNET rater or Phius verifier (an approved third party), a signed report to the code official",
+         "when": "the whole building with its envelope complete, before occupancy; each flat with its own shell complete",
+         "passes": f"the whole building (the flats, the stair and the annex together) at most {lk['building_cfm50']:,.0f} cfm at 50 Pa: "
+                   f"{lk['rate_cfm50_ft2']:g} per ft2 of its {lk['area_ft2']:,.0f} ft2 of gross enclosure, measured at the outside of the "
+                   "thermal boundary, the slab included, the leakage the heat loads take. Multi-point (at least 5 points), pressurized and "
+                   "depressurized, by ANSI/RESNET/ICC 380-2022 or ASTM E779, its accuracy within 10% and its correlation 0.95 or better. "
+                   f"Each flat alone, unguarded (RESNET's Test 1): at most {lk['flat_cfm50_ft2']:.2f} cfm50 per ft2 of its own shell (its "
+                   "outside and party walls, its floor and ceiling); sampled only as RESNET's Chapter 6 allows, agreed with the QA "
+                   "provider. Revised by Addendum 8",
+         "basis": "Phius 2024 1.3.3.2 and 1.5.2.3 (the heat loads' basis); IECC R402.4.1.2, its exception for attached dwelling units",
+         "limits": {k: lk[k] for k in ("rate_cfm50_ft2", "area_ft2", "building_cfm50", "flat_cfm50_ft2")},
+         "quotes": [("PHIUS", "All other buildings 0.06"),
+                    ("PHIUS", "A whole-building test for airtightness must be"),
+                    ("PHIUS", "the gross envelope is measured at the exterior of the thermal boundary, the same as for the energy model "
+                              "and includes surfaces in contact with the ground"),
+                    ("PHIUS", "Conducted in both pressurization and depressurization"),
+                    ("PHIUS", "The test reports shall indicate a minimum of a 5-point"),
+                    ("PHIUS", "Individual dwelling unit compartmentalization testing shall be"),
+                    ("PHIUS", "The test threshold shall be 0.3"),
+                    ("IECC-R", "When testing individual dwelling units, an air leakage rate not exceeding 0.30 cubic feet per minute "
+                               "per square foot"),
+                    ("IECC-R", "Attached single and multiple-family building dwelling units")]},
         # -- Fire protection: NFPA 13R's acceptance.
         {"id": "F-1", "area": "Fire protection", "what": "the underground supply, flushed", "who": fire_, "when": "before it is connected to the sprinkler piping",
          "passes": f"at the system's demand rate ({fh['worst']['q_gpm']:.0f} gpm, the governing design) until the water runs clear",
@@ -187,6 +250,8 @@ def items(p: dict, s7: dict) -> list[dict]:
 
 
 def checks(p: dict, s7: dict, its: list[dict] | None = None) -> list[tuple[str, bool, str]]:
+    from .systems import latest_model, load
+
     its = its if its is not None else items(p, s7)
     texts, missing, absent = {}, [], []
     for key, (path, _) in SRC.items():
@@ -205,11 +270,14 @@ def checks(p: dict, s7: dict, its: list[dict] | None = None) -> list[tuple[str, 
          + (f"; sources not on disk: {absent}" if absent else "")),
         ("every item says what, who, when, what passes and on what it rests; ids unique", whole and len(set(ids)) == len(ids), f"{len(its)} items"),
         ("every item resting on the design alone names it", all(it["quotes"] or "design" in it["basis"] or "sequence" in it["basis"] for it in its), ""),
+        *leakage_checks(load(latest_model()), p, its),
     ]
 
 
-def markdown(p: dict, its: list[dict]) -> str:
+def markdown(p: dict, its: list[dict], revised: str | None = None) -> str:
+    """The section; `revised` says which addendum revised what, under its title."""
     lines = ["# 01 45 00: Quality control, the walk-up's tests and inspections", "",
+             *([revised, ""] if revised else []),
              "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Each test is the code's own "
              "(quoted below its table) or the design's claim to be proved; Pennsylvania's code official inspects as 34 Pa. Code "
              "403.45 asks.", ""]
@@ -242,5 +310,5 @@ def report(r: dict) -> str:
     by = {}
     for it in r["items"]:
         by[it["area"]] = by.get(it["area"], 0) + 1
-    return "\n".join([f"Pass 3g step 9c: the tests and inspections (01 45 00, for Addendum 7)", "", fmt(r["checks"]), "",
+    return "\n".join(["Pass 3g step 9c: the tests and inspections (01 45 00: Addendum 7's, as Addendum 8 revises it)", "", fmt(r["checks"]), "",
                       ", ".join(f"{a} {n}" for a, n in by.items()), f"wrote {r['path']}"])

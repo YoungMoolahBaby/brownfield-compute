@@ -167,7 +167,17 @@ The round's packets and forms are rebuilt on Addendum 7, before any went out, wi
 revised questions (the plant, each flat's loop, the mini-splits' takeover, the house panel, the
 tests).
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then step 10.
+Step 10 scoped (2026-11-23): the usual all-electric walk-up and the engineered design, both priced
+item by item from free sources, the fee apart from the systems, then energy, noise, comfort and who
+gets the savings.
+- Found while scoping: Addendum 7's blower-door test passed flats four to ten times leakier than
+  the heat loads take (Phius). At the code's 3.0 ACH50 the building would need 23.1 kW, not 19.4.
+- Addendum 8 (Jon: test to Phius, now) holds the whole building to Phius's 1,032 cfm50 and each
+  flat to 0.30 cfm50/ft2, with a check that the test and the loads can't part again.
+- The packets are rebuilt with its G-002.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10
+(10a) runs alongside.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4009,7 +4019,8 @@ test. Then the township brief's ask.
            RSMeans is paid, and its licence bars republishing its data in a public repo. Test
            whether the report's conclusion survives the range; only if it doesn't, cross-check
            privately.
-         - **Addendum 7 is step 9's;** the round's outcomes go in the addendum after it.
+         - **Addendum 7 is step 9's;** the round's outcomes go in the addendum after it (Addendum
+           9 now: Addendum 8 went out first, with step 10's scoping finding).
        - **The parts:**
          - 9a, the fallback: the flats on their mini-splits, the hot water on a backup heater,
            and what that does to the wiring;
@@ -4310,6 +4321,9 @@ test. Then the township brief's ask.
          - **Choices in it:**
            - **The blower door holds each flat to the 3.0 ACH50 the heat loads assume.** The
              code's 0.30 cfm/ft2 for attached flats would pass a leakier one.
+             *Corrected 2026-11-23 (Addendum 8, step 10's scoping):* wrong. The heat loads
+             (`design_case`) take Phius's 0.06 cfm50/ft2, 0.31-0.75 ACH50 a flat; 3.0 ACH50 is
+             pass 3b's case. E-1 is now Phius's whole-building test and each flat's.
            - **The ERVs are held to the design's 45 cfm each way,** within 10% of each other. The
              code's floor is 30.8 cfm, and the kitchen and bath exhaust 25 and 20.
            - **No duct leakage test:** R403.3.5 exempts ducts and units wholly inside the thermal
@@ -4440,6 +4454,82 @@ test. Then the township brief's ask.
              `round.json` keeps the first issue, 2026-11-22 17:54. The log is still empty.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
+       - **Scoped 2026-11-23** (Jon: "go"). Its parts:
+         - 10a, the usual walk-up defined from sources, and both item lists;
+         - 10b, both priced up front, and the fee;
+         - 10c, the running costs a year;
+         - 10d, noise and comfort side by side;
+         - 10e, who gets the savings;
+         - 10f, the ranges and the report.
+         - **What the free sources give** (a research agent, checked 2026-11-23):
+           - **No free total for a walk-up's systems.** No survey publishes MEP cost per flat for
+             low-rise multifamily. So both walk-ups are built up item by item and checked against:
+             - NAHB's single-family shares (plumbing 6.3%, electrical 6.4%, HVAC 6.3%, *Cost of
+               Constructing a Home 2024*);
+             - HUD's 2024 Johnstown walk-up construction cost, $162,308 for a 2-bedroom flat.
+           - **Equipment installed:** REMDB (NREL, CC BY 4.0), with ENERGY STAR MFNC v1.3's
+             incremental costs as a consistency check.
+           - **Labour:** BLS OEWS May 2025 wages for Indiana County's area (plumbers $29.51,
+             electricians $34.41 an hour); Davis-Bacon building rates as the high end. The
+             residential determination is a 1999 survey and unusable.
+           - **Markups:** PHFA's limits.
+           - **Fees:** PHFA's architect fee cap for a walk-up already buys mechanical and
+             electrical drawings, so the fee difference is one of depth. No free source splits out
+             the MEP share.
+         - **The steer:**
+           - The engineering (the fee) and the systems (what this design chose) are priced apart.
+           - Against the usual all-electric walk-up, whose mini-split is its heating, the radiant
+             floors, the plant and the network share are extra capital, since 9a's mini-splits
+             already heat each flat alone. The report says so if the numbers do.
+         - **Decisions taken in the plan:**
+           - the usual walk-up all-electric (78% of new apartment units, Census 2025), gas beside it;
+           - the data center's heat free, with the price at which the two tie;
+           - pass 3 §4's network share;
+           - the trades' answers added when they come.
+       - **Found while scoping: Addendum 7's blower-door test didn't hold the flats to the leakage
+         the heat loads take.**
+         - E-1 passed a flat at the energy code's 3.0 ACH50 and said "the heat loads assume it".
+           But `loads.design_case` takes Phius's 0.06 cfm50 per ft2 of each flat's enclosure (the
+           rule D28 designs to): 39-93 cfm50, 0.31-0.75 ACH50.
+         - With every flat at 3.0, the design heat goes from 19.4 to 23.1 kW (+19%) and the hardest
+           floor's water from 34.0 to 35.6 C, past the flow P-1 was checked at.
+         - **Jon (2026-11-23):** test to Phius, issued now as Addendum 8, before the packets go
+           out; then step 10.
+       - **Addendum 8 done 2026-11-23: the air-leakage tests to Phius's limits**
+         (`systems.addendum_8_run`; published, issued 2026-11-23 10:28 UTC-8).
+         - **E-1 is now Phius's two tests** (Guidebook v26.1.2, 1.3.3.2 and 1.5.2.3, quoted from
+           the saved copy):
+           - **the whole building** (the flats, the stair and the annex, which is inside the
+             envelope): at most 1,032 cfm50, 0.06 per ft2 of its 17,193 ft2 of gross enclosure,
+             multi-point, pressurized and depressurized;
+           - **each flat alone,** unguarded: at most 0.30 cfm50 per ft2 of its shell. That is also
+             the energy code's limit for attached flats tested one by one (R402.4.1.2's exception),
+             so the code is met there.
+         - **The guard** (`acceptance.leakage_checks`):
+           - E-1's limit per ft2 must equal the leakage `design_case` gives every flat;
+           - the enclosure it's on must add up: the flats as the loads take them and the stair sum
+             to the building's outline (`loads.enclosure`).
+           - Tests break both: the loads at 3.0 ACH50, a limit stated off, a flat's walls off.
+         - **What was issued:**
+           - the revised section, `spec-01-45-00-tests-addendum-8.md` (only E-1 differs from
+             Addendum 7's);
+           - G-002 reissued alone, as an addendum reissues only the sheets it changes
+             (`servicesheets.REVISED`).
+           - No element of the building, the frame or the services changes.
+         - **Addendum 7 kept as issued,** as Addendum 6 was: its section and its G-002 were drawn
+           from the E-1 this revises, so its run is retired (git 7f31b31) and its items are read
+           from the manifest. Addendum 8's run carries its checks, every one but the diff against
+           Addendum 5.
+         - **Run:** `systems --ifc --publish` passes every check (223 lines). Addenda 2-5 and 7
+           come out byte for byte; the manifest only gains Addendum 8.
+         - **The packets rebuilt:** each takes G-002 from Addendum 8 and lists it as reissued. The
+           question forms don't mention the test, so they stand as published.
+         - **Seen in headless Chrome:**
+           - the viewer opens at "Addendum 8, the latest", the building as Addendum 5 left it,
+             the services as Addendum 7 issued them;
+           - the plan room reads "Addenda (8)".
+         - Tests: `tests/test_walkup_addendum8.py`, 5; `test_walkup_acceptance.py`,
+           `test_walkup_installers.py` and `test_website.py` updated.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

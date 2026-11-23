@@ -276,6 +276,34 @@
      "label": "Specification section 01 45 00: the tests and inspections"
     }
    ]
+  },
+  {
+   "number": 8,
+   "title": "The air-leakage tests to Phius's limits, which the heat loads assume",
+   "issued": "2026-11-23T10:28:20-08:00",
+   "items": [
+    "Item 1 (the air-leakage tests, E-1 of specification section 01 45 00 and sheet G-002): Addendum 7's E-1 held each flat to 3.0 air changes an hour at 50 Pa, the energy code's limit, and said the heat loads assume it. They don't: they take Phius's limit, 0.06 cfm50 per ft2 of gross enclosure, which is 39-93 cfm50 a flat, 0.31-0.75 air changes an hour. With every flat at 3.0, the building's design heat would be 23.1 kW, not the 19.4 its building loop carries (6.04 gpm, P-1 at 10.7 ft of its curve's 12.3), and its hardest floor would need 35.6 C water, not 34.0. E-1 is now Phius's two tests (its Guidebook, 1.3.3.2 and 1.5.2.3). The whole building, the flats, the stair and the annex together: at most 1,032 cfm50, 0.06 per ft2 of its 17,193 ft2 of gross enclosure, measured at the outside of the thermal boundary, the slab included; multi-point, pressurized and depressurized, by ANSI/RESNET/ICC 380-2022 or ASTM E779. And each flat alone, unguarded: at most 0.30 cfm50 per ft2 of its own shell, which is also the energy code's limit for flats tested one by one (R402.4.1.2, its exception). By a RESNET rater or Phius verifier, a signed report to the code official.",
+    "Item 2 (the documents): specification section 01 45 00, revised (spec-01-45-00-tests-addendum-8.md), and sheet G-002, reissued alone (services-sheet-g-002-addendum-8.pdf), replace Addendum 7's. Nothing else in them changes, and no element of the building, the frame or the services."
+   ],
+   "model": null,
+   "changes": null,
+   "services_changes": null,
+   "services_model": null,
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-8.md",
+     "label": "The addendum: its items, what it changes and the checks"
+    },
+    {
+     "path": "spec-01-45-00-tests-addendum-8.md",
+     "label": "Specification section 01 45 00: the tests and inspections, revised (E-1, the air-leakage tests)"
+    },
+    {
+     "path": "services-sheet-g-002-addendum-8.pdf",
+     "label": "Sheet G-002, the tests and inspections, reissued with E-1 revised"
+    }
+   ]
   }
  ],
  "services": {

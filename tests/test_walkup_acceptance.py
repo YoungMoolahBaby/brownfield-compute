@@ -38,7 +38,11 @@ def test_the_schedule_takes_its_figures_from_the_design(made, P):
     assert f"the design's worst {c4['worst']['oz']:.0f}" in by["HW-2"]["passes"]
     assert f"{w['loop']['gpm']:.2f} gpm in all" in by["HW-3"]["passes"]
     assert f"{L['pump_ft']:.1f} ft at the worst flat" in by["H-3"]["passes"] and f"{L['pump_curve_ft']:.1f} ft" in by["H-3"]["passes"]
-    assert f"at most {P['pass3.air.ach50']:g} air changes" in by["E-1"]["passes"]
+    # E-1 (Addendum 8): the whole building at Phius's rate on its enclosure, each flat at the compartment limit.
+    lim = by["E-1"]["limits"]
+    assert f"at most {lim['building_cfm50']:,.0f} cfm at 50 Pa" in by["E-1"]["passes"]
+    assert f"{P['systems.phius.compartment_cfm50_ft2']:.2f} cfm50 per ft2 of its own shell" in by["E-1"]["passes"]
+    assert "air changes" not in by["E-1"]["passes"]
     assert f"{P['systems.plumbing.max_static_psi']:g} psi" in by["P-3"]["passes"]
     # Every code-based item quotes its code; every other rests on the design or the sequence, named.
     for it in its:

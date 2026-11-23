@@ -256,6 +256,35 @@ def preheat_c(p: dict) -> float:
     return max(p["systems.erv.preheat_min_c"], (p["systems.erv.supply_min_c"] - sre * t_in) / (1 - sre))
 
 
+def flat_enclosure_m2(apt: dict, f: dict) -> float:
+    """A flat's share of the building's gross enclosure (m2), as Phius measures it: its outside walls,
+    its roof, its floor on the ground."""
+    ground = f["floor"] == 1
+    footprint = f["ceiling_m2"] or (apt["flat_len_m"] * apt["depth_m"] / 2)  # a flat's outline (m2)
+    return f["wall_gross_m2"] + f["ceiling_m2"] + (footprint if ground else 0.0)
+
+
+def enclosure(apt: dict) -> dict:
+    """The building's gross enclosure (m2), as Phius's whole-building test is held to it: "measured at
+    the exterior of the thermal boundary", the slab on the ground included. By its parts: the flats as
+    `design_case` takes them, the stair core between the two halves, and the annex behind the stair,
+    inside the envelope (Addendum 2), less the stair's back wall the annex covers. And the main block
+    from its outline, which the flats and the stair must sum to."""
+    L, D, H = apt["length_m"], apt["depth_m"], apt["storeys"] * apt["storey_m"]
+    parts = apt["rooms"]["annex"]["parts"]
+    slab = next(x for x in parts if x["kind"] == "annex_slab")
+    ax, ay = slab["hi_m"][0] - slab["lo_m"][0], slab["hi_m"][1] - slab["lo_m"][1]  # out from the back facade, along it
+    h = max(x["hi_m"][2] for x in parts if x["kind"] == "annex_wall")
+    flats = {f["name"]: flat_enclosure_m2(apt, f) for f in apt["flats"]}
+    s = apt["stair_len_m"]
+    stair = 2 * s * H + 2 * s * D  # its front and back facades, its roof, its floor
+    annex = 2 * ax * h + ay * h + 2 * ax * ay  # two side walls, its back wall, its roof, its floor
+    covered = ay * h  # the building's back wall behind the annex, inside the envelope now
+    main = 2 * (L + D) * H + 2 * L * D
+    return {"flats": flats, "stair_m2": stair, "annex_m2": annex, "covered_m2": covered, "main_m2": main,
+            "parts_main_m2": sum(flats.values()) + stair, "gross_m2": main + annex - covered}
+
+
 def design_case(apt: dict, p: dict, wall_u: float | None = None, preheat: bool = False) -> dict:
     """The engineered design for `room_heat`: the flats' balanced ventilation with heat recovery
     (`ventilation`, the ERV's sensible recovery at the design temperature, `erv_sensible`), air leakage at Phius's
@@ -279,9 +308,7 @@ def design_case(apt: dict, p: dict, wall_u: float | None = None, preheat: bool =
     flats = {}
     for f in apt["flats"]:
         v = vent[f["name"]]
-        ground = f["floor"] == 1
-        footprint = f["ceiling_m2"] or (apt["flat_len_m"] * apt["depth_m"] / 2)  # a flat's outline (m2)
-        enclosure_ft2 = (f["wall_gross_m2"] + f["ceiling_m2"] + (footprint if ground else 0.0)) / FT2
+        enclosure_ft2 = flat_enclosure_m2(apt, f) / FT2
         cfm50 = p["systems.phius.airtight_cfm50_ft2"] * enclosure_ft2
         flats[f["name"]] = {
             "infil_m3h": cfm50 / p["pass3.air.n_factor"] * CFM_M3H, "vent_m3h": v["design_cfm"] * CFM_M3H,

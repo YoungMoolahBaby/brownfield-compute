@@ -142,6 +142,11 @@ phius:
     unit: cfm at 50 Pa per ft2 of gross enclosure, whole building
     conf: high
     source: "Phius 2024 Guidebook Table 1.3.3.2.0 Performance Path Airtightness Limits: 'All other buildings 0.06 CFM50/ft2'; gross enclosure 'measured at the exterior of the thermal boundary and includes surfaces in contact with the ground'"
+  compartment_cfm50_ft2:
+    value: 0.30
+    unit: cfm at 50 Pa per ft2 of a dwelling unit's own shell (its outside walls, party walls, floor and ceiling), each flat tested alone, unguarded
+    conf: high
+    source: "Phius 2024 Guidebook 1.5.2.3 (p. 186), Compartmentalization: 'Individual dwelling unit compartmentalization testing shall be performed to test the air barrier integrity of each dwelling unit'; 'The test threshold shall be 0.3 CFM50 / sq ft of unit Shell/Envelope'. The same as PA 2021 IECC R402.4.1.2's exception for dwelling units tested one by one: 'an air leakage rate not exceeding 0.30 cubic feet per minute per square foot ... of the dwelling unit enclosure area'"
 
 design:
   heating_c:

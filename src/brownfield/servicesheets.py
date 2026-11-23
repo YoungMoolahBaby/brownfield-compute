@@ -42,6 +42,9 @@ REV = "addendum-5"  # the building and the frame the sheets are drawn on, as pub
 SERVICES_REV = "addendum-7"  # the services model they're drawn from (servicesifc.ISSUE)
 SHEETS_REV = "Addendum 7"  # the addendum that issues the sheets (Addendum 6 issued the first set, published as it was)
 PDF_NAME = "services-sheets-addendum-7.pdf"
+# Sheets a later addendum reissued alone, as an addendum reissues only the sheets it changes: the
+# revision each carries, and the file it was published in (Addendum 7's set stays as issued).
+REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf")}
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -1347,12 +1350,15 @@ def _wtable(ax, x: float, y: float, cols: list[tuple[str, float]], rows: list[li
 
 
 def tests_sheet(ax, s7: dict, p: dict) -> None:
-    """G-002 (Addendum 7): the tests and inspections, specification section 01 45 00 as a schedule."""
+    """G-002 (Addendum 7; reissued by Addendum 8, E-1): the tests and inspections, specification
+    section 01 45 00 as a schedule."""
     from . import acceptance
 
-    title_block(ax, "G-002", "TESTS AND INSPECTIONS (SPECIFICATION 01 45 00)")
+    rev = REVISED.get("G-002", (SHEETS_REV,))[0]
+    title_block(ax, "G-002", "TESTS AND INSPECTIONS (SPECIFICATION 01 45 00)", revision=rev)
     ax.text(1.4, SH - 1.2, "TESTS AND INSPECTIONS", fontsize=14, weight="bold", va="top")
-    ax.text(1.4, SH - 1.65, "Specification section 01 45 00 (Addendum 7) governs, with the codes' own words for each test it quotes. Each test is "
+    issued = "Addendum 7" if rev == "Addendum 7" else f"Addendum 7, as {rev} revises it"
+    ax.text(1.4, SH - 1.65, f"Specification section 01 45 00 ({issued}) governs, with the codes' own words for each test it quotes. Each test is "
             "the code's own or the design's claim to be proved, its figures the design's. Pennsylvania's code official inspects as 34 Pa. Code "
             "403.45 asks.", fontsize=8.5, va="top")
     its = acceptance.items(p, s7)
@@ -1563,7 +1569,7 @@ def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path =
             "members": framing(src / f"framing-{REV}.ifc"), "s7": s7, "p": p, "routes": routes, "src": src}
 
 
-def write(ctx: dict, path: Path, numbers: list[str] | None = None) -> dict:
+def write(ctx: dict, path: Path, numbers: list[str] | None = None, title: str | None = None) -> dict:
     """The sheets as one PDF (TrueType text, no creation date, so it repeats). Returns what each
     sheet drew."""
     import matplotlib
@@ -1578,7 +1584,7 @@ def write(ctx: dict, path: Path, numbers: list[str] | None = None) -> dict:
     tags: dict[str, tuple[int, int]] = {}
     path.parent.mkdir(parents=True, exist_ok=True)
     with matplotlib.rc_context({"pdf.fonttype": 42}), PdfPages(
-            path, metadata={"Title": f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g steps 8a and 9d",
+            path, metadata={"Title": title or f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g steps 8a and 9d",
                             "CreationDate": None}) as pdf:
         for n in sheets:
             fig, ax = _figure()

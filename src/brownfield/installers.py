@@ -4,8 +4,10 @@
 name: Jon's own message introduces him), the trade's question form (step 8b) and its sheets from
 the latest addendum's set, Addendum 7's (G-001, G-002's tests and the trade's own; the plumber and
 the HVAC contractor also get M-602's sequence, and the HVAC contractor and the electrician the
-plumbing walls, which their line sets, loop risers and feeders run in). Everything else, the
-models, schedules, other sheets and the 3D viewer, is a link to the plan room. No reply-by date.
+plumbing walls, which their line sets, loop risers and feeders run in), each sheet a later
+addendum reissued alone from that addendum (`servicesheets.REVISED`: G-002 from Addendum 8).
+Everything else, the models, schedules, other sheets and the 3D viewer, is a link to the plan room.
+No reply-by date.
 
 **The log** (`load_log`, `check_log`): every comment Jon relays goes into a private file on his
 machine, `data/raw/round/comments.yaml` (gitignored), with who sent it by trade and county only,
@@ -142,12 +144,12 @@ def packet(trade: str, form: Path, out: Path, sheets_pdf: Path = BIDSET / SHEETS
     """One trade's packet: the letter, its question form, its sheets."""
     import pypdf
 
-    from .servicesheets import sheet_list
+    from .servicesheets import REVISED, sheet_list
 
     titles = dict(sheet_list())
     form_pages = len(pypdf.PdfReader(str(form)).pages)
     contents = ["this letter", f"the questions for the {TRADES[trade]} ({form_pages} pages)"]
-    contents += [f"{n}, {titles[n].capitalize()}" for n in SHEETS[trade]]
+    contents += [f"{n}, {titles[n].capitalize()}" + (f" (reissued by {REVISED[n][0]})" if n in REVISED else "") for n in SHEETS[trade]]
     from .pdfset import SHEET_H, SHEET_W
     contents.append(f"(the sheets are drawn {SHEET_W:g} x {SHEET_H:g} in.: they read on a screen, or printed at 11 x 17)")
     letter = out / f"letter-{SLUG[trade]}.pdf"
@@ -158,7 +160,13 @@ def packet(trade: str, form: Path, out: Path, sheets_pdf: Path = BIDSET / SHEETS
         w.append(str(src))
     sheets = pypdf.PdfReader(str(sheets_pdf))
     for n in SHEETS[trade]:
-        w.add_page(sheets.pages[pages[n]])
+        if n in REVISED:  # reissued alone, its own one-page file beside the set
+            page = pypdf.PdfReader(str(sheets_pdf.parent / REVISED[n][1])).pages[0]
+            if n not in (page.extract_text() or "") or REVISED[n][0] not in (page.extract_text() or ""):
+                raise ValueError(f"{REVISED[n][1]} isn't {n} as {REVISED[n][0]} reissued it")
+            w.add_page(page)
+        else:
+            w.add_page(sheets.pages[pages[n]])
     w.add_metadata({"/Title": f"12-flat walk-up: the installers' round, for the {TRADES[trade]}", "/Creator": "brownfield-compute pass 3g step 8c"})
     path = out / f"packet-{SLUG[trade]}.pdf"
     path.parent.mkdir(parents=True, exist_ok=True)

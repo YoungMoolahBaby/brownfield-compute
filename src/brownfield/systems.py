@@ -531,10 +531,11 @@ RFI_002_ANSWER_AFTER_MIN = 30
 # 2 when it was produced and checked (git 2f6623f), Addenda 3 to 7 when they were published (4 with
 # ENERGY STAR's glass, before it went out; 5 with the services and the frame, D28 step 7e; 6 with
 # the services' sheets, before the installers' round, step 8; 7 with each flat's hot-water loop,
-# the plant, the sequence and the tests, step 9d).
+# the plant, the sequence and the tests, step 9d; 8 with the air-leakage tests, found scoping step 10,
+# before the round's packets went out).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
           4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00", 6: "2026-11-22T16:06:49-08:00",
-          7: "2026-11-23T08:35:59-08:00"}
+          7: "2026-11-23T08:35:59-08:00", 8: "2026-11-23T10:28:20-08:00"}
 # When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
 # Addendum 5 to issue.
 SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
@@ -544,7 +545,8 @@ TITLES = {1: "The patio doors: their glass and their width",
           4: "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling",
           5: "The services, the frame, the stair's enclosure and the roof hatch",
           6: "The fire service's control valves, the house panel and the services drawn",
-          7: "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests"}
+          7: "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests",
+          8: "The air-leakage tests to Phius's limits, which the heat loads assume"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -797,102 +799,78 @@ def addendum_5_words(params: dict, apt5: dict) -> dict:
 # d6d99c7, `addendum_6_run`) can't draw them again. Its items are read from the manifest.
 
 
-SPECS = {"23-09-93": ("spec-23-09-93-sequence.md", "Specification section 23 09 93: the sequence of operations"),
-         "01-45-00": ("spec-01-45-00-tests.md", "Specification section 01 45 00: the tests and inspections")}
+# Addendum 7 (pass 3g step 9d: each flat's hot-water loop, the plant's storage and backup heater, the
+# control sequence and the tests) is kept as issued too: its section 01 45 00 and its sheet G-002
+# were drawn from the E-1 Addendum 8 revises, so its run (git 7f31b31, `addendum_7_run`) can't draw
+# them again. Its items are read from the manifest, and Addendum 8's run carries its checks. Its
+# services model (`servicesifc.ISSUE`) is still the one in effect.
+
+SPEC_8 = "spec-01-45-00-tests-addendum-8.md"
+REVISED_8 = ("Revised by Addendum 8: E-1, the air-leakage tests (the whole building to Phius's limit, which the heat loads take, "
+             "and each flat on its own). Otherwise as Addendum 7 issued it.")
 
 
-def addendum_7_words(params: dict, s7: dict, fb: dict, diff: dict, sheets: dict, seq: list[dict], its: list[dict]) -> dict:
-    """Addendum 7's items (pass 3g step 9): the fallback (9a), the control sequence (9b), the energy
-    code's hot-water rules and the tests (9c), and what they change in the plant, the services model
-    and the sheets (9d). Every figure from the designs on the routes (`routed.summary`), the
-    fallback's run, the services model's diff and the sheets' run."""
-    from . import plumbing, sequence
+def leaky_heat(apt: dict, P: dict) -> dict:
+    """The building's design heat as the loads take it (`design_case`: Phius's leakage) and with every
+    flat at the energy code's 3.0 ACH50, which Addendum 7's E-1 would have passed."""
+    import copy
+
+    from . import loads
+
+    case = loads.design_case(apt, P, preheat=True)
+    leaky = copy.deepcopy(case)
+    for f in apt["flats"]:
+        leaky["flats"][f["name"]]["infil_m3h"] = P["pass3.air.ach50"] / P["pass3.air.n_factor"] * f["interior_volume_m3"]
+    a, b = loads.room_heat(apt, P, case), loads.room_heat(apt, P, leaky)
+    vol_ft3 = {f["name"]: f["interior_volume_m3"] / 0.0283168466 for f in apt["flats"]}
+    cfm50 = {n: c["infil_m3h"] / loads.CFM_M3H * P["pass3.air.n_factor"] for n, c in case["flats"].items()}
+    ach50 = {n: cfm50[n] * 60 / vol_ft3[n] for n in cfm50}
+    return {"design_kw": sum(x["design_w"] for x in a.values()) / 1e3, "leaky_kw": sum(x["design_w"] for x in b.values()) / 1e3,
+            "water_c": max(x["supply_c"] for x in a.values()), "leaky_water_c": max(x["supply_c"] for x in b.values()),
+            "flat_cfm50": (min(cfm50.values()), max(cfm50.values())), "ach50": (min(ach50.values()), max(ach50.values()))}
+
+
+def addendum_8_words(params: dict, lk: dict, heat: dict, s7: dict) -> dict:
+    """Addendum 8's items (found scoping step 10): E-1 to Phius's limits. Every figure from the run."""
     from .params import values
+    from .servicesheets import REVISED
 
     P = values(params)
-    h, rt, ct, sb = "systems.hot_water.", "systems.routing.", "systems.controls.", "systems.substation."
-    w, L, el = s7["water"], s7["loop"], s7["electrical"]
-    sq_w = s7["square_water"]
-    lp, rc, c4 = w["loop"], w["recirc"], w["c404"]
-    house, sv = el["service"]["house"], el["service"]
-    held = plumbing.storage_held(P)
-    tm_kw = lambda d: d["tm"]["capacity_kbtuh"] / 3.412142  # noqa: E731
-    sh, hw = fb["space"], fb["water"]
-    least = min(sh["flats"], key=lambda n: sh["flats"][n]["capacity_w"] - sh["flats"][n]["load_w"])
-    lf = sh["flats"][least]
-    feeders = el["feeders"]
-    steps = sum(len(m["steps"]) for s in seq for m in s["modes"])
-    to_select = [t for t, _, k in sequence.POINTS if k == "to select"]
-    areas = list(dict.fromkeys(it["area"] for it in its))
-    coded = sum(1 for it in its if it["quotes"])
-    changed = "; ".join(f"{k} {v['added']} added, {v['changed']} changed, {v['deleted']} removed"
-                        for k, v in diff["by_system"].items())
+    L = s7["loop"]
     items = [
-        "Item 1 (the hot water, IECC 2021 C404): a plant serving several flats comes under the energy code's commercial hot-water "
-        "rules (R403.8), which the bid set's hot water didn't meet. Each flat's hot water is now a loop of its own: its hot branch "
-        "runs past its fixtures to its lavatory, where a thermostatic balancing valve in the vanity starts its "
-        f"{lp['flat_return_in']:g} in. return to the return riser: Caleffi ThermoSetter 116, 1/2 in. (basis of design), set "
-        f"{P[h + 'tbv_set_f']:g} F, reached through the vanity's doors (C404.6: with access). Each fixture's own pipe is sized for it "
-        f"({', '.join(f'{k} {v:g}' for k, v in c4['own_in'].items())} in.): no fixture holds more than {c4['limit_oz']:g} fl oz from the "
-        f"loop (C404.5.2; the worst {c4['worst']['oz']:.0f}, {c4['worst']['flat']}'s {c4['worst']['fixture']}). The flats' hot pipe and "
-        f"returns are insulated {P[rt + 'branch_insulation_in']:g} in. (C404.4, Table C403.12.3), stopped at each plate and joist, "
-        f"their holes bored for the bare pipe. P-3 runs while the return at the swing tank is under {P[h + 'return_min_f']:g} F and "
-        f"stops at {P[ct + 'recirc_stop_f']:g} F (C404.6.1); it moves {lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft round the longest circuit, "
-        f"within its rated {P[h + 'recirc_rated_gpm']:g} gpm at {P[h + 'recirc_rated_ft']:g} ft. The returns: {lp['return_main_in']:g} in. "
-        f"main, {lp['return_riser_in']:g} in. risers. The loop loses {lp['w_per_flat']:.0f} W a flat ({lp['riser_mains_w_per_flat']:.0f} in "
-        "the risers and mains).",
-        f"Item 2 (the hot-water plant): with each flat's loop, Ecosizer asks {w['primary']['storage_gal']:.0f} gal of storage on the routes "
-        f"({sq_w['primary']['storage_gal']:.0f} on the square lengths), over the 250 gal tank Addendum 5's model placed. The storage is "
-        f"now {P[rt + 'tank_count']:g} Lochinvar HP150G tanks in series, {held:g} gal (basis of design): cold in at ST-1B's bottom, hot "
-        f"out of ST-1A's top, for stratification. The next single tank, 450 gal and 49 in. across, wouldn't pass the mechanical room's "
-        f"42 in. door. The swing tank's element is {P['systems.house.swing_element_va'] / 1000:g} kW (Ecosizer asks "
-        f"{tm_kw(sq_w):.2f} kW on the square lengths, {tm_kw(w):.2f} on the routes; Bradford White makes 4.0 and 4.5 at 208 V); the plant's "
-        f"capacity {w['primary']['capacity_kbtuh'] / 3.412142:.2f} kW. The mechanical room's floor: the tanks along its far wall, the "
-        "heat pump by the door, the swing tank and the backup heater (Item 3) on the back wall, each with its maker's service space; "
-        "the plant's mains drop through the slab 12 in. off the wall to the building.",
-        f"Item 3 (when the data center's heat is gone): a backup heater, BK-1, on the heater circuit after HP-1: A. O. Smith "
-        f"DRE-52-12 (basis of design), {P[h + 'backup_w'] / 1000:.1f} kW against the plant's {hw['plant_w'] / 1000:.2f}, its elements "
-        "locked out unless the data center's water is gone, and never energized with HP-1 enabled (its contactor's coil wired "
-        "through a normally closed contact of HP-1's enable). The flats are heated by their mini-splits alone: each covers its "
-        f"flat at the design temperature ({sh['design_c']:g} C), the least margin {least}'s {lf['capacity_w']:,.0f} W against "
-        f"{lf['load_w']:,.0f}. The wiring counts each flat's heating as its heat pump and the ERV's preheater together: each "
-        f"feeder at most {max(f['amps'] for f in feeders.values()):.1f} A on its {min(f['breaker_a'] for f in feeders.values()):.0f} A "
-        f"breaker; the house panel {house['breaker_a']:.0f} A ({house['amps']:.1f} A calculated: BK-1 counted, HP-1 not, NEC 220.60); "
-        f"the service {sv['amps']:.0f} A on its {sv['main_a']} A main. The house panel's 120% rule now takes "
-        f"{el['pv']['house_ac_kw']:.1f} kW AC of the roof's PV.",
-        f"Item 4 (the building loop's pump): P-1, Grundfos ALPHA2 15-55F (basis of design), needs {L['pump_ft']:.1f} ft at "
-        f"{L['gpm']:.2f} gpm on its worst path ({L['pump_path']}), against {L['pump_curve_ft']:.1f} ft on its curve III, its highest "
-        f"fixed speed, with {P[sb + 'pump_margin']:.0%} kept in hand; the loop's risers {L['riser_in']:g} in.",
-        f"Item 5 (the control sequence): specification section 23 09 93 ({SPECS['23-09-93'][0]}) is issued, {steps} steps in "
-        f"{len(seq)} systems, normal running and the fallback, {len(sequence.INTERLOCKS)} interlocks wired, not programmed, and "
-        f"{len(sequence.POINTS)} control points. {len(to_select)} points are still to select by the bidder ({', '.join(to_select)}).",
-        f"Item 6 (the tests and inspections): specification section 01 45 00 ({SPECS['01-45-00'][0]}) is issued, {len(its)} items in "
-        f"{len(areas)} areas ({', '.join(a.lower() for a in areas)}): what, who, when and what passes, {coded} of them the codes' own "
-        "tests quoted in their words, the rest the design's claims to be proved at commissioning.",
-        f"Item 7 (the services model and the sheets, reissued): services-addendum-7.ifc, {diff['n_after']:,} elements. Against "
-        f"Addendum 5's, {len(diff['added'])} added (each flat's return and its balancing valve, the plant's two tanks and backup "
-        f"heater), {len(diff['deleted'])} removed (the one storage tank, and fittings of runs routed again), {len(diff['changed'])} "
-        f"changed in route, length or size, most of them routed again around the flats' returns; by system: {changed}. Its "
-        f"schedules are reissued with it. The services sheets, {sheets['path'].name}: {len(sheets['sheets'])} "
-        "sheets, G-002 (the tests) and M-602 (the sequence) new, P-601 and M-601 revised, every plan and elevation redrawn from the "
-        "revised model. They replace Addendum 6's sheets.",
+        "Item 1 (the air-leakage tests, E-1 of specification section 01 45 00 and sheet G-002): Addendum 7's E-1 held each flat to "
+        f"{P['pass3.air.ach50']:.1f} air changes an hour at 50 Pa, the energy code's limit, and said the heat loads assume it. They "
+        f"don't: they take Phius's limit, {lk['rate_cfm50_ft2']:g} cfm50 per ft2 of gross enclosure, which is "
+        f"{heat['flat_cfm50'][0]:.0f}-{heat['flat_cfm50'][1]:.0f} cfm50 a flat, {heat['ach50'][0]:.2f}-{heat['ach50'][1]:.2f} air changes "
+        f"an hour. With every flat at {P['pass3.air.ach50']:.1f}, the building's design heat would be {heat['leaky_kw']:.1f} kW, not the "
+        f"{heat['design_kw']:.1f} its building loop carries ({L['gpm']:.2f} gpm, P-1 at {L['pump_ft']:.1f} ft of its curve's "
+        f"{L['pump_curve_ft']:.1f}), and its hardest floor would need {heat['leaky_water_c']:.1f} C water, not {heat['water_c']:.1f}. "
+        "E-1 is now Phius's two tests (its Guidebook, 1.3.3.2 and 1.5.2.3). The whole building, the flats, the stair and the "
+        f"annex together: at most {lk['building_cfm50']:,.0f} cfm50, {lk['rate_cfm50_ft2']:g} per ft2 of its {lk['area_ft2']:,.0f} ft2 "
+        "of gross enclosure, measured at the outside of the thermal boundary, the slab included; multi-point, pressurized and "
+        "depressurized, by ANSI/RESNET/ICC 380-2022 or ASTM E779. And each flat alone, unguarded: at most "
+        f"{lk['flat_cfm50_ft2']:.2f} cfm50 per ft2 of its own shell, which is also the energy code's limit for flats tested one by one "
+        "(R402.4.1.2, its exception). By a RESNET rater or Phius verifier, a signed report to the code official.",
+        f"Item 2 (the documents): specification section 01 45 00, revised ({SPEC_8}), and sheet G-002, reissued alone "
+        f"({REVISED['G-002'][1]}), replace Addendum 7's. Nothing else in them changes, and no element of the building, the frame or "
+        "the services.",
     ]
     return {"items": items}
 
 
-def addendum_7_run(params: dict) -> dict:
-    """Addendum 7 (pass 3g step 9d): it changes no element of the building or the frame; it reissues
-    the services model (each flat's loop, the plant's tanks and backup heater) and the sheets, and
-    issues the sequence and the tests as specification sections. Checked on the designs on the
-    routes, the model's own checks (7d), the plant's room (7a), the fallback (9a), the sequence
-    (9b), the tests (9c) and the sheets. Its text, the sheets and the sections go to
-    `ifc_out("addendum-7")`; the published bid set is left alone."""
+def addendum_8_run(params: dict) -> dict:
+    """Addendum 8 (found scoping pass 3g step 10): it changes no element of the building, the frame or
+    the services; it revises E-1 in section 01 45 00 and reissues G-002 alone. Checked on everything
+    Addendum 7's run checked but its diff against Addendum 5 (the designs on the routes, the services
+    model's own checks, the plant's room, the fallback, the sequence, the tests), now with E-1 held to
+    the loads' leakage, and the reissued sheet. Its text, the section and the sheet go to
+    `ifc_out("addendum-8")`; the published bid set is left alone."""
     from . import acceptance, fallback, routed, routing, sequence, servicesheets, servicesifc
     from .params import values
 
     P = values(params)
     if latest_model().name != "apartment-addendum-5.json":
-        raise SystemExit(f"Addendum 7 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
+        raise SystemExit(f"Addendum 8 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
     apt = load(latest_model())
     routes = routed.load(apt, P)
     if routes is None or not routes.fresh:
@@ -906,50 +884,54 @@ def addendum_7_run(params: dict) -> dict:
     plant = [c for c in routing.equipment_checks(apt, P, placed["equipment"], placed["plant"], placed["soffits"])
              if "plant" in c[0]]
     sh, hw = fallback.space_heat(apt, P, s7, placed), fallback.hot_water(P, s7)
-    seq, its = sequence.sequence(P, s7), acceptance.items(P, s7)
-    out = ifc_out("addendum-7")
+    its = acceptance.items(P, s7)
+    lk, heat = acceptance.leakage(apt, P), leaky_heat(apt, P)
+    out = ifc_out("addendum-8")
     out.mkdir(parents=True, exist_ok=True)
-    specs = {k: out / name for k, (name, _) in SPECS.items()}
-    specs["23-09-93"].write_text(sequence.markdown(seq), encoding="utf-8")
-    specs["01-45-00"].write_text(acceptance.markdown(P, its), encoding="utf-8")
-    sheets = servicesheets.run(apt, P, routes=routes, s7=s7)
-    diff = servicesifc.changes(PUBLISHED / "services-addendum-5.ifc", model)
-    words = addendum_7_words(params, s7, {"space": sh, "water": hw}, diff, sheets, seq, its)
+    spec = out / SPEC_8
+    spec.write_text(acceptance.markdown(P, its, revised=REVISED_8), encoding="utf-8")
+    rev, name = servicesheets.REVISED["G-002"]
+    ctx = servicesheets.context(apt, P, routes=routes, s7=s7)
+    sheet = out / name
+    servicesheets.write(ctx, sheet, numbers=["G-002"], title=f"walk-up services sheet G-002 ({rev})")
+    import pypdf
+
+    pages = pypdf.PdfReader(str(sheet)).pages
+    text = " ".join((pg.extract_text() or "") for pg in pages)
+    words = addendum_8_words(params, lk, heat, s7)
     s7_bad = [c for c in s7["checks"] if not c[1]]
     model_bad = [c[0] for c in rec["checks"] if not c[1]]
     checks = [
         ("every check of 7c's designs on the routes passes", not s7_bad, f"{len(s7['checks'])} checks"),
-        ("the services model was built from these routes, and its own checks pass (7d)",
+        ("the services model in effect (Addendum 7's) was built from these routes, and its own checks pass (7d)",
          rec.get("model") == model.name and model.exists() and not model_bad,
          f"{rec.get('model')}, {rec['elements']:,} elements" + (f"; failing: {model_bad}" if model_bad else "")),
         *plant,
         *fallback.checks(sh, hw, s7["electrical"], P),
         *sequence.checks(P, s7),
         *acceptance.checks(P, s7, its),
-        ("what the services model changed is read from every element of both files: Addendum 5's as published, Addendum 7's as 7d "
-         "counted them", diff["n_before"] > 0 and diff["n_after"] == rec["elements"],
-         f"{diff['n_before']:,} -> {diff['n_after']:,}: {len(diff['added'])} added, {len(diff['changed'])} changed, "
-         f"{len(diff['deleted'])} removed"),
-        *sheets["checks"],
+        ("the loads at the leakage Addendum 7's E-1 allowed would need more than the building loop carries (why the test is revised)",
+         heat["leaky_kw"] > s7["loop"]["w"] / 1e3, f"{heat['leaky_kw']:.1f} kW against {s7['loop']['w'] / 1e3:.1f}"),
+        ("G-002 is reissued alone, as Addendum 8, with E-1's limit on it as text",
+         len(pages) == 1 and "G-002" in text and rev in text and f"{lk['building_cfm50']:,.0f}" in text,
+         f"{name}: {len(pages)} page"),
     ]
-    r = {"revision": "addendum-7", "words": words, "checks": checks, "second": [], "second_status": None, "sheets": sheets["path"],
-         "specs": specs, "diff": diff, "s7_checks": s7_bad}
-    path = out / "addendum-7.md"
-    path.write_text(addendum_7_report(r) + "\n", encoding="utf-8")
-    r["written"] = [path, sheets["path"], *specs.values()]
+    r = {"revision": "addendum-8", "words": words, "checks": checks, "second": [], "second_status": None, "sheet": sheet,
+         "spec": spec, "s7_checks": s7_bad, "leakage": lk, "heat": heat}
+    path = out / "addendum-8.md"
+    path.write_text(addendum_8_report(r) + "\n", encoding="utf-8")
+    r["written"] = [path, sheet, spec]
     return r
 
 
-def addendum_7_report(r: dict) -> str:
+def addendum_8_report(r: dict) -> str:
     from . import bidset
 
-    d = r["diff"]
     return "\n".join([
-        f"Addendum 7 (made up, pass 3g step 9, D28): {TITLES[7].lower()}", "",
+        f"Addendum 8 (made up, found scoping pass 3g step 10, D28): {TITLES[8][0].lower() + TITLES[8][1:]}", "",
         *(f"  {x}" for x in r["words"]["items"]), "",
-        f"What changed: no element of the building or the frame. The services model, against Addendum 5's ({d['before']} -> {d['after']}): "
-        + "; ".join(f"{k}: {v['added']} added, {v['changed']} changed, {v['deleted']} removed" for k, v in d["by_system"].items()) + ". "
-        "The sheets are reissued; the sequence and the tests are issued as specification sections.", "",
+        "What changed: no element of the building, the frame or the services. Section 01 45 00's E-1 is revised and sheet G-002 "
+        "reissued; Addendum 7's other documents stand.", "",
         "Checks:", *(f"  {x}" for x in bidset.report(r["checks"]).splitlines()),
         *(["", "The designs on the routes: failing checks", *(f"  {label}: {dd}" for label, _, dd in r["s7_checks"])] if r["s7_checks"] else []),
     ])
@@ -998,16 +980,17 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
     included. Only from runs whose every check passed (both readers'). Addenda 2 to 5 are written
     again from their runs, byte for byte as issued; the bid set's and Addendum 1's files, and
-    Addendum 6's (its sheets were drawn from the services Addendum 7 reissues), are left as they
-    are, and Addendum 6's items are read from the manifest as issued. Addendum 5 issued the frame
-    and the services as bid documents (pass 3g step 7e); Addendum 6, which changes no model, its
-    text and the services' sheets (step 8); Addendum 7 the revised services model, its sheets and
-    two specification sections (step 9d)."""
+    Addendum 6's and 7's (their sheets and sections were drawn from what a later addendum revised),
+    are left as they are, and their items, files and Addendum 7's services model are read from the
+    manifest as issued. Addendum 5 issued the frame and the services as bid documents (pass 3g step
+    7e); Addendum 6, which changes no model, its text and the services' sheets (step 8); Addendum 7
+    the revised services model, its sheets and two specification sections (step 9d); Addendum 8 the
+    revised section 01 45 00 and sheet G-002 (step 10's scoping)."""
     import shutil
 
     from . import addendum, bidset
 
-    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-7"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-8"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
@@ -1023,17 +1006,19 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         written.append(to / f"drawings-{rev}")
     shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
     written.append(to / "rfi-002.bcf")
-    # Addendum 6, as issued: its files stay; its items are the manifest's.
+    # Addenda 6 and 7, as issued: their files stay; their items are the manifest's, and so is the
+    # services model Addendum 7 issued, still the one in effect.
     issued = json.loads((to / "addenda.json").read_text(encoding="utf-8"))
-    a6 = next(a for a in issued["addenda"] if a["number"] == 6)
-    gone = [f["path"] for f in a6["files"] if not (to / f["path"]).exists()]
+    kept = {n: next(a for a in issued["addenda"] if a["number"] == n) for n in (6, 7)}
+    services = issued["services"]
+    gone = [f["path"] for a in kept.values() for f in a["files"] if not (to / f["path"]).exists()]
+    gone += [f for f in (services["model"], services["changes"], *(x["path"] for x in services["files"])) if not (to / f).exists()]
     if gone:
-        raise SystemExit(f"Addendum 6's published files are missing: {gone}")
-    r7 = runs["addendum-7"]
-    for src, dst in ((ifc_out("addendum-7") / "addendum-7.md", to / "addendum-7.md"), (r7["sheets"], to / r7["sheets"].name),
-                     *((path, to / path.name) for path in r7["specs"].values())):
-        shutil.copyfile(src, dst)
-        written.append(dst)
+        raise SystemExit(f"Addendum 6's or 7's published files are missing: {gone}")
+    r8 = runs["addendum-8"]
+    for src in (ifc_out("addendum-8") / "addendum-8.md", r8["spec"], r8["sheet"]):
+        shutil.copyfile(src, to / src.name)
+        written.append(to / src.name)
     models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
     for n in (1, 2, 3, 4, 5):
         path = to / f"changes-addendum-{n}.json"
@@ -1055,7 +1040,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
              3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"],
-             5: runs["addendum-5"]["words"]["items"], 6: a6["items"], 7: r7["words"]["items"]}
+             5: runs["addendum-5"]["words"]["items"], 6: kept[6]["items"], 7: kept[7]["items"], 8: r8["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -1083,37 +1068,25 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("services-addendum-5/firestop.csv", "The firestop schedule, by condition (IBC 714)"),
             ("services-addendum-5/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
             ("services-addendum-5/fittings.csv", "Fittings, by system, kind and size")],
-        6: [(f["path"], f["label"]) for f in a6["files"]],
-        7: [("addendum-7.md", "The addendum: its items, what it changes and the checks"),
-            ("services-addendum-7.ifc", "The services, IFC4, revised: each flat's hot-water loop and its balancing valve, the "
-                                        "plant's two storage tanks and backup heater"),
-            ("changes-services-addendum-7.json", "What the revised services model changed against Addendum 5's, by GlobalId"),
-            ("services-addendum-7/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
-            ("services-addendum-7/equipment.csv", "Equipment"),
-            (r7["sheets"].name, "The services drawn, revised: plans of each storey for each trade, the plumbing walls in elevation, "
-                                "the plants, the one-line, the panel schedules, the hydraulic summary, the control sequence and the "
-                                "tests"),
-            *((path.name, SPECS[k][1]) for k, path in r7["specs"].items())],
+        **{n: [(f["path"], f["label"]) for f in kept[n]["files"]] for n in (6, 7)},
+        8: [("addendum-8.md", "The addendum: its items, what it changes and the checks"),
+            (r8["spec"].name, "Specification section 01 45 00: the tests and inspections, revised (E-1, the air-leakage tests)"),
+            (r8["sheet"].name, "Sheet G-002, the tests and inspections, reissued with E-1 revised")],
     }
-    # The services model as Addendum 7 reissues it (`brownfield routes --ifc`); Addendum 5's stays as issued.
-    from . import servicesifc
-
-    services = servicesifc.publish(to, ISSUED[7], addendum=7)
-    written += [to / services["model"], to / f"services-{servicesifc.ISSUE}", to / services["changes"]]
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-5.ifc", "revision": "addendum-5", "status": "Addendum 5",
                             "members": len(frame["members"]),
                             "note": "the completed wood frame: the shell, the flats' partitions and plumbing walls, the "
                                     "service annex, the stair halls' floors and the roof hatch's opening (D28 step 7)"},
-                # Addenda 6 and 7 change no element of the building: no model of their own. Addendum 7's
+                # Addenda 6 to 8 change no element of the building: no model of their own. Addendum 7's
                 # changes to the services are marked in the services' layers (`services.changes`).
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models.get(n), "changes": f"changes-addendum-{n}.json" if n in models else None,
-                             "services_changes": services["changes"] if n == 7 else None,
+                             "services_changes": kept[7]["services_changes"] if n == 7 else None,
                              # The services model this addendum issued, if any (the viewer shows each addendum's).
                              "services_model": next((f for f, _ in files[n] if f.startswith("services-addendum-") and f.endswith(".ifc")), None),
                              "rfi": {1: "rfi-001.bcf", 3: "rfi-002.bcf"}.get(n),
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 8)],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 9)],
                 "services": services}
     # The installers' round (step 8c), as `brownfield round --publish` last left it.
     from . import installers

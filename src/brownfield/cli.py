@@ -684,13 +684,14 @@ def cmd_systems(args) -> int:
             print(f"FAIL the second reader (web-ifc) didn't run: {r['second_status']}")
             return 1
         ok &= all(good for _, good, _ in r["checks"] + r["second"])
-    # Addendum 6 (pass 3g step 8) stays as issued: its sheets were drawn from the services Addendum 7
-    # reissues. Addendum 7 (step 9d) changes no element of the building: checked on the designs on
-    # the routes, the revised services model, the fallback, the sequence, the tests and the sheets.
-    r7 = runs["addendum-7"] = systems.addendum_7_run(load_params())
-    print(NL + systems.addendum_7_report(r7))
-    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r7["written"]))
-    ok &= all(good for _, good, _ in r7["checks"])
+    # Addenda 6 and 7 (pass 3g steps 8 and 9d) stay as issued: their sheets and sections were drawn
+    # from what a later addendum revised. Addendum 8 (found scoping step 10) changes no element: it
+    # revises the air-leakage tests, checked on everything Addendum 7's run checked, the tests held
+    # to the loads' leakage, and its reissued sheet.
+    r8 = runs["addendum-8"] = systems.addendum_8_run(load_params())
+    print(NL + systems.addendum_8_report(r8))
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r8["written"]))
+    ok &= all(good for _, good, _ in r8["checks"])
     if args.publish:
         if not ok:
             print(NL + "a check fails: nothing published")

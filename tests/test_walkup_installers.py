@@ -101,8 +101,8 @@ def test_each_packet_holds_its_letter_questions_and_sheets(tmp_path):
     import pypdf
 
     sheets_pdf = ins.BIDSET / ins.SHEETS_PDF
-    if not sheets_pdf.exists():
-        pytest.skip("the services sheets aren't published")
+    if not sheets_pdf.exists() or not all((ins.BIDSET / name).exists() for _, name in servicesheets.REVISED.values()):
+        pytest.skip("the services sheets, or a sheet reissued alone, aren't published")
     pages = ins.sheet_pages(sheets_pdf)
     assert list(pages) == [n for n, _ in servicesheets.sheet_list()]
     form = tmp_path / "form.pdf"
@@ -117,3 +117,6 @@ def test_each_packet_holds_its_letter_questions_and_sheets(tmp_path):
         assert "would you look at its" in (r.pages[0].extract_text() or "")
         for i, n in enumerate(ins.SHEETS[t]):
             assert n in (r.pages[2 + i].extract_text() or ""), (t, n)
+            # A sheet reissued alone comes from its addendum, the rest from the set as issued.
+            rev = servicesheets.REVISED.get(n, (servicesheets.SHEETS_REV,))[0]
+            assert f"revision: {rev}" in (r.pages[2 + i].extract_text() or ""), (t, n, rev)
