@@ -1269,6 +1269,31 @@ check:
     conf: medium
     source: "National Fire Sprinkler Association, 'The True Cost to Install a Residential Fire Sprinkler System' (2020): 'about $1.35 per square foot' (one- and two-family dwellings; range $0.81-2.47)"
 
+  recs_energy_factor:
+    value: 1.5
+    unit: how far a usual flat's energy a year may sit from RECS 2020's households like it, either way
+    conf: placeholder
+    source: "judgement: RECS's households differ from the model's flats in set points, fixtures, people and climate within the zones taken; the ratio of means is held to it"
+  recs_stock_hp_cop:
+    value: 2.26
+    low: 2.0
+    high: 2.6
+    unit: the seasonal COP of RECS's heat-pump-heated flats built 2000-2020 (to turn their electricity into heat)
+    conf: medium
+    source: "the federal minimum for split heat pumps 2006-2015, HSPF 7.7 (10 CFR 430.32(c), 8.2 from 2015; as DOE states them, not read first-hand here): 7.7 / 3.412 = 2.26; low: strip heat in cold spells; high: the group's ductless units (RECS EQUIPM 13), above the minimum"
+  recs_stock_afue:
+    value: 0.80
+    low: 0.78
+    high: 0.92
+    unit: the AFUE of RECS's gas-furnace-heated flats built 2000-2020 (to turn their gas into heat)
+    conf: medium
+    source: "the federal minimum for non-weatherized gas furnaces, AFUE 78% from 1992 and 80% from 2015 (10 CFR 430.32(e), as DOE states it, not read first-hand here); high: some condensing furnaces in the group"
+  ecotope_primary_tm_w:
+    value: 50
+    unit: W an apartment, the most of the loops' loss a central plant's primary covers in a year (the swing tank's element the rest)
+    conf: medium
+    source: "Ecotope, Ecosizer manual (May 2025) p. 30, Figure 15: 'the annual average of the temperature maintenance load covered by the primary system in watts per apartment. The figure shows an asymptotic approach towards 50 W/apt' (HPWHsim, 118 apartments, a year of metered draws)"
+
 # The heat network's dense case beside pass 3 §4's base case (pass3.block.homes, main_km).
 network:
   dense_homes:
@@ -2446,3 +2471,303 @@ remdb:
     conf: placeholder
     source: 'judgement: REMDB''s national regressions against one basis-of-design model''s list price and stated hours'
 
+# Pass 3g step 10c (D28): each walk-up's energy a year (src/brownfield/energy.py). Prices in `tariff`.
+energy:
+  heat_set_f:
+    value: 69.8
+    low: 68.4
+    high: 70.5
+    unit: F, the flats' heating set point through the year
+    conf: medium
+    source: "RECS 2020 microdata, apartments in buildings of 5+ units (2,218 records), weighted means: winter 'TEMPHOME' 70.5 F, 'TEMPNITE' 69.1, 'TEMPGONE' 68.4; the value the mean of home and night, low gone, high home (the design loads hold 68 F, pass3.loads.indoor_c)"
+  cool_set_f:
+    value: 71.1
+    low: 70.7
+    high: 75
+    unit: F, the flats' cooling set point
+    conf: medium
+    source: "RECS 2020 microdata, the same households with air conditioning (2,069 records), weighted means: 'TEMPHOMEAC' 71.4 F, 'TEMPNITEAC' 70.7; the value their mean; high: 75 F, the IECC reference design's (the cooling design's, systems.design.cooling_indoor_f)"
+  subadditivity_k:
+    value: 0.667
+    low: 0.444
+    high: 1.0
+    unit: the exponent's constant in Hurel, Sherman and Walker's sub-additivity, Qt = Qm + Qinf exp(-k Qu / Qinf)
+    conf: medium
+    source: "Hurel, Sherman and Walker, 'Sub-additivity in combining infiltration with mechanical ventilation for single zone buildings', Building and Environment 98 (2016), LBNL report (OSTI 1532181, data/raw/pass3g/step10/infil/osti_1532181.pdf): Table 4, 'Short-term [forward] Qt = Qm + Qinf e^(-2Qu/3Qinf)', 'Long-term Qt = Qm + Qinf e^(-4Qu/9Qinf)' (Table 2: forward hourly 2/3, annual 4/9; inverse hourly 1, taken as the high end); 'useful for estimating energy loads' (the hourly forward case). Its limit, p. 17: the data 'did not include attached or multifamily configurations'"
+  occupants:
+    value: 2.39
+    low: 1.99
+    high: 3.0
+    unit: people in a 2-bedroom flat on average, for the year's hot water
+    conf: medium
+    source: "FSEC-PF-464-15's multifamily formula as the Ecosizer manual (May 2025) Table 2 gives it, ASHRAE market rate 1.49 + 0.45 per bedroom = 2.39; low: RECS 2020 microdata, 2-bedroom apartments in buildings of 5+ units with their own electric water heater, weighted mean household size 1.99 (357 records); high: 3, Phius's bedrooms + 1 and CTCAC's (the design day's, systems.hot_water.occupants_per_flat)"
+  fixture_gpd_per_occ:
+    value: 22
+    low: 16.6
+    high: 27.6
+    unit: gallons a day per occupant, times Fmix, of showers, baths and faucets' hot water
+    conf: medium
+    source: "Parker, Fairey and Lutz, 'Estimating Daily Domestic Hot-Water Use in North American Homes', ASHRAE Transactions AT-15-021 (FSEC-PF-464-15; data/raw/pass3g/dl/dhw/fsec.txt), Eq. 11: 'HWgpd = 22 x (Occ x Fmix) + CWgpd + DWgpd'; Regression A, OccNorm coefficient 22.08, 95% interval 16.6-27.6 (69 single-family homes)"
+  tmix_f:
+    value: 105
+    unit: F, the mixed temperature at a shower or faucet
+    conf: medium
+    source: "FSEC-PF-464-15 (above): Fmix = 1 - (Tset - Tmix)/(Tset - Tmains), the target 'generally assumed to be 105 F at point of end-use (Tuse)'"
+  cw_gal_cycle:
+    value: 2.3
+    low: 1.5
+    high: 4.0
+    unit: gal of hot water a clothes-washer cycle
+    conf: medium
+    source: "FSEC-PF-464-15 (above): 'Standard clothes washer 2008 or later: 4.62 gal per cycle x 0.5 = 2.3'; 'ENERGY STAR clothes washer: 3.0 x 0.5 = 1.5'; standard vintage 4.0; cycles a year 123 + 61 x Occ (Eq. 2)"
+  dw_gal_cycle:
+    value: 4.4
+    low: 4.4
+    high: 8.0
+    unit: gal of hot water a dishwasher cycle
+    conf: medium
+    source: "FSEC-PF-464-15 (above): DWgpc = 4.64/EF - 1.9295 (Eq. 4); 'ENERGY STAR unit: 4.4 gallons per cycle' (EF 0.73), 'Base unit: 8.0'; cycles a year 91 + 30 x Occ (Eq. 3)"
+  hp_scop:
+    value: 3.08
+    low: 2.4
+    high: 3.3
+    unit: the usual flat's ducted mini-split's seasonal heating COP (and the engineered flats' in the fallback)
+    conf: medium
+    source: "Fujitsu design and technical manual for ARUH12-48KUAS (data/raw/pass3g/fujitsu_dt.txt), the ARUH12KUAS specification table: 'SEER2 Cooling Btu/hW 19.1 HSPF2 Heating 10.5' (Region IV): 10.5 / 3.412 = 3.08; low: RDH (2021), British Columbia's cold-climate field study, ductless 2.4; high: its central variable-speed 3.3 (pass3.heat_pump_home.scop's source)"
+  seer2_minisplit:
+    value: 19.1
+    unit: Btu/Wh, the ducted mini-split's seasonal cooling efficiency
+    conf: high
+    source: "Fujitsu ARUH12KUAS, design and technical manual (above): 'SEER2 Cooling Btu/hW 19.1'"
+  seer2_ac:
+    value: 14.3
+    low: 13.8
+    high: 14.5
+    unit: Btu/Wh, the gas walk-up's split air conditioner's seasonal efficiency
+    conf: medium
+    source: "Goodman GLXS4B spec sheet SS-GLXS4B-R32 (03/26, data/raw/pass3g/step10/equipment/): the model code's efficiency digit '13.8 - 14.5 = 4' (GLXS4BA1810A); 14.3 as REMDB's entry for it (remdb.ac_split's source)"
+  furnace_afue:
+    value: 0.97
+    low: 0.95
+    high: 0.97
+    unit: the gas furnace's seasonal efficiency (AFUE)
+    conf: medium
+    source: "Goodman GR9S960403AN spec SS-GR9S96_GD9S96-R32 (08/26): AFUE 97; low 0.95, judgement for a field install"
+  furnace_fan_w:
+    value: 256
+    low: 174
+    high: 300
+    unit: W, the furnace's blower while it fires
+    conf: medium
+    source: "Goodman GR9S96 spec (above), 'GR9S96 Cooling & Circulation Airflow', 0403A*, tap F02 (the heating default, 'F02^' in its heating table) at 0.5 in. w.c.: '965 [cfm] 256 [W]'; low: tap F03 at 0.5 in., '780 174'; high: 300, an allowance for the inducer the sheet doesn't give (judgement)"
+  furnace_out_btuh:
+    value: 38800
+    unit: Btu/h, the furnace's output (its firing hours)
+    conf: high
+    source: "Goodman GR9S960403AN (furnace_va's source): 40,000 Btu/h in, 38,800 out"
+  heater_uef:
+    value: 0.92
+    unit: the usual flat's electric water heater's uniform energy factor
+    conf: high
+    source: "A. O. Smith ENT-50 (usual.heater_h_in's source): 'ENT-50 50 46 62 0.92 ...', UEF 0.92"
+  gas_heater_uef:
+    value: 0.63
+    unit: the gas walk-up's power-direct-vent water heater's uniform energy factor
+    conf: high
+    source: "Rheem PROG40-40N RH67 PDV (usual.gas_heater_gal's source): UEF 0.63"
+  central_te:
+    value: 0.97
+    low: 0.95
+    high: 0.97
+    unit: the central walk-up's gas water heater's thermal efficiency
+    conf: high
+    source: "A. O. Smith BTH-120 spec ACGSS00125 (March 2026): 'BTH-120(A) Natural/Propane 120,000 35 97%'; 'Recovery capacities are based on 95% thermal efficiency' (low)"
+  central_h_in:
+    value: 55.5
+    unit: in., the central gas water heater's height
+    conf: high
+    source: "A. O. Smith BTH-120 spec (above), dimensions table: 'BTH-120(A) Gallons 60 55 1/2 35 27 3/4 ...' (A)"
+  central_dia_in:
+    value: 27.75
+    unit: in., the central gas water heater's diameter
+    conf: medium
+    source: "A. O. Smith BTH-120 spec (above), dimensions table, C 27-3/4 (taken as the diameter; the sheet's drawing isn't read)"
+  tank_r:
+    value: 12.5
+    low: 10
+    high: 16
+    unit: h ft2 F/Btu, the insulation round every central plant's tanks (their standby loss)
+    conf: medium
+    source: "10 CFR 431.110, unfired hot water storage tanks: 'R-12.5' minimum (the commercial standard, as DOE's table gives it; not read first-hand here); each tank's shell, sides, top and bottom, from its dimensions; low and high judgement"
+  plant_room_c:
+    value: 20
+    low: 15
+    high: 25
+    unit: C, the air round the central plants' tanks
+    conf: placeholder
+    source: "judgement: the annex's mechanical room, inside the envelope, kept at the flats' temperature"
+  pump_eff:
+    value: 0.30
+    low: 0.20
+    high: 0.40
+    unit: a small circulator's wire-to-water efficiency (the loop pump and the recirculation pump at their duties)
+    conf: placeholder
+    source: "judgement for ECM wet-rotor circulators at a few gpm (Grundfos ALPHA2: 'P1 max 45 W'); each pump's power = gpm x ft x 0.1885 W / efficiency, at the duty the design computes"
+  controls_w:
+    value: 50
+    low: 20
+    high: 200
+    unit: W, the engineered design's plant and substation controls and meter readers, running
+    conf: placeholder
+    source: "placeholder until the controls are chosen; high: their 200 VA allowance (systems.house.controls_va)"
+  gas_heater_fan_w:
+    value: 100
+    low: 50
+    high: 600
+    unit: W, a gas water heater's blower while it fires (the gas walk-up's and the central one's)
+    conf: placeholder
+    source: "judgement; high: their nameplates, Rheem PDV 'LESS THAN 5 AMPS' and BTH-120 '5.0 A' at 120 V (usual.gas_heater_va, usual.central_heater_va)"
+  mass:
+    value: 0.5
+    low: 0.0
+    high: 1.0
+    unit: how much of a day's sun and gains carry to its other hours (0 each hour alone, 1 the whole day)
+    conf: placeholder
+    source: "judgement: the flats' mass (the gypcrete topping, the slab, the furnishings) without a dynamic model; the same in every walk-up"
+  fallback_h:
+    value: 168
+    low: 0
+    high: 720
+    unit: hours a year the data center's heat is gone (the flats on their mini-splits, the water on BK-1)
+    conf: placeholder
+    source: "unknown (PLAN D28 step 9): none to a month; a week a year as the base, spread over the year like the heat"
+  gas_heater_in_btuh:
+    value: 40000
+    unit: Btu/h, the gas walk-up's water heater's input (its firing hours)
+    conf: high
+    source: "Rheem PROG40-40N RH67 PDV (usual.gas_heater_gal's source): 40,000 Btu/h"
+  p2_gpm:
+    value: 3.3
+    unit: gpm, the heater circuit's pump P-2 (HP-1's load flow)
+    conf: medium
+    source: "ClimateMaster Tranquility SW catalogue RP3006, SW036 part-load heating row (hot_water.hp_cop's source): 'load EWT 120 F at 3.3 gpm'"
+  p2_head_ft:
+    value: 15
+    low: 8
+    high: 25
+    unit: ft, P-2's head (HX-1, HP-1, BK-1 and the storage's piping)
+    conf: placeholder
+    source: "P-2 is 'to select' (sequence.py); judgement until it is"
+  hp1_input_w:
+    value: 2313
+    unit: W, HP-1's input at its rated point (its share of the house meter's demand)
+    conf: high
+    source: "ClimateMaster Tranquility SW catalogue RP3006, SW036 part-load heating, source 80 F, load 120 F at 3.3 gpm: '34,605 [Btuh] 2,313 [W] ... 4.4 [COP]' (hot_water.hp_cop's source)"
+  heat_usd_mwh:
+    value: 0
+    unit: USD per MWh the building pays for the data center's heat
+    conf: high
+    source: "pass 3's assumption (D28 step 10's decision 2): the heat free in the base case; 10c gives the price at which the walk-ups tie"
+
+# Pass 3g step 10c: the prices each walk-up's meters pay, from the utilities' tariffs in effect (a research
+# agent, 2026-11-23; every page saved under data/raw/pass3g/step10/energy/, gitignored; the key quotes checked
+# there). Penelec: FirstEnergy Pennsylvania Electric Company, Electric Pa. P.U.C. No. 1, Supplement No. 40
+# (effective 2026-10-01), fepa_retail_tariff_electric_paPUC_no1.pdf; it serves Indiana Borough, Homer City and
+# White and Center Townships (p. 13). Peoples Natural Gas: Tariff Gas-PA P.U.C. No. 48, Supplement No. 26
+# (effective 2026-10-01), png_retail_tariff_48_supp26_2026-10-01.pdf (p. 15: Indiana County). The charges
+# alike in every walk-up (the flats' electric customer charges) are left out.
+tariff:
+  elec_res_usd_kwh:
+    value: 0.22577
+    low: 0.209
+    high: 0.23065
+    unit: USD per kWh at a flat's meter (Penelec Rate RS), all in at the margin
+    conf: high
+    source: "Penelec Rate RS (p. 61): 'Per kWh for all kWh ... 6.815 cents per kWh'; riders (Rider Matrix p. 181): Universal Service 'Penelec 1.844 (I) cents per kWh' (2026, p. 185), EE&C-C 'Residential RS ... 0.222 (D)' (p. 194), Default Service Support 'RS, GS-V ... 0.375 (D)' (p. 213), SPVRC 0.000 (p. 231); price to compare 'June 1, 2026 through November 30, 2026 ... Residential RS, GS-V $0.13142 (I) per kWh' (p. 203; PA Power Switch for 15701 the same); DSIC 2.70% on distribution (p. 239), STAS -0.02% (p. 182): 22.398 c, 22.5775 with them. High: the price to compare from 2026-12-01, 13.564 c (PA Power Switch, 'futureRate'), and DSIC on all the distribution riders: 23.065. Low: EIA-861M, Pennsylvania residential average Sep 2025-Aug 2026, 20.90 c (all utilities, customer charges in it)"
+  house_gss_usd_kwh:
+    value: 0.17779
+    low: 0.17667
+    high: 0.18012
+    unit: USD per kWh at a house meter on Penelec's GS-Small
+    conf: high
+    source: "Penelec Rate GS-Small (p. 65): 'Per kWh for all billed kWh ... 4.262'; EE&C commercial 0.429 (p. 194), DSS GS-S 0.056 (p. 213), price to compare 'GS-S, GS-M (PTC), H ... $0.12920 (I) per kWh' (p. 203): 17.667 c; with DSIC and STAS 17.779. High: the commercial price to compare from 2026-12-01, $0.1314 (PA Power Switch, small business): 18.012"
+  house_gsm_usd_kwh:
+    value: 0.13400
+    low: 0.13400
+    high: 0.13636
+    unit: USD per kWh at a house meter on Penelec's GS-Medium (its demand apart)
+    conf: high
+    source: "Penelec Rate GS-Medium (pp. 70-72): no per-kWh distribution charge for Penelec (the 0.531 c is West Penn's); EE&C 0.429, DSS 'GS-M, H, BRD' 0.054, price to compare 0.12920 (GS-M under 100 kW): 13.403 c, 13.400 with STAS. High: from 2026-12-01 ($0.1314) with DSIC on the riders: 13.636"
+  house_gsm_usd_kw:
+    value: 7.179
+    low: 6.99
+    high: 7.179
+    unit: USD per kW of billing demand a month, Penelec GS-Medium
+    conf: high
+    source: "Penelec Rate GS-Medium (p. 70): 'Per kW for all billing kW ... $6.99' (the table read from the tariff's text; its columns Met-Ed, Penelec single and three phase, Penn Power, West Penn), with DSIC 2.70%: 7.179. Billing demand the greatest of the month's on-peak maximum, 40% of its off-peak maximum, the contract demand, or '50% of the highest billing demand established during the preceding eleven (11) months'. GS-Small's limit (p. 65): 'If an existing Customer's total consumption exceeds 1,500 kWh per month for two (2) consecutive months ... placed on Rate Schedule GS-Medium'"
+  house_gss_customer_usd_month:
+    value: 21.52
+    low: 20.96
+    high: 21.52
+    unit: USD a month, a house meter's customer charge on GS-Small
+    conf: high
+    source: "Penelec GS-Small (p. 65): 'Customer Charge ... $20.87', with DSIC 2.70% and the commercial smart meter charge $0.09 (p. 198): 21.52 (low without the DSIC)"
+  house_gsm_customer_usd_month:
+    value: 22.59
+    low: 22.00
+    high: 22.59
+    unit: USD a month, a house meter's customer charge on GS-Medium (single phase)
+    conf: high
+    source: "Penelec GS-Medium (p. 70): customer charge single phase $21.91 (three phase $44.07), with DSIC 2.70% and $0.09 (p. 198): 22.59 (low without the DSIC)"
+  gss_limit_kwh_month:
+    value: 1500
+    unit: kWh a month, the most a GS-Small house meter takes before GS-Medium
+    conf: high
+    source: "Penelec GS-Small (p. 65), as house_gsm_usd_kw's source"
+  pv_excess_usd_kwh:
+    value: 0.12920
+    low: 0.12920
+    high: 0.13400
+    unit: USD per kWh for PV beyond the house meter's own use over a year
+    conf: high
+    source: "52 Pa. Code 75.13(d): the credit 'at the full retail kilowatt-hour rate ... up to the total amount of electricity used by that customer during the billing period', the excess 'carried forward'; (e): 'At the end of each year, the DSP shall compensate the customer-generator for any remaining excess kilowatt hours ... at the DSP's price to compare rate' (pacode_52_75.13_net_metering.html); the commercial price to compare 0.12920. High: Penelec's Net Metering Rider (pp. 187-191) words it 'full retail value for all energy produced'; and 'The customer-generator is responsible for the distribution charge, demand charge and other applicable charges'"
+  gas_res_usd_mcf:
+    value: 12.47
+    low: 11.719
+    high: 14.638
+    unit: USD per Mcf at a flat's gas meter (Peoples Rate RS), all in at the margin
+    conf: high
+    source: "Peoples Tariff 48 Supplement 26, Summary of Rates p. 3, Residential: capacity 1.7144 + MFC 0.0377; price to compare 3.5749 (GCA 0.6706, supply 2.7427, MFC 0.0751, GPC 0.0865); delivery 5.3537 (p. 40) + USR 0.7482 + DSIC 0.3151 - TRS 0.0287; state tax 0.0037: 'Total per MCF $11.7190' (Oct-Dec 2026). The value: 2026's totals by the days each held (Supps 19, 20, 23, 25, 26: 12.4266, 14.6377, 12.4893, 12.0794, 11.7190); high the Feb-Mar 2026 interim. Not in it: the Weather Normalization Adjustment (per account, Oct-May) and the pending base-rate case (Tariff 49, suspended to 2026-12-26: delivery $6.6359)"
+  gas_res_customer_usd_month:
+    value: 17.5563
+    low: 17.5563
+    high: 25.92
+    unit: USD a month, a flat's gas account (Peoples Rate RS)
+    conf: high
+    source: "Peoples Supp 26 p. 3: 'Customer Charge per meter per month $16.80' (p. 40) + Supplier Choice 0.0063 + DSIC 0.8400 - TRS 0.0900 = $17.5563; p. 8: 'apartment buildings ... in which the units are individually metered' are residential. High: the pending case's proposed $26.00 (DSIC reset to zero, Peoples' rates page)"
+  gas_com_usd_mcf:
+    value: 10.04
+    low: 9.4014
+    high: 11.9429
+    unit: USD per Mcf at the central heater's gas meter (Peoples Rate SGS), all in at the margin
+    conf: high
+    source: "Peoples Supp 26 p. 3, SGS: capacity 0.7555, price to compare 4.4757, delivery 3.9844 (p. 45) + DSIC 0.2044 - TRS 0.0214, state tax 0.0028: 'Total per MCF $9.4014' (Oct-Dec 2026); the value 2026's totals by the days each held (9.9493, 11.9429, 10.0751, 9.6880, 9.4014); p. 8: 'any non-industrial premises where one meter is serving more than one unit' is commercial; SGS for 'less than 1,000 Mcf annually' (p. 45)"
+  gas_com_customer_small_usd_month:
+    value: 22.9884
+    low: 22.9884
+    high: 32.14
+    unit: USD a month, an SGS gas account under 500 Mcf a year
+    conf: high
+    source: "Peoples Supp 26 p. 45: customer charge $22.00 'for annual consumption less than 500 Mcf'; with riders (p. 3) $22.9884. High: the pending case's proposed $32.14"
+  gas_com_customer_large_usd_month:
+    value: 45.9705
+    low: 45.9705
+    high: 64.28
+    unit: USD a month, an SGS gas account of 500 to 1,000 Mcf a year
+    conf: high
+    source: "Peoples Supp 26 p. 45: $44.00 'equal to or greater than 500 Mcf but less than 1,000 Mcf'; with riders $45.9705. High: the proposed $64.28"
+  gas_com_tier_mcf:
+    value: 500
+    unit: Mcf a year, where an SGS account's customer charge steps up
+    conf: high
+    source: "Peoples Supp 26 p. 45 (above)"

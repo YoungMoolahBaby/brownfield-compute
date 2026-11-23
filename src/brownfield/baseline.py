@@ -641,16 +641,20 @@ def services(apt: dict, p: dict, s7: dict) -> dict:
 
 
 def usual_case(apt: dict, p: dict) -> dict:
-    """The usual walk-up's flats for `loads.room_heat`: the code's leakage, and the code's
-    ventilation air (exhaust only, made up through the envelope) with no heat recovery; the same
+    """The usual walk-up's flats for `loads.room_heat`: the bath fan exhausting all the time, the
+    flat's whole ventilation (`usual.bath_fan_cfm`), its air made up through the envelope with no
+    heat recovery; the code's leakage; the two combined by LBNL's sub-additivity
+    (`loads.subadditive`, hourly: `energy.subadditivity_k`), so the fan's air counts in full and the
+    leakage's natural flow (its ACH50 over pass 3's n-factor, `natural_m3h`) only in part. The same
     walls and glass as the engineered design."""
-    from .loads import CFM_M3H, ventilation
+    from .loads import CFM_M3H, subadditive
 
-    vent = ventilation(apt, p)
+    fan = p["baseline.usual.bath_fan_cfm"] * CFM_M3H
     flats = {}
     for f in apt["flats"]:
-        flats[f["name"]] = {"infil_m3h": p["baseline.usual.ach50"] / p["pass3.air.n_factor"] * f["interior_volume_m3"],
-                            "vent_m3h": vent[f["name"]]["imc_cfm"] * CFM_M3H, "recovery": 0.0,
+        natural = p["baseline.usual.ach50"] / p["pass3.air.n_factor"] * f["interior_volume_m3"]
+        flats[f["name"]] = {"infil_m3h": subadditive(fan, fan, natural, p["baseline.energy.subadditivity_k"]) - fan,
+                            "natural_m3h": natural, "vent_m3h": fan, "recovery": 0.0,
                             **({"wall_u": p["systems.addendum_3.wall_u"]} if apt.get("continuous_insulation_m", 0.0) > 0.0 else {}),
                             **({"window_u": apt["glass_u"]} if apt.get("glass_u") is not None else {})}
     return {"flats": flats, "design_c": p["systems.design.heating_c"]}
@@ -702,8 +706,8 @@ def central_check(p: dict, s7: dict) -> dict:
 def heat_check(apt: dict, p: dict, s7: dict) -> dict:
     """Each usual flat's design heat (the code's leakage, no heat recovery) against its heat pump's
     capacity at the design dry bulb with its line set (`fallback.space_heat`, the same unit). The
-    exhaust fan's air and the leakage are added (`room_ua`), an upper bound: an unbalanced fan and
-    the envelope's leakage partly overlap, and how much needs a source (10c)."""
+    bath fan's air and the leakage are combined by LBNL's sub-additivity (`usual_case`; 10a first
+    added them, an upper bound)."""
     from . import fallback, routing
     from .loads import room_heat
 
@@ -769,8 +773,8 @@ def checks(r: dict, p: dict) -> list[tuple[str, bool, str]]:
          f"{counted_fit:,.0f} fittings against {sched_fit:,}; " + ", ".join(f"{k} {seen[k]} against {n}" for k, n in sched_rows.items())),
         ("every item traces to a model element, a design parameter or a stated rule, and has a quantity", not untraced and not empty,
          f"{len(its)} items" + (f"; untraced {untraced[:4]}" if untraced else "") + (f"; empty {empty[:4]}" if empty else "")),
-        ("each usual flat's heat pump carries its own heat at the code's leakage with no heat recovery (the fan's air and the "
-         "leakage added, an upper bound)", hc["ok"],
+        ("each usual flat's heat pump carries its own heat at the code's leakage with no heat recovery (the bath fan's air and "
+         "the leakage combined by LBNL's sub-additivity)", hc["ok"],
          f"least spare {hc['worst']}: {hc['flats'][hc['worst']]['capacity_w']:,.0f} W against {hc['flats'][hc['worst']]['load_w']:,.0f} "
          f"(the building at most {hc['building_kw']:.1f} kW against the engineered design's {hc['engineered_kw']:.1f})"),
         ("each usual flat's own hot pipe within IPC 607.2", rule[far]["longest_ft"] <= p["baseline.usual.ipc_607_2_ft"],

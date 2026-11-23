@@ -95,6 +95,17 @@ def flat_air(f: dict, p: dict, case: dict) -> tuple[float, float]:
     return infil, vent
 
 
+def subadditive(q_mech: float, q_unbal: float, q_inf: float, k: float) -> float:
+    """A fan's air and the envelope's leakage together (any unit of flow): Hurel, Sherman and Walker's
+    forward sub-additivity (Building and Environment 98, 2016, Table 4), Qt = Qm + Qinf exp(-k Qu /
+    Qinf), with Qm the mechanical flow, Qu its unbalanced part and k 2/3 for hourly flows (4/9 for
+    a year's). A balanced fan (Qu = 0) adds to the leakage; an exhaust fan much larger than the
+    leakage is the whole flow."""
+    import math
+
+    return q_mech + (q_inf * math.exp(-k * q_unbal / q_inf) if q_inf > 0 else 0.0)
+
+
 def room_ua(f: dict, rows: list[dict], p: dict, case: dict) -> list[dict]:
     """Each room's heat loss coefficient by part (W/K). Leakage by exterior area; ventilation by the
     case's supply shares ({room id: share}), or by floor area when it has none."""

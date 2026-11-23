@@ -1746,3 +1746,57 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
         of $428,215;
       - HUD 2024 TDC limits, Johnstown walk-up, 2 bedrooms: HCC $161,169;
       - NFSA's "about $1.35 per square foot" for NFPA 13D.
+  - **10c, the energy a year and its prices (2026-11-23).** Saved under
+    `data/raw/pass3g/step10/infil/`, `energy/` and `equipment/` (gitignored); each param in
+    `params/baseline.yaml` (`energy`, `tariff`) quotes its source.
+    - **Hurel, Sherman and Walker,** "Sub-additivity in combining infiltration with mechanical
+      ventilation for single zone buildings", *Building and Environment* 98 (2016), LBNL's report
+      (OSTI 1532181; escholarship.org refused a plain fetch, OSTI didn't).
+      - Table 4: forward, short-term, "Qt = Qm + Qinf e^(-2Qu/3Qinf)"; long-term 4/9.
+      - Its errors: additivity overpredicts by 21% hourly, quadrature underpredicts by 3.7%, the
+        exponential model biases under 1%.
+      - Its limits: REGCAP simulations of single-zone houses, 0.6-10 ACH50, eight climates; "it did
+        not include attached or multifamily configurations".
+    - **Parker, Fairey and Lutz,** "Estimating Daily Domestic Hot-Water Use in North American
+      Homes", ASHRAE Transactions (FSEC-PF-464-15):
+      - "HWgpd = 22 x (Occ x Fmix) + CWgpd + DWgpd", Fmix = 1 - (Tset - Tmix)/(Tset - Tmains), Tmix
+        105 F; the coefficient 22.08 (95% 16.6-27.6);
+      - its example: three occupants, Fmix 0.68, a standard washer and dishwasher, "52.3 gpd";
+      - 69 single-family homes.
+    - **The makers' ratings:**
+      - Fujitsu ARUH12KUAS, "SEER2 ... 19.1 HSPF2 ... 10.5";
+      - Goodman GR9S96 0403A, tap F02 at 0.5 in. w.c., "965 [cfm] 256 [W]";
+      - Goodman GLXS4B's efficiency digit 4, "13.8 - 14.5" SEER2;
+      - A. O. Smith BTH-120, 97%, 55-1/2 in. high, 27-3/4 across.
+    - **Ecotope, Ecosizer manual** (May 2025), p. 30: the primary covers the loops' loss to "an
+      asymptotic approach towards 50 W/apt" in a year (HPWHsim, 118 apartments).
+    - **RECS 2020 microdata, again:**
+      - set points in apartments of 5+ unit buildings: TEMPHOME 70.5 F, TEMPNITE 69.1, TEMPGONE
+        68.4; with air conditioning 71.4 and 70.7;
+      - end uses (KWHWTH, BTUNGWTH, KWHSPH, BTUNGSPH) for the known cases. They're EIA's models of
+        each household's bills, not metered end uses.
+    - **Penelec** (FirstEnergy Pennsylvania Electric Company, Electric Pa. P.U.C. No. 1, Supplement
+      No. 40, effective 2026-10-01):
+      - Rate RS: customer $11.25, distribution 6.815 c/kWh;
+      - its riders: universal service 1.844 c, EE&C 0.222, default service support 0.375, DSIC
+        2.70%, STAS -0.02%;
+      - the price to compare $0.13142 (Jun-Nov 2026), $0.11747 (Dec 2025-May 2026), and $0.13564
+        from 2026-12-01 (PA Power Switch);
+      - GS-Small: $20.87, 4.262 c, to 1,500 kWh a month; GS-Medium: $21.91 single phase, "$6.99" a
+        kW of billing demand, with a 50% ratchet over eleven months; the commercial price to compare
+        $0.12920;
+      - RS isn't for a house meter: "any facility not including an occupied dwelling unit"; the
+        common-area provision (C) is marked for Penn Power only.
+    - **52 Pa. Code 75.13** (net metering): credit "at the full retail kilowatt-hour rate ... up to
+      the total amount of electricity used ... during the billing period"; any excess at year end
+      "at the DSP's price to compare rate". Penelec's rider says "full retail value".
+    - **Peoples Natural Gas** (Tariff Gas-PA P.U.C. No. 48):
+      - Supplement 26 (effective 2026-10-01): Rate RS "Total per MCF $11.7190", the customer charge
+        $16.80 ($17.5563 with riders); Rate SGS "$9.4014", $22.00 under 500 Mcf a year, $44.00 to
+        1,000;
+      - the 2026 quarters (Supplements 19, 20, 23, 25);
+      - Tariff 49, a base-rate case, suspended to 2026-12-26 (proposed RS $26.00 and $6.6359/Mcf).
+    - **EIA, the last 12 months** (Sep 2025-Aug 2026; 2026 preliminary):
+      - Pennsylvania residential electricity 20.90 c/kWh, commercial 13.56 (EIA-861M);
+      - residential gas $20.06/Mcf as a simple mean, $15.96 weighted by volume. The summer months'
+        prices sit on little gas, so the tariff is the better input.

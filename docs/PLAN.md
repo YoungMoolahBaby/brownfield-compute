@@ -183,7 +183,7 @@ gets the savings.
 - So three usual walk-ups (electric, gas, central hot water), each listed item by item beside the
   engineered design: 248 items.
 - The usual flats need up to 29.7 kW at design against 19.4. The same heat pump still heats each
-  one.
+  one. (10c: 30.6 kW, with the bath fan's 50 cfm and the leakage combined by LBNL's rule.)
 
 10b done: both walk-ups priced item by item from free sources, 121 prices.
 - A flat's systems: the engineered design $59,100, the usual walk-up $27,800 all-electric, $37,900 gas
@@ -194,8 +194,19 @@ gets the savings.
 - The biggest piece is the space heat from the data center's water ($12,000). Then come cast iron
   for quiet ($4,900), the hot-water plant and its loops ($4,700), the ERVs ($3,900) and PV ($2,600).
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10c
-(the running costs a year) runs alongside.
+10c done: each walk-up's energy and running cost a year, on the local tariffs (Penelec, Peoples).
+- With the data center's heat free, a flat's running cost is $525 engineered, against $1,060 for the
+  electric walk-up, $794 for gas and $611 with central hot water.
+- So the engineered design saves $535 a year a flat over the electric walk-up, $269 over gas and $86
+  over central hot water. Against its $31,300 premium up front, energy doesn't pay it back.
+- The heat would have to cost under $136/MWh for the engineered design to stay ahead of the electric
+  walk-up, under $68 against gas, $22 against central.
+- The engineered plant's biggest electricity use is the swing tank's element, which covers the loops'
+  loss: 14.3 MWh a year.
+- Its house meter lands on Penelec's GS-Medium, with a demand charge of about $68 a flat a year.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10d,
+noise and comfort side by side.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4603,7 +4614,9 @@ test. Then the township brief's ask.
            - **Each usual flat's heat pump carries its own heat.** At the code's 3.0 ACH50 with no
              heat recovery the building needs at most 29.7 kW, against the engineered design's 19.4.
              That's an upper bound: the exhaust fan's air and the leakage are added, though an
-             unbalanced fan and the envelope's leakage partly overlap.
+             unbalanced fan and the envelope's leakage partly overlap. (10c combines them by
+             LBNL's sub-additivity, at the bath fan's own 50 cfm rather than the code's 30.8: 30.6
+             kW.)
              The same 12k unit still covers each flat; the least spare is 1-back-left, 4,080 W
              against 2,823.
            - **Each walk-up's service on a main the meter stack offers (NEC 220.84):**
@@ -4730,6 +4743,138 @@ test. Then the township brief's ask.
            - the fee's arithmetic;
            - the shared items cancelling and the purposes adding up;
            - a dearer engineered-only item moving only the engineered design.
+       - **10c done 2026-11-23: each walk-up's energy and running cost a year** (Jon: "proceed with
+         10c"; `uv run brownfield baseline`, now 10a-10c; `src/brownfield/energy.py`; params
+         `baseline.energy` and `baseline.tariff`; writes `out/pass3/energy.md|json`).
+         - **How:**
+           - **Space heat and cooling,** each flat hour by hour over ERA5's 2005-2023 at the site.
+             - Its envelope as the heat loads have it, less the sun through its glass and the IECC
+               reference design's internal gains.
+             - Each of the four facings averaged; a placeholder `mass` sets how much of a day's
+               sun carries to its other hours.
+             - The set points RECS's apartments keep: 69.8 F heating, 71.1 F cooling.
+           - **The air:**
+             - the engineered flats balanced, the ERV recovering hour by hour after its preheater,
+               at Phius's leakage;
+             - the usual flats' bath fan exhausting 50 cfm all year at the code's 3.0 ACH50, the two
+               combined by Hurel, Sherman and Walker's sub-additivity (LBNL, 2016): the fan's air in
+               full, the leakage's flow times exp(-2/3 x fan/leakage).
+           - **Hot water:**
+             - FSEC's model (Parker, Fairey and Lutz 2015), 2.39 people a flat, on the mains by day:
+               43.7 gal a day a flat at the tap;
+             - each flat's own heater by its UEF; the central gas heater by its 97%, with the loops'
+               and its tank's loss;
+             - the engineered plant month by month: Ecosizer's swing tank on the month's average day
+               for its element's share of the loops' loss, the rest from HX-1 and HP-1 at its COP
+               4.4.
+           - **Fans and pumps:** the ERV at HVI's 28 W, the bath fan at Panasonic's 7.2 W, the
+             furnace's blower at Goodman's 256 W, the circulators at their design duties.
+           - **The heat pumps:** HSPF2 10.5, a seasonal COP of 3.08. Cooling: the mini-split's SEER2
+             19.1, the gas walk-up's air conditioner's 14.3.
+           - **PV:** PVGIS's yield for the 8.0 kWp the house panel takes, 9.6 MWh a year.
+           - **The fallback:** a placeholder week a year on the mini-splits and BK-1.
+           - **Prices:** the tariffs in effect, a research agent's saved pages, the key quotes checked
+             (`baseline.tariff`):
+             - **Penelec RS** for the flats: 22.58 c/kWh at the margin (distribution 6.815,
+               universal service 1.844, efficiency 0.222, default service 0.375, the price to compare
+               13.142, DSIC and STAS);
+             - **the house meter:** GS-Small, 17.78 c, or GS-Medium past 1,500 kWh a month, 13.40 c
+               and $7.18 per kW of billing demand. Its 50% ratchet holds a fallback month's peak for
+               eleven more;
+             - **net metering:** PV at the full retail rate up to the meter's use, any excess over a
+               year at the price to compare (52 Pa. Code 75.13);
+             - **Peoples:** Rate RS $12.47/Mcf (2026's totals by the days each held) and $17.56 a month
+               a flat's account; Rate SGS $10.04 and $22.99 a month under 500 Mcf a year.
+           - The flats' lights, appliances and plugs, alike in every walk-up, are left out. The house's
+             own continuous loads (lights, fire alarm, telecom, 619 W) are alike too but kept in,
+             because they set the house meter's class.
+         - **A flat's space heat a year:**
+           - engineered 1,079 kWh;
+           - at the code's leakage 1,646;
+           - the usual flats 2,826.
+           - Of the saving, the ERV gives 1,180 and the airtightness 567.
+         - **A flat's hot water:** 2,506 kWh of heat at the tap.
+           - The electric flat's tank uses 2,724 kWh. The gas flat's uses 3,978 kWh of gas.
+           - The central heater burns 167 Mcf a year for the building.
+           - **The engineered plant**, for the building:
+             - HP-1 2,363 kWh and the swing element 14,332;
+             - the data center gives 35.0 MWh;
+             - the loops lose 2,112 W all year and the tanks 361 W.
+         - **A flat's running cost a year** (2026 dollars, the data center's heat free):
+
+           | | engineered | electric | gas | central |
+           |---|---|---|---|---|
+           | the flats' electricity | $279 | $958 | $198 | $343 |
+           | the house meter, net of PV | $247 | $102 | $102 | $105 |
+           | gas | | | $493 | $163 |
+           | **total** | **$525** | **$1,060** | **$794** | **$611** |
+
+           - The engineered flat's electricity: the ERV and its preheater 571 kWh, cooling 656.
+           - Its house meter (GS-Medium): 7.6 kW in a normal month, 17.6 with BK-1, 114 kW-months
+             billed, $68 a flat.
+           - The gas walk-up's $493 includes twelve accounts' customer charges, $211 a flat.
+         - **The tie:** the engineered design's running cost meets the electric walk-up's when the
+           data center's heat costs $136/MWh, the gas walk-up's at $68 and the central walk-up's at
+           $22. A flat takes 3.9 MWh of it a year.
+         - **Beside the building:** the heat network's upkeep (pass 3 §4's 1.5% of its cost) $148 a
+           flat a year at the base case, $32 dense; its pumping $7.
+         - **So, on energy:** the engineered design saves $535 a year a flat over the electric
+           walk-up, $269 over gas and $86 over central hot water. Its premium up front is $31,335
+           over electric (10b). Energy doesn't pay it back in any building's life, even with the
+           heat free, as the steer expected. 10e and 10f say who gets which and over what range.
+         - **Checks:** 9, all pass:
+           - the hourly model at the design hour, no sun or gains, reproduces each flat's design heat
+             to 2e-13 W;
+           - its preheater's year reproduces `hvac.preheat_energy`'s, 345.5 kWh;
+           - the plant on step 4's design day reproduces its HP-1 (10.501 kWh) and its swing element
+             (95.98 kBtu);
+           - Fujitsu's full-capacity table, weighted by the usual flats' year, gives 2.65, under the
+             3.08 taken;
+           - **Ecotope (Ecosizer manual, Figure 15):** the primary covers 43 W a flat of the loops'
+             loss a year, under Ecotope's ~50 W an apartment;
+           - **RECS 2020, apartments in 5+ unit buildings** (the ratio of means, its jackknife):
+             - an own electric water heater, kWh per occupant: model 1,140 against 1,154 (±42);
+             - an own gas water heater, kBtu per occupant: model 5,679 against 7,966 (±265);
+             - space heat, Wh per ft2 per degree day, against flats in climate zones 4A-5A built 2000
+               or later: model 0.57 against 0.66 (heat-pump flats, ±0.10) and 0.62 (gas furnaces,
+               ±0.07).
+         - **Found:**
+           - **The usual flats' air.** The bath fan runs at 50 cfm, not the code's 30.8. With LBNL's
+             combination, the building's design heat is 30.6 kW, not 10a's 29.7. The same heat pump
+             still carries each flat (1-back-left 2,898 W against 4,080).
+           - **The loops are the plant's largest electricity use.** The swing element's resistance
+             heat, 14.3 MWh a year, costs about $160 a flat at GS-Medium's price, nearly a third of
+             the engineered design's running cost. It's C404.5's price at a 12-flat scale; the
+             central walk-up pays it in gas.
+           - **The ERV and the tight envelope add cooling:** 656 kWh a flat against the usual flats'
+             538. The ERV keeps the cool night air out, and nothing models opening a window.
+           - **The house meter changes class.** The plant puts the engineered house meter past
+             GS-Small's 1,500 kWh a month, onto GS-Medium with a demand charge.
+           - **The first space-heat check compared electricity, and failed.** The model's flats used
+             0.59 of RECS's heat-pump flats' kWh. RECS's 2000-2020 flats had older equipment
+             (federal minimums HSPF 7.7, AFUE 80%). The heat itself (their energy times those) is
+             what compares: 0.86 and 0.92.
+         - **What we don't know:**
+           - **How much of a day's sun the flats keep** (`mass`, a placeholder). Each hour alone
+             needs more heat, the whole day less; the same in every walk-up.
+           - **LBNL's rule was fitted on single-family houses.** Its authors say it "did not include
+             attached or multifamily configurations".
+           - **FSEC's hot water** is from 69 single-family homes. The occupancy, 2.39, is ASHRAE's
+             market-rate formula.
+           - **The fallback's hours**, P-2's head, the plant's controls: placeholders.
+           - **Latent cooling and the kitchen hood's use** aren't modelled.
+           - **The tariffs change:** the price to compare resets twice a year (13.564 c from
+             2026-12-01), and Peoples' base-rate case (Tariff 49) is pending.
+           - **RECS's end-use splits** are EIA's own models of bills.
+         - Tests: `tests/test_walkup_energy.py`, 12. Among them:
+           - LBNL's rule (balanced adds, a large fan is the whole flow);
+           - FSEC's own worked example (52.3 gal a day);
+           - mass and the cooling days;
+           - a tank's loss and a pump's power from first principles;
+           - PV past the meter's use;
+           - GS-Medium's demand and its ratchet;
+           - the tie price;
+           - more fallback hours moving only the engineered design.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building
