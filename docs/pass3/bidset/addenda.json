@@ -19,6 +19,7 @@
    "model": "apartment-addendum-1.ifc",
    "changes": "changes-addendum-1.json",
    "services_changes": null,
+   "services_model": null,
    "rfi": "rfi-001.bcf",
    "files": [
     {
@@ -57,6 +58,7 @@
    "model": "apartment-addendum-2.ifc",
    "changes": "changes-addendum-2.json",
    "services_changes": null,
+   "services_model": null,
    "rfi": null,
    "files": [
     {
@@ -89,6 +91,7 @@
    "model": "apartment-addendum-3.ifc",
    "changes": "changes-addendum-3.json",
    "services_changes": null,
+   "services_model": null,
    "rfi": "rfi-002.bcf",
    "files": [
     {
@@ -122,6 +125,7 @@
    "model": "apartment-addendum-4.ifc",
    "changes": "changes-addendum-4.json",
    "services_changes": null,
+   "services_model": null,
    "rfi": null,
    "files": [
     {
@@ -158,6 +162,7 @@
    "model": "apartment-addendum-5.ifc",
    "changes": "changes-addendum-5.json",
    "services_changes": null,
+   "services_model": "services-addendum-5.ifc",
    "rfi": null,
    "files": [
     {
@@ -206,6 +211,7 @@
    "model": null,
    "changes": null,
    "services_changes": null,
+   "services_model": null,
    "rfi": null,
    "files": [
     {
@@ -234,6 +240,7 @@
    "model": null,
    "changes": null,
    "services_changes": "changes-services-addendum-7.json",
+   "services_model": "services-addendum-7.ifc",
    "rfi": null,
    "files": [
     {

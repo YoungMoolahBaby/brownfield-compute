@@ -1110,6 +1110,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models.get(n), "changes": f"changes-addendum-{n}.json" if n in models else None,
                              "services_changes": services["changes"] if n == 7 else None,
+                             # The services model this addendum issued, if any (the viewer shows each addendum's).
+                             "services_model": next((f for f, _ in files[n] if f.startswith("services-addendum-") and f.endswith(".ifc")), None),
                              "rfi": {1: "rfi-001.bcf", 3: "rfi-002.bcf"}.get(n),
                              "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 8)],
                 "services": services}

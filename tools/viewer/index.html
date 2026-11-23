@@ -53,6 +53,13 @@
   .file { border: 1px solid var(--rule); border-radius: 8px; background: var(--chip); }
   .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
   a.file { text-decoration: none; }
+  /* The model switch: a dropdown, newest addendum first, however many there are. */
+  .pick { display: inline-flex; align-items: center; gap: 8px; font: 500 13px var(--font-body); color: var(--muted); }
+  .pick select {
+    font: 500 13px var(--font-body); color: var(--ink); background: var(--chip); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 7px 10px; max-width: 100%; cursor: pointer;
+  }
+  .pick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button:focus-visible, .file:focus-within, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
   .view { position: relative; min-width: 0; min-height: 0; background: var(--viewport); }
@@ -121,10 +128,9 @@
       <p id="sub">Parsing apartment.ifc in your browser with That Open's web-ifc&hellip;</p>
     </div>
     <div class="tools">
-      <div class="seg" role="group" aria-label="Model" id="models">
-        <button type="button" data-model="base" aria-pressed="true">Bid set</button>
-        <button type="button" data-model="own" aria-pressed="false" hidden>Your file</button>
-      </div>
+      <label class="pick">Model
+        <select id="models"><option value="base">Bid set, as issued</option></select>
+      </label>
       <label class="file">Open an IFC file&hellip;<input type="file" id="pick" accept=".ifc"></label>
       <a class="file" id="back" href="index.html" hidden>Plan room</a>
     </div>
@@ -196,20 +202,29 @@
     } catch {
       MANIFEST = { addenda: [{ number: 1, model: "apartment-addendum-1.ifc", changes: null, title: "Addendum 1" }] };
     }
-    for (const a of MANIFEST.addenda) {
-      if (!a.model) continue;  // an addendum that changes no model (Addendum 6) has none of its own
-      MODELS[`a${a.number}`] = { file: `./models/${a.model}`, label: `Addendum ${a.number}`, short: `Add. ${a.number}`,
-                                 changes: a.changes ? `./models/${a.changes}` : null, number: a.number, title: a.title };
+    // Each addendum shows the documents as they stood at it: the latest building model issued by
+    // then (Addenda 6 and 7 changed none: Addendum 5's), and the latest services model (Addendum 5
+    // issued the first, Addendum 7 the revised one). An older manifest names no addendum's services:
+    // the services model it has is the latest addendum's.
+    const sorted = [...MANIFEST.addenda].sort((x, y) => x.number - y.number);
+    if (MANIFEST.services && !sorted.some((a) => a.services_model)) sorted[sorted.length - 1].services_model = MANIFEST.services.model;
+    let bld = null, svc = null;
+    for (const a of sorted) {
+      if (a.model) bld = { file: a.model, from: a.number };
+      if (a.services_model) svc = { file: a.services_model, from: a.number };
+      if (!bld) continue;
+      MODELS[`a${a.number}`] = { file: `./models/${bld.file}`, from: bld.from, label: `Addendum ${a.number}`,
+                                 changes: a.changes ? `./models/${a.changes}` : null, number: a.number, title: a.title,
+                                 services: svc ? `./models/${svc.file}` : null, svcFrom: svc ? svc.from : null,
+                                 svcChanges: a.services_changes ? `./models/${a.services_changes}` : null };
     }
-    const own = document.querySelector('[data-model="own"]');
-    for (const [k, m] of Object.entries(MODELS)) {
-      if (k === "base") continue;
-      const b = document.createElement("button");
-      Object.assign(b, { type: "button", textContent: m.short });
-      b.dataset.model = k;
-      b.title = `${m.label}: ${m.title || ""}`;
-      b.setAttribute("aria-pressed", "false");
-      own.before(b);
+    // The dropdown: the addenda newest first, then the bid set.
+    const sel = $("#models"), bidset = sel.querySelector('option[value="base"]');
+    const adds = Object.entries(MODELS).filter(([, m]) => m.number).sort((x, y) => y[1].number - x[1].number);
+    for (const [i, [k, m]] of adds.entries()) {
+      const o = document.createElement("option");
+      Object.assign(o, { value: k, textContent: `${m.label}${i === 0 ? ", the latest" : ""}`, title: m.title || "" });
+      sel.insertBefore(o, bidset);
     }
     const f = MANIFEST.framing;
     if (f) {
@@ -219,22 +234,32 @@
       $("#opt-frame").disabled = true;
       $("#frame-note").textContent = "(not published)";
     }
-    const sv = MANIFEST.services;
-    if (sv) {
-      MODELS.services = { file: `./models/${sv.model}`, label: "Services", changes: sv.changes ? `./models/${sv.changes}` : null,
-                          status: sv.status || "" };
-      $("#services-note").textContent = `Services: ${sv.elements.toLocaleString()} elements, routed through ${sv.frame} (${sv.note}).`;
-    } else {
-      for (const l of LAYERS) { $(`#opt-${l}`).disabled = true; $(`#opt-${l}`).closest("label").classList.add("off"); }
-      $("#services-note").textContent = "Services: not published.";
+    servicesUI();
+  }
+  // The services model in effect for the model shown (none for the bid set, Addenda 1 to 4 or your
+  // own file), and its key among the loaded models.
+  const curSvc = () => MODELS[state.model]?.services || null;
+  const svcKey = (file) => `svc:${file}`;
+  function servicesUI() {
+    const m = MODELS[state.model], sv = MANIFEST && MANIFEST.services, file = curSvc();
+    for (const l of LAYERS) { $(`#opt-${l}`).disabled = !file; $(`#opt-${l}`).closest("label").classList.toggle("off", !file); }
+    if (!sv) { $("#services-note").textContent = "Services: not published."; return; }
+    if (!file) {
+      const first = Object.values(MODELS).filter((x) => x.services).map((x) => x.svcFrom);
+      $("#services-note").textContent = state.model === "own" ? "Services: the plan room's, not your file's."
+        : `Services: first issued with Addendum ${Math.min(...first)}; open it or a later addendum to see them.`;
+      return;
     }
+    const latest = file.endsWith(`/${sv.model}`);
+    $("#services-note").textContent = `Services as issued with Addendum ${m.svcFrom}`
+      + (latest ? `: ${sv.elements.toLocaleString()} elements, routed through ${sv.frame} (${sv.note}).` : `, routed through ${sv.frame}.`);
   }
   const LAYERS = ["plumbing", "hvac", "electrical", "sprinklers"];
   const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null,
                   rooms: false, frame: false, changes: false, svcChanges: false, layers: { plumbing: false, hvac: false, electrical: false, sprinklers: false } };
   const anyLayer = () => Object.values(state.layers).some(Boolean);
   const changeSets = {};  // model key: what that addendum changed (models/changes-addendum-N.json)
-  let svcChanges = null;  // what the services' latest addendum changed in them (models/changes-services-addendum-N.json)
+  const svcChangeSets = {};  // what an addendum changed in the services, by its file (models/changes-services-addendum-N.json)
   const loaded = {};
   let dirty = true;
 
@@ -476,14 +501,14 @@
     const cur = loaded[state.model];
     const chg = state.changes ? changeSets[state.model] : null;
     for (const [k, r] of Object.entries(loaded)) {
-      r.group.visible = k === state.model || (k === "frame" && state.frame) || (k === "services" && anyLayer());
+      r.group.visible = k === state.model || (k === "frame" && state.frame) || (k === svcKey(curSvc()) && anyLayer());
       for (const m of r.group.children) {
         const { e, role } = m.userData;
         let show = state.storey === "all" || e.storey === state.storey;
         if (role === "service") {
           m.visible = show && !!state.layers[e.psets.BF_Service.Layer];
-          const sc = state.svcChanges && svcChanges;
-          m.material.color.setHex(sc ? (svcChanges.added.has(e.gid) ? CHANGE.added : svcChanges.changed.has(e.gid) ? CHANGE.changed : CHANGE.same)
+          const sc = state.svcChanges && svcChangeSets[MODELS[state.model]?.svcChanges];
+          m.material.color.setHex(sc ? (sc.added.has(e.gid) ? CHANGE.added : sc.changed.has(e.gid) ? CHANGE.changed : CHANGE.same)
                                      : svcColour(e));
           m.material.emissive.setHex(0x000000);
           continue;
@@ -514,7 +539,7 @@
     if (cur && state.selected) {
       const key = state.selected.userData.key;
       state.selected = cur.byKey.get(key) || (state.frame && loaded.frame ? loaded.frame.byKey.get(key) : null)
-        || (anyLayer() && loaded.services ? loaded.services.byKey.get(key) : null) || null;
+        || (anyLayer() && loaded[svcKey(curSvc())] ? loaded[svcKey(curSvc())].byKey.get(key) : null) || null;
       if (state.selected) state.selected.material.emissive.copy(SELECT).multiplyScalar(0.55);
     }
     inspect(state.selected);
@@ -673,7 +698,7 @@
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), camera);
     const groups = [r.group, ...(state.frame && loaded.frame ? [loaded.frame.group] : []),
-                    ...(anyLayer() && loaded.services ? [loaded.services.group] : [])];
+                    ...(anyLayer() && loaded[svcKey(curSvc())] ? [loaded[svcKey(curSvc())].group] : [])];
     const pickable = groups.flatMap((g) => g.children).filter((m) => m.visible && !(state.xray && (m.userData.role === "wall" || m.userData.role === "party")));
     const hits = ray.intersectObjects(pickable, false);
     state.selected = hits.length ? hits[0].object : null;
@@ -700,13 +725,14 @@
     const r = build(data);
     r.title = key === "own" ? data.project || source.name
       : MODELS[key]?.number ? `12-flat walk-up, Addendum ${MODELS[key].number}: ${MODELS[key].title}` : "12-flat walk-up, as issued for bid";
-    r.stat = `${source.name}: ${(bytes.length / 1e3).toFixed(0)} kB, ${data.elements.length} elements, ${data.tris.toLocaleString()} triangles, parsed in ${data.ms.toFixed(0)} ms (${data.schema})`;
+    const m = MODELS[key];
+    const whose = m?.from && m.from !== m.number ? `, the building as Addendum ${m.from} left it` : "";
+    r.stat = `${source.name}${whose}: ${(bytes.length / 1e3).toFixed(0)} kB, ${data.elements.length} elements, ${data.tris.toLocaleString()} triangles, parsed in ${data.ms.toFixed(0)} ms (${data.schema})`;
     return r;
   }
 
   async function show(key, source) {
     wanted = key;
-    const btn = document.querySelector(`[data-model="${key}"]`);
     if (!loaded[key]) {
       $("#loading").hidden = false;
       $("#loading").textContent = `Parsing ${source.name} with web-ifc…`;
@@ -715,7 +741,10 @@
       try {
         r = await p;
       } catch (err) {
-        if (wanted === key) $("#loading").textContent = `${source.name} didn't load: ${err.message}.`;
+        if (wanted === key) {
+          $("#loading").textContent = `${source.name} didn't load: ${err.message}.`;
+          $("#models").value = state.model;  // the dropdown back to what's shown
+        }
         return;
       } finally {
         if (pending[key] === p) delete pending[key];
@@ -725,7 +754,7 @@
       if (wanted !== key) return;  // another model was asked for meanwhile; this one waits, loaded
     }
     state.model = key;
-    for (const b of $("#models").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b === btn));
+    $("#models").value = key;
     $("#title").textContent = loaded[key].title;
     if (!webIfcVersion) { try { webIfcVersion = String(api.GetVersion()); } catch {} }  // once the engine has started
     const empty = loaded[key].data.elements.length === 0 ? " No element in it has geometry to draw." : "";
@@ -735,6 +764,8 @@
     look("iso");
     $("#loading").hidden = true;
     showChanges();
+    servicesUI();
+    if (await loadServices()) showSvcChanges(); else refresh();
   }
   let webIfcVersion = "";
 
@@ -761,17 +792,17 @@
   // What the services' latest addendum changed, by GlobalId, on the services' layers: shown once a
   // layer is on, the elements it added and changed coloured as an addendum's are.
   async function showSvcChanges() {
-    const m = MODELS.services, row = $("#svc-changes-row"), box = $("#svc-changes");
-    row.hidden = !(m && m.changes && anyLayer());
+    const m = MODELS[state.model], row = $("#svc-changes-row"), box = $("#svc-changes");
+    row.hidden = !(m && m.svcChanges && anyLayer() && loaded[svcKey(curSvc())]);
     if (row.hidden) { box.hidden = true; refresh(); return; }
-    $("#svc-changes-label").textContent = `Mark what ${m.status} changed in the services`;
-    if (!svcChanges) {
+    $("#svc-changes-label").textContent = `Mark what Addendum ${m.number} changed in the services`;
+    if (!svcChangeSets[m.svcChanges]) {
       try {
-        const c = await (await fetch(m.changes)).json();
-        svcChanges = { added: new Set(c.added), changed: new Set(c.changed), raw: c };
+        const c = await (await fetch(m.svcChanges)).json();
+        svcChangeSets[m.svcChanges] = { added: new Set(c.added), changed: new Set(c.changed), raw: c };
       } catch { row.hidden = true; refresh(); return; }
     }
-    const c = svcChanges.raw;
+    const c = svcChangeSets[m.svcChanges].raw;
     box.hidden = !state.svcChanges;
     box.innerHTML = `<span class="sw" style="background:#2e9e5b"></span><span>${c.added.length} added</span>
       <span class="sw" style="background:#e8a33b"></span><span>${c.changed.length} changed</span>
@@ -797,30 +828,36 @@
     refresh();
   }
 
+  // The services model in effect, parsed once a layer is on; false if it didn't load.
+  async function loadServices() {
+    const file = curSvc(), key = file && svcKey(file);
+    if (!file || !anyLayer() || loaded[key]) return true;
+    $("#loading").hidden = false;
+    $("#loading").textContent = `Parsing ${file.split("/").pop()} with web-ifc…`;
+    try {
+      loaded[key] = await (pending[key] ??= load(key, { name: file.split("/").pop(), file }));
+    } catch (err) {
+      $("#loading").textContent = `The services model didn't load: ${err.message}.`;
+      return false;
+    } finally {
+      delete pending[key];
+    }
+    $("#loading").hidden = true;
+    return true;
+  }
+
   async function setLayer(layer, on) {
     state.layers[layer] = on;
-    if (on && !loaded.services) {
-      $("#loading").hidden = false;
-      $("#loading").textContent = "Parsing the services model with web-ifc…";
-      try {
-        loaded.services = await (pending.services ??= load("services", { name: MODELS.services.file.split("/").pop(), file: MODELS.services.file }));
-      } catch (err) {
-        $("#loading").textContent = `The services model didn't load: ${err.message}.`;
-        state.layers[layer] = false;
-        $(`#opt-${layer}`).checked = false;
-        return;
-      } finally {
-        delete pending.services;
-      }
-      $("#loading").hidden = true;
+    if (!(await loadServices())) {
+      state.layers[layer] = false;
+      $(`#opt-${layer}`).checked = false;
+      return;
     }
     showSvcChanges();
   }
 
-  $("#models").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button[data-model]");
-    if (!b) return;
-    const k = b.dataset.model;
+  $("#models").addEventListener("change", (ev) => {
+    const k = ev.target.value;
     if (k === "own") { if (loaded.own) show("own"); return; }
     show(k, { name: MODELS[k].file.split("/").pop(), file: MODELS[k].file });
   });
@@ -834,9 +871,12 @@
       delete loaded.own;
       if (state.model === "own") state.model = "base";
     }
-    const own = document.querySelector('[data-model="own"]');
-    own.hidden = false;
-    own.textContent = f.name.length > 22 ? f.name.slice(0, 20) + "…" : f.name;
+    let own = $('#models option[value="own"]');
+    if (!own) {  // your file, at the top of the dropdown
+      own = Object.assign(document.createElement("option"), { value: "own" });
+      $("#models").prepend(own);
+    }
+    own.textContent = `Your file: ${f.name.length > 28 ? f.name.slice(0, 26) + "…" : f.name}`;
     state.selected = null;
     await show("own", { name: f.name, pick, bytes: new Uint8Array(await f.arrayBuffer()) });
     ev.target.value = "";
@@ -871,16 +911,18 @@
     // otherwise the latest addendum, the documents as they stand.
     const nums = Object.values(MODELS).map((m) => m.number).filter(Boolean);
     const hash = location.hash.match(/^#addendum(?:-(\d+))?(?:-changes)?$/);
-    const first = location.hash === "#bidset" ? "base" : hash ? `a${hash[1] || 1}` : nums.length ? `a${Math.max(...nums)}` : "base";
+    const latest = nums.length ? `a${Math.max(...nums)}` : "base";
+    const asked = location.hash === "#bidset" ? "base" : hash ? `a${hash[1] || 1}` : latest;
+    const first = MODELS[asked] ? asked : latest;  // a link to an addendum that isn't there opens the latest
     if (location.hash.includes("changes") || /[?&]changes/.test(location.search)) { state.changes = true; $("#opt-changes").checked = true; }
     // Links can open a view: ?rooms, ?frame, ?xray, ?storey=2, ?view=back (the plan room uses them).
     const q = new URLSearchParams(location.search);
     for (const [key, id] of [["rooms", "#opt-rooms"], ["xray", "#opt-xray"]]) if (q.has(key)) { state[key] = true; $(id).checked = true; }
     if (q.has("frame") && MODELS.frame) { $("#opt-frame").checked = true; setFrame(true); }
     // ?plumbing, ?hvac, ?wiring (or ?electrical), ?sprinklers: the services' layers.
-    if (q.has("svcchanges") && MODELS.services && MODELS.services.changes) { state.svcChanges = true; $("#opt-svc-changes").checked = true; }
+    if (q.has("svcchanges")) { state.svcChanges = true; $("#opt-svc-changes").checked = true; }
     for (const [key, l] of [["plumbing", "plumbing"], ["hvac", "hvac"], ["wiring", "electrical"], ["electrical", "electrical"], ["sprinklers", "sprinklers"]]) {
-      if (q.has(key) && MODELS.services) { $(`#opt-${l}`).checked = true; setLayer(l, true); }
+      if (q.has(key) && MODELS[first]?.services) { $(`#opt-${l}`).checked = true; state.layers[l] = true; }
     }
     $("#loading").textContent = `Parsing ${MODELS[first].file.split("/").pop()} with web-ifc…`;
     await show(first, { name: MODELS[first].file.split("/").pop(), file: MODELS[first].file });

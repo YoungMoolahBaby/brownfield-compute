@@ -4380,6 +4380,21 @@ test. Then the township brief's ask.
            - **In the viewer:** with a services layer on, "Mark what Addendum 7 changed in the
              services" colours them as an addendum's changes. The plan room's Addendum 7 links
              straight to it.
+           - **Every addendum in the viewer** (Jon: "it says 7 addendas but the viewer seems to
+             only be through addendum 5"). It had a button only for an addendum with a building
+             model of its own, so it stopped at Addendum 5, and showed Addendum 7's services over
+             any model. Each addendum now shows the documents as they stood at it:
+             - the building issued by then (Addenda 6 and 7: Addendum 5's, said so under the
+               title);
+             - the services issued by then (Addenda 5 and 6: Addendum 5's; Addendum 7: its own).
+               None before Addendum 5: the bid set and Addenda 1-4 grey the layers out.
+
+             The manifest names the services model each addendum issued (`services_model`), and
+             the site carries both. It opens at the latest, Addendum 7.
+           - **The model switch is a dropdown** (Jon: "could be a dropdown instead of horizontal list
+             in case there are a lot of addendas"): newest first, the bid set last, your own file at
+             the top once opened. Seen in headless Chrome: the default view, Addendum 7 with its
+             changes marked, Addendum 6 with Addendum 5's services, and the bid set with no layers.
          - **Run (2026-11-23):** every check passes (`systems --ifc`, 223 lines). Addendum 7's own 31
            include 7c's 20, the plant's three, the fallback's, the sequence's and the tests', the
            diff read from both files, and the sheets'. Addenda 2-5 came out byte for byte; Addendum

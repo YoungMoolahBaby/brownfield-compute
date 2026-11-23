@@ -129,7 +129,8 @@ def manifest() -> dict:
         raise SystemExit(f"no {MANIFEST.relative_to(ROOT)}: run `uv run brownfield systems --ifc --publish`")
     m = json.loads(MANIFEST.read_text(encoding="utf-8"))
     missing = [f["path"] for a in m["addenda"] for f in a["files"] if not (PUBLISHED / f["path"]).exists()]
-    missing += [p for a in m["addenda"] for p in (a["model"], a["changes"], a["rfi"]) if p and not (PUBLISHED / p).exists()]
+    missing += [p for a in m["addenda"] for p in (a["model"], a["changes"], a["rfi"], a.get("services_model"), a.get("services_changes"))
+                if p and not (PUBLISHED / p).exists()]
     rnd = m.get("round") or {}
     missing += [x["path"] for x in rnd.get("files", []) + rnd.get("rfis", []) if not (PUBLISHED / x["path"]).exists()]
     if m.get("framing") and not (PUBLISHED / m["framing"]["model"]).exists():
@@ -217,7 +218,7 @@ def addenda(m: dict) -> tuple[str, str]:
         # only the services (Addendum 7) marks them on the services' layers.
         layers = "&amp;".join(SERVICE_LAYERS)
         seen = (f' · <a href="model.html#addendum-{a["number"]}-changes">see what changed in 3D</a>' if a["model"]
-                else f' · <a href="model.html?{layers}&amp;svcchanges">see what changed in the services in 3D</a>'
+                else f' · <a href="model.html?{layers}&amp;svcchanges#addendum-{a["number"]}">see what changed in the services in 3D</a>'
                 if a.get("services_changes") else "")
         items.append(
             f'<li><div class="ah"><b>Addendum {a["number"]:02d}</b> <span>{e(a["title"])}</span>'
@@ -241,12 +242,10 @@ def _safe_out(out: Path) -> None:
 def build(out: Path = DEFAULT_OUT) -> list[Path]:
     m = manifest()
     copies = dict(COPIES)
-    for a in m["addenda"]:
-        if not a["model"]:
-            continue
-        copies[f"models/{a['model']}"] = PUBLISHED / a["model"]
-        if a["changes"]:
-            copies[f"models/{a['changes']}"] = PUBLISHED / a["changes"]
+    for a in m["addenda"]:  # each addendum's models and what it changed, for the viewer
+        for k in ("model", "changes", "services_model", "services_changes"):
+            if a.get(k):
+                copies[f"models/{a[k]}"] = PUBLISHED / a[k]
     if m.get("framing"):
         copies[f"models/{m['framing']['model']}"] = PUBLISHED / m["framing"]["model"]
     if m.get("services"):
@@ -272,7 +271,7 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
     page = (VIEWER / "planroom.html").read_text(encoding="utf-8")
     page = re.sub(r"\{\{size:([^}]+)\}\}", lambda mm: _size(out / mm.group(1)), page)
     latest = max(m["addenda"], key=lambda a: a["number"])
-    drawn = max((a for a in m["addenda"] if a["model"]), key=lambda a: a["number"])  # the latest with a model of its own
+    drawn = max((a for a in m["addenda"] if a["model"]), key=lambda a: a["number"])  # the latest with drawings of its own
     c = counts(PUBLISHED / f"drawings-addendum-{drawn['number']}" / "schedule.csv")
     c["addenda"] = len(m["addenda"])
     page = re.sub(r"\{\{count:(\w+)\}\}", lambda mm: f"{c[mm.group(1)]:,}", page)
@@ -280,8 +279,7 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
     page = (page.replace("{{addenda:summary}}", summary).replace("{{addenda:list}}", listing)
             .replace("{{documents:tree}}", tree(m)).replace("{{bid:issued}}", html.escape(when(BID_ISSUED)))
             .replace("{{addenda:latest}}", f"Addendum {latest['number']}")
-            .replace("{{addenda:latest_model}}", f"Addendum {drawn['number']}")
-            .replace("{{addenda:latest_model_n}}", str(drawn["number"])))
+            .replace("{{addenda:latest_n}}", str(latest["number"])))
     if "{{" in page:
         raise SystemExit("planroom.html: a {{...}} left unfilled")
     (out / "index.html").write_text(page, encoding="utf-8")

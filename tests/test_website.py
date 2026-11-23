@@ -148,8 +148,11 @@ def test_the_addenda_are_the_manifests_and_the_runs(site):
     a7 = m["addenda"][6]
     assert a7["services_changes"] == m["services"]["changes"] and (site / "models" / a7["services_changes"]).is_file()
     assert "svcchanges" in page and m["services"]["model"] == "services-addendum-7.ifc"
-    # The viewer opens at the latest addendum with a model.
-    assert 'href="model.html#addendum-5"' in page
+    # Each addendum names the services model it issued (5 and 7), copied for the viewer, which shows
+    # each addendum with the building and the services as they stood; it opens at the latest.
+    assert [a.get("services_model") for a in m["addenda"]] == [None] * 4 + ["services-addendum-5.ifc", None, "services-addendum-7.ifc"]
+    assert all((site / "models" / a["services_model"]).is_file() for a in m["addenda"] if a.get("services_model"))
+    assert f'href="model.html#addendum-{len(m["addenda"])}"' in page
 
 
 @ready
