@@ -162,6 +162,11 @@ def test_the_documents_are_in_folders(site):
         assert '<span class="fold">05 Services model' in page
         for path in [m["services"]["model"], *(f["path"] for f in m["services"]["files"])]:
             assert f'href="files/{path}"' in page, path
+    if m.get("round"):  # the installers' round (pass 3g step 8c): its forms, its log, and the comments shown
+        assert '<span class="fold">06 Installers\' round' in page
+        for x in m["round"]["files"] + m["round"]["rfis"]:
+            assert f'href="files/{x["path"]}"' in page, x["path"]
+        assert page.index("05 Services model") < page.index("06 Installers' round")
 
 
 def test_an_item_doesnt_stop_at_a_decimal_point():

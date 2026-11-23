@@ -906,6 +906,17 @@ def cmd_questions(args) -> int:
     return 0
 
 
+def cmd_round(args) -> int:
+    from . import installers, systems
+
+    P = values(load_params())
+    apt = systems.load(systems.latest_model())
+    r = installers.run(apt, P, publish_to=installers.PUBLISHED if args.publish else None)
+    print(installers.report(r))
+    print(NL + "wrote " + ", ".join(str(k["path"].relative_to(OUT_DIR.parent)) for k in r["packets"].values()))
+    return 1 if r["problems"] else 0
+
+
 def cmd_viewer(args) -> int:
     from . import viewer
 
@@ -1118,6 +1129,8 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    rd = sub.add_parser("round", help="pass 3g step 8c: the installers' round: each trade's packet (a letter, its questions, its sheets), and the log of their comments (data/raw/round/comments.yaml, private) checked")
+    rd.add_argument("--publish", action="store_true", help="also publish the question forms, the public log and each comment its author let us show, to the plan room (only if the log is sound)")
     sub.add_parser("questions", help="pass 3g step 8b: a question sheet for each trade (plumber, HVAC, electrician, sprinkler contractor), for the installers' round")
     sub.add_parser("sheets", help="pass 3g step 8a: the services drawn as sheets from the published models (plans of each storey for each trade, the plumbing walls in elevation, the diagrams and schedules), for the installers' round")
     rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked; 7c: steps 3-6 on the routes; 7d with --ifc: the services model and its schedules)")
@@ -1144,7 +1157,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "round": cmd_round, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

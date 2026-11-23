@@ -272,5 +272,32 @@
   ],
   "status": "Addendum 5",
   "note": "issued with Addendum 5; 345 rated openings firestopped by the maker's engineering judgment"
+ },
+ "round": {
+  "issued": "2026-11-22T17:54:51-08:00",
+  "files": [
+   {
+    "path": "round/questions-plumber.pdf",
+    "label": "The questions for the plumber"
+   },
+   {
+    "path": "round/questions-hvac.pdf",
+    "label": "The questions for the HVAC contractor"
+   },
+   {
+    "path": "round/questions-electrician.pdf",
+    "label": "The questions for the electrician"
+   },
+   {
+    "path": "round/questions-sprinkler.pdf",
+    "label": "The questions for the sprinkler contractor"
+   },
+   {
+    "path": "round/comments.md",
+    "label": "What came back: the comments shown with their author's OK"
+   }
+  ],
+  "rfis": [],
+  "note": "0 comments received, 0 shown with their author's OK"
  }
 }

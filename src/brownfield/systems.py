@@ -1028,6 +1028,12 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
                              "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None, 5: None, 6: None}[n],
                              "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4, 5, 6)],
                 "services": services}
+    # The installers' round (step 8c), as `brownfield round --publish` last left it.
+    from . import installers
+
+    rnd = installers.manifest_entry(to)
+    if rnd is not None:
+        manifest["round"] = rnd
     path = to / "addenda.json"
     path.write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
     written.append(path)

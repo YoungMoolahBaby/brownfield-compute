@@ -130,6 +130,8 @@ def manifest() -> dict:
     m = json.loads(MANIFEST.read_text(encoding="utf-8"))
     missing = [f["path"] for a in m["addenda"] for f in a["files"] if not (PUBLISHED / f["path"]).exists()]
     missing += [p for a in m["addenda"] for p in (a["model"], a["changes"], a["rfi"]) if p and not (PUBLISHED / p).exists()]
+    rnd = m.get("round") or {}
+    missing += [x["path"] for x in rnd.get("files", []) + rnd.get("rfis", []) if not (PUBLISHED / x["path"]).exists()]
     if m.get("framing") and not (PUBLISHED / m["framing"]["model"]).exists():
         missing.append(m["framing"]["model"])
     s = m.get("services")
@@ -160,13 +162,16 @@ def _folder(name: str, rows: list[str], note: str = "", open_: bool = False) -> 
 
 
 def tree(m: dict) -> str:
-    """The bid documents as folders: the bid set's, each addendum's, the RFIs, the framing model, the
-    services model and its schedules."""
+    """The bid documents as folders: the bid set's, each addendum's, the RFIs (the installers' comments
+    shown among them), the framing model, the services model and its schedules, and the installers'
+    round."""
     bid = "".join(_folder(name, [_row(p, label, BID_ISSUED) for p, label in files]) for name, files in BID_FOLDERS)
     adds = "".join(_folder(f"Addendum {a['number']:02d}: {a['title']}", [_row(f["path"], f["label"], a["issued"]) for f in a["files"]],
                            f" · issued {when(a['issued'], False)}") for a in reversed(m["addenda"]))
     rfis = [_row(a["rfi"], f"RFI {a['rfi'][4:7]}, answered by Addendum {a['number']} (BCF 3.0)", a["issued"])
             for a in m["addenda"] if a["rfi"]]
+    rnd = m.get("round")
+    rfis += [_row(x["path"], f"The installers' round: {x['label']}", x["issued"]) for x in (rnd or {}).get("rfis", [])]
     out = [f'<details class="folder top" open><summary><span class="fold">01 Bid documents</span>'
            f'<span class="n">issued {html.escape(when(BID_ISSUED, False))}</span></summary>{bid}</details>',
            f'<details class="folder top" open><summary><span class="fold">02 Addenda</span>'
@@ -187,6 +192,12 @@ def tree(m: dict) -> str:
         out.append(f'<details class="folder top"><summary><span class="fold">05 Services model</span><span class="n">{html.escape(s.get("status", "preliminary"))}</span></summary>'
                    f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
                    f'{"".join(rows)}</table></details>')
+    if rnd:  # the installers' round (pass 3g step 8): the question forms and what came back
+        out_rows = [_row(x["path"], x["label"], rnd["issued"]) for x in rnd["files"]]
+        out.append("<details class=\"folder top\"><summary><span class=\"fold\">06 Installers' round</span>"
+                   f'<span class="n">{html.escape(rnd["note"])}</span></summary>'
+                   f'<table><tr><th>Document</th><th class="k">File</th><th class="d">Issued</th><th class="s">Size</th></tr>'
+                   f'{"".join(out_rows)}</table></details>')
     return "".join(out)
 
 

@@ -112,7 +112,11 @@ Addendum 6 (Jon's decision) fixes both before the round and issues the sheets:
 - five for every trade, among them how they'd usually do it and what it would cost (step 10's
   baseline).
 
-Next: 8c, the packets and the log.
+8c done: a packet for each trade (a letter from the study, its questions, its sheets), a private
+log for what comes back with only what a commenter agreed to published, and the round's folder in
+the plan room with the four question forms.
+
+Next: 8d, the round itself (Jon): send the packets, then relay the replies.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3713,7 +3717,7 @@ test. Then the township brief's ask.
              login).
            - NEC 2020 352.26 and 300.4(A)(1) were read through IAEI and EC&M, not NFPA 70's text.
     8. **The installers' round (Jon):** the set to a plumber, an HVAC contractor, an electrician
-       and a sprinkler contractor; their comments logged, then taken or answered (Addendum 6).
+       and a sprinkler contractor; their comments logged, then taken or answered (Addendum 7).
        - **Jon's decisions (2026-11-22),** all four recommendations:
          - **The sheets first.** The services went out as a model, its schedules and the viewer's
            layers, and a trade reviews and bids from sheets: sent as they were, the set would
@@ -3730,7 +3734,8 @@ test. Then the township brief's ask.
          - 8b, a question sheet for each trade, from the items flagged for this round;
          - 8c, the log and the packets. Each comment is an RFI (a BCF topic, as RFIs 001 and
            002), by trade and county only; nothing is published without the commenter's OK;
-         - 8d, the round itself (Jon), then Addendum 6 with what's taken.
+         - 8d, the round itself (Jon), then Addendum 7 with what's taken (Addendum 6 went out
+           first, with 8a's two findings).
        - **8a done 2026-11-22: the services drawn as sheets** (`uv run brownfield sheets`;
          `src/brownfield/servicesheets.py`; writes `out/pass3/services/sheets/`).
          - **How:** 21 sheets, 36 x 24 in., drawn from the published files, as pass 3f drew the
@@ -3882,6 +3887,60 @@ test. Then the township brief's ask.
            in the sheets above.
          - **What we don't know:** whether the questions are the ones a trade would want to
            answer. The round will say, and C3 asks what's missing.
+       - **8c done 2026-11-22: the packets and the log** (`uv run brownfield round`, `--publish`;
+         `src/brownfield/installers.py`). Jon took all four recommendations:
+         - **The log is private, and only what a commenter agreed to is published.** It lives at
+           `data/raw/round/comments.yaml`, gitignored, so it stays on Jon's machine.
+         - **The letter is from "the brownfield-compute study", with no name in it.** Jon's own
+           message introduces him.
+         - **The questions are in the plan room now.** Comments go there as RFIs when their
+           authors agree.
+         - **No reply-by date.**
+         - **How:**
+           - **A packet for each trade** (`out/pass3/round/packets/`, for Jon to send):
+             - a one-page letter: what this is (a design study, not a job, nothing to win), what
+               we ask (an hour), how to reply, the plan room's link, and what we publish (only
+               with a yes, by trade and county);
+             - the trade's question form;
+             - G-001 and the trade's sheets from Addendum 6's set. The HVAC contractor and the
+               electrician also get the plumbing walls, which their line sets, loop risers and
+               feeders run in.
+
+             9-12 pages each. The letter says the sheets are 36 x 24 in., read on a screen or
+             printed at 11 x 17.
+           - **The log:** one entry a comment Jon relays, with:
+             - trade, county, when it came and by what;
+             - the questions or sheets it's about, and the services elements if any;
+             - their words, and their yes or no to publishing (question C5);
+             - open, taken (with its addendum) or answered (with the answer and its date).
+
+             `check_log` names what an entry lacks: a trade outside the round, a question or
+             sheet that doesn't exist, no yes or no, an answer or date missing.
+           - **Publishing** (`--publish`, only from a sound log) writes the plan room's "06
+             Installers' round" folder:
+             - the four question forms;
+             - the public log, with the counts and each comment its author let us show;
+             - each such comment as a BCF 3.0 topic in "03 RFIs": its author a role
+               (`plumber@example.com`), a viewpoint on any services elements it names, our answer
+               as a comment, closed once taken or answered.
+
+             A comment without a yes is counted, never written there. One taken back is removed
+             on the next publish. `brownfield systems --publish` keeps the round's entry in the
+             manifest.
+         - **Run (2026-11-22):** four packets (plumber 11 pages, HVAC contractor 12,
+           electrician 12, sprinkler contractor 9). The log is empty; the round is published to
+           the plan room: the four forms and an empty log.
+           - Tests: `tests/test_walkup_installers.py`, 14, on synthetic entries in temporary
+             folders only. They check:
+             - every problem an entry can have is named;
+             - a comment without a yes never reaches the published files;
+             - a comment taken back leaves;
+             - the BCF repeats byte for byte;
+             - each packet's pages are its letter, form and sheets.
+         - **What we don't know:** whether trades will answer an unpaid request about a made-up
+           building. Jon's own contacts, and the hour we ask for, are what we have.
+       - **8d, the round itself (Jon):** send the packets; relay each reply (an entry in the log);
+         then each comment taken (Addendum 7) or answered, and published if its author agreed.
     9. **The inspection and commissioning plan.**
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
