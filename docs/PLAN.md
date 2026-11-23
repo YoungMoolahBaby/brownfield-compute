@@ -127,7 +127,17 @@ Step 9 started (Jon: the code's tests, the design's claims and the control seque
   the preheater, the service rises to 455 A, still on its 600 A main. The house panel goes to
   100 A, so it can take less PV (8.3 kW AC).
 
-Next: 9b, the control sequence.
+9b done: the control sequence.
+- The plant switches between the data center's heat and its backup heater, one at a time, by a
+  wired interlock.
+- The radiant floors run on an outdoor reset.
+- Each flat's mini-split sits 2 K under the floor and takes over when the floor can't hold the
+  room.
+- Found: eight of the sixteen control points, among them the heater circuit's pump and the two
+  data-center valves, have never been chosen. They're part of the plant's wall-hung equipment no
+  step has placed.
+
+Next: 9c, the tests and inspections.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4048,6 +4058,62 @@ test. Then the township brief's ask.
              they count defrost. The tightest flat has twice its need to give.
            - How long the data center's heat can be gone. The backup carries the design day for
              as long as it lasts, at the electricity's cost: step 10 prices it.
+       - **9b done 2026-11-22: the control sequence** (`uv run brownfield sequence`;
+         `src/brownfield/sequence.py`; writes `out/pass3/sequence.md`, specification section
+         23 09 93, for Addendum 7).
+         - **How:** each system in its modes, every setpoint the design's own. The few the
+           sequence sets itself are judgements, set at commissioning (`controls`): the fallback's
+           timers, the warm-weather shutdown, the mini-splits' offset and the loop's alarm.
+           - **The hot-water plant:**
+             - **Normal:** the heater circuit's pump P-2 runs on ST-1's aquastat (140 F, at half
+               the tank's height: Ecosizer's). V-1 throttles the data center's water so it
+               leaves HX-1 at 80 F, the heat pump's source. HP-1 lifts the circuit to 140 F. The
+               swing tank's element switches on at 125 F and off at 133 F (Ecosizer's, not a
+               clock: "quiet hours" earlier was loose wording). The mixing valve sends 125 F; the
+               return comes back at 122 F or more.
+             - **Fallback:** entered when the data center's water at the annex falls below 80 F,
+               or stops, for 10 min. HP-1 is locked out first, then BK-1 released, and its own
+               thermostats hold 140 F. It's left after 30 min of the water back: BK-1 locked out
+               first, then HP-1.
+             - **Alarms:** the fallback, the storage below 125 F, the return below 122 F, a fault.
+           - **The building loop:** the outdoor reset, a straight line from the room's 20 C to
+             the design's 40.2 C at -16.3 C, as REHAU describes weather compensation. A starting
+             curve: 31.1 C at 0 C outdoors. It shuts off above 15.5 C. In the fallback V-2 closes
+             and P-1 stops: cold or still water would only cool the floors.
+           - **Each flat's mini-split** heats at 18 C, 2 K under the floor's 20 C, so it runs only
+             when the floor can't hold the room. Fujitsu's units take no outside mode signal (only
+             operation/stop and a forced stop, the latter already the condensate switch's). So the
+             takeover is each flat's setpoint, not a wire from the plant, and the manager confirms
+             it at the season's change and on the plant's alarm.
+           - **The ERV** runs continuously; its preheater holds 2.5 C only with its airflow
+             proved. The mini-split's fan runs on low with the ERV. Fire protection's signals
+             are as step 6 designed them.
+           - **Three interlocks are wired, not programmed:**
+             - BK-1 never with HP-1: its contactor coil goes through a normally closed contact
+               of HP-1's enable. The house panel's 100 A rests on this.
+             - The preheater on its own airflow sensor.
+             - The water-level switch on each mini-split's forced stop.
+         - **Run (2026-11-22):** 9 checks pass.
+           - The reset gives the design's supply at the design dry bulb and the room's at the
+             room's temperature, never falling as it gets colder, and still heating (22.5 C) at
+             the shutdown.
+           - Every setpoint is within its equipment's range: the heat pump's source, BK-1's
+             thermostats, the swing tank under the storage, the preheater at least Broan's 0 C.
+           - Leaving the fallback is slower than entering it.
+           - The house panel counts BK-1 and HP-1 as the interlock runs them.
+           - 30 steps in 5 systems, 16 control points. Tests: `tests/test_walkup_sequence.py`, 4.
+         - **Found:**
+           - **Eight of the sixteen control points have never been chosen.** They're the plant
+             controller, the heater circuit's pump, the two data-center valves, the flow switch,
+             and three temperature sensors. Like the exchangers and the mixing valve, they're
+             part of the plant's wall-hung equipment that 7a placed no box for. The design sized
+             the heater circuit's flow, not its pump. A question already for the plumber (P6),
+             and a gap step 10's pricing has to carry.
+           - **A building-wide switch to the mini-splits isn't possible with these units.** The
+             takeover rests on each flat's setting, so a tenant who has switched theirs off
+             gets a cold flat until it's switched on. The plant's alarm tells the manager.
+         - **What we don't know:** the reset's slope against the building as built. The floors'
+           own heat and the flats' gains bend it; the balancing tunes it (9c).
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing

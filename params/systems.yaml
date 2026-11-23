@@ -555,6 +555,16 @@ hot_water:
     unit: A, its full-load current at 208 V single phase
     conf: high
     source: "the same sheet, p. 4: 'Full Load Current in Amperes ... Single Phase 208V' 59 for 12.3 kW"
+  backup_thermostat_min_f:
+    value: 120
+    unit: F, the least its thermostats are set to
+    conf: high
+    source: "A. O. Smith AOSCE15300 p. 1: 'One temperature control (adjustable through a range of 120 to 181 F) and manual reset high temperature cut-off per element'"
+  backup_thermostat_max_f:
+    value: 181
+    unit: F, the most its thermostats are set to
+    conf: high
+    source: "the same sheet, p. 1 (backup_thermostat_min_f)"
   backup_gal:
     value: 50
     unit: gal, its own tank
@@ -2973,3 +2983,44 @@ services:
     unit: in., the same for sprinkler pipe through studs (NFPA 13R 5.2.3.7)
     conf: medium
     source: "NFPA 13R 5.2.3.7, the 2019 wording as the 2022 cycle's Second Revision No. 2 prints it (data/raw/pass3g/raw/sprinkler/13R_A2021_SDR.txt, a committee draft): 'Pipe or tube through holes or notches in wood and metal stud walls within 1 1/4 in. (32 mm) of the inside face of the stud shall be protected from mechanical damage'; A.5.2.3.7: 'An example of mechanical protection might consist of nail plates'"
+# The control sequence's own setpoints and timers (pass 3g step 9b): judgements, each to set at
+# commissioning; every other setpoint the sequence uses is the design's own (hot_water, erv, loads).
+controls:
+  fallback_enter_min:
+    value: 10
+    low: 5
+    high: 30
+    unit: min the data center's water at the annex must stay below the heat pump's source temperature, or without flow, before the plant falls back to its backup heater
+    conf: low
+    source: "judgement: long enough not to switch on a passing dip, short against the storage's hours of hot water; to set at commissioning"
+  fallback_exit_min:
+    value: 30
+    low: 10
+    high: 60
+    unit: min the data center's water must be back, warm and flowing, before the plant leaves its backup heater
+    conf: low
+    source: "judgement: longer than going in, so the plant doesn't cycle between its heaters; to set at commissioning"
+  wwsd_c:
+    value: 15.5
+    low: 13
+    high: 18
+    unit: C outdoors, above which the building loop's pump stops (warm-weather shutdown)
+    conf: low
+    source: "judgement: a usual warm-weather shutdown for radiant floors (60 F); REHAU's guide describes outdoor reset but sets no figure (855.601 p. 24, data/raw/pass3g/dl/rehau/dg.pdf); to set at commissioning"
+  ms_offset_k:
+    value: 2
+    low: 1
+    high: 3
+    unit: K below the floor's room setpoint that each flat's mini-split is set to heat at, so it runs only when the floor can't hold the room
+    conf: low
+    source: "judgement: a two-stage setpoint split, the floor first; to set with the tenants"
+  loop_alarm_k:
+    value: 2
+    unit: K the building loop's supply may stay under its reset target before the plant controller alarms
+    conf: low
+    source: "judgement: to set at commissioning"
+  loop_alarm_min:
+    value: 30
+    unit: min it may stay so before the alarm
+    conf: low
+    source: "judgement: to set at commissioning"
