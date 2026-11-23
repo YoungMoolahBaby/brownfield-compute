@@ -101,7 +101,18 @@ a sheet. Found:
 - the house load takes the swing tank's element at 1,747 VA, not its 2.0 kW: 44.9 A on a 45 A
   breaker, or 47.3 A (a 50 A breaker) if it counts as continuous.
 
-Next: 8b, a question sheet for each trade.
+Addendum 6 (Jon's decision) fixes both before the round and issues the sheets:
+- the valves cost the governing sprinkler design 0.06 psi, so it needs 44.79 of 45;
+- the element runs 4.9 h on the design day, so it's continuous, and the house position is
+  50 A;
+- no model element changes.
+
+8b done: a question sheet for each trade, letter-size forms with the design's own figures:
+- the plumber 9 questions, the HVAC contractor 9, the electrician 7, the sprinkler contractor 6;
+- five for every trade, among them how they'd usually do it and what it would cost (step 10's
+  baseline).
+
+Next: 8c, the packets and the log.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3779,6 +3790,98 @@ test. Then the township brief's ask.
            - Whether the plumbing plans need enlarged plans of the baths, kitchens and utility
              closets. The sizes left off them are in the elevations, the schedules and the
              model. A question for this round.
+       - **Addendum 6 done 2026-11-22, before the round** (Jon: "yes fix both as addendum 6, then
+         8b"). The two findings above, and the sheets issued.
+         - **How:**
+           - **Item 1, the fire service's control valves** (`fire.valves_psi`):
+             - a listed indicating shutoff valve on each side of the 2 in. double check
+               assembly, OS&Y gate valves as the basis of design, each with a tamper switch to
+               the monitoring panel;
+             - both the step 6 and the 7c hydraulics count them, from NFPA 13's chart as the
+               USFA's plans-review manual reprints it: a 2 in. gate valve is 1 ft of Schedule 40
+               steel pipe (2.067 in., C 120). A butterfly valve would be 6 ft.
+           - **Item 2, the house panel** (`electrical.house_loads`):
+             - the swing tank's element at its 2.0 kW nameplate (`house.swing_element_va`);
+             - continuous when its design day's heat takes it 3 h or more at that
+               (`house.continuous_h`, NEC Article 100).
+           - **Item 3:** the sheets of 8a, revised to Addendum 6
+             (`services-sheets-addendum-6.pdf`).
+           - **It changes no model element,** so it has no model of its own. The manifest gives
+             it none, the plan room links nothing to mark in 3D, and the viewer opens at the
+             latest addendum with a model (Addendum 5). It's checked on the designs it changes and
+             the sheets it issues (`systems.addendum_6_run`, in `brownfield systems --ifc`).
+         - **Run (2026-11-22):** all checks pass.
+           - 7a-7d: 71 checks pass. The services model came out byte for byte as published.
+           - `brownfield systems --ifc --publish`: Addenda 1-5's published files are byte for
+             byte as they were; Addendum 6 adds `addendum-6.md` and the sheets.
+           - Tests: `tests/test_walkup_addendum6.py`, 4.
+           - The plan room seen in headless Chrome: "Addenda (6)", the viewer at Addendum 5.
+         - **Found:**
+           - **The valves cost 0.06 psi at the governing design** (3-front-left's open area,
+             56 gpm), which now needs 44.79 of the 45 psi (44.73 before).
+             - The stair's six sprinklers: 0.30 psi, 36.4 psi in all.
+             - Step 6's square figures: the stair from 40.4 to 40.7 psi, the top flats' living
+               areas from 38.1 to 38.2.
+             - Nothing has to grow with gate valves. A butterfly valve, the usual alternative, is
+               6 ft on the same chart and would put the governing design at 45.1 psi, over the 45.
+               So Item 1 says an equal may lose no more than a gate valve.
+           - **The element runs 4.9 h on the design day at 2.0 kW, so it's continuous.**
+             - The house comes to 10,291 VA calculated (9,538 before), 47.3 A, a 50 A position
+               (45 before).
+             - The service: 149,317 VA and 414 A (412 before), still on the 600 A main.
+             - The PV the house panel can take under the 120% rule falls from 17.5 to 16.6 kW
+               AC.
+         - **What we don't know:**
+           - Whether the sprinkler contractor would fit gate valves. A listed butterfly valve with a
+             built-in supervisory switch is the usual choice, and this design can't take its loss
+             on the placeholder street pressure: the hydrant test, or a larger pipe, decides it. A
+             question for the round.
+           - Whether the element's 4.9 h run at a stretch: the quiet hours' control decides it
+             (step 9). Counted continuous until then.
+         - **Found on the way, in the sheets:** P-601 carried figures typed in, not read from
+           the design.
+           - The temperatures, the storage's 16 h, the 60 psi setting, the loop's 66-175 W
+             spread and the exchanger's 3 K now come from the params.
+           - The RPZ's extra loss now comes from Watts' figure, a new param (`rpz_psi_40`):
+             8.4 psi at the routed peak, where the sheet had step 4's 8.5.
+           - The data center's "89%" of the hot water's heat was step 4's whole-day figure: the
+             sheet now gives the preheat's share it computes (75%).
+       - **8b done 2026-11-22: a question sheet for each trade** (`uv run brownfield questions`;
+         `src/brownfield/questions.py`; writes `out/pass3/round/`).
+         - **How:** for each trade, its questions, then five for every trade.
+           - **The trade's own questions** come from the items flagged for this round in steps
+             3-8. Each points at its sheet or schedule and says why we ask, with the design's own
+             figure (the designs on the routes, the published schedules, the params):
+             - **plumber, 9:** the PEX bent through its turns, the cast-iron stacks, the shared
+               drain, the vent stacks, the bored holes, the plant, the street's pressure, the
+               RPZ, the fixtures;
+             - **HVAC contractor, 9:** the loops' balancing, the heat meters' cut-off, a hot-water
+               preheater, the soffits, the fans' settings, the condensate, the line sets, the
+               ERV into the return, the building loop;
+             - **electrician, 7:** the GFCI on the inverter units, the feeders' bends, the
+               plates, the meter stack's parallel sets, pricing without a device layout, the
+               upsized circuits, the 50 A house panel;
+             - **sprinkler contractor, 6:** the calculation on a placeholder street, the valves,
+               the stair's six, the layout, the CPVC drops' firestopping, the fire service.
+           - **For every trade:**
+             - how they'd usually do it and roughly what it would cost (step 10's baseline);
+             - what costs more than it buys;
+             - what's missing to price it;
+             - whether they used the model or the viewer (D27's open question);
+             - whether we may publish their comments, by trade and county only.
+           - **Each trade's sheet is a letter-size PDF form,** to print and write on, three
+             pages each. The study's own references ("step 7c", "D27") are kept off the forms
+             and in the Markdown we use.
+         - **Run (2026-11-22):** 31 questions for the trades and 5 for every one.
+           - Tests: `tests/test_walkup_questions.py`, 4. They check:
+             - the figures are the designs';
+             - every sheet a question names is in the set;
+             - the forms read as text.
+         - **Found:** nothing new in the design. Putting the questions into words showed which
+           figures were only in step 4's prose (the RPZ's loss, the data center's share), fixed
+           in the sheets above.
+         - **What we don't know:** whether the questions are the ones a trade would want to
+           answer. The round will say, and C3 asks what's missing.
     9. **The inspection and commissioning plan.**
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.

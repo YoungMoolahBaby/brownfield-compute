@@ -198,11 +198,13 @@ def addenda(m: dict) -> tuple[str, str]:
     items = []
     for a in sorted(m["addenda"], key=lambda a: a["issued"], reverse=True):
         files = " · ".join(f'<a href="files/{e(f["path"])}">{e(f["path"].rsplit("/", 1)[-1])}</a>' for f in a["files"])
+        # An addendum that changes no model (Addendum 6) has nothing to mark in 3D.
+        seen = f' · <a href="model.html#addendum-{a["number"]}-changes">see what changed in 3D</a>' if a["model"] else ""
         items.append(
             f'<li><div class="ah"><b>Addendum {a["number"]:02d}</b> <span>{e(a["title"])}</span>'
             f'<span class="n">issued {e(when(a["issued"]))}</span></div>'
             f'<ol>{"".join(f"<li>{e(x)}</li>" for x in a["items"])}</ol>'
-            f'<p class="af">{files} · <a href="model.html#addendum-{a["number"]}-changes">see what changed in 3D</a></p></li>')
+            f'<p class="af">{files}{seen}</p></li>')
     return summary, f'<ol class="addenda-list" reversed>{"".join(items)}</ol>'
 
 
@@ -221,6 +223,8 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
     m = manifest()
     copies = dict(COPIES)
     for a in m["addenda"]:
+        if not a["model"]:
+            continue
         copies[f"models/{a['model']}"] = PUBLISHED / a["model"]
         if a["changes"]:
             copies[f"models/{a['changes']}"] = PUBLISHED / a["changes"]
@@ -247,14 +251,16 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
     page = (VIEWER / "planroom.html").read_text(encoding="utf-8")
     page = re.sub(r"\{\{size:([^}]+)\}\}", lambda mm: _size(out / mm.group(1)), page)
     latest = max(m["addenda"], key=lambda a: a["number"])
-    c = counts(PUBLISHED / f"drawings-addendum-{latest['number']}" / "schedule.csv")
+    drawn = max((a for a in m["addenda"] if a["model"]), key=lambda a: a["number"])  # the latest with a model of its own
+    c = counts(PUBLISHED / f"drawings-addendum-{drawn['number']}" / "schedule.csv")
     c["addenda"] = len(m["addenda"])
     page = re.sub(r"\{\{count:(\w+)\}\}", lambda mm: f"{c[mm.group(1)]:,}", page)
     summary, listing = addenda(m)
     page = (page.replace("{{addenda:summary}}", summary).replace("{{addenda:list}}", listing)
             .replace("{{documents:tree}}", tree(m)).replace("{{bid:issued}}", html.escape(when(BID_ISSUED)))
             .replace("{{addenda:latest}}", f"Addendum {latest['number']}")
-            .replace("{{addenda:latest_n}}", str(latest["number"])))
+            .replace("{{addenda:latest_model}}", f"Addendum {drawn['number']}")
+            .replace("{{addenda:latest_model_n}}", str(drawn["number"])))
     if "{{" in page:
         raise SystemExit("planroom.html: a {{...}} left unfilled")
     (out / "index.html").write_text(page, encoding="utf-8")

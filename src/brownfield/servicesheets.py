@@ -38,8 +38,9 @@ from .servicesifc import FT, IN, read_back
 
 BIDSET = Path(__file__).resolve().parents[2] / "docs" / "pass3" / "bidset"
 OUT = OUT_DIR / "pass3" / "services" / "sheets"
-REV = "addendum-5"
-PDF_NAME = f"services-{REV}-sheets.pdf"
+REV = "addendum-5"  # the models the sheets are drawn from
+SHEETS_REV = "Addendum 6"  # the addendum that issues the sheets
+PDF_NAME = "services-sheets-addendum-6.pdf"
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -250,7 +251,7 @@ def _figure():
     return pdfset._figure()
 
 
-def title_block(ax, number: str, title: str, revision: str = "Addendum 5", status: str = "for review: the installers' round") -> None:
+def title_block(ax, number: str, title: str, revision: str = SHEETS_REV, status: str = "for review: the installers' round") -> None:
     from matplotlib.patches import Rectangle
 
     ax.add_patch(Rectangle((BORDER, BORDER), SW - 2 * BORDER, SH - 2 * BORDER, fill=False, lw=1.5))
@@ -905,8 +906,9 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         ("STREET MAIN", f"{p[pl + 'street_psi']:.0f} psi: a placeholder\nuntil the hydrant test (NFPA 291)"),
         ("TAP AND SERVICE", f"{p[pl + 'tap_in']:g} in. tap\n{up['the tap in the main (Table E103.3(4))']:.1f} psi at the peak"),
         ("WATER METER", f"the authority's\n{up['the main meter']:.1f} psi at the peak"),
-        ("DOUBLE CHECK VALVE\nASSEMBLY, 2 IN.", f"{up['the double check valve assembly']:.1f} psi at the peak\n(the authority may ask an RPZ:\nabout 8.5 psi more)"),
-        ("PRESSURE-REDUCING\nVALVE", "set 60 psi static,\nfor quiet"),
+        ("DOUBLE CHECK VALVE\nASSEMBLY, 2 IN.", f"{up['the double check valve assembly']:.1f} psi at the peak\n(the authority may ask an RPZ:\n"
+         f"about {up['the double check valve assembly'] * (p[pl + 'rpz_psi_40'] / p[pl + 'dcva_psi_40'] - 1):.1f} psi more)"),
+        ("PRESSURE-REDUCING\nVALVE", f"set {p[pl + 'max_static_psi']:g} psi static,\nfor quiet"),
         (f"COLD MAIN {cold['sizes']['main']:g} IN.", f"PEX-a under the slab\nto four {cold['sizes']['riser']:g} in. risers,\n{cold['sizes']['branch']:g} in. to each flat"),
     ]
     x = 1.4
@@ -924,15 +926,22 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
 
     ax.text(1.4, SH - 6.0, "THE HOT-WATER PLANT (THE ANNEX'S MECHANICAL ROOM)", fontsize=11, weight="bold", va="top")
     h, pr, tm = w["heater"], w["primary"], w["tm"]
+    hw = "systems.hot_water."
+    t_store, t_out, t_back = p[hw + "storage_f"], p[hw + "distribution_f"], p[hw + "return_min_f"]
+    from .params import load_params
+    spread = load_params()[hw + "recirc_w_per_flat"]
     by = SH - 13.2
-    dc = _box(ax, 1.4, by + 4.2, 3.4, 1.3, f"DATA CENTER'S LIQUID LOOP\nits return, {h['dc_in_f']:.0f} F (50 C)\n{h['dc_per_circuit']:.2f} times the heater\ncircuit's flow", fs=6)
+    dc = _box(ax, 1.4, by + 4.2, 3.4, 1.3, f"DATA CENTER'S LIQUID LOOP\nits return, {h['dc_in_f']:.0f} F ({(h['dc_in_f'] - 32) * 5 / 9:.0f} C)\n"
+              f"{h['dc_per_circuit']:.2f} times the heater\ncircuit's flow", fs=6)
     hx = _box(ax, 6.2, by + 4.2, 3.4, 1.3, f"HX-1 PLATE EXCHANGER\npreheats the heater circuit\nto {h['preheat_f']:.1f} F: {h['preheat_kw']:.1f} kW\n({h['preheat_share']:.0%} of the plant's heat)", fs=6)
-    hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to 140 F,\n{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
-    st1 = _box(ax, 11.0, by + 1.2, 3.6, 1.6, f"ST-1 STORAGE\n{pr['storage_gal']:.0f} gal at 140 F\n(Lochinvar, basis of design)\n{pr['capacity_kbtuh']:.1f} kBtu/h over 16 h", fs=6)
-    st2 = _box(ax, 16.0, by + 1.2, 3.3, 1.6, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, 2.0 kW element\n(Bradford White RE340S6,\nbasis of design; 7a)", fs=6)
-    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, "MIXING VALVE\nASSE 1017 master valve\n125 F out", fs=6)
+    hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to {t_store:g} F,\n{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
+    st1 = _box(ax, 11.0, by + 1.2, 3.6, 1.6, f"ST-1 STORAGE\n{pr['storage_gal']:.0f} gal at {t_store:g} F\n(Lochinvar, basis of design)\n"
+               f"{pr['capacity_kbtuh']:.1f} kBtu/h over {p[hw + 'run_hr']:g} h", fs=6)
+    st2 = _box(ax, 16.0, by + 1.2, 3.3, 1.6, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
+               "(Bradford White RE340S6,\nbasis of design; Addendum 6)", fs=6)
+    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
     hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n{hot['sizes']['branch']:g} in. to each flat", fs=6)
-    rp = _box(ax, 20.7, by - 1.6, 3.3, 1.2, f"RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{w['loop']['gpm']:.2f} gpm, 122 F back", fs=6)
+    rp = _box(ax, 20.7, by - 1.6, 3.3, 1.2, f"RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{w['loop']['gpm']:.2f} gpm, {t_back:g} F back", fs=6)
     # The data center's water: to HX-1, then the heat pump's source, then back.
     _pipe(ax, [(dc[0] + dc[2], dc[1] + 0.95), (hx[0], hx[1] + 0.95)], colour="#6a1b9a", text="DC water")
     _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.95), (hp[0], hp[1] + 0.95)], colour="#6a1b9a", text="source, throttled")
@@ -942,26 +951,29 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     _pipe(ax, [(st1[0], st1[1] + 0.3), (hx[0] + hx[2] * 0.5, st1[1] + 0.3), (hx[0] + hx[2] * 0.5, hx[1])], colour=TAGS["CW"][1],
           text="heater circuit, from the storage's bottom", side=-1)
     _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.3), (hp[0], hp[1] + 0.3)], colour="#ef6c00", text=f"{h['preheat_f']:.1f} F", side=-1)
-    _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1]), (hp[0] + hp[2] * 0.5, st1[1] + st1[3])], colour=TAGS["HW"][1], text="140 F")
-    _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text="140 F")
+    _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1]), (hp[0] + hp[2] * 0.5, st1[1] + st1[3])], colour=TAGS["HW"][1], text=f"{t_store:g} F")
+    _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_store:g} F")
     _pipe(ax, [(st2[0] + st2[2], st2[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
-    _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text="125 F")
+    _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_out:g} F")
     _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.6), (rp[0] + rp[2], rp[1] + 0.6)], colour=TAGS["HWR"][1],
           ls=TAGS["HWR"][2], text=f"return {w['loop']['return_main_in']:g} in. main, {w['loop']['return_riser_in']:g} in. risers", side=1)
     _pipe(ax, [(rp[0], rp[1] + 0.6), (st2[0] + st2[2] * 0.5, rp[1] + 0.6), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
     _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, from the main")
     _pipe(ax, [(mv[0] + mv[2] * 0.25, by - 0.2), (mv[0] + mv[2] * 0.25, mv[1])], colour=TAGS["CW"][1], text="cold to the mixing valve")
     notes = [
-        f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at 125 F, a swing-tank plant "
+        f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at {t_out:g} F, a swing-tank plant "
         f"({pr['running_gal']:.0f} gal running, against a floor of {pr['minimum_gal']:.0f}).",
-        "Stored and leaving the heater at 140 F (WHO: not less than 60 C; CDC: above 140 F); sent out at 125 F; back at 122 F or more.",
-        f"The loop loses {w['loop']['w_per_flat']:.0f} W a flat on its routes (Ecosizer's spread of measured buildings 66-175). The swing "
-        f"tank's element runs {tm['element_hr']:.1f} h on the design day; the plant carries {tm['plant_share']:.0%} of the loop's loss.",
-        "About 89% of the hot water's heat comes from the data center (step 4): the preheat, and what the heat pump draws from its water.",
+        f"Stored and leaving the heater at {t_store:g} F (WHO: not less than 60 C; CDC: above 140 F); sent out at {t_out:g} F; back at "
+        f"{t_back:g} F or more.",
+        f"The loop loses {w['loop']['w_per_flat']:.0f} W a flat on its routes (Ecosizer's spread of measured buildings {spread.low:g}-"
+        f"{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh on the design day; the plant carries "
+        f"{tm['plant_share']:.0%} of the loop's loss.",
+        f"Most of the hot water's heat comes from the data center: the preheat ({h['preheat_share']:.0%} of the plant's), and what the "
+        "heat pump draws from its water.",
         "Not in the model: the plant's wall-hung assemblies (the exchanger, the pumps, the mixing valve, the backflow assembly, the "
         "pressure-reducing valve). Their places in the mechanical room are for the plumber to propose.",
-        "The plant's control sequence (the data center's flow through HX-1 held so its water leaves the heat pump's source at 80 F) is "
-        "step 9's.",
+        f"The plant's control sequence (the data center's flow through HX-1 held so its water leaves the heat pump's source at "
+        f"{h['source_f']:.0f} F) is step 9's.",
     ]
     yy = by - 2.6
     ax.text(1.4, yy, "NOTES", fontsize=8, weight="bold", va="top")
@@ -988,7 +1000,8 @@ def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     y = SH - 4.0
     dc = _box(ax, 1.4, y, 3.4, 1.4, f"DATA CENTER'S LIQUID LOOP\nits return, {L['primary_in_c']:.0f} C ({_f(L['primary_in_c']):.0f} F)\n"
               f"{L['primary_gpm']:.2f} gpm, back at {L['primary_out_c']:.1f} C", fs=6)
-    hx = _box(ax, 6.2, y, 3.4, 1.4, f"HX-2 PLATE EXCHANGER\n{L['w'] / 1000:.1f} kW at design\n(an approach of 3 K,\njudgement until selected)", fs=6)
+    hx = _box(ax, 6.2, y, 3.4, 1.4, f"HX-2 PLATE EXCHANGER\n{L['w'] / 1000:.1f} kW at design\n(an approach of {p['systems.substation.approach_k']:g} K,\n"
+              "judgement until selected)", fs=6)
     pu = _box(ax, 11.0, y, 3.4, 1.4, f"P-1 CIRCULATOR\nGrundfos ALPHA2 15-55F\n{L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft\n(worst path: {L['pump_path']})", fs=6)
     hd = _box(ax, 15.8, y, 3.4, 1.4, f"HEADER {L['header_in']:g} IN.\n{L['supply_c']:.1f} C out, {L['return_c']:.1f} C back\n"
               "pre-insulated PEX-a mains\nunder the slab", fs=6)
@@ -1082,7 +1095,7 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         ax.text(fx + 0.5, yy + 0.13, f"FEEDER {n.upper()}: {f['breaker_a']:.0f} A, {c}", fontsize=5.6, va="center")
         ax.text(fx + 0.5, yy - 0.1, f'in {trade}" PVC; {f["ft"]:.0f} ft routed; drop {max(f["drop"]["ll"], f["drop"]["an"], f["drop"]["bn"]):.2%}; '
                 f"{fa['flats_a'][n] / 1000:.1f} kA at the panel", fontsize=5.3, va="center", color="#424242")
-        _box(ax, fx + 6.9, yy - 0.28, 2.4, 0.56, f"LC {n.upper()}\nQO130L125PG, 30 spaces", fs=5.2)
+        _box(ax, fx + 6.9, yy - 0.28, 2.4, 0.56, f"LC {n.upper()}\nQO130L125PG, {el['panels'][n]['spaces']} spaces", fs=5.2)
     hp = el["service"]["house"]
     hb = _box(ax, x, 2.2, 3.2, 1.9, f"HOUSE PANEL\n{hp['breaker_a']:.0f} A from the house meter\n{hp['calculated_va']:,.0f} VA calculated\n"
               f"{hp['amps']:.1f} A; the heat pump\non {hp['dhw_breaker_a']:.0f} A (MOCP {hp['dhw_mocp_a']:.0f})", fs=6)
@@ -1162,9 +1175,9 @@ def fire_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     items = [
         ("STREET MAIN", f"{p['systems.plumbing.street_psi']:.0f} psi: a placeholder\nheld to {fh['target_psi']:.0f} for its swing\n(IBC 903.3.5)"),
         ("FIRE SERVICE", f"{p[sp + 'underground_id_in']:g} in. underground\n{p[sp + 'underground_ft']:.0f} ft (step 6)"),
-        ("SHUTOFF VALVE", "listed, supervised\n(tamper switch)"),
+        ("SHUTOFF VALVE", "listed OS&Y gate valve,\nsupervised (tamper switch)\nAddendum 6, item 1"),
         (f"DOUBLE CHECK\nASSEMBLY {sz['backflow']} IN.", "Watts LF007: UL Classified\nwithout shutoff valves only"),
-        ("SHUTOFF VALVE", "listed, supervised\n(tamper switch)"),
+        ("SHUTOFF VALVE", "listed OS&Y gate valve,\nsupervised (tamper switch)\nAddendum 6, item 1"),
         ("WATERFLOW SWITCH", "and an exterior\nhorn-strobe (903.4.2)"),
         (f"MAIN {sz['main']} IN.", "CPVC under the slab\nto the stair"),
         (f"RISER {sz['riser']} IN.", "in the stair, at the back\nof each storey's hall"),
@@ -1179,20 +1192,28 @@ def fire_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
                            f"lines {sz['branch']} in.; the stair's own sprinklers on the riser. A fire department connection on the street side "
                            "(13R 6.11.1, IBC 912.2.1) with a check valve and an automatic drip. A monitoring panel (Potter PFC-6006) sends to a "
                            "supervising station (903.4.1)."), fontsize=6.3, va="top")
-    ax.text(1.4, y - 0.55, ("The shutoff valves on each side of the backflow assembly are listed and supervised: Watts lists the LF007 as UL "
-                            "Classified without its own shutoff valves only (found in step 7a; not yet an addendum item)."), fontsize=6.3, va="top",
-            color="#c00000")
+    w = fh["worst"]
+    gate, bfly_ft = p[sp + "shutoff_valve_el_ft"], p[sp + "butterfly_valve_el_ft"]
+    bfly = w["need_psi"] + w["valves_psi"] * (bfly_ft / gate - 1)  # a butterfly valve instead, at the same flow
+    ax.text(1.4, y - 0.55, ("The system's control valves are the listed, supervised shutoff valves on each side of the backflow assembly "
+                            f"(Addendum 6, item 1): Watts lists its {sz['backflow']} in. LF007 as UL Classified without its own shutoff "
+                            f"valves only. The hydraulics count them (NFPA 13's chart: a {sz['backflow']} in. gate valve is {gate:g} ft of "
+                            f"Schedule 40 steel pipe; a butterfly valve's {bfly_ft:g} ft would put the governing design at {bfly:.1f} psi, "
+                            + ("over" if bfly > fh["target_psi"] else "within") + " what the street gives, so an equal loses no more than "
+                            "a gate valve)."),
+            fontsize=6.3, va="top")
     # The hydraulic summary.
     w = fh["worst"]
     ax.text(1.4, SH - 6.2, "HYDRAULIC SUMMARY (13R 7.1.1.3.1: EACH COMPARTMENT'S WORST FOUR; THE STAIR'S SIX)", fontsize=11, weight="bold", va="top")
     rows = [["at the riser assembly (the routed pipe, Hazen-Williams, C 150)", f"{w['p_assembly_psi']:.1f}"],
             ["the underground service", f"{w['underground_psi']:.2f}"],
             ["the backflow assembly", f"{w['backflow_psi']:.1f}"],
+            ["its shutoff valves", f"{w['valves_psi']:.2f}"],
             ["up from the main", f"{w['elevation_psi']:.1f}"],
             ["needed at the street", f"{w['need_psi']:.1f}"],
             [f"the street, less its margin ({p[sp + 'margin_psi']:g} psi)", f"{fh['target_psi']:.1f}"]]
     yy = _table(ax, 1.4, SH - 7.0, [(f"THE MOST DEMANDING: {w['flat'].upper()} {w['comp'].upper()}, {len(w['design'])} SPRINKLERS, {w['q_gpm']:.0f} GPM", 6.4),
-                                    ("PSI", 0.8)], rows, fs=6.2, row_h=0.21, bold_rows={4})
+                                    ("PSI", 0.8)], rows, fs=6.2, row_h=0.21, bold_rows={5})
     cases = sorted(fh["cases"], key=lambda c: -c["need_psi"])
     crow = [[c["flat"], c["comp"], str(c["heads"]), f"{c['q_gpm']:.0f}", f"{c['p_assembly_psi']:.1f}", f"{c['need_psi']:.1f}"] for c in cases[:18]]
     _table(ax, 9.4, SH - 7.0, [("FLAT", 1.3), ("COMPARTMENT", 1.3), ("HEADS", 0.6), ("GPM", 0.6), ("AT ASSEMBLY\nPSI", 1.1), ("AT STREET\nPSI", 1.0)],
@@ -1248,7 +1269,7 @@ def cover(ax, sheets: list[tuple[str, str]]) -> None:
         "Codes as Pennsylvania enforces them (34 Pa. Code 403.21, from 2026-01-01): the 2021 IBC, IPC, IMC and IECC; NFPA 70 (2020), "
         "13R (2019) and 72 (2019).",
         "The bid set's documents govern: the services model (services-addendum-5.ifc), its schedules (lengths, fittings, equipment, "
-        "fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-5. These sheets are drawn from "
+        "fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-6. These sheets are drawn from "
         "the model and add nothing to it.",
         "Each run is tagged with its system and nominal size in inches; a circuit with its name and wire.",
         "Each storey's plan shows its flats' own runs wherever they go in the floor and ceiling spaces (a floor's drains serve the "
@@ -1348,7 +1369,7 @@ def write(ctx: dict, path: Path, numbers: list[str] | None = None) -> dict:
     tags: dict[str, tuple[int, int]] = {}
     path.parent.mkdir(parents=True, exist_ok=True)
     with matplotlib.rc_context({"pdf.fonttype": 42}), PdfPages(
-            path, metadata={"Title": f"walk-up services sheets ({REV})", "Creator": "brownfield-compute pass 3g step 8a", "CreationDate": None}) as pdf:
+            path, metadata={"Title": f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g step 8a", "CreationDate": None}) as pdf:
         for n in sheets:
             fig, ax = _figure()
             try:
@@ -1406,8 +1427,8 @@ def checks(ctx: dict, res: dict, path: Path) -> list[tuple[str, bool, str]]:
     ]
 
 
-def run(apt: dict, p: dict, out: Path = OUT) -> dict:
-    ctx = context(apt, p)
+def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None) -> dict:
+    ctx = context(apt, p, routes=routes, s7=s7)
     path = out / PDF_NAME
     res = write(ctx, path)
     ch = checks(ctx, res, path)

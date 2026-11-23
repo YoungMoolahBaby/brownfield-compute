@@ -506,9 +506,9 @@ def conduit_for(sizes: list[str], p: dict, kind: str = "THHN/THWN/THWN-2", sched
 
 # ---- 5c: the house loads ----
 
-HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous), across the phases (208 V)?
+HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous / by its hours), across the phases (208 V)?
     ("dhw_heat_pump", "the hot-water plant's water-to-water heat pump (ClimateMaster SW036)", "motor", True),
-    ("swing_element", "the swing tank's element (step 4's plant, Ecosizer's size)", "noncontinuous", True),
+    ("swing_element", "the swing tank's element at its nameplate (Bradford White's; Addendum 6)", "by its hours", True),
     ("loop_pump", "the building heating loop's pump (Grundfos ALPHA2 15-55F)", "motor", False),
     ("recirc_pump", "the hot-water recirculation pump (Grundfos ALPHA2 15-55SF)", "motor", False),
     ("controls", "the substation's and the plant's controls and the meters' reader", "continuous", False),
@@ -530,10 +530,14 @@ def house_loads(apt: dict, p: dict) -> dict:
 
     h, w = "systems.house.", "systems.wiring."
     stair_n = len(apt["stair"]["flights"]) + 1
-    element_va = plant(apt, p)["tm"]["capacity_kbtuh"] * 1000.0 / 3.412142
+    # The swing tank's element at its nameplate (Addendum 6), continuous if the design day's heat
+    # from it (step 4's plant) takes it `continuous_h` or more at that (it runs in the quiet hours).
+    element_h = plant(apt, p)["tm"]["element_kbtu"] * 1000.0 / 3.412142 / p[h + "swing_element_va"]
+    element_kind = "continuous" if element_h >= p[h + "continuous_h"] else "noncontinuous"
     rows = []
     for k, what, kind, ll in HOUSE_LOADS:
-        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"], "swing_element": element_va}.get(k) or p[h + f"{k}_va"]
+        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"]}.get(k) or p[h + f"{k}_va"]
+        kind = element_kind if k == "swing_element" else kind
         factor = p[h + "continuous_factor"] if kind == "continuous" else 1.0
         rows.append({"key": k, "what": what, "kind": kind, "ll": ll, "va": va, "calc_va": va * factor})
     largest = max(r["va"] for r in rows if r["kind"] == "motor")
@@ -545,7 +549,7 @@ def house_loads(apt: dict, p: dict) -> dict:
     va_ln = sum(r["calc_va"] for r in rows if not r["ll"]) / 2
     z0 = feeder_drop(complex(0.0, 0.0), 0.0, va_ll, va_ln, va_ln, p[w + "pf"], FLAT_SYSTEM)
     amps = max(z0["ia"], z0["ib"])
-    return {"rows": rows, "stair_luminaires": stair_n, "connected_va": sum(r["va"] for r in rows),
+    return {"rows": rows, "stair_luminaires": stair_n, "element_h": element_h, "connected_va": sum(r["va"] for r in rows),
             "calculated_va": sum(r["calc_va"] for r in rows), "amps": amps, "breaker_a": next_standard(amps, p),
             "dhw_breaker_a": next_standard(p[h + "dhw_heat_pump_va"] / 208.0, p), "dhw_mocp_a": p[h + "dhw_heat_pump_mocp_a"]}
 

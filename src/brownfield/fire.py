@@ -194,6 +194,17 @@ def dcva_psi(gpm: float, size_in: str) -> float:
     raise ValueError(gpm)
 
 
+def valves_psi(gpm: float, size_in: str, p: dict) -> float:
+    """The fire service's listed shutoff valves, one on each side of the backflow assembly
+    (Addendum 6: Watts' 2 in. LF007 is listed without its own valves), each its equivalent length
+    of Schedule 40 steel pipe from NFPA 13's chart, at steel's C. The chart's figure is for a 2 in.
+    valve, the assembly's size; another size has no figure here."""
+    s = "systems.sprinkler."
+    if size_in != "2":
+        raise ValueError(f"the shutoff valves' equivalent length is a 2 in. valve's, not {size_in} in.")
+    return p[s + "shutoff_valves"] * p[s + "shutoff_valve_el_ft"] * hw_psi_ft(gpm, p[s + "steel_2in_id_in"], p[s + "c_steel"])
+
+
 # ---- The friction: Hazen-Williams ----
 
 def hw_psi_ft(gpm: float, id_in: float, c: float) -> float:
@@ -413,11 +424,12 @@ def supply(p: dict, q: float, p_top: float, z_top_m: float, run: dict, sizes: di
                 + hw_psi_ft(q, main["id"], c) * (run["main_ft"] + 3 * main["elbow"]))
     under = hw_psi_ft(q, p[s + "underground_id_in"], p[s + "c_underground"]) * (p[s + "underground_ft"] + p[s + "underground_el_ft"])
     backflow = dcva_psi(q, sizes["backflow"])
+    valves = valves_psi(q, sizes["backflow"], p)
     head_ft = z_top_m / FT + p["systems.fire_code.access_road_below_slab_ft"] + p[pl + "main_depth_ft"]
     elevation = 0.433 * head_ft
-    need = p_top + friction + under + backflow + elevation
-    return {"riser_main_psi": friction, "underground_psi": under, "backflow_psi": backflow, "elevation_psi": elevation,
-            "need_psi": need, "q_gpm": q}
+    need = p_top + friction + under + backflow + valves + elevation
+    return {"riser_main_psi": friction, "underground_psi": under, "backflow_psi": backflow, "valves_psi": valves,
+            "elevation_psi": elevation, "need_psi": need, "q_gpm": q}
 
 
 def hydraulics(apt: dict, p: dict) -> dict:
@@ -612,9 +624,10 @@ def routed_hydraulics(apt: dict, p: dict, routes) -> dict:
         pt, q = tree_demand(top, flowing, sizes, p, c)
         under = hw_psi_ft(q, p[s + "underground_id_in"], p[s + "c_underground"]) * (p[s + "underground_ft"] + p[s + "underground_el_ft"])
         bf = dcva_psi(q, sizes["backflow"])
+        vv = valves_psi(q, sizes["backflow"], p)
         elev = 0.433 * (top.z / FT + p["systems.fire_code.access_road_below_slab_ft"] + p[pl + "main_depth_ft"])
-        return {"q_gpm": q, "p_assembly_psi": pt, "underground_psi": under, "backflow_psi": bf, "elevation_psi": elev,
-                "need_psi": pt + under + bf + elev}
+        return {"q_gpm": q, "p_assembly_psi": pt, "underground_psi": under, "backflow_psi": bf, "valves_psi": vv, "elevation_psi": elev,
+                "need_psi": pt + under + bf + vv + elev}
 
     def cases(sizes: dict) -> list[dict]:
         out = []
@@ -888,7 +901,8 @@ def report(s: dict) -> str:
               "  The designs, by what they ask of the street:"]
     for c in sorted(hyd["cases"], key=lambda x: -x["need_psi"])[:6]:
         lines.append(f"    {c['flat']:14s} {c['comp']:8s} {c['q_gpm']:5.1f} gpm, {c['need_psi']:5.1f} psi (the riser and main "
-                     f"{c['riser_main_psi']:.1f}, backflow {c['backflow_psi']:.1f}, elevation {c['elevation_psi']:.1f})")
+                     f"{c['riser_main_psi']:.1f}, backflow {c['backflow_psi']:.1f}, its shutoff valves {c['valves_psi']:.2f}, "
+                     f"elevation {c['elevation_psi']:.1f})")
     lines.append(f"  Governing: {w['flat']} {w['comp']}, {w['q_gpm']:.0f} gpm at {w['need_psi']:.1f} psi; {hyd['water_gal']:,.0f} gal over 30 min. "
                  f"The street's 55 psi is a placeholder (the hydrant test).")
     lines += ["", f"The stair with no heater: {st['t_f']:.0f} F at the design hour (flats' side {st['ua_in_w_k']:.0f} W/K, outdoors "

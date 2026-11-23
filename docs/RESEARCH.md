@@ -1478,3 +1478,21 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     rungs "not to exceed 14 inches (356 mm) on center"; side rails "not less than 30 inches (762
     mm)" above the roof; a 30 by 30 in. clear landing at its foot.
 
+- **Step 8, Addendum 6 (2026-11-22).** Under `data/raw/pass3g/` (gitignored).
+  - **The fire service's shutoff valves.**
+    - Watts' sheet for the 2 in. LF007 (ES-LF007S 2344, 2023): "UL Classified without shutoff
+      valves only (3/4" to 2", except 007M3LF)". Its 3 in. sheet: "UL Classified with OSY gate
+      valves (horizontal only)". Both are in `data/watts_lf007_dcva_chartread.csv`'s header.
+    - Their loss is from NFPA 13's chart, as the USFA/NFA *Commercial Fire Sprinkler System
+      Plans Review* student manual (May 2023, `raw/sprinkler/USFA_sm_0263.txt`) reprints it:
+      - Appendix A p. A-8, "EQUIVALENT PIPE LENGTH CHART FOR VALVES AND FITTINGS - SCH 40 STEEL
+        PIPE": at 2 in., a gate valve 1 ft and a butterfly valve 6 ft;
+      - p. A-6: Schedule 40's 2.067 in. bore at 2 in.;
+      - p. A-6: "BLK STL (WET & DELUGE)" C 120.
+
+      NFPA 13D's first draft has the same kind of table (Table 10.4.4(b), `13D_A2021_FDR.txt`).
+      IPC Table E103.3(5) gives a 2 in. gate valve 1.3 ft, for water supply, not sprinklers.
+  - **The swing tank's element:** Bradford White's spec 1201-0926 (RE340S6, elements "Minimum
+    1500 / Maximum 6000" W), as step 7a read it. The rule that a load of 3 hours or more is
+    continuous (NEC Article 100) is as the load-calculation guides state it: the 2020 text wasn't
+    read.

@@ -195,6 +195,7 @@
       MANIFEST = { addenda: [{ number: 1, model: "apartment-addendum-1.ifc", changes: null, title: "Addendum 1" }] };
     }
     for (const a of MANIFEST.addenda) {
+      if (!a.model) continue;  // an addendum that changes no model (Addendum 6) has none of its own
       MODELS[`a${a.number}`] = { file: `./models/${a.model}`, label: `Addendum ${a.number}`, short: `Add. ${a.number}`,
                                  changes: a.changes ? `./models/${a.changes}` : null, number: a.number, title: a.title };
     }

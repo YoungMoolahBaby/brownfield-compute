@@ -406,6 +406,11 @@ plumbing:
     unit: psi through a 2 in. double check valve assembly at 40 gpm
     conf: medium
     source: "Watts spec sheet ES-LF007S 2623 (Watts LF007, 2 in.), p. 4, its flow curve read by a research agent; the authority decides between it and a reduced-pressure zone assembly (Watts LF009 2 in., 13.2 psi at 40 gpm, ES-LF009 2611 p. 5)"
+  rpz_psi_40:
+    value: 13.2
+    unit: psi through a 2 in. reduced-pressure zone assembly at 40 gpm, if the authority asks one instead of the double check
+    conf: medium
+    source: "Watts spec sheet ES-LF009 2611 (Watts LF009, 2 in.), p. 5, as dcva_psi_40's source reads it: '13.2 psi at 40 gpm'"
   prv_falloff_psi_40:
     value: 9.7
     unit: psi, a 2 in. pressure-reducing valve's falloff at 40 gpm
@@ -1660,6 +1665,16 @@ house:
     unit: times a continuous load (3 hours or more) for a feeder's conductors and breaker
     conf: medium
     source: "NEC 215.2(A)(1) and 215.3 (feeders: 125% of continuous loads), the rule as every load-calculation guide states it; its 2020 text not read here. 625.42 (quoted under ev) makes EV charging continuous"
+  swing_element_va:
+    value: 2000
+    unit: VA, the swing tank's electric element at its nameplate (Addendum 6)
+    conf: high
+    source: "Bradford White spec 1201-0926 p. 2, RE340S6: elements 'Minimum 1500 / Maximum 6000' W; step 4's 1.75 kW (Ecosizer's size) isn't made, so the element is 2.0 kW (pass 3g step 7a). The house load had taken Ecosizer's size (step 5); Addendum 6 takes the nameplate"
+  continuous_h:
+    value: 3
+    unit: h, the least time at its maximum current that makes a load continuous
+    conf: medium
+    source: "NEC Article 100, Continuous Load ('expected to continue for 3 hours or more'), as every load-calculation guide states it; its 2020 text not read here (as continuous_factor)"
   dhw_heat_pump_mocp_a:
     value: 35
     unit: A, its maximum overcurrent device
@@ -1918,6 +1933,31 @@ sprinkler:
     unit: Hazen-Williams C of CPVC sprinkler pipe
     conf: high
     source: "Viking Plastics' BlazeMaster installation and design manual F_080712 Rev 18.1 (2018): 'must be calculated using a Hazen-Williams C value of 150'; the USFA manual's table of NFPA 13's values: 'PVC & CPVC 150'"
+  shutoff_valves:
+    value: 2
+    unit: listed indicating shutoff valves on the fire service, one on each side of its double check valve assembly, each supervised (Addendum 6)
+    conf: high
+    source: "Watts ES-LF007S 2344 (2023), Approvals: 'UL Classified without shutoff valves only (3/4\" to 2\", except 007M3LF)' (data/watts_lf007_dcva_chartread.csv), so the 2 in. assembly's own valves are not the system's control valves (pass 3g step 7a); IBC 2021 903.4 supervises the control valves"
+  shutoff_valve_el_ft:
+    value: 1
+    unit: ft of Schedule 40 steel pipe, a 2 in. gate valve's equivalent length (the shutoff valves are OS&Y gate valves, the basis of design)
+    conf: high
+    source: "USFA/NFA Commercial Fire Sprinkler System Plans Review, Student Manual (May 2023), Appendix A p. A-8, 'EQUIVALENT PIPE LENGTH CHART FOR VALVES AND FITTINGS - SCH 40 STEEL PIPE' (NFPA 13's): 2 in. gate valve 1, butterfly valve 6 (data/raw/pass3g/raw/sprinkler/USFA_sm_0263.txt)"
+  butterfly_valve_el_ft:
+    value: 6
+    unit: ft of Schedule 40 steel pipe, a 2 in. butterfly valve's equivalent length (the usual alternative to an OS&Y gate valve)
+    conf: high
+    source: "the same chart (shutoff_valve_el_ft): 2 in. butterfly valve 6"
+  steel_2in_id_in:
+    value: 2.067
+    unit: in., the inside diameter of 2 in. Schedule 40 steel pipe, the basis of NFPA 13's equivalent lengths
+    conf: high
+    source: "the same manual, p. A-6 and slide 7-74, 'Sched. 40 ... 2.067' for 2 in."
+  c_steel:
+    value: 120
+    unit: Hazen-Williams C of wet black steel pipe, the basis of NFPA 13's equivalent lengths
+    conf: high
+    source: "the same manual, p. A-6, HAZEN-WILLIAMS C-VALUES: 'BLK STL (WET & DELUGE)' 120"
   c_underground:
     value: 150
     unit: Hazen-Williams C of the underground fire service (PVC)
