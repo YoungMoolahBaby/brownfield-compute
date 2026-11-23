@@ -293,6 +293,16 @@ plumbing:
     unit: wsfu, cold or hot
     conf: high
     source: "IPC 2021 Table E103.3(2) (above)"
+  wsfu_tub_hot:
+    value: 1.0
+    unit: wsfu, a private bathtub's hot
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (UpCodes' Michigan copy, data/raw/pass3g/dl/appe/mi_e.txt): 'Bathtub | Private | Faucet | 1.0 | 1.0 | 1.4' (cold, hot, total)"
+  wsfu_lav_hot:
+    value: 0.5
+    unit: wsfu, a private lavatory's hot
+    conf: high
+    source: "IPC 2021 Table E103.3(2) (as wsfu_tub_hot): 'Lavatory | Private | Faucet | 0.5 | 0.5 | 0.7'"
   wsfu_dishwasher:
     value: 1.4
     unit: wsfu, hot only
@@ -473,6 +483,16 @@ hot_water:
     unit: F, each flat's thermostatic balancing valve's setting (at it, the valve closes to its least flow)
     conf: low
     source: "judgement: between the loop's least return (122 F) and its supply (125 F), so each flat returns at 122 F or more; within the valve's 'Adjustment temperature range: sizes 1/2 & 3/4: 95 - 140 F' (Caleffi 01325/21 NA); set at commissioning"
+  tbv_length_in:
+    value: 12.6875
+    unit: in., each flat's balancing valve with its isolation ball valves, end to end (1/2 in.)
+    conf: medium
+    source: "Caleffi 01325/21 NA, the 116 series' dimension table for 1/2 in. 'with isolation ball valves': '12 11/16\"', the longest it lists (the text's columns are scrambled: the longest taken); its 'Lay Length: size 1/2\": 5 inch' without them"
+  tbv_height_in:
+    value: 4.5
+    unit: in., each flat's balancing valve's height with its temperature gauge (also taken for its depth)
+    conf: low
+    source: "Caleffi 01325/21 NA, the figure's B: '4-1/2\"' (read off a scrambled table); its depth isn't listed: taken as its height"
   tbv_min_f:
     value: 95
     unit: F, the least the balancing valve sets to
@@ -884,6 +904,13 @@ substation:
     unit: K, the least difference the heat exchanger keeps between the data center's water and the building's, at each end
     conf: low
     source: "judgement, to select: a plate heat exchanger can be sized to any approach (a smaller one is a bigger exchanger); 3 K is a design choice until a unit is selected"
+  pump_margin:
+    value: 0.10
+    low: 0.05
+    high: 0.20
+    unit: of the building loop's worst path's head, kept in hand under the pump's curve at the design flow
+    conf: low
+    source: "judgement: for what the routed path doesn't count (the manifolds' balancing valves and actuators, the exchanger's strainer) and the curve's reading off a chart; to confirm at balancing (9c)"
   max_velocity_fps:
     value: 4
     unit: ft/s, the most the building loop's pipes carry
@@ -2584,11 +2611,6 @@ routing:
     unit: in., how far from its plumbing wall a flat's hot branch may run in the joists' space
     conf: low
     source: "judgement: a fitter's run along the wall, and it keeps the finer voxel's grid no larger than a 1 in. search over the whole flat (13.0 against 14.4 million cells)"
-  return_tee_in:
-    value: 6
-    unit: in., how near a flat's loop's end its return may run in its hot branch's pipe (the tee where it leaves)
-    conf: low
-    source: "the design (Addendum 7): past the two pipes' halves and their clearance (3.75 and 3 in. as the router rounds them), so the return can leave the end in any direction there is room; beyond it the hot pipe is closed to it"
   slab_voxel_in:
     value: 2
     unit: in., the router's voxel under the slab, where no member is bored

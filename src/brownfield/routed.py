@@ -349,7 +349,8 @@ def _basis() -> dict:
 
 def grown() -> dict:
     """The sizes step 7c's designs asked of the routes beyond steps 3-6's (`data/route_sizes.json`):
-    {fire: {part: nominal}, vent_in: {flat: nominal}, main_in: {kind: nominal}, return_in: {"flat": nominal}}, for `routes.requests`
+    {fire: {part: nominal}, vent_in: {flat: nominal}, main_in: {kind: nominal}, return_in: {"flat": nominal},
+    loop_riser_in: {"loop": nominal}}, for `routes.requests`
     to route at. Only for this model and frame; empty if none or another's."""
     if not GROWN.exists():
         return {}
@@ -364,12 +365,13 @@ def grow(asks: dict) -> dict:
 
     g = grown()
     out = {"source": SOURCE, "basis": _basis(), "fire": dict(g.get("fire", {})), "vent_in": dict(g.get("vent_in", {})),
-           "main_in": dict(g.get("main_in", {})), "return_in": dict(g.get("return_in", {}))}
+           "main_in": dict(g.get("main_in", {})), "return_in": dict(g.get("return_in", {})),
+           "loop_riser_in": dict(g.get("loop_riser_in", {}))}
     new = {}
     for part, size in asks.get("fire", {}).items():
         if part not in out["fire"] or SIZES.index(size) > SIZES.index(out["fire"][part]):
             out["fire"][part] = new.setdefault("fire", {})[part] = size
-    for key in ("vent_in", "main_in", "return_in"):
+    for key in ("vent_in", "main_in", "return_in", "loop_riser_in"):
         for k, v in asks.get(key, {}).items():
             if v > out[key].get(k, 0.0) + 1e-9:
                 out[key][k] = new.setdefault(key, {})[k] = v
@@ -450,7 +452,7 @@ def obstructions(apt: dict, p: dict, body: dict) -> dict:
 FT_ = 0.3048
 
 
-def asks(apt: dict, p: dict, routes, fire_h: dict, water: dict, vt: dict) -> dict:
+def asks(apt: dict, p: dict, routes, fire_h: dict, water: dict, vt: dict, sub_riser_in: float | None = None) -> dict:
     """What the routed designs ask beyond what was routed: a pipe larger than its request's."""
     from .fire import SIZES
     from .routes import p_size
@@ -469,6 +471,10 @@ def asks(apt: dict, p: dict, routes, fire_h: dict, water: dict, vt: dict) -> dic
     for k, v in want.items():
         if v > used[k] + 1e-6:
             out.setdefault("main_in", {})[k] = v
+    # The building loop's risers, if the pump's curve asks them larger than 7a placed them.
+    from .routing import default_sizes
+    if sub_riser_in is not None and sub_riser_in > default_sizes(apt, p)["loop"] + 1e-9:
+        out.setdefault("loop_riser_in", {})["loop"] = sub_riser_in
     # Each flat's loop's return (Addendum 7), routed at one size for all.
     rets = [r["size_in"] for rid, r in routes.reqs.items() if rid.startswith("plumbing/hot-return/")]
     if rets and water["loop"]["flat_return_in"] > min(rets) + 1e-9:
@@ -522,7 +528,7 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
     vt = vents(apt, p, routes)
     ob = obstructions(apt, p, routes.body)
     pen = penetrations(apt, p, routes.body, routes.rt)
-    want = asks(apt, p, routes, fh, water, vt)
+    want = asks(apt, p, routes, fh, water, vt, sub["riser_in"])
     pl, w, h = "systems.plumbing.", "systems.wiring.", "systems.hot_water."
     c4, rc = water["c404"], water["recirc"]
     erv_ok = all(d[k]["ok"] for d in ducts.values() for k in ("erv_supply", "erv_exhaust"))
@@ -562,6 +568,9 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
          all(r["fps"] <= p["systems.substation.max_velocity_fps"] + 1e-9 for r in sub["risers"].values())
          and max(v[k]["largest_main_in"] for v in sub["routed_loop"]["paths"].values() for k in ("supply", "return")) <= sub["header_in"] + 1e-9,
          f"pump {sub['pump_ft']:.1f} ft (square {sq_sub['pump_ft']:.1f}), worst {sub['pump_path']}"),
+        (f"the building loop's pump covers its worst routed path at its highest fixed speed, {p['systems.substation.pump_margin']:.0%} in hand "
+         "(Grundfos's ALPHA2 15-55 curve III, read off its leaflet)", sub["pump_ok"],
+         f"{sub['pump_ft']:.1f} ft needed at {sub['gpm']:.2f} gpm against {sub['pump_curve_ft']:.1f}; risers {sub['riser_in']:g} in."),
         ("pressure to spare at every flat's shower on the routed pipe, cold and hot (Appendix E; PEX sweeps, Uponor's "
          "fittings), within the street's at the peak", all(v >= 0 for k in ("cold", "hot") for v in water["paths"][k]["by_flat"].values())
          and water["street_ok"],
@@ -573,7 +582,7 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
         ("no hot pipe more than 50 ft from circulating water (each flat's loop, Addendum 7) to a fixture, on the routes (IPC 607.2)",
          water["longest_hot_ft"] <= 50, f"longest {water['longest_hot_ft']:.1f} ft (square, from the risers: {water['square_longest_hot_ft']:.1f})"),
         (f"no more than {c4['limit_oz']:g} fl oz (half a gallon) in any hot fixture's pipe off its flat's loop, on the routes (IECC C404.5.2, "
-         f"Table C404.5.2.1's PEX at {c4['size_in']:g} in.)", not c4["over"],
+         f"Table C404.5.2.1's PEX; each fixture's own pipe at its own size, {', '.join(f'{k} {v:g}' for k, v in c4['own_in'].items())} in.)", not c4["over"],
          f"worst {c4['worst']['oz']:.0f} fl oz ({c4['worst']['flat']}, {c4['worst']['fixture']})"),
         (f"the risers' and mains' routed loss within Ecosizer's spread ({spread.low:g}-{spread.high:g} W a flat); the flats' own loops "
          "(C404.5) on top", spread.low - 1e-9 <= water["loop"]["riser_mains_w_per_flat"] <= spread.high + 1e-9,

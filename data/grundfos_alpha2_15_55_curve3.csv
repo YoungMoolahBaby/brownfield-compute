@@ -1,0 +1,27 @@
+# Grundfos ALPHA2 15-55 (60 Hz, 1 x 115 V; the 15-55F and 15-55SF share it): its highest fixed speed (curve III), head (ft) against flow (US gpm).
+# Read off the curve in Grundfos's US leaflet "Grundfos ALPHA2" (literature 6511597, api.grundfos.com/literature/Grundfosliterature-6511597.pdf, saved 2026-11-22 in data/raw/pass3g/step9/grundfos/), p. 2 "Performance Data":
+# rendered at 6x, calibrated by the plot frame (0 gpm, 0 ft) and its ticks (every 2 gpm along the top, every 2 ft along the left), the curve traced pixel by pixel from 2 gpm both ways.
+# Checks: the leaflet's own table, "max. 19 ft" and "max. 21 gpm" (the curve: 18.9 ft at 0.5 gpm, 0 at 21.8); the ALPHA2 15-55SF sheet (product 99163937), rated 10.7 gpm at 8.202 ft (the curve: 8.39 there, 2.3% over).
+gpm,ft
+0.5,18.91
+1,18.41
+2,17.06
+3,15.79
+4,14.57
+5,13.46
+6,12.32
+7,11.42
+8,10.50
+9,9.68
+10,8.88
+11,8.19
+12,7.47
+13,6.76
+14,6.04
+15,5.36
+16,4.66
+17,3.96
+18,3.19
+19,2.40
+20,1.56
+21,0.73

@@ -57,7 +57,8 @@ POINTS = [
     ("MV-1", "the master mixing valve", "ASSE 1017"),
     ("P-3", "the recirculation pump, switched by PC-1", "Grundfos ALPHA2 15-55SF (basis of design)"),
     ("TS-5", "the hot-water return's temperature, at ST-2", "to select"),
-    ("TBV", "each flat's thermostatic balancing valve, on its return at the return riser (self-acting)",
+    ("TBV", "each flat's thermostatic balancing valve, under its lavatory in the vanity, where its loop's return starts (self-acting; "
+            "IECC C404.6: with access)",
      "Caleffi ThermoSetter 116 series, 1/2 in. (basis of design; Addendum 7)"),
     ("TS-3", "the outdoor air's temperature, shaded, out of the sun and the exhausts", "with PC-1"),
     ("V-2", "the data center's water through HX-2, a modulating valve", "to select"),

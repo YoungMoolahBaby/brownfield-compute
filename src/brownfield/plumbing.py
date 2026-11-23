@@ -415,25 +415,46 @@ def _ft(tree, k: int) -> float:
     return (e.length + (tree.lead_m if e.up is None else 0.0)) / FT
 
 
-def flat_loop(routes, name: str) -> dict:
-    """A flat's loop on its routes (Addendum 7): its hot branch from the riser to the loop's end, the
-    joint there to its return (the two routes' ends, a tee's width apart), and its return to the
-    return riser (m); the edges of the hot tree it circulates."""
+LOOP_END = "lav"  # each flat's loop ends at its lavatory, its balancing valve in the vanity (Addendum 7; `routes` takes it)
+FIXTURE_HOT_WSFU = {"tub": "wsfu_tub_hot", "lav": "wsfu_lav_hot", "sink": "wsfu_kitchen_sink_each", "dishwasher": "wsfu_dishwasher",
+                    "washer": "wsfu_washer_each"}
+
+
+def fixture_hot_in(fixture: str, p: dict) -> float:
+    """A hot fixture's own pipe (9c): the smallest PEX within the hot water's velocity at Appendix E's
+    demand for that fixture alone (Table E103.3(3) at its Table E103.3(2) units)."""
+    from .loads import hunter_gpm
+
+    t_c = (p["systems.hot_water.distribution_f"] - 32) / 1.8
+    return pex_for(hunter_gpm(p["systems.plumbing." + FIXTURE_HOT_WSFU[fixture]]), p["systems.plumbing.hot_fps"], 1e9, t_c)[0]
+
+
+def hot_edge_sizes(tree, branch_in: float, p: dict) -> dict[int, float]:
+    """Each piece of a flat's hot branch: a piece serving one fixture at that fixture's own size, one
+    serving more at the flat's branch size (step 4's)."""
+    return {k: (fixture_hot_in(e.below[0], p) if len(e.below) == 1 else branch_in) for k, e in enumerate(tree.edges)}
+
+
+def flat_loop(routes, name: str, p: dict | None = None) -> dict:
+    """A flat's loop on its routes (Addendum 7): its hot branch from the riser to its lavatory's stub,
+    the vanity's joint from there to the return's stub (the stubs apart, and the balancing valve's
+    length), and its return to the return riser (m); the edges of the hot tree it circulates."""
     hot, ret = routes.tree(f"plumbing/hot/{name}"), routes.tree(f"plumbing/hot-return/{name}")
-    a = next(b for b in hot.branches if b.terminal == "loop-end").points[-1]
-    b = next(b for b in ret.branches if b.terminal == "loop-end").points[-1]
-    return {"hot_m": hot.path("loop-end")["m"], "joint_m": math.dist(a, b), "return_m": ret.length_m,
-            "edges": set(hot.chain("loop-end")), "end": a, "return_end": b}
+    a = next(b for b in hot.branches if b.terminal == LOOP_END).points[-1]
+    b = next(b for b in ret.branches if b.terminal == LOOP_END).points[-1]
+    valve = p["systems.hot_water.tbv_length_in"] * 0.0254 if p else 0.0
+    return {"hot_m": hot.path(LOOP_END)["m"], "joint_m": math.dist(a, b) + valve, "return_m": ret.length_m,
+            "edges": hot.chain(LOOP_END), "end": a, "return_end": b}
 
 
 def dead_legs(routes, name: str) -> dict[str, list[tuple[float, int]]]:
     """Each hot fixture's pipe off its flat's circulating loop (IECC C404.5): the (m, edge) pieces of
     the hot tree from the loop to its stub-out."""
     t = routes.tree(f"plumbing/hot/{name}")
-    on = flat_loop(routes, name)["edges"]
+    on = set(flat_loop(routes, name)["edges"])
     out = {}
     for x in t.terminals():
-        if x == "loop-end":
+        if x == LOOP_END:
             continue
         out[x] = [(t.edges[k].length + (t.lead_m if t.edges[k].up is None else 0.0), k) for k in t.chain(x) if k not in on]
     return out
@@ -492,7 +513,11 @@ def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: f
 
     pl, h = "systems.plumbing.", "systems.hot_water."
     fins = p["systems.routing.branch_insulation_in"]
-    fl = {f["name"]: flat_loop(routes, f["name"]) for f in apt["flats"]}
+    fl = {f["name"]: flat_loop(routes, f["name"], p) for f in apt["flats"]}
+    # The loop's hot pieces at their own sizes (the lavatory's own pipe at its own).
+    sizes = {n: hot_edge_sizes(routes.tree(f"plumbing/hot/{n}"), n_branch, p) for n in fl}
+    hot_btuh = {n: sum(_ft(routes.tree(f"plumbing/hot/{n}"), k) * pipe_loss_btuh_ft(od(sizes[n][k]), fins, t_loop, air_f, p)
+                       for k in v["edges"]) for n, v in fl.items()}
     w = water(apt, p)
     hot_per = w["per_flat"]["hot"]
     storeys = apt["storeys"]
@@ -513,9 +538,9 @@ def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: f
         loss += sum(_ft(ret_main, k) * pipe_loss_btuh_ft(od(n_ret[k]), ins(n_ret[k]), t_loop, t_in, p) for k in n_ret)
         loss += sum(L * (pipe_loss_btuh_ft(od(n_rise), ins(n_rise), t_loop, air_f, p) + pipe_loss_btuh_ft(od(n_ret_rise), ins(n_ret_rise), t_loop, air_f, p))
                     for L in rise.values())
-        hot_ft, ret_ft = pipe_loss_btuh_ft(od(n_branch), fins, t_loop, air_f, p), pipe_loss_btuh_ft(od(n_flat_ret), fins, t_loop, air_f, p)
+        ret_ft = pipe_loss_btuh_ft(od(n_flat_ret), fins, t_loop, air_f, p)
         flats = {n: {"hot_ft": v["hot_m"] / FT, "joint_ft": v["joint_m"] / FT, "return_ft": v["return_m"] / FT,
-                     "loss_btuh": v["hot_m"] / FT * hot_ft + (v["joint_m"] + v["return_m"]) / FT * ret_ft} for n, v in fl.items()}
+                     "loss_btuh": hot_btuh[n] + (v["joint_m"] + v["return_m"]) / FT * ret_ft} for n, v in fl.items()}
         flats_loss = sum(v["loss_btuh"] for v in flats.values())
         loss += flats_loss
         gpm = loss / (60 * RHO_CP * (supply - ret_f))
@@ -697,18 +722,22 @@ def routed_hot_lengths(apt: dict, routes) -> dict[str, float]:
     return {f["name"]: max(sum(m for m, _ in v) for v in dead_legs(routes, f["name"]).values()) / FT for f in apt["flats"]}
 
 
-def routed_volumes(apt: dict, p: dict, routes, size_in: float) -> dict:
+def routed_volumes(apt: dict, p: dict, routes, branch_in: float) -> dict:
     """IECC C404.5.2 on the routes: the water (fl oz, Table C404.5.2.1's PEX) in each hot fixture's
-    pipe off its flat's loop, at the flat's branch size, against the half gallon. The pipe only: the
-    tee's branch outlet the code also counts is a fraction of an ounce at these sizes."""
+    pipe off its flat's loop, each piece at its size (`hot_edge_sizes`), against the half gallon.
+    The pipe only: the tee's branch outlet the code also counts is a fraction of an ounce at these
+    sizes."""
     from .hvac import FT
 
-    oz = tube_oz_ft(size_in)
-    by = {f["name"]: {x: sum(m for m, _ in v) / FT * oz for x, v in dead_legs(routes, f["name"]).items()} for f in apt["flats"]}
+    by = {}
+    for f in apt["flats"]:
+        sizes = hot_edge_sizes(routes.tree(f"plumbing/hot/{f['name']}"), branch_in, p)
+        by[f["name"]] = {x: sum(m / FT * tube_oz_ft(sizes[k]) for m, k in v) for x, v in dead_legs(routes, f["name"]).items()}
     worst = max(((n, x, v) for n, d in by.items() for x, v in d.items()), key=lambda t: t[2])
     limit = p["systems.hot_water.c404_volume_oz"]
     return {"by_flat": by, "worst": {"flat": worst[0], "fixture": worst[1], "oz": worst[2]}, "limit_oz": limit,
-            "over": [(n, x) for n, d in by.items() for x, v in d.items() if v > limit + 1e-9], "size_in": size_in, "oz_per_ft": oz}
+            "over": [(n, x) for n, d in by.items() for x, v in d.items() if v > limit + 1e-9], "branch_in": branch_in,
+            "own_in": {x: fixture_hot_in(x, p) for x in FIXTURE_HOT_WSFU}}
 
 
 def design(apt: dict, p: dict, routes=None) -> dict:
@@ -999,8 +1028,8 @@ def report(s: dict) -> str:
              f"{ht['hp_heat_kwh_day']:.0f} kWh of heat for {ht['hp_kwh_day']:.1f} kWh.",
              f"  The loop: {lp['loss_btuh'] / 3.412142:.0f} W ({lp['w_per_flat']:.0f} a flat), {lp['gpm']:.2f} gpm to hold {lp['supply_f']:g} F "
              f"out and {lp['return_f']:g} F back; returns {lp['return_main_in']:g} in. mains, {lp['return_riser_in']:g} in. risers (at most "
-             f"{lp['return_fps']:.2f} ft/s). Each flat's own loop (IECC C404.5, Addendum 7): its {lp['flat_branch_in']:g} in. branch on "
-             f"to its farthest fixture and a {lp['flat_return_in']:g} in. return through a thermostatic balancing valve, "
+             f"{lp['return_fps']:.2f} ft/s). Each flat's own loop (IECC C404.5, Addendum 7): its hot branch to its lavatory, where a "
+             f"thermostatic balancing valve in the vanity takes it into a {lp['flat_return_in']:g} in. return, "
              f"{lp['flats_loss_btuh'] / 3.412142:.0f} W of the loss. The recirculation pump {d['recirc']['ft']:.1f} ft at "
              f"{d['recirc']['gpm']:.2f} gpm round {d['recirc']['index'] or 'the farthest flat'} (rated {d['recirc']['rated'][1]:g} ft at "
              f"{d['recirc']['rated'][0]:g} gpm). It returns to a {tm['volume_gal']:.0f} gal swing tank (Ecosizer) whose element "

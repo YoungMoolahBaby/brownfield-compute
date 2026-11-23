@@ -271,7 +271,22 @@ def stacks(apt: dict) -> dict[str, list[str]]:
     return out
 
 
-def routed_building_loop(apt: dict, p: dict, routes, flats: dict, t_c: float, meters: dict) -> dict:
+def loop_pump_ft(gpm: float) -> float:
+    """The building loop's pump (Grundfos ALPHA2 15-55F) at its highest fixed speed: its head (ft) at
+    a flow, read off Grundfos's curve (`data/grundfos_alpha2_15_55_curve3.csv`), straight lines
+    between the points."""
+    from .loads import _table
+
+    rows = [(float(r["gpm"]), float(r["ft"])) for r in _table("grundfos_alpha2_15_55_curve3.csv")]
+    if not rows[0][0] <= gpm <= rows[-1][0]:
+        raise ValueError(f"{gpm:.2f} gpm off the pump's curve ({rows[0][0]:g}-{rows[-1][0]:g})")
+    for (q0, h0), (q1, h1) in zip(rows, rows[1:]):
+        if gpm <= q1:
+            return h0 + (h1 - h0) * (gpm - q0) / (q1 - q0)
+    return rows[-1][1]
+
+
+def routed_building_loop(apt: dict, p: dict, routes, flats: dict, t_c: float, meters: dict, riser_in: float = 0.0) -> dict:
     """The building loop on its routes (7c): a riser pair in each column's plumbing wall (7a: the
     spine between the front and back flats takes no pipe, so one pair a column, not one a side), its
     three flats' flow; the mains under the slab edge by edge, each carrying the flats beyond it, the
@@ -279,7 +294,8 @@ def routed_building_loop(apt: dict, p: dict, routes, flats: dict, t_c: float, me
     its column, up the riser (in pieces between the flats' tees, each carrying the flats above it)
     to its tee, its tail to the manifold, its meter and index circuit, and back the same way on the
     return. Fittings as `plumbing.routed_paths` counts them: a sweep at each bend, an elbow where the
-    main turns up and at the manifold, a tee's branch or run at each junction (Uponor's EP)."""
+    main turns up and at the manifold, a tee's branch or run at each junction (Uponor's EP). The
+    risers no smaller than `riser_in` (`substation`: what the pump's curve asks)."""
     from .plumbing import ep_fittings, stacks as columns
 
     fit = ep_fittings()
@@ -290,7 +306,8 @@ def routed_building_loop(apt: dict, p: dict, routes, flats: dict, t_c: float, me
         main = routes.tree(f"main/loop-{kind}")
         for col, names in cols.items():
             q_col = sum(flats[n]["gpm"] for n in names)
-            n_rise, fps = pipe_for_flow(q_col, p)
+            n_rise = max(pipe_for_flow(q_col, p)[0], riser_in)
+            fps = q_col * GPM / (math.pi * (sdr9_bore_in(n_rise) * IN) ** 2 / 4) / FT
             tees = {n: routes.tree(f"hvac/loop-{kind}-tail/{n}").root[2] for n in names}
             z_top = max(tees.values())
             if kind == "supply":
@@ -373,8 +390,19 @@ def substation(apt: dict, p: dict, alt_covering: bool = False, routes=None) -> d
     worst = max(path, key=path.get)
     square = {"risers": risers, "pump_psi": path[worst], "pump_path": worst}
     rl = None
+    ft_of = lambda psi: psi * PSI / (rho * 9.80665) / FT  # noqa: E731
+    curve = loop_pump_ft(gpm)
+    margin = p[s_ + "pump_margin"]
     if routes is not None:
-        rl = routed_building_loop(apt, p, routes, flats, supply - 5, meters)
+        # The risers grow a size at a time until the pump's highest fixed speed covers the worst
+        # path with the margin in hand (9c: at the velocity limit's sizes alone it didn't).
+        from .routed import grown
+
+        start = max(max(r["pipe_in"] for r in risers.values()), grown().get("loop_riser_in", {}).get("loop", 0.0))
+        for size in [n for n in PEX_SIZES_IN if n >= start]:
+            rl = routed_building_loop(apt, p, routes, flats, supply - 5, meters, riser_in=size)
+            if ft_of(rl["head"][rl["worst"]]) * (1 + margin) <= curve + 1e-9:
+                break
         risers, path, worst = rl["risers"], rl["head"], rl["worst"]
         for r in risers.values():
             r["psi"] = max(rl["paths"][n]["supply"]["psi"] + rl["paths"][n]["return"]["psi"] for n in r["flats"])
@@ -383,7 +411,9 @@ def substation(apt: dict, p: dict, alt_covering: bool = False, routes=None) -> d
     return {"flats": flats, "supply_c": supply, "return_c": t_return, "w": w, "gpm": gpm, "risers": risers,
             "header_in": header, "header_fps": header_fps, "primary_in_c": t_primary, "primary_out_c": t_primary_out,
             "primary_gpm": primary_gpm, "margin_k": t_primary - supply, "meters": meters,
-            "pump_psi": path[worst], "pump_ft": path[worst] * PSI / (rho * 9.80665) / FT, "pump_path": worst,
+            "pump_psi": path[worst], "pump_ft": ft_of(path[worst]), "pump_path": worst,
+            "pump_curve_ft": curve, "pump_ok": ft_of(path[worst]) * (1 + margin) <= curve + 1e-9,
+            "riser_in": max(r["pipe_in"] for r in risers.values()),
             "approach_ok": t_primary - supply >= p[s_ + "approach_k"] - 1e-9, "square": square, "routed_loop": rl}
 
 
@@ -772,6 +802,8 @@ def summary(apt: dict, p: dict) -> dict:
             ("every circuit at or under 330 ft (REHAU Table 6.1, 1/2 in.)", not any(f["too_long"] for f in sub["flats"].values()), ""),
             ("the building's supply under the data center's return less the exchanger's approach", sub["approach_ok"],
              f"{sub['supply_c']:.1f} C against {sub['primary_in_c']:.0f} - {p['systems.substation.approach_k']:g}"),
+            (f"the building loop's pump covers its worst path at its highest fixed speed, {p['systems.substation.pump_margin']:.0%} in "
+             "hand (Grundfos's curve)", sub["pump_ok"], f"{sub['pump_ft']:.1f} ft at {sub['gpm']:.2f} gpm against {sub['pump_curve_ft']:.1f}"),
             ("every flat's heat meter within its measuring range at design", all(m["in_range"] for m in sub["meters"].values()),
              f"{min(m['l_h'] for m in sub['meters'].values()):.0f}-{max(m['l_h'] for m in sub['meters'].values()):.0f} l/h"),
             ("every ERV's supply at or over PHI's minimum at the design hour, with no defrost (preheated to at least Broan's 0 C)",
@@ -802,7 +834,8 @@ def report(s: dict) -> str:
              f"The building loop at design: {sub['w'] / 1000:.1f} kW, {sub['supply_c']:.1f} C out and {sub['return_c']:.1f} C back, "
              f"{sub['gpm']:.2f} gpm on a {sub['header_in']:g} in. header ({sub['header_fps']:.1f} ft/s); the data center's water "
              f"{sub['primary_in_c']:.0f} -> {sub['primary_out_c']:.1f} C at {sub['primary_gpm']:.2f} gpm; the pump "
-             f"{sub['pump_ft']:.1f} ft before the exchanger and valves (worst path {sub['pump_path']})."]
+             f"{sub['pump_ft']:.1f} ft before the exchanger and valves (worst path {sub['pump_path']}); its highest fixed speed "
+             f"gives {sub['pump_curve_ft']:.1f} ft at that flow (Grundfos's curve)."]
     for side, r in sub["risers"].items():
         lines.append(f"  {side} riser: {len(r['flats'])} flats, {r['gpm']:.2f} gpm, {r['pipe_in']:g} in. ({r['fps']:.1f} ft/s), "
                      f"{r['main_ft']:.0f} ft of main and {r['rise_ft']:.0f} ft up, {r['psi']:.2f} psi there and back")

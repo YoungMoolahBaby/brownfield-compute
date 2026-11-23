@@ -935,6 +935,15 @@ def cmd_sequence(_args) -> int:
     return 0 if all(ok for _, ok, _ in r["checks"]) else 1
 
 
+def cmd_acceptance(_args) -> int:
+    from . import acceptance, systems
+
+    P = values(load_params())
+    r = acceptance.run(systems.load(systems.latest_model()), P)
+    print(acceptance.report(r))
+    return 0 if all(ok for _, ok, _ in r["checks"]) else 1
+
+
 def cmd_viewer(args) -> int:
     from . import viewer
 
@@ -1147,6 +1156,7 @@ def main(argv=None) -> int:
     vw.add_argument("--latest", action="store_true", help="show this run's models (out/pass3/bidset) instead of the published ones (docs/pass3/bidset)")
     ps = sub.add_parser("pdfset", help="pass 3f: the bid set and Addendum 1 as PDFs only, and what each costs a bidder against the data")
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
+    sub.add_parser("acceptance", help="pass 3g step 9c: the tests and inspections: what, who, when, what passes, and the code or design claim behind each (out/pass3/acceptance.md)")
     sub.add_parser("sequence", help="pass 3g step 9b: the control sequence: the plant normal and on its backup, the loop's outdoor reset, the mini-splits' takeover, the ERV, the interlocks (out/pass3/sequence.md)")
     sub.add_parser("fallback", help="pass 3g step 9a: when the data center's heat is gone: the flats on their mini-splits, the hot water on its backup heater, the wiring for both")
     rd = sub.add_parser("round", help="pass 3g step 8c: the installers' round: each trade's packet (a letter, its questions, its sheets), and the log of their comments (data/raw/round/comments.yaml, private) checked")
@@ -1177,7 +1187,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "round": cmd_round, "fallback": cmd_fallback, "sequence": cmd_sequence, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "round": cmd_round, "fallback": cmd_fallback, "sequence": cmd_sequence, "acceptance": cmd_acceptance, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

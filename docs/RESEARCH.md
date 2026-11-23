@@ -1539,3 +1539,30 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     sheet: a need at or under both is under the curve, which falls with flow.
   - **The swing tank's elements.** Bradford White 1201-0926 (step 7a's copy), its table of element
     wattages by voltage: 1,500 to 6,000 W in 500 W steps at 208 V non-simultaneous.
+  - **The building loop's pump's curve.** Grundfos's US leaflet "Grundfos ALPHA2" (literature
+    6511597, api.grundfos.com, `grundfos/lit_6511597.pdf`), p. 2 "Performance Data": a drawing,
+    no table. Its curve III was read by rendering the page and tracing it pixel by pixel,
+    calibrated by the plot's frame and ticks (`data/grundfos_alpha2_15_55_curve3.csv`). The
+    leaflet's table: "max. 21 gpm", "max. 19 ft", "1 x 115V". Three of Grundfos's other leaflets
+    (6014960, 5247541, 5247542) are for the 230 V ALPHA2 L and weren't used.
+  - **The fixtures' own units.** IPC 2021 Table E103.3(2), from step 4's saved Michigan copy
+    (`dl/appe/mi_e.txt`): "Bathtub | Private | Faucet | 1.0 | 1.0 | 1.4" and "Lavatory | Private
+    | Faucet | 0.5 | 0.5 | 0.7" (cold, hot, total).
+  - **The tests' codes.**
+    - IMC 2021, chapters 11 and 12 (UpCodes' Pennsylvania edition, saved 2026-11-22,
+      `imc/imc11.txt`, `imc12.txt`): 1110.5 "The system shall be pressurized for a period of not
+      less than 60 minutes"; "A vacuum of 500 microns shall be achieved"; "The system pressure
+      shall not rise above 1,500 microns for a period of not less than 10 minutes". 1208.1 "at one
+      and one-half times the maximum system design pressure, but not less than 100 psi"; 1209.2
+      "Piping to be embedded in concrete shall be pressure tested prior to pouring concrete."
+    - 34 Pa. Code 403.45, Inspections, for commercial construction (pacodeandbulletin.gov, saved
+      2026-11-22, `pa/s403_45.txt`): (c) "The work shall remain accessible and exposed for
+      inspection"; (e) the final report's seven areas. 403.64 is the residential subchapter's
+      (houses and townhouses, under the IRC), not the walk-up's.
+    - NFPA 13R, the 2022 edition's second draft report (`raw/sprinkler/13R_A2021_SDR.txt`, as step
+      6 saved it), chapter 10: flushing (10.2.1), "Systems having more than 20 sprinklers or
+      having a fire department connection shall pass a hydrostatic pressure test performed for the
+      aboveground piping system in accordance with NFPA 13" (10.2.2.1), the waterflow alarm
+      "within 5 minutes" (10.2.3.1.1), and the main drain (10.2.4). NFPA 13's own test isn't
+      saved: the USFA manual (`raw/sprinkler/USFA_sm_0263.txt`) gives its "post-installation
+      hydrostatic test pressure of 200 psi", not its duration.

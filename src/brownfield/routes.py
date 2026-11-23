@@ -33,6 +33,7 @@ import math
 from pathlib import Path
 
 from . import OUT_DIR
+from .plumbing import LOOP_END  # where each flat's hot-water loop ends and its return starts (Addendum 7)
 from .routing import FRAME, FT, IN, ceiling_z, column, placements, soffit_spans
 from .systems import by_flat
 
@@ -503,6 +504,8 @@ def requests(apt: dict, p: dict) -> dict:
         taken: list[tuple[float, float]] = [(f["washer"]["y"] - r_sp, f["washer"]["y"] + r_sp)]  # its standpipe
         slot: dict[tuple[str, str], float] = {}
         hot_od, cold_od = pex_od_in(branch["hot"], p[R + "branch_insulation_in"]), pex_od_in(branch["cold"], p[R + "cold_insulation_in"])
+        ret_n = max(pd["loop"]["flat_return_in"], gs.get("return_in", {}).get("flat", 0.0))
+        ret_od = pex_od_in(ret_n, p[R + "branch_insulation_in"])
         # A slot as the router sees it: whole voxels (forge rounds a pipe's cross-section up to
         # 2r + 1 of them), and one more for where the grid's cells fall.
         cells = lambda half: (max(0, math.ceil((2 * half / v1 - 1) / 2 - 1e-9)) + 1) * v1  # noqa: E731
@@ -515,6 +518,12 @@ def requests(apt: dict, p: dict) -> dict:
             for kind, od_, sgn in (("cold", cold_od, 1.0), ("hot", hot_od, -1.0)):
                 if f"{kind}_in" in fv:
                     slot[(fk, kind)] = take_slot(free, fv["y"] + sgn * off, cells(od_ * IN / 2 + wall_clear), taken, 0.0)
+            if fk == LOOP_END:
+                # The flat's loop's return stub (Addendum 7), beside the hot one toward the fixture's
+                # middle: the thermostatic balancing valve joins the two in the vanity.
+                yh = slot[(fk, "hot")]
+                toward = 1.0 if fv["y"] > yh else -1.0
+                slot[(fk, "return")] = take_slot(free, yh + toward * off, cells(ret_od * IN / 2 + wall_clear), taken, 0.0)
         for kind, temp_od in (("cold", pex_od_in(branch["cold"], p[R + "cold_insulation_in"])), ("hot", pex_od_in(branch["hot"], p[R + "branch_insulation_in"]))):
             riser = next(s_ for s_ in vs[col] if s_["kind"] == kind)
             terms_ = []
@@ -533,14 +542,10 @@ def requests(apt: dict, p: dict) -> dict:
             top = storey_of(name) == max(storey_of(n) for n in fx if column(n) == col)
             extra, zone_ceil = {}, ceil
             if kind == "hot":
-                # The flat's loop (IECC C404.5, Addendum 7): its hot branch on to the joists' space over
-                # its farthest hot fixture, where its return leaves for the return riser, so every
-                # fixture is a short way off circulating water. Its holes for the bare pipe: the
-                # insulation stops at each member it passes (C404.4).
-                far = max(terms_, key=lambda t_: abs(t_[1][1] - riser["y"]))
-                z_end = (ceil["lo"][2] + ceil["hi"][2]) / 2
-                end = [x, far[1][1], z_end]
-                terms_ = terms_ + [("loop-end", end)]
+                # The flat's loop (IECC C404.5, Addendum 7) runs through its hot branch to the
+                # lavatory, where its return starts (below), so every fixture is a short way off
+                # circulating water. Its holes for the bare pipe: the insulation stops at each member
+                # it passes (C404.4).
                 extra = {"bore_m": pex_od_in(branch["hot"]) * IN, "voxel": vh}
                 # On the finer voxel, in the joists' space along the wall (`hot_band_in`).
                 zone_ceil = _box([max(ceil["lo"][0], x - band), ceil["lo"][1], ceil["lo"][2]],
@@ -550,20 +555,19 @@ def requests(apt: dict, p: dict) -> dict:
                 goals=part_of(riser["id"], fz + 0.3, tee_z if top else ceil["hi"][2]),
                 blocks=over_wall(apt, name, [(y_ - col_w, y_ + col_w) for y_ in [t_[1][1] for t_ in terms_] + [riser["y"]]]), **extra)
             if kind == "hot":
-                # Its return: from the loop's end, a tee on the hot branch (the hot pipe open to it only
-                # within `return_tee_in` of the end, closed to it beyond), back through the joists'
-                # space to the return riser, through a thermostatic balancing valve (Addendum 7) at
-                # the riser.
+                # Its return: from its own stub under the lavatory (the thermostatic balancing valve
+                # in the vanity joins it to the hot one, where it can be reached: C404.6), up the wall,
+                # back through the joists' space to the return riser.
                 rr = next(s_ for s_ in vs[col] if s_["kind"] == "hot-return")
-                ret_n = max(pd["loop"]["flat_return_in"], gs.get("return_in", {}).get("flat", 0.0))
-                ret_od = pex_od_in(ret_n, p[R + "branch_insulation_in"])
-                hot_id = f"plumbing/hot/{name}"
-                add(f"plumbing/hot-return/{name}", "water", ret_od, [rr["x"], rr["y"], tee_z], [("loop-end", end)],
-                    [wall_cavity(apt, frame, pw, p, y0=rr["y"] - col_w, y1=rr["y"] + col_w, edge=False), ceil],
-                    attach=[rr["id"], hot_id], attach_near=[{"id": hot_id, "at": [round(v, 6) for v in end], "m": p[R + "return_tee_in"] * IN}],
-                    flat=name, role="hot-return", gap=wall_clear, bore_m=pex_od_in(ret_n) * IN, after=hot_id, size_in=ret_n,
+                ys = slot[(LOOP_END, "return")]
+                stub = [x, ys, fz + f[LOOP_END]["hot_in"] * IN]
+                add(f"plumbing/hot-return/{name}", "water", ret_od, [rr["x"], rr["y"], tee_z], [(LOOP_END, stub)],
+                    [wall_cavity(apt, frame, pw, p, y0=ys - col_w, y1=ys + col_w, edge=False),
+                     wall_cavity(apt, frame, pw, p, y0=rr["y"] - col_w, y1=rr["y"] + col_w, edge=False), ceil],
+                    attach=[rr["id"]], flat=name, role="hot-return", gap=wall_clear, bore_m=pex_od_in(ret_n) * IN,
+                    after=f"plumbing/hot/{name}", size_in=ret_n,
                     goals=part_of(rr["id"], fz + 0.3, ceil["hi"][2]),
-                    blocks=over_wall(apt, name, [(end[1] - col_w, end[1] + col_w), (rr["y"] - col_w, rr["y"] + col_w)]))
+                    blocks=over_wall(apt, name, [(ys - col_w, ys + col_w), (rr["y"] - col_w, rr["y"] + col_w)]))
         st, vst = stack[col], next(s_ for s_ in vs[col] if s_["kind"] == "vent")
         # The lav's, sink's and washer's drains: down the wall from the trap, through the floor, along
         # the joists' space under it (or under the slab) to the stack; nothing runs along the wall,

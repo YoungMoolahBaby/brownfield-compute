@@ -139,17 +139,22 @@ Step 9 started (Jon: the code's tests, the design's claims and the control seque
 
 9c started: reading the energy code's tests found three hot-water rules the design broke, now
 fixed for Addendum 7. A plant serving several flats falls under the commercial chapter (R403.8).
-- Each flat's hot water now circulates to its farthest fixture and back through a balancing
-  valve, so every fixture is within half a gallon of hot water (C404.5). The worst is 56 of 64 fl
-  oz; before, 52 of 60 were over.
+- Each flat's hot water now circulates in a loop of its own and back through a balancing valve,
+  so every fixture is within half a gallon of hot water (C404.5); before, 52 of 60 were over.
 - The flats' hot pipe takes 1 in. of insulation (C404.4).
 - The recirculation pump stops at temperature (C404.6.1).
-- The cost: the loop loses 2,230 W, not 793. The swing tank's element goes from 2.0 to 4.5 kW,
+- The cost: the loop loses 2,120 W, not 793. The swing tank's element goes from 2.0 to 4.5 kW,
   the house panel from 100 to 110 A, and the PV it takes from 8.3 to 6.7 kW AC.
-- Found, not fixed: the building loop's pump head (13.4 ft routed) is never checked against its
-  curve.
+- Then the two open items:
+  - **The building loop's pump:** its curve, read off Grundfos's leaflet, covers the worst path,
+    10.8 ft against 12.3. The routed head had taken the risers smaller than the model has them.
+  - **The balancing valves:** each flat's loop now ends at its lavatory, the valve in the vanity
+    where it can be reached. Each fixture's own pipe takes its own size, and the worst fixture
+    holds 53 of 64 fl oz.
+- 9c done: the tests and inspections, 28 items, each with its code's words or the design's figure
+  (specification section 01 45 00).
 
-Next: the rest of 9c, the tests and inspections.
+Next: 9d, Addendum 7.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4205,16 +4210,104 @@ test. Then the township brief's ask.
              with its fixtures spread 17 ft along the wall. Step 10 prices it.
            - **The building loop's pump.** 7c's routed head is 13.4 ft (13.1 then). Nothing
              checks it against the ALPHA2 15-55F, whose CP2 setting holds about 8.9 ft at 6 gpm,
-             as step 3 read the curve. A check to add, and 9c's balancing test.
+             as step 3 read the curve. (Checked in 9c's second part, below.)
            - **The balancing valves aren't placed.** Each needs its access panel. The routes join
              each return to its riser wherever there's room: in the wall, or in the joists' space
-             over a rated ceiling, where an access door would have to be listed. Like the plant's
-             wall-hung equipment, a placement still to make.
+             over a rated ceiling, where an access door would have to be listed. (Placed in 9c's
+             second part, below.)
          - **What we don't know:**
            - the balancing valves' real flows: Caleffi's design curve stands for all of them;
            - whether the 1 in. insulation is kept continuous in the walls as built;
            - how the loss model fits in-flat loops. Ecosizer's buildings don't say how their
              loops run.
+       - **9c, second: the two open items (2026-11-22).** Jon: "please continue with the rest of 9c
+         and fold in the two open items".
+         - **The building loop's pump, checked against its curve.**
+           - **The curve:** Grundfos's US leaflet for the ALPHA2 15-55 (literature 6511597) has it
+             only as a drawing. It was read off curve III, the highest fixed speed: rendered, then
+             calibrated by the plot's frame and ticks, and traced pixel by pixel
+             (`data/grundfos_alpha2_15_55_curve3.csv`). Two checks: the leaflet's own "max. 19
+             ft" (the read curve gives 18.9 at 0.5 gpm), and the 15-55SF sheet's rated 10.7 gpm at
+             8.202 ft (the curve reads 8.39 there, 2.3% over).
+           - **Found:** at the loop's 6.04 gpm the curve gives 12.3 ft, under 7c's 13.4. But 13.4
+             took each column's risers at 1/2 in., the velocity limit's size for a column's flow,
+             while 7a had placed them at the square design's 3/4 in. Taken at the 3/4 in. in the
+             model, the worst path needs 10.8 ft. With the 10% kept in hand (`pump_margin`, a
+             judgement) that's 11.9, under the curve's 12.3.
+           - **The rule now:** the risers grow until the pump's highest speed covers the worst
+             path with that margin. A size the model doesn't have would be asked of the router
+             (`loop_riser_in`); none was. Steps 3 and 7c both check it.
+         - **The balancing valves, placed.** IECC C404.6: "Automatic controls, temperature sensors
+           and pumps shall be in a location with access."
+           - **Not at the riser:** the risers are packed side by side and fill the 2x6 wall's
+             depth floor to ceiling, so nothing can come down beside one to a valve.
+           - **Not in the joists' space:** an access door would cut the rated ceilings of floors
+             1 and 2, and would have to be fire-rated.
+           - **Under the lavatory:** where plumbers usually take a recirculation return. Each
+             flat's loop now runs through its hot branch to its lavatory's stub. The valve sits in
+             the vanity between that stub and its return's, 5 in. away in the right-hand flats and
+             15 in. in the left, reached through the vanity's doors with no access panel. The
+             return rises in the wall beside the lavatory to the joists' space and goes back to its
+             riser.
+           - **Each fixture's own pipe now takes its own size,** as Appendix E sizes a pipe for the
+             fixtures it serves. That's Hunter's demand at the fixture's Table E103.3(2) units,
+             within 5 ft/s: the tub, sink, dishwasher and washer 3/4 in., the lavatory 1/2 in.
+             Pieces serving more than one fixture keep the flat's 1 in. Ending at the lavatory,
+             the tub became a longer dead leg: 87 fl oz at 1 in. in the worst flat, 53 at its own
+             3/4 in.
+           - **The pressure path still runs the flat's whole demand through 1 in. to the top
+             shower:** 4.4 psi per 100 ft at its 9.26 gpm, against 2.0 for the tub's own 3 gpm in
+             3/4 in., so it's on the safe side. The cold water keeps step 4's 1 in. throughout.
+           - **In the services model:** each valve is a box in the vanity (`IfcValve`, REGULATING).
+             Its size is Caleffi's 12-11/16 in. with its ball valves by 4-1/2 in.; its access is
+             recorded on it.
+           - **The router:** the return starts from its own stub, so the tee inside the hot pipe
+             (`attach_near`) is no longer used. Forge keeps it, with its known case.
+           - **Results:** routed 442 of 442 on the third pass, with no clash; every check of 7a-7c
+             passes, with nothing to route again.
+         - **Run (2026-11-22), routed:**
+           - every hot fixture within half a gallon: the worst 53 of 64 fl oz, 1-back-left's tub.
+             IPC 607.2's longest pipe from circulating water is 22.4 ft;
+           - the loop loses 2,120 W, 1,242 of it in the flats' loops: 177 W a flat. The risers
+             and mains alone are 73 W a flat. The flow is 4.81 gpm, 0.40 a flat; P-3 needs 3.4 ft;
+           - the building loop's pump needs 10.8 ft at 6.04 gpm, against its curve's 12.3;
+           - the swing tank's 4.5 kW element, the house panel's 110 A and the service's 463 A
+             still hold. The loops' extra loss over the design before 9c is now 1,327 W, about 11.6
+             MWh a year.
+       - **9c, third: the tests and inspections (2026-11-22)** (`uv run brownfield acceptance`;
+         `src/brownfield/acceptance.py`; writes `out/pass3/acceptance.md`, specification section 01
+         45 00, for Addendum 7).
+         - **How:** 28 items in 9 areas. Each says what is tested, who does it, when, what passes
+           and on what it rests:
+           - **the codes' own tests,** quoted from the copies saved under `data/raw/`. A check finds
+             all 32 quotations word for word, and a made-up one is caught:
+             - IPC 312's water, drain and backflow tests;
+             - IMC 1110's line-set tests, 1208.1's hydrostatic test, and 1209.2's test before the
+               topping;
+             - the energy code's blower door (R402.4.1.2-.3), ventilation test (R403.6.3) and hot
+               water rules (C404.4-.6);
+             - NFPA 13R's acceptance tests (its 2022 edition's second draft, chapter 10);
+             - Pennsylvania's inspections, 34 Pa. Code 403.45. A 12-flat R-2 building comes under
+               its commercial section, not 403.64's for houses;
+           - **the design's own claims, with their figures from the design runs:**
+             - each flat's return at or over 122 F, and P-3's control;
+             - the plant's setpoints, interlock and fallback;
+             - the building loop's flows and pump, and the outdoor reset;
+             - each mini-split's static pressure and water-level switch.
+         - **Choices in it:**
+           - **The blower door holds each flat to the 3.0 ACH50 the heat loads assume.** The
+             code's 0.30 cfm/ft2 for attached flats would pass a leakier one.
+           - **The ERVs are held to the design's 45 cfm each way,** within 10% of each other. The
+             code's floor is 30.8 cfm, and the kitchen and bath exhaust 25 and 20.
+           - **No duct leakage test:** R403.3.5 exempts ducts and units wholly inside the thermal
+             envelope, and every flat's are.
+         - **Tests:** `tests/test_walkup_acceptance.py`, 3; `tests/test_walkup_c404.py`, now 8.
+         - **What we don't know:**
+           - NFPA 13's own hydrostatic test: its 200 psi is from the USFA manual, and its duration
+             isn't in anything saved;
+           - 13R's published 2022 text, which the second draft may differ from;
+           - the building loop's design pressure, for IMC 1208.1's 1.5 times: the expansion tank
+             and relief valve aren't chosen. The 100 psi floor stands until they are.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing

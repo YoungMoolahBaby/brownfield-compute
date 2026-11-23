@@ -318,7 +318,9 @@ def default_sizes(apt: dict, p: dict) -> dict:
 
     d = design(apt, p)
     seg = {k: next(s["in"] for s in d["paths"][k]["segments"] if "riser" in s["segment"]) for k in ("cold", "hot")}
-    loop = max(r["pipe_in"] for r in substation(apt, p)["risers"].values())
+    from .routed import grown
+
+    loop = max(max(r["pipe_in"] for r in substation(apt, p)["risers"].values()), grown().get("loop_riser_in", {}).get("loop", 0.0))
     return {"cold": seg["cold"], "hot": seg["hot"], "return": d["loop"]["return_riser_in"], "loop": loop}
 
 

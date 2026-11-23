@@ -223,6 +223,10 @@ def piece_size(req: dict, tree, n: int, D: Designs) -> tuple[float | str | None,
     if s == "water":
         if role == "hot-return":
             return D.water["loop"]["flat_return_in"], "the flat's loop's return (Addendum 7), at its share of the loop's flow"
+        if role == "hot" and len(e.below) == 1:
+            from .plumbing import fixture_hot_in
+
+            return fixture_hot_in(e.below[0], p), "its fixture's own (Appendix E at that fixture's demand; 9c)"
         return D.water["paths"][role]["sizes"]["branch"], "step 4's branch, held on the routes (7c)"
     if s == "main":
         k = req["kind"]
@@ -346,9 +350,7 @@ def fittings(req: dict, tree, n: int, size, top_of_column: bool) -> list[dict]:
     # stub-out; where the main turns up into a riser; where the top flat's branch leaves the riser's
     # end; where a tail reaches its manifold.
     if s in ("water", "main", "hydronic"):
-        # A flat's loop's end (Addendum 7) is no stub-out: the tee joining its return is drawn with
-        # the flat (`elements`).
-        if e.terminal is not None and e.terminal != "loop-end":
+        if e.terminal is not None:
             out.append({"kind": "elbow", "at": pts[-1], "dirs": [_dir(pts[-2], pts[-1]), np.array([0.0, 0.0, 1.0])]})
         if e.up is None and top_of_column and s in ("water", "hydronic"):
             out.append({"kind": "elbow", "at": pts[0], "dirs": [np.array([0.0, 0.0, 1.0]), _dir(pts[0], pts[1])]})
@@ -428,27 +430,27 @@ def elements(apt: dict, p: dict, routes, s7: dict, placed: dict) -> list[El]:
                       "Material": MATERIAL[mat], "Flat": req.get("flat") or ""}
                 out.append(El(f"fit/{rid}/{n}/{k}", fcls, _fitting_pre(fcls, f["kind"]), f"{f['kind']}, {rid} #{n}", system,
                               ("sweep", _fitting_geom(f, d), d * 1.25), fp))
-    # -- Each flat's loop's end (Addendum 7): the tee where its return leaves its hot branch's end,
-    # drawn along the hot pipe into it and the return out of it.
+    # -- Each flat's balancing valve (Addendum 7), in its vanity: between the lavatory's hot stub and
+    # its loop's return stub, in front of the wall, at the stubs' height.
+    from .plumbing import LOOP_END
+
+    L_, H_ = p["systems.hot_water.tbv_length_in"] * 0.0254, p["systems.hot_water.tbv_height_in"] * 0.0254
     for f in apt["flats"]:
         rid = f"plumbing/hot-return/{f['name']}"
         if rid not in routes.recs:
             continue
-        hot, ret = routes.tree(f"plumbing/hot/{f['name']}"), routes.tree(rid)
-        hb = next(b for b in hot.branches if b.terminal == "loop-end")
-        rb = next(b for b in ret.branches if b.terminal == "loop-end")
-        if len(hb.points) > 1 and math.dist(hb.points[-2], hb.points[-1]) > 1e-6:
-            u = _dir(hb.points[-2], hb.points[-1])
-        else:  # the loop's end on the tree already (a branch of no length): along the pipe it's on
-            par = hot.branches[hb.parent]
-            u = _dir(par.point_at(max(0.0, hb.at - 0.05)), par.point_at(min(par.length, hb.at + 0.05)))
-        v = _dir(rb.points[-1], rb.points[-2])
-        size = D.water["loop"]["flat_return_in"]
-        d = routes.reqs[rid]["od_m"]
-        fp = {"System": "hot", "Layer": SYSTEMS["hot"][2], "Run": rid, "Piece": 0, "Kind": "tee (the loop's end)", "Size": nominal(size),
-              "Material": MATERIAL["pex"], "Flat": f["name"]}
-        out.append(El(f"fit/{rid}/loop-end", "IfcPipeFitting", "JUNCTION", f"tee (the loop's end), {f['name']}", "hot",
-                      ("sweep", _fitting_geom({"at": hb.points[-1], "dirs": [u, v]}, d), d * 1.25), fp))
+        hb = next(b for b in routes.tree(f"plumbing/hot/{f['name']}").branches if b.terminal == LOOP_END)
+        rb = next(b for b in routes.tree(rid).branches if b.terminal == LOOP_END)
+        fv = placed["fixtures"][f["name"]][LOOP_END]
+        y = (hb.points[-1][1] + rb.points[-1][1]) / 2
+        z = (hb.points[-1][2] + rb.points[-1][2]) / 2
+        x0 = fv["x"] + fv["into"] * 0.0254
+        x1 = x0 + fv["into"] * H_
+        lo, hi = [min(x0, x1), y - L_ / 2, z - H_ / 2], [max(x0, x1), y + L_ / 2, z + H_ / 2]
+        out.append(El(f"valve/{f['name']}/balancing", "IfcValve", "REGULATING", f"thermostatic balancing valve, {f['name']}", "hot",
+                      ("box", lo, hi), {"System": "hot", "Layer": SYSTEMS["hot"][2], "Flat": f["name"], "Kind": "thermostatic balancing valve",
+                                        "Size": nominal(D.water["loop"]["flat_return_in"]), "Model": "Caleffi ThermoSetter 116 series (basis of design)",
+                                        "Setting": f"{p['systems.hot_water.tbv_set_f']:g} F", "Access": "the vanity's doors (IECC C404.6)"}))
     # -- The pinned verticals and fixed pieces 7a placed (the router's own boxes).
     w = D.water
     for o in routes.body["obstacles"]:

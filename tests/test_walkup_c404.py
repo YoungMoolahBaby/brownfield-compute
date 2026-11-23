@@ -26,32 +26,59 @@ def test_table_c404_5_2_1_as_read(P):
 
 
 def _flat(sink_at: float, sink_leg: float) -> Routes:
-    """One flat's hot branch: a 6 m trunk from the riser to the loop's end, the tub off it 1 m short
-    of the end, the sink off it `sink_at` m out on a `sink_leg` m leg; its return back alongside."""
+    """One flat's hot branch: a 6 m trunk from the riser to the lavatory, where the loop ends; the tub
+    off it 1 m short of that, the sink off it `sink_at` m out on a `sink_leg` m leg; its return back
+    alongside from its own stub 0.1 m from the lavatory's."""
+    end = plumbing.LOOP_END
     hot = {"id": "plumbing/hot/x", "root": [0.0, 0.0, 0.0], "snap_m": 0.05, "goals": [], "slope": 0.0}
     ret = {"id": "plumbing/hot-return/x", "root": [0.0, 0.1, 0.0], "snap_m": 0.05, "goals": [], "slope": 0.0}
     rec_hot = {"id": hot["id"], "ok": True, "branches": [
-        {"terminal": "loop-end", "points": [[0, 0, 0], [6, 0, 0]], "to": [6, 0, 0]},
+        {"terminal": end, "points": [[0, 0, 0], [6, 0, 0]], "to": [6, 0, 0]},
         {"terminal": "tub", "points": [[5, 0, 0], [5, 0, -1]], "to": [5, 0, -1]},
         {"terminal": "sink", "points": [[sink_at, 0, 0], [sink_at, 0, -sink_leg]], "to": [sink_at, 0, -sink_leg]}]}
-    rec_ret = {"id": ret["id"], "ok": True, "branches": [{"terminal": "loop-end", "points": [[0, 0.1, 0], [6, 0.1, 0]], "to": [6, 0.1, 0]}]}
+    rec_ret = {"id": ret["id"], "ok": True, "branches": [{"terminal": end, "points": [[0, 0.1, 0], [6, 0.1, 0]], "to": [6, 0.1, 0]}]}
     return Routes({"requests": [hot, ret]}, {"routes": [rec_hot, rec_ret]}, True)
+
+
+def test_each_hot_fixtures_own_pipe_takes_its_own_size(P):
+    # Appendix E for one fixture: Table E103.3(2)'s units, Table E103.3(3)'s demand (3.0 gpm at 1
+    # wsfu), the smallest PEX within 5 ft/s: the tub's 3 gpm needs 3/4 in., the lavatory's 1.5 fits 1/2.
+    assert plumbing.fixture_hot_in("tub", P) == 0.75 and plumbing.fixture_hot_in("lav", P) == 0.5
+    t = _flat(2.0, 2.0).tree("plumbing/hot/x")
+    sizes = plumbing.hot_edge_sizes(t, 1.0, P)
+    for k, e in enumerate(t.edges):
+        assert sizes[k] == (plumbing.fixture_hot_in(e.below[0], P) if len(e.below) == 1 else 1.0)
 
 
 def test_a_flats_loop_leaves_each_fixture_only_its_own_leg(P):
     r = _flat(2.0, 2.0)
-    fl = plumbing.flat_loop(r, "x")
-    assert fl["hot_m"] == pytest.approx(6.0) and fl["return_m"] == pytest.approx(6.0) and fl["joint_m"] == pytest.approx(0.1)
+    fl = plumbing.flat_loop(r, "x", P)
+    assert fl["hot_m"] == pytest.approx(6.0) and fl["return_m"] == pytest.approx(6.0)
+    assert fl["joint_m"] == pytest.approx(0.1 + P["systems.hot_water.tbv_length_in"] * 0.0254)  # the stubs apart, and the valve
     legs = plumbing.dead_legs(r, "x")
     assert sorted(legs) == ["sink", "tub"]
     assert sum(m for m, _ in legs["sink"]) == pytest.approx(2.0) and sum(m for m, _ in legs["tub"]) == pytest.approx(1.0)
+    oz = plumbing.tube_oz_ft(plumbing.fixture_hot_in("sink", P))
     v = plumbing.routed_volumes({"flats": [{"name": "x"}]}, P, r, 1.0)
-    assert v["by_flat"]["x"]["sink"] == pytest.approx(2.0 / FT * 3.91) and not v["over"]
-    # The same flat with its sink 6 m down off the trunk: 77 fl oz of 1 in. PEX, over the half gallon.
-    v = plumbing.routed_volumes({"flats": [{"name": "x"}]}, P, _flat(2.0, 6.0), 1.0)
-    assert v["worst"]["fixture"] == "sink" and v["worst"]["oz"] == pytest.approx(6.0 / FT * 3.91) and v["over"] == [("x", "sink")]
+    assert v["by_flat"]["x"]["sink"] == pytest.approx(2.0 / FT * oz) and not v["over"]
+    # The same flat with its sink 9 m down off the trunk: over the half gallon even at its own size.
+    v = plumbing.routed_volumes({"flats": [{"name": "x"}]}, P, _flat(2.0, 9.0), 1.0)
+    assert v["worst"]["fixture"] == "sink" and v["worst"]["oz"] == pytest.approx(9.0 / FT * oz) and v["over"] == [("x", "sink")]
     # IPC 607.2 from the flat's loop: the longest leg, not the way from the riser.
     assert plumbing.routed_hot_lengths({"flats": [{"name": "x"}]}, r)["x"] == pytest.approx(2.0 / FT)
+
+
+def test_the_building_loops_pump_curve_as_read(P):
+    from brownfield import hvac
+
+    # Grundfos's own figures: the leaflet's "max. 19 ft", and the 15-55SF sheet's rated 10.7 gpm at
+    # 8.202 ft, which the curve read off the leaflet passes within 3%.
+    assert hvac.loop_pump_ft(0.5) == pytest.approx(19.0, abs=0.2)
+    assert hvac.loop_pump_ft(P["systems.hot_water.recirc_rated_gpm"]) == pytest.approx(P["systems.hot_water.recirc_rated_ft"], rel=0.03)
+    q = [0.5] + list(range(1, 22))
+    assert all(hvac.loop_pump_ft(a) > hvac.loop_pump_ft(b) for a, b in zip(q, q[1:]))  # falls with flow
+    with pytest.raises(ValueError):
+        hvac.loop_pump_ft(25.0)
 
 
 def test_the_pumps_head_counts_each_flats_valve_by_its_cv(P):
@@ -89,14 +116,14 @@ def test_every_flat_has_its_loop_and_every_fixture_is_within_half_a_gallon(made,
     assert not w["c404"]["over"] and w["c404"]["worst"]["oz"] <= P["systems.hot_water.c404_volume_oz"]
     assert w["longest_hot_ft"] <= 50
     for f in apt["flats"]:
-        fl = plumbing.flat_loop(routes, f["name"])
-        # The return's end a pipe's width past the hot's end, both in the joists' space over the far fixture.
-        assert fl["joint_m"] < 0.15 and fl["hot_m"] > 0 and fl["return_m"] > 0
+        fl = plumbing.flat_loop(routes, f["name"], P)
+        # The two stubs under the lavatory within a vanity's width, the valve between them.
+        assert fl["joint_m"] - P["systems.hot_water.tbv_length_in"] * 0.0254 < 0.5 and fl["hot_m"] > 0 and fl["return_m"] > 0
         assert all(m > 0 for legs in plumbing.dead_legs(routes, f["name"]).values() for m, _ in legs)
 
 
 def test_the_loops_checks_pass_on_the_routes(made):
     _, _, s7 = made
-    names = ("IECC C404.5.2", "the recirculation pump holds", "risers' and mains' routed loss", "IPC 607.2")
+    names = ("IECC C404.5.2", "the recirculation pump holds", "risers' and mains' routed loss", "IPC 607.2", "building loop's pump covers")
     rows = [(label, ok, detail) for label, ok, detail in s7["checks"] if any(n in label for n in names)]
     assert len(rows) == len(names) and all(ok for _, ok, _ in rows), rows
