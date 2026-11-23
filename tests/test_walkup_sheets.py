@@ -7,7 +7,8 @@ import pytest
 from brownfield import routed, servicesheets as ss, systems
 from brownfield.params import load_params, values
 
-PUBLISHED = [ss.BIDSET / f"{k}-{ss.REV}.ifc" for k in ("apartment", "services", "framing")]
+PUBLISHED = [ss.BIDSET / f"{k}-{ss.REV}.ifc" for k in ("apartment", "framing")]
+SERVICES = ss.OUT.parent / f"services-{ss.SERVICES_REV}.ifc"  # Addendum 7's, built by `brownfield routes --ifc`
 BANDS = [(1, -math.inf, 2.74), (2, 2.74, 5.79), (3, 5.79, 9.14), ("roof", 9.14, math.inf)]
 
 
@@ -100,8 +101,8 @@ def test_labels_never_overlap_and_say_what_they_left_off():
 def test_the_set_is_indexed_once_each_by_discipline():
     sheets = ss.sheet_list()
     numbers = [n for n, _ in sheets]
-    assert len(numbers) == len(set(numbers)) == 21
-    assert numbers[0] == "G-001"
+    assert len(numbers) == len(set(numbers)) == 23  # Addendum 7 added G-002 (the tests) and M-602 (the sequence)
+    assert numbers[:2] == ["G-001", "G-002"] and "M-602" in numbers
     assert [n.split("-")[0] for n in numbers] == sorted([n.split("-")[0] for n in numbers], key=["G", "P", "M", "E", "FP"].index)
     for trade in ("P", "M", "E", "FP"):
         assert {f"{trade}-101", f"{trade}-102", f"{trade}-103"} <= set(numbers)
@@ -111,8 +112,8 @@ def test_the_set_is_indexed_once_each_by_discipline():
 
 @pytest.fixture(scope="module")
 def drawn(tmp_path_factory):
-    if not all(p.exists() for p in PUBLISHED):
-        pytest.skip("the published models aren't there (docs/pass3/bidset)")
+    if not all(p.exists() for p in PUBLISHED) or not SERVICES.exists():
+        pytest.skip("the published building and frame, or the services model (`brownfield routes --ifc`), aren't there")
     P = values(load_params())
     apt = systems.load(systems.latest_model())
     routes = routed.load(apt, P)
@@ -129,10 +130,10 @@ def test_every_element_is_on_a_sheet_and_the_pdf_reads_as_text(drawn):
 
     ctx, res, path = drawn
     ch = {label: ok for label, ok, _ in ss.checks(ctx, res, path)}
-    # Between addenda the published model can be older than the routes (step 9a rerouted a feeder;
-    # Addendum 7 issues the model again): the check that says so must tell the truth either way.
+    # The services model can be older than the routes until `brownfield routes --ifc` builds it again:
+    # the check that says so must tell the truth either way.
     same = "the services model was built from the routes these sheets' figures come from"
-    desc = ifcopenshell.open(str(ss.BIDSET / f"services-{ss.REV}.ifc")).by_type("IfcBuilding")[0].Description or ""
+    desc = ifcopenshell.open(str(ctx["services_path"])).by_type("IfcBuilding")[0].Description or ""
     assert ch.pop(same) == (ctx["routes"].rt["requests_sha"] in desc)
     assert all(ch.values()), ch
 

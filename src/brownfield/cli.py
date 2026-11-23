@@ -684,11 +684,13 @@ def cmd_systems(args) -> int:
             print(f"FAIL the second reader (web-ifc) didn't run: {r['second_status']}")
             return 1
         ok &= all(good for _, good, _ in r["checks"] + r["second"])
-    # Addendum 6 (pass 3g step 8) changes no model: checked on the designs on the routes and the sheets.
-    r6 = runs["addendum-6"] = systems.addendum_6_run(load_params())
-    print(NL + systems.addendum_6_report(r6))
-    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r6["written"]))
-    ok &= all(good for _, good, _ in r6["checks"])
+    # Addendum 6 (pass 3g step 8) stays as issued: its sheets were drawn from the services Addendum 7
+    # reissues. Addendum 7 (step 9d) changes no element of the building: checked on the designs on
+    # the routes, the revised services model, the fallback, the sequence, the tests and the sheets.
+    r7 = runs["addendum-7"] = systems.addendum_7_run(load_params())
+    print(NL + systems.addendum_7_report(r7))
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r7["written"]))
+    ok &= all(good for _, good, _ in r7["checks"])
     if args.publish:
         if not ok:
             print(NL + "a check fails: nothing published")
@@ -827,23 +829,15 @@ def cmd_routes(args) -> int:
         sd = servicesifc.run(apt, P, routes=rts, s7=s7)
         print(NL + servicesifc.report(sd))
         out = OUT_DIR / "pass3" / "routes-7d.json"
-        out.write_text(json.dumps({"checks": sd["checks"], "elements": sd.get("elements"), "counts": sd.get("counts"),
-                                   "conduit_bends": sd.get("conduit_bends"), "firestop": sd.get("schedules", {}).get("firestop")},
+        out.write_text(json.dumps({"checks": sd["checks"], "model": sd["path"].name if "path" in sd else None, "elements": sd.get("elements"),
+                                   "counts": sd.get("counts"), "conduit_bends": sd.get("conduit_bends"),
+                                   "firestop": sd.get("schedules", {}).get("firestop")},
                                   indent=1, default=str) + NL, encoding="utf-8")
         print(NL + "wrote " + ", ".join(str(x.relative_to(OUT_DIR.parent)) for x in [out, *sd.get("written", [])][:3]) + ", ...")
         ok7d = all(c for _, c, _ in sd["checks"])
-        if getattr(args, "publish", False):
-            # Into the plan room beside the addenda, the manifest's other entries kept.
-            from .systems import PUBLISHED, SERVICES_ISSUED
-            entry = servicesifc.publish(PUBLISHED, SERVICES_ISSUED)
-            mpath = PUBLISHED / "addenda.json"
-            m = json.loads(mpath.read_text(encoding="utf-8"))
-            m["services"] = entry
-            mpath.write_text(json.dumps(m, indent=1) + NL, encoding="utf-8")
-            print("published " + entry["model"] + f" and {len(entry['files'])} schedules to {PUBLISHED.relative_to(OUT_DIR.parent)}; "
-                  "addenda.json's `services`")
-    elif getattr(args, "publish", False):
-        print(NL + "--publish needs --ifc: nothing published")
+    if getattr(args, "publish", False):
+        # The services model goes out with the addendum that issues it (Addendum 5's, then 7's).
+        print(NL + "the services model is published with its addendum: `brownfield systems --ifc --publish`; nothing published")
     return 0 if ok and all(c for _, c, _ in ch) and all(c for _, c, _ in s7["checks"]) and ok7d else 1
 
 
@@ -1166,14 +1160,14 @@ def main(argv=None) -> int:
     rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked; 7c: steps 3-6 on the routes; 7d with --ifc: the services model and its schedules)")
     rq.add_argument("--requests", action="store_true", help="write out/pass3/route-requests.json for forge's `routes-json` (7b) and stop")
     rq.add_argument("--ifc", action="store_true", help="also 7d: the services as IFC (out/pass3/services), checked, with its schedules")
-    rq.add_argument("--publish", action="store_true", help="with --ifc: publish the services model and its schedules into docs/pass3/bidset (only if the model's checks pass)")
+    rq.add_argument("--publish", action="store_true", help="retired: the services model is published with its addendum (`brownfield systems --ifc --publish`)")
     sub.add_parser("fire", help="pass 3g step 6: sprinklers and alarms: the one stair, NFPA 13R layout and hydraulics, the stair's enclosure, smoke alarms, the roof hatch")
     sub.add_parser("electrical", help="pass 3g step 5: electrical designed: each flat's panel, circuits and feeder, the house loads, the service and its fault current, the meter wall, room for PV and EV")
     sub.add_parser("plumbing", help="pass 3g step 4: plumbing designed: the hot-water plant, recirculation, pipe sizes and pressure, drains, vents, noise")
     sub.add_parser("hvac", help="pass 3g step 3: heating, cooling and ventilation designed: radiant floors, the building loop, ERV and mini-split ducts")
     sub.add_parser("loads", help="pass 3g step 2: the walk-up's loads room by room: heat, ventilation, cooling, water, drainage, hot water, electrical")
     sy = sub.add_parser("systems", help="pass 3g: the walk-up's rooms, plumbing walls and service annex against IBC 2021 (after forge `apartment-json addendum-2 60`)")
-    sy.add_argument("--publish", action="store_true", help="with --ifc: publish Addenda 2 and 3 into docs/pass3/bidset, with addenda.json and each addendum's changes (only if every check passes)")
+    sy.add_argument("--publish", action="store_true", help="with --ifc: publish the addenda into docs/pass3/bidset, with addenda.json and each addendum's changes (only if every check passes; those already issued left as they are)")
     sy.add_argument("--ifc", action="store_true", help="also Addenda 2 and 3 in the bid set: the IFC, both readers, the IDS, each one's diff against the one before, the drawings, RFI 002")
     sub.add_parser("addendum", help="pass 3f: a made-up RFI and Addendum 1 run as a reviewed change: element diff, checks, drawings (after forge `apartment-json addendum-1`)")
     bs = sub.add_parser("bidset", help="pass 3f: the walk-up as a bid set in IFC4, written from forge's model and checked against it by two readers")

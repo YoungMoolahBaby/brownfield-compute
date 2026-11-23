@@ -590,6 +590,12 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
         (f"the recirculation pump holds the loop's flow round its index circuit, within its rated {p[h + 'recirc_rated_gpm']:g} gpm at "
          f"{p[h + 'recirc_rated_ft']:g} ft; each flat's balancing valve within its {p[h + 'tbv_max_dp_psi']:g} psi",
          rc["ok"] and rc["tbv_ok"], f"{rc['gpm']:.2f} gpm at {rc['ft']:.1f} ft ({rc['index']}); valve {rc['tbv_psi']:.2f} psi at {rc['flat_gpm']:.2f} gpm"),
+        ("the plant on the routed loop's loss: the storage tanks hold the storage Ecosizer asks, the swing tank's element its "
+         "temperature-maintenance capacity",
+         plumbing.storage_held(p) >= water["primary"]["storage_gal"]
+         and p["systems.house.swing_element_va"] >= water["tm"]["capacity_kbtuh"] * 1000 / 3.412142 - 1e-6,
+         f"{plumbing.storage_held(p):g} gal against {water['primary']['storage_gal']:.0f}; {p['systems.house.swing_element_va'] / 1000:g} kW "
+         f"against {water['tm']['capacity_kbtuh'] / 3.412142:.2f}"),
         (f"every branch vent routed, within {lim['vent_ft']:g} ft or a size up over its whole length (IPC 906.2); each vent stack "
          "by Table 906.1",
          all(v["routed_in"] >= v["need_in"] - 1e-9 and v["whole"] for v in vt["flats"].values())

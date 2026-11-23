@@ -154,7 +154,16 @@ fixed for Addendum 7. A plant serving several flats falls under the commercial c
 - 9c done: the tests and inspections, 28 items, each with its code's words or the design's figure
   (specification section 01 45 00).
 
-Next: 9d, Addendum 7.
+9d done: Addendum 7 published, with the revised services model, 23 sheets and the two
+specification sections. Addenda 1-6 are left as issued.
+- Found: 9c's loops raised the storage the plant needs to 255-259 gal, over the 250 gal tank in the
+  model. It's now two 150 gal tanks in series. Lochinvar's next single tank, 450 gal, won't pass
+  the mechanical room's door.
+- The backup heater is placed in the room, and three new checks guard the room: each piece's
+  service space, the door and the ceiling, and the drops through the slab.
+- In 3D, Addendum 7's changes to the services are marked on their layers.
+
+Next: the installers' round (8d, Jon's), its packets now with Addendum 7's sheets; step 10.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4308,6 +4317,94 @@ test. Then the township brief's ask.
            - 13R's published 2022 text, which the second draft may differ from;
            - the building loop's design pressure, for IMC 1208.1's 1.5 times: the expansion tank
              and relief valve aren't chosen. The 100 psi floor stands until they are.
+       - **9d done 2026-11-23: Addendum 7, published** (Jon: "lets do 9d"; `uv run brownfield systems
+         --ifc --publish`; `systems.addendum_7_run`).
+         - **What it issues (seven items):**
+           - 9c's hot water: each flat's loop, the balancing valves, the insulation, P-3's control;
+           - the plant, revised (below);
+           - 9a's fallback: BK-1, the mini-splits heating alone, the wiring;
+           - P-1 against its curve;
+           - the sequence and the tests as specification sections 23 09 93 and 01 45 00
+             (`spec-23-09-93-sequence.md`, `spec-01-45-00-tests.md`);
+           - the services model and the sheets, reissued: `services-addendum-7.ifc` with its
+             schedules, and `services-sheets-addendum-7.pdf`, 23 sheets. Two are new: G-002, the
+             tests as a schedule, and M-602, the sequence and its 17 points. P-601 now draws the two
+             tanks, BK-1 on the heater circuit, P-3's control, and an inset of one flat's loop with
+             every flat's loop as routed. M-601 gives P-1 against its curve.
+         - **Found while drawing the plant: the storage tank no longer held the storage.**
+           - 9c's loops raised Ecosizer's storage to 255 gal on the routes and 259 on the square
+             lengths. 7a had placed Lochinvar's HP250G, 250 gal, for step 4's 238.6, and nothing
+             checked the tank against the plant. Now both `plumbing.summary` and 7c do.
+           - **Two HP150G in series, 300 gal** (basis of design). Ecotope's design guidance:
+             "multiple storage tanks plumbed in series ... enables a high degree of temperature
+             stratification" (Heller and Oram, 2015, saved under `data/raw/pass3g/step9/ecotope/`).
+             Ecosizer sizes the storage as one volume; its aquastat, at half the storage, goes where
+             ST-1B's top joins ST-1A's bottom.
+           - **Lochinvar's next single tank won't go in.** The HP500G is 49 in. across, wider than
+             the mechanical room's 42 in. door. Stood up, its diagonal is 109 in., under a 108 in.
+             ceiling.
+         - **BK-1 placed.** 9a chose it, but the model had no box for it. The room's floor now holds:
+           - the two tanks along the far wall;
+           - the heat pump by the door;
+           - the swing tank and BK-1 on the back wall, BK-1 with NEC 110.26(A)'s 36 in. of
+             working space in front.
+
+           Its footprint is taken at 27 in. each way. A. O. Smith's table gives 21-3/4 and 27 in., and
+           its text doesn't say which is the diameter. The plant's drop through the slab moved from
+           24 to 12 in. off the wall, out of that space.
+
+           Three checks now: each piece inside the room with its service space clear, each through
+           the door and stood up under the ceiling, and both drops clear. Forge routed all 442
+           runs again with no clash (505 s), and 7a-7d pass (77).
+         - **Publishing leaves every issued addendum as it was.**
+           - Addendum 5's text had been read from the latest services run, so a publish would have
+             rewritten it. It now reads Addendum 5's issued model and schedules, and comes out byte
+             for byte.
+           - Addendum 6 stays as issued. Its sheets were drawn from the services Addendum 7 reissues,
+             so its run (`addendum_6_run`, git d6d99c7) is retired, and its items come from the
+             manifest.
+           - The services model is named for its issuing addendum (`servicesifc.ISSUE`). Its
+             GlobalIds stay keyed on the frame it's routed through, so the two issues compare
+             element by element.
+           - `brownfield routes --publish` no longer publishes the services alone; they go out with
+             their addendum.
+         - **What changed, marked in 3D:** `changes-services-addendum-7.json`, by GlobalId: 59 added,
+           532 changed, 15 removed, of 3,162 (3,118 before).
+           - **Added:** each flat's return and its balancing valve, the two tanks and BK-1.
+           - **Changed:** mostly cold pipe, the loop's tails, vents and branch circuits routed again
+             around the returns. No sprinkler, duct or line set moved.
+           - **In the viewer:** with a services layer on, "Mark what Addendum 7 changed in the
+             services" colours them as an addendum's changes. The plan room's Addendum 7 links
+             straight to it.
+         - **Run (2026-11-23):** every check passes (`systems --ifc`, 223 lines). Addendum 7's own 31
+           include 7c's 20, the plant's three, the fallback's, the sequence's and the tests', the
+           diff read from both files, and the sheets'. Addenda 2-5 came out byte for byte; Addendum
+           7's issue time is 2026-11-23 08:35:59 (UTC-8).
+           - **On the routes:**
+             - the worst fixture holds 53 of 64 fl oz, and IPC 607.2's longest pipe is 22.4 ft;
+             - the loop loses 2,112 W, 1,242 of it in the flats' loops;
+             - P-3 moves 4.79 gpm at 3.3 ft, and P-1 needs 10.7 ft at 6.04 gpm against its curve's
+               12.3;
+           - **The plant:** 11.63 kW, BK-1's 12.3 covering it; the swing tank's element 4.5 kW
+             against 3.70.
+           - **The wiring:** the house panel 108.4 A on 110 A; the service 463 A on its 600 A main;
+             6.7 kW AC of PV on the house panel.
+           - **The viewer**, seen in headless Chrome: the Level 1 plumbing, with the added runs in
+             green.
+           - Tests: `tests/test_walkup_addendum7.py`, 6. `test_website.py` and `test_walkup_sheets.py`
+             updated.
+         - **What we don't know:**
+           - **The room's wall-hung equipment.** The exchangers, the pumps, the mixing valve, the
+             backflow assemblies, the riser assembly and the expansion tanks hang on what wall is
+             left. With five pieces on its floor, the room may now be short of wall, and no one has
+             laid it out. A question for the plumber.
+           - **BK-1's diameter,** taken at the larger figure until its drawing is read.
+           - **Whether two tanks in series stratify as Ecosizer's one volume does.** Ecotope's
+             guidance says they do; it's not measured here.
+           - **The installers' round.** Its packets carried Addendum 6's sheets, and its forms carry
+             figures 9a and 9c changed (the house panel's 50 A among them). The packets now take
+             Addendum 7's sheets (`installers.SHEETS_PDF`). Whether to rebuild and republish the
+             forms is Jon's: it depends on whether they've gone out.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing

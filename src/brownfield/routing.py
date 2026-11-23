@@ -35,6 +35,7 @@ length, z up from the top of the ground slab).
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from . import OUT_DIR
@@ -813,28 +814,48 @@ def flat_equipment(apt: dict, p: dict, frame: dict, fx: dict, ch: dict, sf: list
 
 
 def annex_equipment(apt: dict, p: dict) -> list[dict]:
-    """The mechanical room's floor-standing plant (m), laid out against its walls:
-    - **the storage tank** in the corner of the far wall and the partition, its anodes' 36 in.
-      toward the room;
-    - **the heat pump** against the partition by the door's wall, its front (connections, 36 in.
-      of service) toward the room;
-    - **the swing tank** against the partition between them, its 24 in. in front.
+    """The mechanical room's floor-standing plant (m), laid out against its walls (Addendum 7):
+    - **the storage, two tanks in series** along the far wall from its corner with the partition:
+      ST-1A, the hot end, in the corner, then ST-1B; each with its anodes' 36 in. toward the room;
+    - **the heat pump** against the far wall by the door's wall, its front (connections, 36 in. of
+      service) toward the room;
+    - **the swing tank** against the partition, past the storage's anode space, its 24 in. in front;
+    - **the backup heater** beside it, its control compartment's 36 in. of working space in front
+      (NEC 110.26(A)), the plant's drop through the slab kept clear of it.
     The fire and domestic services' assemblies, the plate exchangers, pumps and mixing valve hang
     on the walls above the floor (7b routes to them)."""
     mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
     (_, y0, z0), (x1, y1, _) = mech["lo_m"], mech["hi_m"]
     g = p[R + "wall_gap_in"] * IN
-    D, Ht = p[R + "tank_dia_in"] * IN, p[R + "tank_h_in"] * IN
-    tank = _box("annex/storage-tank", "tank", [x1 - g - D, y1 - g - D, z0], [x1 - g, y1 - g, z0 + Ht],
-                service=[[x1 - g - D - p[R + "tank_anode_in"] * IN, y1 - g - D, z0], [x1 - g - D, y1 - g, z0 + Ht]])
+    D, Ht, anode = p[R + "tank_dia_in"] * IN, p[R + "tank_h_in"] * IN, p[R + "tank_anode_in"] * IN
+    tanks, top = [], y1 - g
+    for k in range(int(p[R + "tank_count"])):
+        tanks.append(_box(f"annex/storage-tank-{'ab'[k]}", "tank", [x1 - g - D, top - D, z0], [x1 - g, top, z0 + Ht],
+                          service=[[x1 - g - D - anode, top - D, z0], [x1 - g - D, top, z0 + Ht]]))
+        top -= D + g
     hw, hd, hh = (p[R + k] * IN for k in ("hp_w_in", "hp_d_in", "hp_h_in"))
     hp = _box("annex/heat-pump", "heat_pump", [x1 - g - hd, y0 + g, z0], [x1 - g, y0 + g + hw, z0 + hh],
               service=[[x1 - g - hd - p[R + "hp_service_in"] * IN, y0 + g, z0], [x1 - g - hd, y0 + g + hw, z0 + hh]])
     sd, sh = p[R + "swing_dia_in"] * IN, p[R + "swing_h_in"] * IN
-    ym = (hp["hi"][1] + tank["lo"][1]) / 2
-    swing = _box("annex/swing-tank", "tank", [x1 - g - sd, ym - sd / 2, z0], [x1 - g, ym + sd / 2, z0 + sh],
-                 service=[[x1 - g - sd - p[R + "swing_front_in"] * IN, ym - sd / 2, z0], [x1 - g - sd, ym + sd / 2, z0 + sh]])
-    return [tank, hp, swing]
+    xs = x1 - g - D - anode - g  # the swing tank's right side, past the storage's anode space
+    swing = _box("annex/swing-tank", "tank", [xs - sd, y1 - g - sd, z0], [xs, y1 - g, z0 + sh],
+                 service=[[xs - sd, y1 - g - sd - p[R + "swing_front_in"] * IN, z0], [xs, y1 - g - sd, z0 + sh]])
+    bd, bh = p[R + "backup_dia_in"] * IN, p[R + "backup_h_in"] * IN
+    xb = xs - sd - g
+    backup = _box("annex/backup-heater", "heater", [xb - bd, y1 - g - bd, z0], [xb, y1 - g, z0 + bh],
+                  service=[[xb - bd, y1 - g - bd - p["systems.wiring.working_depth_in"] * IN, z0], [xb, y1 - g - bd, z0 + bh]])
+    return [*tanks, hp, swing, backup]
+
+
+def annex_drops(apt: dict, p: dict) -> dict[str, list[float]]:
+    """Where the mechanical room's piping drops through the annex's slab (x, y in m): the plant's
+    mains, and the fire main from the riser assembly, each off the wall to the building and either
+    side of the stair's middle (placeholders until the room's piping is drawn)."""
+    mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
+    core = apt["stair"]["core_y_m"]
+    mid = (core[0] + core[1]) / 2
+    return {"plant": [mech["lo_m"][0] + p[R + "plant_drop_x_in"] * IN, mid + 0.3],
+            "fire": [mech["lo_m"][0] + p[R + "fire_entry_off_in"] * IN, mid - 0.3]}
 
 
 def _overlap(a: dict, b: dict, tol: float = 1e-6) -> bool:
@@ -869,6 +890,21 @@ def equipment_checks(apt: dict, p: dict, eq: list[dict], plant: list[dict], sf: 
     door = next(d for d in apt["rooms"]["annex"]["doors"] if d["room"] == "annex/mechanical")
     way = {"lo": [door["lo_m"][0], mech["lo_m"][1], 0.0], "hi": [door["hi_m"][0], mech["lo_m"][1] + p["systems.wiring.working_depth_in"] * IN, 2.0]}
     blocked = [e["id"] for e in plant if _overlap(e, way)]
+    # Each piece in through the door, on its side if need be, and stood up under the ceiling.
+    ceiling = mech["hi_m"][2] - mech["lo_m"][2]
+    narrow = {e["id"]: min(e["hi"][0] - e["lo"][0], e["hi"][1] - e["lo"][1]) for e in plant}
+    tall = {e["id"]: e["hi"][2] - e["lo"][2] for e in plant}
+    wide = [i for i, w in narrow.items() if w > door["width_m"] + 1e-9]
+    tilt = {i: math.hypot(narrow[i], tall[i]) for i in narrow}
+    no_stand = [i for i, d in tilt.items() if d > ceiling + 1e-9]
+    # The plant's and the fire service's drops through the slab clear of every piece and its space.
+    drops = annex_drops(apt, p)
+    hit = []
+    for k, (x, y) in drops.items():
+        for e in plant:
+            for what, (lo, hi) in (("", (e["lo"], e["hi"])), (" (its service space)", e["service"])):
+                if lo[0] - 1e-6 <= x <= hi[0] + 1e-6 and lo[1] - 1e-6 <= y <= hi[1] + 1e-6:
+                    hit.append(f"the {k} drop in {e['id']}{what}")
     over_wall = max(abs(k["minisplit"]["piping_clear_to"] - (rooms[f"{n}/hall"]["hi_m"][0] if k["minisplit"]["piping_clear_to"] > rooms[f"{n}/hall"]["hi_m"][0]
                     else rooms[f"{n}/hall"]["lo_m"][0])) for n, k in by.items())
     return [("every ERV over open floor in its closet, with room for its 20 x 30 in. access door under it (Broan)", not bad_erv,
@@ -877,7 +913,14 @@ def equipment_checks(apt: dict, p: dict, eq: list[dict], plant: list[dict], sf: 
              ", ".join(bad_ms) or f"its 12 in. piping side reaches {over_wall / IN:.1f} in. past the hall (the partition framed to the soffit, 7b)"),
             ("no two pieces of a flat's equipment overlap", not clash, ", ".join(clash[:4])),
             ("the plant inside the mechanical room, each piece's service space clear of the rest and the door's way in clear",
-             inside and not svc and not blocked, "; ".join(svc + blocked) or "storage tank, heat pump, swing tank")]
+             inside and not svc and not blocked, "; ".join(svc + blocked) or ", ".join(e["id"].split("/")[1] for e in plant)),
+            ("each piece of the plant through the mechanical room's door and stood up under its ceiling",
+             not wide and not no_stand, "; ".join([f"{i} wider than the door" for i in wide] + [f"{i} {tilt[i] / IN:.1f} in. on its diagonal"
+                                                                                                for i in no_stand])
+             or f"the widest {max(narrow.values()) / IN:.1f} in. through {door['width_m'] / IN:.0f} in.; the longest diagonal "
+                f"{max(tilt.values()) / IN:.1f} in. under {ceiling / IN:.0f} in."),
+            ("the plant's and the fire service's drops through the slab clear of every piece and its service space", not hit,
+             "; ".join(hit) or ", ".join(f"{k} at {x / IN:.0f}, {y / IN:.0f} in." for k, (x, y) in drops.items()))]
 
 
 # ---- 7a as data and as text ----

@@ -38,9 +38,10 @@ from .servicesifc import FT, IN, read_back
 
 BIDSET = Path(__file__).resolve().parents[2] / "docs" / "pass3" / "bidset"
 OUT = OUT_DIR / "pass3" / "services" / "sheets"
-REV = "addendum-5"  # the models the sheets are drawn from
-SHEETS_REV = "Addendum 6"  # the addendum that issues the sheets
-PDF_NAME = "services-sheets-addendum-6.pdf"
+REV = "addendum-5"  # the building and the frame the sheets are drawn on, as published
+SERVICES_REV = "addendum-7"  # the services model they're drawn from (servicesifc.ISSUE)
+SHEETS_REV = "Addendum 7"  # the addendum that issues the sheets (Addendum 6 issued the first set, published as it was)
+PDF_NAME = "services-sheets-addendum-7.pdf"
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -77,8 +78,8 @@ TRADES = {  # discipline: (layers, the plans' name)
 }
 SHORT = {  # a box's label on a plan, by its key's last part (or kind)
     "wc": "WC", "lav": "LAV", "tub": "TUB", "sink": "SINK", "dishwasher": "DW", "washer": "W", "dryer": "D",
-    "erv": "ERV", "minisplit": "MS", "outdoor-unit": "ODU", "manifold": "MF", "panel": "LC", "storage-tank": "ST-1",
-    "swing-tank": "ST-2", "heat-pump": "HP-1",
+    "erv": "ERV", "minisplit": "MS", "outdoor-unit": "ODU", "manifold": "MF", "panel": "LC", "storage-tank-a": "ST-1A",
+    "storage-tank-b": "ST-1B", "swing-tank": "ST-2", "heat-pump": "HP-1", "backup-heater": "BK-1",
 }
 HIDDEN = (0, (3, 2))
 
@@ -259,7 +260,8 @@ def title_block(ax, number: str, title: str, revision: str = SHEETS_REV, status:
     x = RIGHT + 0.2
     lines = [("brownfield-compute, pass 3g", 11), ("12-flat walk-up", 11), ("SERVICES", 14), ("", 8),
              ("NOT FOR CONSTRUCTION", 12), ("a made-up design for a study,", 8), ("not a real project:", 8),
-             ("nothing is out to bid", 8), ("", 8), ("drawn from the bid set's models", 8), (f"of {REV.replace('-', ' ').title()}", 8), ("", 8),
+             ("nothing is out to bid", 8), ("", 8), ("drawn from the bid set's models:", 8), (f"the building and frame of {_rev(REV)},", 8),
+             (f"the services of {_rev(SERVICES_REV)}", 8), ("", 8),
              (f"revision: {revision}", 9), (status, 9)]
     y = SH - 1.2
     for text, size in lines:
@@ -267,6 +269,10 @@ def title_block(ax, number: str, title: str, revision: str = SHEETS_REV, status:
         y -= size / PT * 1.8
     ax.text(x, 3.2, "\n".join(_wrap(title.upper(), 26)), fontsize=12, va="top", weight="bold", linespacing=1.15)
     ax.text(x, 1.5, number, fontsize=28, va="top", weight="bold")
+
+
+def _rev(r: str) -> str:
+    return r.replace("-", " ").title()
 
 
 def _wrap(text: str, width: int) -> list[str]:
@@ -925,55 +931,67 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
                            "its turns)."), fontsize=6.5, va="top")
 
     ax.text(1.4, SH - 6.0, "THE HOT-WATER PLANT (THE ANNEX'S MECHANICAL ROOM)", fontsize=11, weight="bold", va="top")
-    h, pr, tm = w["heater"], w["primary"], w["tm"]
-    hw = "systems.hot_water."
+    h, pr, tm, lp, rc = w["heater"], w["primary"], w["tm"], w["loop"], w["recirc"]
+    hw, rt, ct = "systems.hot_water.", "systems.routing.", "systems.controls."
     t_store, t_out, t_back = p[hw + "storage_f"], p[hw + "distribution_f"], p[hw + "return_min_f"]
     from .params import load_params
+    from .plumbing import SWING_DEADBAND_F, storage_held
+    from .sequence import aquastat_at
     spread = load_params()[hw + "recirc_w_per_flat"]
     by = SH - 13.2
     dc = _box(ax, 1.4, by + 4.2, 3.4, 1.3, f"DATA CENTER'S LIQUID LOOP\nits return, {h['dc_in_f']:.0f} F ({(h['dc_in_f'] - 32) * 5 / 9:.0f} C)\n"
               f"{h['dc_per_circuit']:.2f} times the heater\ncircuit's flow", fs=6)
-    hx = _box(ax, 6.2, by + 4.2, 3.4, 1.3, f"HX-1 PLATE EXCHANGER\npreheats the heater circuit\nto {h['preheat_f']:.1f} F: {h['preheat_kw']:.1f} kW\n({h['preheat_share']:.0%} of the plant's heat)", fs=6)
-    hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to {t_store:g} F,\n{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
-    st1 = _box(ax, 11.0, by + 1.2, 3.6, 1.6, f"ST-1 STORAGE\n{pr['storage_gal']:.0f} gal at {t_store:g} F\n(Lochinvar, basis of design)\n"
+    hx = _box(ax, 6.2, by + 4.2, 3.4, 1.3, f"HX-1 PLATE EXCHANGER\npreheats the heater circuit\nto {h['preheat_f']:.1f} F: {h['preheat_kw']:.1f} kW\n"
+              f"({h['preheat_share']:.0%} of the plant's heat)", fs=6)
+    hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to {t_store:g} F,\n"
+              f"{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
+    bk = _box(ax, 16.0, by + 4.2, 3.8, 1.3, f"BK-1 BACKUP HEATER (ADD. 7)\nA. O. Smith DRE-52-12 (basis of\ndesign): {p[hw + 'backup_w'] / 1000:.1f} kW, "
+              f"its own {p[hw + 'backup_gal']:g} gal;\nlocked out unless the DC's heat is gone", fs=6)
+    st1 = _box(ax, 11.0, by + 1.0, 3.6, 1.8, f"ST-1A + ST-1B STORAGE (ADD. 7)\n{p[rt + 'tank_count']:g} x {p[rt + 'tank_gal']:g} gal in series, "
+               f"{storage_held(p):g} gal\nat {t_store:g} F (Lochinvar HP150G,\nbasis of design); Ecosizer asks {pr['storage_gal']:.0f}\n"
                f"{pr['capacity_kbtuh']:.1f} kBtu/h over {p[hw + 'run_hr']:g} h", fs=6)
-    st2 = _box(ax, 16.0, by + 1.2, 3.3, 1.6, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
-               "(Bradford White RE340S6,\nbasis of design; Addendum 6)", fs=6)
-    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
-    hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n{hot['sizes']['branch']:g} in. to each flat", fs=6)
-    rp = _box(ax, 20.7, by - 1.6, 3.3, 1.2, f"RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{w['loop']['gpm']:.2f} gpm, {t_back:g} F back", fs=6)
+    st2 = _box(ax, 16.0, by + 1.0, 3.3, 1.8, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
+               f"(Bradford White RE340S6,\nbasis of design; Addendum 7)\non at {t_out:g} F, off at {t_out + SWING_DEADBAND_F:g} F", fs=6)
+    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MV-1 MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
+    hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n"
+              f"{hot['sizes']['branch']:g} in. to each flat's loop", fs=6)
+    rp = _box(ax, 20.7, by - 1.9, 3.8, 1.5, f"P-3 RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft; TS-5 at ST-2:\n"
+              f"on under {t_back:g} F, off at {p[ct + 'recirc_stop_f']:g} F (C404.6.1)", fs=6)
     # The data center's water: to HX-1, then the heat pump's source, then back.
     _pipe(ax, [(dc[0] + dc[2], dc[1] + 0.95), (hx[0], hx[1] + 0.95)], colour="#6a1b9a", text="DC water")
     _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.95), (hp[0], hp[1] + 0.95)], colour="#6a1b9a", text="source, throttled")
     _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1] + hp[3]), (hp[0] + hp[2] * 0.5, hp[1] + hp[3] + 0.5), (dc[0] + dc[2] * 0.5, hp[1] + hp[3] + 0.5),
                (dc[0] + dc[2] * 0.5, dc[1] + dc[3])], colour="#6a1b9a", text=f"back to the data center at {h['source_f']:.0f} F", side=1)
-    # The heater circuit: storage bottom to HX-1 to HP-1 to storage top.
+    # The heater circuit (P-2): ST-1B's bottom through HX-1, HP-1 and BK-1 to ST-1A's top.
     _pipe(ax, [(st1[0], st1[1] + 0.3), (hx[0] + hx[2] * 0.5, st1[1] + 0.3), (hx[0] + hx[2] * 0.5, hx[1])], colour=TAGS["CW"][1],
-          text="heater circuit, from the storage's bottom", side=-1)
+          text="heater circuit (P-2), from ST-1B's bottom", side=-1)
     _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.3), (hp[0], hp[1] + 0.3)], colour="#ef6c00", text=f"{h['preheat_f']:.1f} F", side=-1)
-    _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1]), (hp[0] + hp[2] * 0.5, st1[1] + st1[3])], colour=TAGS["HW"][1], text=f"{t_store:g} F")
+    _pipe(ax, [(hp[0] + hp[2], hp[1] + 0.3), (bk[0], bk[1] + 0.3)], colour=TAGS["HW"][1], text=f"{t_store:g} F", side=-1)
+    _pipe(ax, [(bk[0] + bk[2] * 0.5, bk[1]), (bk[0] + bk[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, st1[1] + st1[3])],
+          colour=TAGS["HW"][1], text=f"to ST-1A's top, {t_store:g} F", side=1)
     _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_store:g} F")
-    _pipe(ax, [(st2[0] + st2[2], st2[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
+    _pipe(ax, [(st2[0] + st2[2], mv[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
     _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_out:g} F")
-    _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.6), (rp[0] + rp[2], rp[1] + 0.6)], colour=TAGS["HWR"][1],
-          ls=TAGS["HWR"][2], text=f"return {w['loop']['return_main_in']:g} in. main, {w['loop']['return_riser_in']:g} in. risers", side=1)
-    _pipe(ax, [(rp[0], rp[1] + 0.6), (st2[0] + st2[2] * 0.5, rp[1] + 0.6), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
-    _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, from the main")
+    _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.75), (rp[0] + rp[2], rp[1] + 0.75)], colour=TAGS["HWR"][1],
+          ls=TAGS["HWR"][2], text=f"return {lp['return_main_in']:g} in. main, {lp['return_riser_in']:g} in. risers", side=1)
+    _pipe(ax, [(rp[0], rp[1] + 0.75), (st2[0] + st2[2] * 0.5, rp[1] + 0.75), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
+    _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, to ST-1B's bottom")
     _pipe(ax, [(mv[0] + mv[2] * 0.25, by - 0.2), (mv[0] + mv[2] * 0.25, mv[1])], colour=TAGS["CW"][1], text="cold to the mixing valve")
     notes = [
         f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at {t_out:g} F, a swing-tank plant "
-        f"({pr['running_gal']:.0f} gal running, against a floor of {pr['minimum_gal']:.0f}).",
+        f"({pr['running_gal']:.0f} gal running; {pr['storage_gal']:.0f} gal of storage, against a floor of {pr['minimum_gal']:.0f}).",
+        f"The storage is two tanks in series, for its stratification (Ecotope): cold in at ST-1B's bottom, hot out of ST-1A's top. P-2 runs "
+        f"on TS-4, the aquastat {aquastat_at(p)}.",
         f"Stored and leaving the heater at {t_store:g} F (WHO: not less than 60 C; CDC: above 140 F); sent out at {t_out:g} F; back at "
         f"{t_back:g} F or more.",
-        f"The loop loses {w['loop']['w_per_flat']:.0f} W a flat on its routes (Ecosizer's spread of measured buildings {spread.low:g}-"
-        f"{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh on the design day; the plant carries "
-        f"{tm['plant_share']:.0%} of the loop's loss.",
+        f"The loop loses {lp['w_per_flat']:.0f} W a flat on its routes, {lp['riser_mains_w_per_flat']:.0f} of it in the risers and mains "
+        f"(Ecosizer's spread of measured buildings {spread.low:g}-{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh "
+        f"on the design day; the plant carries {tm['plant_share']:.0%} of the loop's loss.",
         f"Most of the hot water's heat comes from the data center: the preheat ({h['preheat_share']:.0%} of the plant's), and what the "
-        "heat pump draws from its water.",
+        "heat pump draws from its water. When it's gone, BK-1 heats the storage instead, never with HP-1 (a wired interlock).",
         "Not in the model: the plant's wall-hung assemblies (the exchanger, the pumps, the mixing valve, the backflow assembly, the "
         "pressure-reducing valve). Their places in the mechanical room are for the plumber to propose.",
-        f"The plant's control sequence (the data center's flow through HX-1 held so its water leaves the heat pump's source at "
-        f"{h['source_f']:.0f} F) is step 9's.",
+        "The control sequence: specification section 23 09 93 (M-602). The tests and inspections: 01 45 00 (G-002).",
     ]
     yy = by - 2.6
     ax.text(1.4, yy, "NOTES", fontsize=8, weight="bold", va="top")
@@ -981,6 +999,7 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     for i, n in enumerate(notes, 1):
         ax.text(1.4, yy, f"{i}. {n}", fontsize=6.3, va="top")
         yy -= 0.24
+    flat_loop_inset(ax, 1.4, yy - 0.3, s7, p)
     # The plumbing's pipe by system and size, from the file.
     rows = lengths_rows(rb, ("plumbing",))
     _table(ax, RIGHT - 9.6, SH - 6.0, [("SYSTEM", 2.4), ("MATERIAL", 3.9), ("SIZE IN.", 0.8), ("FT", 0.8), ("PIECES", 0.7)], rows,
@@ -988,8 +1007,69 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     fx = Counter(r["props"].get("Kind") for r in rb if r["key"].startswith("fixture/"))
     frow = [[k, str(n)] for k, n in sorted(fx.items())]
     _table(ax, RIGHT - 9.6, 6.4, [("FIXTURE", 2.4), ("COUNT", 0.8)], frow, title="FIXTURES (FROM THE MODEL; NONE CHOSEN)")
-    ax.text(1.4, 1.2, "Figures: 7c's designs on the routes (routed.summary on Addendum 5's routes); the tables from the services model.",
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the tables from the services model.",
             fontsize=6, va="top", color="#616161")
+
+
+def flat_loop_inset(ax, x0: float, top: float, s7: dict, p: dict) -> None:
+    """P-601's inset (Addendum 7): one flat's own hot-water loop, as every flat's runs (IECC C404.5):
+    from its riser along its hot branch past its fixtures, each on its own pipe at its own size, to
+    the lavatory, where the thermostatic balancing valve in the vanity starts its return; and each
+    flat's loop as routed."""
+    from .plumbing import LOOP_END
+
+    w = s7["water"]
+    lp, rc, c4 = w["loop"], w["recirc"], w["c404"]
+    hw = "systems.hot_water."
+    ax.text(x0, top, "EACH FLAT'S OWN LOOP (ADDENDUM 7; IECC C404.4-C404.6)", fontsize=8, weight="bold", va="top")
+    red = TAGS["HW"][1]
+    y_hot, y_ret = top - 0.8, top - 3.0
+    xr, xrr, x_end = x0 + 0.3, x0 + 0.75, x0 + 8.6
+    ax.plot([xr, xr], [y_ret - 0.5, y_hot + 0.35], color=red, lw=2.0)
+    ax.plot([xrr, xrr], [y_ret - 0.5, y_hot + 0.35], color=red, lw=1.6, ls=TAGS["HWR"][2])
+    ax.text(xr - 0.05, y_ret - 0.55, f"hot riser\n{w['paths']['hot']['sizes']['riser']:g} in.", fontsize=5.5, ha="right", va="top", color=red)
+    ax.text(xrr + 0.05, y_ret - 0.55, f"return riser\n{lp['return_riser_in']:g} in.", fontsize=5.5, ha="left", va="top", color=red)
+    _pipe(ax, [(xr, y_hot), (x_end, y_hot)], colour=red, text=f"the flat's hot branch, {lp['flat_branch_in']:g} in., in its joists' space and "
+          "plumbing wall", side=1, at=0.42)
+    own = c4["own_in"]
+    fixtures = [k for k in ("tub", "sink", "dishwasher", "washer") if k in own]
+    for i, k in enumerate(fixtures):
+        fx = x0 + 1.7 + i * 1.65
+        ax.plot([fx, fx], [y_hot, y_hot - 0.95], color=red, lw=1.0)
+        _box(ax, fx - 0.55, y_hot - 1.4, 1.1, 0.45, f"{SHORT.get(k, k.upper())}\n{own[k]:g} in.", fs=5.6)
+    lav_x = x_end
+    ax.plot([lav_x, lav_x], [y_hot, y_hot - 0.95], color=red, lw=1.0)
+    _box(ax, lav_x - 0.55, y_hot - 1.4, 1.1, 0.45, f"LAV\n{own.get(LOOP_END, 0.5):g} in.", fs=5.6)
+    # The TBV in the vanity, then the return back to its riser.
+    ty = y_hot - 1.9
+    ax.plot([lav_x, lav_x], [y_hot - 1.4, ty + 0.12], color=red, lw=1.0, ls=TAGS["HWR"][2])
+    ax.fill([lav_x - 0.12, lav_x + 0.12, lav_x - 0.12, lav_x + 0.12], [ty + 0.12, ty - 0.12, ty - 0.12, ty + 0.12], color="white",
+            edgecolor="black", lw=0.8, zorder=4)
+    ax.text(lav_x + 0.2, ty, f"TBV: Caleffi ThermoSetter 116, 1/2 in. (basis of design), set {p[hw + 'tbv_set_f']:g} F;\nin the vanity, "
+            "reached through its doors (C404.6)", fontsize=5.6, va="center", ha="left")
+    ax.plot([lav_x, lav_x], [ty - 0.12, y_ret], color=red, lw=1.0, ls=TAGS["HWR"][2])
+    _pipe(ax, [(lav_x, y_ret), (xrr, y_ret)], colour=red, ls=TAGS["HWR"][2],
+          text=f"its return, {lp['flat_return_in']:g} in.: up the wall beside the lavatory, back through the joists' space", side=1, at=0.5)
+    worst = c4["worst"]
+    lines = [
+        f"Every hot fixture within {c4['limit_oz']:g} fl oz (half a gallon) of the loop (C404.5.2): the worst {worst['oz']:.0f}, "
+        f"{worst['flat']}'s {worst['fixture']}. Each fixture's own pipe sized for it alone (Appendix E).",
+        f"The flats' hot pipe and their returns insulated {p['systems.routing.branch_insulation_in']:g} in. (C404.4, Table C403.12.3), "
+        "stopped at each plate and joist; holes bored for the bare pipe.",
+        f"Each TBV passes {rc['flat_gpm']:.2f} gpm at the design's loss, {rc['tbv_psi']:.2f} psi across it (Caleffi's Cv "
+        f"{p[hw + 'tbv_cv_design']:g}); {lp['gpm']:.2f} gpm in all.",
+    ]
+    rows = []
+    for n in sorted(lp["flats"], key=lambda n: (int(n[0]), n)):
+        fl = lp["flats"][n]
+        oz = c4["by_flat"].get(n, {})
+        rows.append([n, f"{fl['hot_ft']:.0f}", f"{fl['return_ft']:.0f}", f"{fl['loss_btuh'] / 3.412142:.0f}", f"{max(oz.values()):.0f}" if oz else "-"])
+    yy = _table(ax, x0 + 12.6, top, [("FLAT", 1.4), ("HOT FT", 0.8), ("RETURN FT", 0.9), ("LOSS W", 0.8), ("WORST FL OZ", 1.0)], rows,
+                title="EACH FLAT'S LOOP, AS ROUTED", fs=5.6, row_h=0.18)
+    for ln in lines:
+        parts = _wrap(ln, _chars(9.4, 5.9))
+        ax.text(x0 + 12.6, yy, "\n".join(parts), fontsize=5.9, va="top", linespacing=1.2)
+        yy -= len(parts) * 5.9 / PT * 1.45 + 0.06
 
 
 def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
@@ -1002,7 +1082,8 @@ def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
               f"{L['primary_gpm']:.2f} gpm, back at {L['primary_out_c']:.1f} C", fs=6)
     hx = _box(ax, 6.2, y, 3.4, 1.4, f"HX-2 PLATE EXCHANGER\n{L['w'] / 1000:.1f} kW at design\n(an approach of {p['systems.substation.approach_k']:g} K,\n"
               "judgement until selected)", fs=6)
-    pu = _box(ax, 11.0, y, 3.4, 1.4, f"P-1 CIRCULATOR\nGrundfos ALPHA2 15-55F\n{L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft\n(worst path: {L['pump_path']})", fs=6)
+    pu = _box(ax, 11.0, y, 3.4, 1.4, f"P-1 CIRCULATOR\nGrundfos ALPHA2 15-55F\n{L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft\n(worst path: {L['pump_path']})\n"
+              f"its curve III: {L['pump_curve_ft']:.1f} ft (Addendum 7)", fs=6)
     hd = _box(ax, 15.8, y, 3.4, 1.4, f"HEADER {L['header_in']:g} IN.\n{L['supply_c']:.1f} C out, {L['return_c']:.1f} C back\n"
               "pre-insulated PEX-a mains\nunder the slab", fs=6)
     _pipe(ax, [(dc[0] + dc[2], y + 0.9), (hx[0], y + 0.9)], colour="#6a1b9a", text="DC water")
@@ -1057,7 +1138,7 @@ def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     rows = lengths_rows(rb, ("hvac",))
     _table(ax, 14.6, SH - 12.4, [("SYSTEM", 2.9), ("MATERIAL", 4.2), ("SIZE IN.", 1.4), ("FT", 0.8), ("PIECES", 0.7)], rows,
            title="HVAC PIPE AND DUCT BY SYSTEM AND SIZE (FROM THE MODEL)", fs=5.4, row_h=0.17)
-    ax.text(1.4, 1.2, "Figures: 7c's designs on the routes (routed.summary on Addendum 5's routes); the equipment and lengths from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the equipment and lengths from the "
             "services model.", fontsize=6, va="top", color="#616161")
 
 
@@ -1124,7 +1205,7 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
             ax.text(17.8, yy, p_, fontsize=6, va="top")
             yy -= 0.19
         yy -= 0.05
-    ax.text(1.4, 1.2, "Figures: 7c's designs on the routes (routed.summary on Addendum 5's routes); the conductors and conduit from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the conductors and conduit from the "
             "services model.", fontsize=6, va="top", color="#616161")
 
 
@@ -1229,14 +1310,125 @@ def fire_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     rows = lengths_rows(rb, ("sprinklers",))
     _table(ax, 18.6, SH - 9.8, [("SYSTEM", 2.4), ("MATERIAL", 3.6), ("SIZE IN.", 0.8), ("FT", 0.7), ("PIECES", 0.7)], rows,
            title="SPRINKLER PIPE BY SIZE (FROM THE MODEL)", fs=5.8)
-    ax.text(1.4, 1.2, "Figures: 7c's designs on the routes (routed.summary on Addendum 5's routes); the sprinklers and lengths from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the sprinklers and lengths from the "
             "services model.", fontsize=6, va="top", color="#616161")
+
+
+def _chars(width_in: float, fs: float) -> int:
+    """About how many characters of a `fs`-point font fit across `width_in` inches."""
+    return max(8, int(width_in * PT / (fs * 0.6)))
+
+
+def _wtable(ax, x: float, y: float, cols: list[tuple[str, float]], rows: list[list[str]], fs: float = 5.6,
+            groups: dict[int, str] | None = None) -> float:
+    """A table whose cells wrap to their column's width; `groups` puts a heading row before a row
+    index. Returns the y under it."""
+    xs = [x]
+    for _, wd in cols:
+        xs.append(xs[-1] + wd)
+    line = fs / PT * 1.3
+    for (head, _), cx in zip(cols, xs):
+        ax.text(cx + 0.04, y, head, fontsize=fs, va="top", weight="bold")
+    y -= line * 1.2
+    ax.plot([xs[0], xs[-1]], [y, y], color="black", lw=0.6)
+    y -= 0.05
+    for i, row in enumerate(rows):
+        if groups and i in groups:
+            y -= 0.04
+            ax.text(xs[0] + 0.04, y, groups[i].upper(), fontsize=fs + 0.6, va="top", weight="bold")
+            y -= line * 1.25
+        wrapped = [_wrap(cell, _chars(wd - 0.1, fs)) for cell, (_, wd) in zip(row, cols)]
+        for cell, cx in zip(wrapped, xs):
+            ax.text(cx + 0.04, y, "\n".join(cell), fontsize=fs, va="top", linespacing=1.15)
+        y -= max(len(c) for c in wrapped) * line + 0.06
+        ax.plot([xs[0], xs[-1]], [y + 0.03, y + 0.03], color="#bdbdbd", lw=0.3)
+    ax.plot([xs[0], xs[-1]], [y + 0.03, y + 0.03], color="black", lw=0.6)
+    return y - 0.1
+
+
+def tests_sheet(ax, s7: dict, p: dict) -> None:
+    """G-002 (Addendum 7): the tests and inspections, specification section 01 45 00 as a schedule."""
+    from . import acceptance
+
+    title_block(ax, "G-002", "TESTS AND INSPECTIONS (SPECIFICATION 01 45 00)")
+    ax.text(1.4, SH - 1.2, "TESTS AND INSPECTIONS", fontsize=14, weight="bold", va="top")
+    ax.text(1.4, SH - 1.65, "Specification section 01 45 00 (Addendum 7) governs, with the codes' own words for each test it quotes. Each test is "
+            "the code's own or the design's claim to be proved, its figures the design's. Pennsylvania's code official inspects as 34 Pa. Code "
+            "403.45 asks.", fontsize=8.5, va="top")
+    its = acceptance.items(p, s7)
+    groups, rows = {}, []
+    for it in its:
+        if not rows or its[len(rows) - 1]["area"] != it["area"]:
+            groups[len(rows)] = it["area"]
+        rows.append([it["id"], it["what"], it["who"], it["when"], it["passes"], it["basis"]])
+    _wtable(ax, 1.4, SH - 2.3, [("ID", 0.6), ("WHAT", 3.8), ("WHO", 3.4), ("WHEN", 3.4), ("PASSES WHEN", 12.0), ("BASIS", 4.6)], rows,
+            fs=10, groups=groups)
+
+
+def sequence_sheet(ax, s7: dict, p: dict) -> None:
+    """M-602 (Addendum 7): the control sequence, specification section 23 09 93, with its interlocks
+    and its points."""
+    from . import sequence as sq
+
+    title_block(ax, "M-602", "CONTROL SEQUENCE AND POINTS (SPECIFICATION 23 09 93)")
+    ax.text(1.4, SH - 1.2, "SEQUENCE OF OPERATIONS", fontsize=14, weight="bold", va="top")
+    ax.text(1.4, SH - 1.65, "Specification section 23 09 93 (Addendum 7) governs. Setpoints are the design's; the fallback's timers, the warm-weather "
+            "shutdown, the mini-splits' offset and the loop's alarm are judgements, set at commissioning.", fontsize=8.5, va="top")
+    seq = sq.sequence(p, s7)
+    width, fs = 9.4, 10.5
+    line = fs / PT * 1.3
+    cols = [1.4, 1.4 + width + 0.5, 1.4 + 2 * (width + 0.5)]
+    col, y = 0, SH - 2.2
+    bottom = 1.6
+
+    def need(paras: list[str]) -> float:
+        return sum(len(_wrap(t, _chars(width - 0.25, fs))) * line + 0.05 for t in paras)
+
+    blocks = []
+    for i, s in enumerate(seq, 1):
+        for m in s["modes"]:
+            blocks.append((f"{i}. {s['system']}".upper() if m is s["modes"][0] else None, m["mode"], m["steps"]))
+    heights = [(line * 1.5 if head else 0) + line * 1.3 + need(steps) + 0.08 for head, _, steps in blocks]
+    half = sum(heights) / 2  # the sequence over the first two columns, about evenly
+    used = 0.0
+    for (head, mode, steps), h in zip(blocks, heights):
+        if col == 0 and (used + h / 2 > half or y - h < bottom):
+            col, y = 1, SH - 2.2
+        elif y - h < bottom and col < 2:
+            col, y = col + 1, SH - 2.2
+        used += h
+        x = cols[col]
+        if head:
+            ax.text(x, y, head, fontsize=fs + 1.2, weight="bold", va="top")
+            y -= line * 1.5
+        ax.text(x, y, mode + ".", fontsize=fs, weight="bold", va="top")
+        y -= line * 1.3
+        for t in steps:
+            parts = _wrap(t, _chars(width - 0.25, fs))
+            ax.text(x, y, "-", fontsize=fs, va="top")
+            ax.text(x + 0.15, y, "\n".join(parts), fontsize=fs, va="top", linespacing=1.15)
+            y -= len(parts) * line + 0.05
+        y -= 0.08
+    # The interlocks and the points, in the last column.
+    if col < 2:
+        col, y = 2, SH - 2.2
+    x = cols[2]
+    y -= 0.1
+    ax.text(x, y, "INTERLOCKS, WIRED, NOT PROGRAMMED", fontsize=fs + 1.2, weight="bold", va="top")
+    y -= line * 1.5
+    for a, b in sq.INTERLOCKS:
+        parts = _wrap(f"{a}: {b}", _chars(width - 0.25, fs))
+        ax.text(x, y, "\n".join(parts), fontsize=fs, va="top", linespacing=1.15)
+        y -= len(parts) * line + 0.08
+    y -= 0.15
+    ax.text(x, y, "CONTROL POINTS", fontsize=fs + 1.2, weight="bold", va="top")
+    _wtable(ax, x, y - line * 1.6, [("TAG", 0.6), ("WHAT", 5.4), ("CHOSEN", 3.4)], [list(r) for r in sq.POINTS], fs=9.0)
 
 
 # ---- The set ----
 
 def sheet_list() -> list[tuple[str, str]]:
-    out = [("G-001", "COVER, SHEET INDEX, NOTES AND LEGEND")]
+    out = [("G-001", "COVER, SHEET INDEX, NOTES AND LEGEND"), ("G-002", "TESTS AND INSPECTIONS (SPECIFICATION 01 45 00)")]
     for trade, prefix in (("P", "P"), ("M", "M"), ("E", "E"), ("FP", "FP")):
         for k in (1, 2, 3):
             out.append((f"{prefix}-10{k}", f"LEVEL {k} {TRADES[trade][1]} PLAN"))
@@ -1247,7 +1439,8 @@ def sheet_list() -> list[tuple[str, str]]:
                     ("P-202", "PLUMBING WALLS IN ELEVATION, COLUMNS FRONT-RIGHT AND BACK-RIGHT"),
                     ("P-601", "WATER SERVICE AND HOT-WATER PLANT: DIAGRAM AND SCHEDULES")]
         if trade == "M":
-            out.append(("M-601", "HEATING LOOP, EQUIPMENT AND AIR: DIAGRAM AND SCHEDULES"))
+            out += [("M-601", "HEATING LOOP, EQUIPMENT AND AIR: DIAGRAM AND SCHEDULES"),
+                    ("M-602", "CONTROL SEQUENCE AND POINTS (SPECIFICATION 23 09 93)")]
         if trade == "E":
             out += [("E-601", "ONE-LINE DIAGRAM AND FEEDER SCHEDULE"), ("E-602", "PANEL SCHEDULES")]
         if trade == "FP":
@@ -1259,7 +1452,7 @@ def sheet_list() -> list[tuple[str, str]]:
 def cover(ax, sheets: list[tuple[str, str]]) -> None:
     title_block(ax, "G-001", "COVER, SHEET INDEX, NOTES AND LEGEND")
     ax.text(1.4, SH - 1.2, "12-FLAT WALK-UP: THE SERVICES", fontsize=22, weight="bold", va="top")
-    ax.text(1.4, SH - 2.0, "Plumbing, heating, cooling and air, power and sprinklers, drawn from Addendum 5's services model for review by the "
+    ax.text(1.4, SH - 2.0, f"Plumbing, heating, cooling and air, power and sprinklers, drawn from {SHEETS_REV}'s services model for review by the "
             "trades: the installers' round.", fontsize=10, va="top")
     ax.text(1.4, SH - 2.4, "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Not for construction.",
             fontsize=10, va="top", color="#c00000")
@@ -1268,9 +1461,9 @@ def cover(ax, sheets: list[tuple[str, str]]) -> None:
     general = [
         "Codes as Pennsylvania enforces them (34 Pa. Code 403.21, from 2026-01-01): the 2021 IBC, IPC, IMC and IECC; NFPA 70 (2020), "
         "13R (2019) and 72 (2019).",
-        "The bid set's documents govern: the services model (services-addendum-5.ifc), its schedules (lengths, fittings, equipment, "
-        "fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-6. These sheets are drawn from "
-        "the model and add nothing to it.",
+        f"The bid set's documents govern: the services model (services-{SERVICES_REV}.ifc), its schedules (lengths, fittings, equipment, "
+        f"fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-{SHEETS_REV.split()[-1]}. These sheets "
+        "are drawn from the model and add nothing to it.",
         "Each run is tagged with its system and nominal size in inches; a circuit with its name and wire.",
         "Each storey's plan shows its flats' own runs wherever they go in the floor and ceiling spaces (a floor's drains serve the "
         "storey above it, a ceiling's sprinkler pipe the one below), and the mains and risers by the storey they're in. Under the "
@@ -1280,6 +1473,11 @@ def cover(ax, sheets: list[tuple[str, str]]) -> None:
         "plumbing wall (item 4d). Each mini-split's static pressure set to its ducts, and a water-level switch at its drain (item 4e).",
         "Firestop every opening through a rated assembly by its condition in the firestop schedule (item 5): listed systems where they "
         "fit as tested, the maker's engineering judgments for the authority's approval for the rest.",
+        "Each flat's hot water is a loop of its own (Addendum 7, item 1; IECC C404.5): from its riser along its hot branch past its "
+        "fixtures to the lavatory, where a thermostatic balancing valve (TBV) in the vanity starts its return to the return riser. The "
+        "flats' hot pipe and returns are insulated 1 in. (C404.4), stopped at each plate and joist (P-601).",
+        "The plant's storage is two tanks in series, and a backup heater (BK-1) is on its heater circuit (Addendum 7, items 2 and 3; "
+        "P-601). The control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002).",
         "Basis of design: every make and model named is a basis of design, not a choice; equals by the bidder, with their data.",
     ]
     missing = [
@@ -1319,6 +1517,10 @@ def draw_sheet(ax, number: str, ctx: dict, drawn: set) -> Labels | None:
     pre, num = number.split("-")
     if number == "G-001":
         cover(ax, sheet_list())
+    elif number == "G-002":
+        tests_sheet(ax, s7, p)
+    elif number == "M-602":
+        sequence_sheet(ax, s7, p)
     elif number in ("P-201", "P-202"):
         cols = ("front-left", "back-left") if number == "P-201" else ("front-right", "back-right")
         return wall_sheet(ax, number, cols, bld, rb, ctx["members"], drawn)
@@ -1340,8 +1542,12 @@ def draw_sheet(ax, number: str, ctx: dict, drawn: set) -> Labels | None:
     return None
 
 
-def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path = BIDSET) -> dict:
-    """The published files read back, and 7c's designs on the routes they were built from."""
+def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path = BIDSET, services_path: Path | None = None) -> dict:
+    """The building and the frame as published (`src`), the services model as `SERVICES_REV` issues
+    it (built by `brownfield routes --ifc`, before it is published: `services_path`), and 7c's
+    designs on the routes it was built from."""
+    from . import servicesifc
+
     from . import routed
 
     routes = routes or routed.load(apt, p)
@@ -1350,7 +1556,10 @@ def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path =
     s7 = s7 or routed.summary(apt, p, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    return {"bld": building(src / f"apartment-{REV}.ifc"), "rb": services(src / f"services-{REV}.ifc"),
+    if servicesifc.ISSUE != SERVICES_REV:
+        raise SystemExit(f"the services model is {servicesifc.ISSUE}'s; the sheets are drawn from {SERVICES_REV}'s")
+    services_path = services_path or servicesifc.OUT / f"services-{SERVICES_REV}.ifc"
+    return {"bld": building(src / f"apartment-{REV}.ifc"), "rb": services(services_path), "services_path": services_path,
             "members": framing(src / f"framing-{REV}.ifc"), "s7": s7, "p": p, "routes": routes, "src": src}
 
 
@@ -1369,7 +1578,8 @@ def write(ctx: dict, path: Path, numbers: list[str] | None = None) -> dict:
     tags: dict[str, tuple[int, int]] = {}
     path.parent.mkdir(parents=True, exist_ok=True)
     with matplotlib.rc_context({"pdf.fonttype": 42}), PdfPages(
-            path, metadata={"Title": f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g step 8a", "CreationDate": None}) as pdf:
+            path, metadata={"Title": f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g steps 8a and 9d",
+                            "CreationDate": None}) as pdf:
         for n in sheets:
             fig, ax = _figure()
             try:
@@ -1413,7 +1623,7 @@ def checks(ctx: dict, res: dict, path: Path) -> list[tuple[str, bool, str]]:
     rb = ctx["rb"]
     want = {r["key"] for r in rb if not r["cls"].endswith("Fitting") or r["key"].startswith("pinned/") or r["obj"] == "manifold"}
     missing = sorted(want - res["drawn"])
-    f = ifcopenshell.open(str(ctx["src"] / f"services-{REV}.ifc"))
+    f = ifcopenshell.open(str(ctx["services_path"]))
     desc = f.by_type("IfcBuilding")[0].Description or ""
     sha = ctx["routes"].rt["requests_sha"]
     text = pypdf.PdfReader(str(path))

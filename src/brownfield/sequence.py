@@ -49,8 +49,8 @@ POINTS = [
     ("TS-1", "the data center's water entering the annex, its temperature", "to select"),
     ("FS-1", "the data center's water entering the annex, a flow switch", "to select"),
     ("V-1", "the data center's water through HX-1, a modulating valve", "to select"),
-    ("P-2", "the heater circuit's pump: ST-1's bottom through HX-1, HP-1 and BK-1 to ST-1's top", "to select"),
-    ("TS-4", "ST-1's aquastat, at Ecosizer's height in the tank", "with ST-1"),
+    ("P-2", "the heater circuit's pump: ST-1B's bottom (the storage's cold end) through HX-1, HP-1 and BK-1 to ST-1A's top", "to select"),
+    ("TS-4", "the storage's aquastat, at Ecosizer's height in it", "with ST-1"),
     ("HP-1", "the water-to-water heat pump, its enable", "ClimateMaster Tranquility SW036 (basis of design)"),
     ("BK-1", "the backup heater's contactor, its own thermostats", "A. O. Smith DRE-52-12 (basis of design)"),
     ("ST-2", "the swing tank's element thermostat", "Bradford White RE340S6 (basis of design)"),
@@ -67,6 +67,18 @@ POINTS = [
 ]
 
 
+def aquastat_at(p: dict) -> str:
+    """Where TS-4 goes: Ecosizer's aquastat height as a share of the storage's volume from its cold
+    end, in the tanks in series (ST-1B the cold end, ST-1A the hot)."""
+    n = int(p["systems.routing.tank_count"])
+    names = [f"ST-1{c}" for c in "AB"[:n]][::-1]  # from the cold end
+    x = p["systems.hot_water.aquastat_fract"] * n
+    k = int(x + 1e-9)
+    if abs(x - k) < 1e-9 and 0 < k < n:
+        return f"where {names[k - 1]}'s top joins {names[k]}'s bottom"
+    return f"at {x - k:.0%} of {names[min(k, n - 1)]}'s height"
+
+
 def sequence(p: dict, s7: dict) -> list[dict]:
     """The sequence, system by system and mode by mode, each step with its figures."""
     h, c = "systems.hot_water.", "systems.controls."
@@ -80,16 +92,21 @@ def sequence(p: dict, s7: dict) -> list[dict]:
     from .loads import preheat_c
 
     pre = preheat_c(p)
+    from .plumbing import storage_held
+
+    held = storage_held(p)
     reset = [(t, reset_c(p, t, sup)) for t in (p["systems.design.heating_c"], -10.0, 0.0, 10.0, wwsd)]
     return [
         {"system": "The hot-water plant (P-601)", "modes": [
             {"mode": "Normal: on the data center's heat", "steps": [
-                f"P-2 starts when TS-4, at {p[h + 'aquastat_fract']:.0%} of ST-1's height, falls below {t_store:g} F, and stops when it "
-                f"reaches {t_store:g} F (Ecosizer's primary aquastat): it runs only with the heating cycle (IECC C404.6.3).",
+                f"P-2 starts when TS-4, at {p[h + 'aquastat_fract']:.0%} of the storage from its cold end ({aquastat_at(p)}), falls below "
+                f"{t_store:g} F, and stops when it reaches {t_store:g} F (Ecosizer's primary aquastat): it runs only with the heating "
+                "cycle (IECC C404.6.3).",
                 f"With P-2, V-1 opens and modulates the data center's water through HX-1 so it leaves HX-1 at {src:g} F, the heat pump's "
                 f"source (ClimateMaster's table goes to {p[h + 'hp_source_max_f']:g} F); HX-1 preheats the circuit to "
                 f"{w['heater']['preheat_f']:.1f} F.",
-                f"HP-1 runs with P-2 and lifts the circuit to {t_store:g} F into ST-1's top.",
+                f"HP-1 runs with P-2 and lifts the circuit to {t_store:g} F into ST-1A's top; the storage's water moves from ST-1B to "
+                "ST-1A as hot water is drawn (the tanks in series).",
                 "BK-1's elements stay locked out (the interlock below).",
                 f"ST-2's element switches on at {t_out:g} F and off at {t_out + SWING_DEADBAND_F:g} F (Ecosizer's swing tank).",
                 f"MV-1 sends {t_out:g} F to the flats.",
@@ -103,13 +120,13 @@ def sequence(p: dict, s7: dict) -> list[dict]:
                 "V-1 closes; HP-1 stops and is locked out; then BK-1's contactor is released.",
                 f"BK-1's own thermostats hold {t_store:g} F at its outlet (set within its {p[h + 'backup_thermostat_min_f']:g}-"
                 f"{p[h + 'backup_thermostat_max_f']:g} F range); P-2 runs on TS-4 as in normal, so ST-1's "
-                f"{w['primary']['storage_gal']:.0f} gal are heated as Ecosizer sized them.",
+                f"{held:g} gal are heated as in normal running (Ecosizer asks {w['primary']['storage_gal']:.0f}).",
                 f"Left when TS-1 is back at {src:g} F or more with flow for {p[c + 'fallback_exit_min']:g} min: BK-1 locked out first, "
                 "then HP-1 enabled.",
             ]},
             {"mode": "Alarms, from PC-1 to the building's manager", "steps": [
                 "the plant in or out of its fallback;",
-                f"ST-1 at TS-4 below {t_out:g} F;",
+                f"the storage at TS-4 below {t_out:g} F;",
                 f"the hot-water return at TS-5 below {t_back:g} F (WHO: not less than 50 C) after P-3 has run "
                 f"{p[c + 'loop_alarm_min']:g} min;",
                 "HP-1's or BK-1's fault.",

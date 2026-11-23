@@ -46,7 +46,11 @@ from . import OUT_DIR
 
 FT, IN = 0.3048, 0.0254
 OUT = OUT_DIR / "pass3" / "services"
-REVISION = "addendum-5"  # the frame the services are routed through (routing.FRAME)
+REVISION = "addendum-5"  # the frame the services are routed through (routing.FRAME); it keys their GlobalIds
+# The addendum that issues this services model: Addendum 5 issued the first (services-addendum-5.ifc,
+# published as it was); Addendum 7 (pass 3g step 9d) the revised one, each flat's hot-water loop and
+# the plant's tanks and backup heater in it.
+ISSUE = "addendum-7"
 S = "systems.services."
 
 # Each system: IfcDistributionSystem's type, its name, the viewer's layer.
@@ -603,8 +607,14 @@ def _equipment(o: dict, D: Designs, p: dict) -> list[El]:
         "manifold": ("IfcPipeFitting", "USERDEFINED", "manifold", "loop", "radiant manifold in its cabinet"),
         "panel": ("IfcElectricDistributionBoard", "DISTRIBUTIONBOARD", None, "power",
                   "load centre (Square D QO130L125PG, step 5)"),
-        "storage-tank": ("IfcTank", "STORAGE", None, "hot", "hot-water storage tank (step 4's basis of design, Lochinvar)"),
+        "storage-tank-a": ("IfcTank", "STORAGE", None, "hot",
+                           "hot-water storage tank ST-1A, the hot end of two in series (Lochinvar HP150G, basis of design; Addendum 7)"),
+        "storage-tank-b": ("IfcTank", "STORAGE", None, "hot",
+                           "hot-water storage tank ST-1B, the cold end of two in series (Lochinvar HP150G, basis of design; Addendum 7)"),
         "swing-tank": ("IfcTank", "STORAGE", None, "hot", "swing tank (step 4's basis of design, Bradford White)"),
+        "backup-heater": ("IfcBoiler", "WATER", None, "hot",
+                          "backup water heater BK-1, electric, on the heater circuit (A. O. Smith DRE-52-12, basis of design; step 9a, "
+                          "Addendum 7)"),
         "heat-pump": ("IfcUnitaryEquipment", "USERDEFINED", "water-to-water heat pump", "hot",
                       "water-to-water heat pump (step 4's basis of design, ClimateMaster Tranquility SW036)"),
     }
@@ -679,7 +689,8 @@ def write(els: list[El], apt: dict, path: Path, source: str) -> None:
     rev = REVISION
     f = project.create_file("IFC4")
     f.header.file_name.time_stamp = bidset.HEADER_TIME
-    proj = bidset._make(f, "IfcProject", f"services/{rev}/project", f"brownfield-compute: the walk-up's services ({rev})")
+    proj = bidset._make(f, "IfcProject", f"services/{rev}/project",
+                        f"brownfield-compute: the walk-up's services ({ISSUE}, routed through {rev}'s frame)")
     unit.assign_unit(f, units=[unit.add_si_unit(f, unit_type=t) for t in ("LENGTHUNIT", "AREAUNIT", "VOLUMEUNIT", "PLANEANGLEUNIT")])
     model = context.add_context(f, context_type="Model")
     body = context.add_context(f, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=model)
@@ -1221,7 +1232,7 @@ def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None
         return {"checks": s7["checks"]}
     placed = routing.placements(apt, p)
     els = elements(apt, p, routes, s7, placed)
-    path = out / f"services-{REVISION}.ifc"
+    path = out / f"services-{ISSUE}.ifc"
     write(els, apt, path, f"forge `routes-json` on {REVISION}'s frame (requests {routes.rt['requests_sha']}); sizes from 7c's designs")
     checks = check(path, els, routes, apt, p)
     why = webifc_status()
@@ -1308,27 +1319,78 @@ LABELS = {"lengths": "Pipe, duct, conduit and cable lengths, by system, material
           "firestop": "The firestop schedule, by condition (IBC 714)"}
 
 
-def publish(to: Path, issued: str, addendum: int | None = None) -> dict:
-    """The services model and its schedules into the published bid set (`to`), only from a run
-    whose model checks all passed (`out/pass3/routes-7d.json`: the file whole, where forge routed
-    it, schema valid, web-ifc's geometry where it should be). The design's own findings (a check
-    of the code it doesn't yet meet) don't stop it: the manifest's note lists them. Returns the
-    manifest's `services` entry: preliminary, or issued with `addendum`."""
+def changes(old: Path, new: Path, tol: float = 1e-3) -> dict:
+    """What a revised services model changed against the one before, by GlobalId (an element's key
+    keeps it, `write`): those added; those deleted, with their names; and those changed in class,
+    in their BF_Service properties (size, model, setting...) or in geometry (a run's path or
+    diameter, a box's corners) by more than `tol` m. Counted by system, for the addendum's text."""
+    import ifcopenshell
+
+    from .bidset import _world_boxes
+
+    r0 = {r["gid"]: r for r in read_back(old)}
+    r1 = {r["gid"]: r for r in read_back(new)}
+    f0, f1 = ifcopenshell.open(str(old)), ifcopenshell.open(str(new))
+    b0 = _world_boxes(f0, [f0.by_guid(g) for g, r in r0.items() if r["sweep"] is None])
+    b1 = _world_boxes(f1, [f1.by_guid(g) for g, r in r1.items() if r["sweep"] is None])
+
+    def props(r: dict) -> dict:
+        return {k: v for k, v in r["props"].items() if k != "id"}  # the pset's entity number in its file
+
+    def same(g: str) -> bool:
+        a, b = r0[g], r1[g]
+        if a["cls"] != b["cls"] or a["pre"] != b["pre"] or props(a) != props(b) or (a["sweep"] is None) != (b["sweep"] is None):
+            return False
+        if a["sweep"] is not None:
+            return (len(a["sweep"]) == len(b["sweep"]) and abs(a["d"] - b["d"]) <= tol
+                    and float(np.abs(np.asarray(a["sweep"]) - np.asarray(b["sweep"])).max()) <= tol)
+        return max(float(np.abs(b0[g][0] - b1[g][0]).max()), float(np.abs(b0[g][1] - b1[g][1]).max())) <= tol
+
+    added = sorted(r1.keys() - r0.keys())
+    deleted = sorted(r0.keys() - r1.keys())
+    changed = sorted(g for g in r0.keys() & r1.keys() if not same(g))
+    by: dict[str, dict[str, int]] = defaultdict(lambda: {"added": 0, "changed": 0, "deleted": 0})
+    for k, gs, rs in (("added", added, r1), ("changed", changed, r1), ("deleted", deleted, r0)):
+        for g in gs:
+            by[rs[g]["props"].get("System") or "-"][k] += 1
+    return {"before": old.name, "after": new.name, "n_before": len(r0), "n_after": len(r1), "added": added, "changed": changed,
+            "deleted": [{"gid": g, "name": r0[g]["name"], "cls": r0[g]["cls"]} for g in deleted],
+            "by_system": dict(sorted(by.items()))}
+
+
+def publish(to: Path, issued: str, addendum: int) -> dict:
+    """The services model as `ISSUE` issues it, and its schedules, into the published bid set
+    (`to`), only from a run whose model checks all passed (`out/pass3/routes-7d.json`: the file
+    whole, where forge routed it, schema valid, web-ifc's geometry where it should be). The
+    design's own findings (a check of the code it doesn't yet meet) don't stop it: the manifest's
+    note lists them. An earlier issue's model and schedules are left as published; what this one
+    changed against the latest of them goes beside it (`changes-services-<issue>.json`, for the
+    viewer to mark). Returns the manifest's `services` entry."""
     import shutil
 
+    if f"addendum-{addendum}" != ISSUE:
+        raise SystemExit(f"the services model is {ISSUE}'s, not Addendum {addendum}'s")
     rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
     model_checks = [c for c in rec["checks"] if not c[0].startswith(("every feeder's conduit", "every rated opening whose code"))]
     bad = [c[0] for c in model_checks if not c[1]]
     if bad:
         raise SystemExit(f"won't publish the services model: {bad}")
-    src = OUT / f"services-{REVISION}.ifc"
+    src = OUT / f"services-{ISSUE}.ifc"
+    if rec.get("model") != src.name:
+        raise SystemExit(f"routes-7d.json is the run of {rec.get('model')}, not {src.name}: `brownfield routes --ifc` again")
+    before = sorted((q for q in to.glob("services-addendum-*.ifc") if q.name != src.name),
+                    key=lambda q: int(q.stem.rsplit("-", 1)[1]))
     shutil.copyfile(src, to / src.name)
-    sch = to / f"services-{REVISION}"
+    sch = to / f"services-{ISSUE}"
     if sch.exists():
         shutil.rmtree(sch)
     sch.mkdir()
     for name in PUBLISHED_SCHEDULES:
         shutil.copyfile(OUT / "schedules" / f"{name}.csv", sch / f"{name}.csv")
+    diff = None
+    if before:
+        diff = changes(before[-1], to / src.name)
+        (to / f"changes-services-{ISSUE}.json").write_text(json.dumps(diff, indent=1) + "\n", encoding="utf-8")
     open_items = []
     over = [b for b in rec["conduit_bends"] if not b["ok"]]
     if over:
@@ -1342,7 +1404,9 @@ def publish(to: Path, issued: str, addendum: int | None = None) -> dict:
     return {"model": src.name, "frame": f"{REVISION.replace('-', ' ').title()}'s frame", "elements": rec["elements"],
             "layers": dict(sorted(layers.items())), "issued": issued,
             "files": [{"path": f"{sch.name}/{n}.csv", "label": LABELS[n]} for n in PUBLISHED_SCHEDULES],
-            "status": f"Addendum {addendum}" if addendum else "preliminary",
-            "note": (f"issued with Addendum {addendum}" if addendum else "preliminary, for Addendum 5")
+            "status": f"Addendum {addendum}",
+            "changes": f"changes-services-{ISSUE}.json" if diff else None,
+            "changes_against": before[-1].name if before else None,
+            "note": f"issued with Addendum {addendum}"
             + (f"; {judged} rated openings firestopped by the maker's engineering judgment" if judged else "")
             + ("; open: " + "; ".join(open_items) if open_items else "")}

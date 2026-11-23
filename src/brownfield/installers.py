@@ -36,7 +36,7 @@ INTAKE = ROOT / "data" / "raw" / "round" / "comments.yaml"
 BIDSET = ROOT / "docs" / "pass3" / "bidset"
 PUBLISHED = BIDSET / "round"
 PLAN_ROOM = "https://youngmoolahbaby.github.io/brownfield-compute/"
-SHEETS_PDF = "services-sheets-addendum-6.pdf"
+SHEETS_PDF = "services-sheets-addendum-7.pdf"  # the round's packets carry the latest sheets (Addendum 6's until Addendum 7)
 # When the round's question forms were first published to the plan room.
 QUESTIONS_ISSUED = "2026-11-22T17:54:51-08:00"
 

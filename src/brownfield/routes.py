@@ -34,7 +34,7 @@ from pathlib import Path
 
 from . import OUT_DIR
 from .plumbing import LOOP_END  # where each flat's hot-water loop ends and its return starts (Addendum 7)
-from .routing import FRAME, FT, IN, ceiling_z, column, placements, soffit_spans
+from .routing import FRAME, FT, IN, annex_drops, ceiling_z, column, placements, soffit_spans
 from .systems import by_flat
 
 REQUESTS = OUT_DIR / "pass3" / "route-requests.json"
@@ -329,9 +329,8 @@ def requests(apt: dict, p: dict) -> dict:
             role="flat", flat=name, blocks=over_wall(apt, name, []))
     # The fire main: from the riser assembly down through the annex's slab, under it into the stair,
     # to the riser's foot.
-    mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
     main_od = float(next(r["avg_OD_in"] for r in _cpvc_rows() if r["nominal_in"] == p_size(p, "main")))
-    fire_in = [mech["lo_m"][0] + p[R + "fire_entry_off_in"] * IN, (core[0] + core[1]) / 2 - 0.3, z_mains]
+    fire_in = [*annex_drops(apt, p)["fire"], z_mains]
     add("fire/main", "sprinkler", main_od, fire_in, [("riser", [riser_x, ry, z_mains])], slab_zone(apt, p), attach=["stair/fire-riser"],
         voxel=v2, role="main")
 
@@ -634,7 +633,7 @@ def requests(apt: dict, p: dict) -> dict:
             blocks=over_wall(apt, name, [(t_[1][1] - col_w, t_[1][1] + col_w) for t_ in vterms] + [(vst["y"] - col_w, vst["y"] + col_w)]))
 
     # -- Under the slab: the mains to each column's risers, the building drain, the feeders.
-    root_plant = [mech["lo_m"][0] + p[R + "plant_drop_x_in"] * IN, (core[0] + core[1]) / 2 + 0.3, z_mains]
+    root_plant = [*annex_drops(apt, p)["plant"], z_mains]
     main_in = {"cold": next(s_["in"] for s_ in pd["paths"]["cold"]["segments"] if "main" in s_["segment"]),
                "hot": next(s_["in"] for s_ in pd["paths"]["hot"]["segments"] if "main" in s_["segment"]),
                "hot-return": pd["loop"]["return_main_in"], "loop-supply": sub["header_in"], "loop-return": sub["header_in"]}

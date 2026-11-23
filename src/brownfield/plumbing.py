@@ -80,6 +80,12 @@ def ecosizer_primary(day_gal: float, shape: np.ndarray, supply_f: float, storage
             "minimum_gal": float(shape.max()) * day_gal / 2.0}
 
 
+def storage_held(p: dict) -> float:
+    """The storage the plant's tanks hold (gal): the tanks in series as one volume, as Ecosizer sizes
+    it (Addendum 7: two Lochinvar HP150G)."""
+    return p["systems.routing.tank_count"] * p["systems.routing.tank_gal"]
+
+
 # Ecosizer's swing tank (EcosizerEngine SwingSystem.py, commit 7586430): its volume the smallest of
 # these at least the loop's loss at 100 W a gallon and a minute's peak draw; its element turns on at
 # the supply temperature and off 8 F above.
@@ -993,6 +999,8 @@ def summary(apt: dict, p: dict) -> dict:
              "its own loop)", d["longest_hot_ft"] <= 50, f"longest {d['longest_hot_ft']:.0f} ft"),
             ("the primary storage at least Ecosizer's floor (half the peak hour)", d["primary"]["storage_gal"] >= d["primary"]["minimum_gal"],
              f"{d['primary']['storage_gal']:.0f} gal against {d['primary']['minimum_gal']:.0f}"),
+            ("the storage tanks hold the storage Ecosizer asks", storage_held(p) >= d["primary"]["storage_gal"],
+             f"{p['systems.routing.tank_count']:g} x {p['systems.routing.tank_gal']:g} gal against {d['primary']['storage_gal']:.0f}"),
             ("the heat pump inside its maker's table: its source at most 80 F, which the preheat exchanger can cool the data "
              "center's water to; its rated output over its share of the plant",
              ht["source_f"] <= p[h + "hp_source_max_f"] and ht["cold_end_k"] >= p["systems.substation.approach_k"] and ht["hp_capacity_ok"],

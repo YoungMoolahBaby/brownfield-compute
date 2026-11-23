@@ -24,6 +24,8 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from .plumbing import storage_held
+
 ROOT = Path(__file__).resolve().parents[2]
 HEATING = ROOT / "data" / "fujitsu_aruh12_heating.csv"
 FACTORS = ROOT / "data" / "fujitsu_aouh12_heating_pipe_factors.csv"
@@ -102,7 +104,7 @@ def hot_water(p: dict, s7: dict) -> dict:
     plant_w = w["primary"]["capacity_kbtuh"] * 1000 / BTU_W
     rise = p[h + "storage_f"] - w["inlet_f"]
     return {"plant_w": plant_w, "backup_w": p[h + "backup_w"], "ok": p[h + "backup_w"] >= plant_w, "rise_f": rise,
-            "recovery_gph": recovery_gph(p[h + "backup_w"], rise), "storage_gal": w["primary"]["storage_gal"],
+            "recovery_gph": recovery_gph(p[h + "backup_w"], rise), "storage_gal": storage_held(p), "storage_need_gal": w["primary"]["storage_gal"],
             "backup_gal": p[h + "backup_gal"], "day_gal": w["day_gal"]}
 
 
@@ -163,7 +165,7 @@ def report(r: dict) -> str:
                      f"unit {-x['height_m']:.1f} m above: x{x['factor']:.3f}); rooms {', '.join(x['rooms'])}")
     lines += ["", f"The hot water on the backup heater: {hw['backup_w'] / 1000:.1f} kW against the plant's {hw['plant_w'] / 1000:.2f} kW; "
                   f"{hw['recovery_gph']:.0f} gal/h from the coldest inlet to storage ({hw['rise_f']:.0f} F), into {hw['storage_gal']:.0f} gal "
-                  f"of storage and its own {hw['backup_gal']:.0f}; the design day {hw['day_gal']:.0f} gal.",
+                  f"of storage (Ecosizer asks {hw['storage_need_gal']:.0f}) and its own {hw['backup_gal']:.0f}; the design day {hw['day_gal']:.0f} gal.",
               "", f"The house panel: {house['calculated_va']:,.0f} VA calculated, {house['amps']:.1f} A: a {house['breaker_a']:.0f} A position. "
                   f"The service: {el['service']['total_va']:,.0f} VA, {el['service']['amps']:.0f} A on its {el['service']['main_a']} A main. "
                   f"The PV the house panel takes under the 120% rule: {el['pv']['house_ac_kw']:.1f} kW AC."]

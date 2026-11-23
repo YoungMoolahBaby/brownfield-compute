@@ -528,11 +528,13 @@ IFC_OUT = OUT_DIR / "pass3" / "bidset" / REVISION
 RFI_002_ASKED = "2026-11-21T16:45:00"
 RFI_002_ANSWER_AFTER_MIN = 30
 # When each addendum went out (D29): Addendum 1 when it was first published (git 8a9d200), Addendum
-# 2 when it was produced and checked (git 2f6623f), Addenda 3 to 6 when they were published (4 with
+# 2 when it was produced and checked (git 2f6623f), Addenda 3 to 7 when they were published (4 with
 # ENERGY STAR's glass, before it went out; 5 with the services and the frame, D28 step 7e; 6 with
-# the services' sheets, before the installers' round, step 8).
+# the services' sheets, before the installers' round, step 8; 7 with each flat's hot-water loop,
+# the plant, the sequence and the tests, step 9d).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
-          4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00", 6: "2026-11-22T16:06:49-08:00"}
+          4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00", 6: "2026-11-22T16:06:49-08:00",
+          7: "2026-11-23T08:35:59-08:00"}
 # When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
 # Addendum 5 to issue.
 SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
@@ -541,7 +543,8 @@ TITLES = {1: "The patio doors: their glass and their width",
           3: "The envelope to Pennsylvania's 2021 energy code",
           4: "The glass: ENERGY STAR's Northern zone, at a solar heat gain that sizes the cooling",
           5: "The services, the frame, the stair's enclosure and the roof hatch",
-          6: "The fire service's control valves, the house panel and the services drawn"}
+          6: "The fire service's control valves, the house panel and the services drawn",
+          7: "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -712,7 +715,8 @@ def addendum_4_words(params: dict) -> dict:
 def addendum_5_words(params: dict, apt5: dict) -> dict:
     """Addendum 5's items: step 6's fire items, the roof hatch, the completed frame and the services
     with their firestop schedule, as bid documents (pass 3g step 7e). The services' figures are read
-    from 7d's run (`out/pass3/routes-7d.json`) and its schedules, never typed in."""
+    from the services model and schedules Addendum 5 issued (`services-addendum-5.ifc` and its
+    folder, published as they were; Addendum 7 reissued the services), never typed in."""
     import csv
 
     from . import servicesifc
@@ -722,15 +726,17 @@ def addendum_5_words(params: dict, apt5: dict) -> dict:
     P = values(params)
     c = "systems.fire_code."
     enc, ra = enclosure(apt5, P), roof_access(apt5, P)
-    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
-    sch = servicesifc.OUT / "schedules"
+    issued = PUBLISHED / "services-addendum-5.ifc"
+    rb = servicesifc.read_back(issued)
+    rec = {"elements": len(rb)}
+    sch = PUBLISHED / "services-addendum-5"
     rows = lambda name: list(csv.DictReader(open(sch / f"{name}.csv", encoding="utf-8")))  # noqa: E731
     lengths = rows("lengths")
     by_layer: dict[str, float] = {}
     for r in lengths:
         by_layer[r["layer"]] = by_layer.get(r["layer"], 0.0) + float(r["ft"])
     fire = rows("firestop")
-    bends = rec["conduit_bends"]
+    bends = servicesifc.conduit_bends(rb, P)
     walls = ", ".join(w["id"] for w in enc["rated_walls"])
     door = enc["protected_doors"][0]["id"] if enc["protected_doors"] else "none"
     rated_openings = sum(int(r["count"]) for r in fire if r["F"])
@@ -786,61 +792,107 @@ def addendum_5_words(params: dict, apt5: dict) -> dict:
     return {"items": items}
 
 
-def addendum_6_words(params: dict, s7: dict, sheets: dict) -> dict:
-    """Addendum 6's items (pass 3g step 8): two found drawing the services (8a), and the sheets. Every
-    figure from the designs on the routes (`routed.summary`) and the sheets' run."""
+# Addendum 6 (pass 3g step 8: the fire service's valves, the house panel, the services' sheets) is
+# kept as issued: its sheets were drawn from the services Addendum 7 reissues, so its run (git
+# d6d99c7, `addendum_6_run`) can't draw them again. Its items are read from the manifest.
+
+
+SPECS = {"23-09-93": ("spec-23-09-93-sequence.md", "Specification section 23 09 93: the sequence of operations"),
+         "01-45-00": ("spec-01-45-00-tests.md", "Specification section 01 45 00: the tests and inspections")}
+
+
+def addendum_7_words(params: dict, s7: dict, fb: dict, diff: dict, sheets: dict, seq: list[dict], its: list[dict]) -> dict:
+    """Addendum 7's items (pass 3g step 9): the fallback (9a), the control sequence (9b), the energy
+    code's hot-water rules and the tests (9c), and what they change in the plant, the services model
+    and the sheets (9d). Every figure from the designs on the routes (`routed.summary`), the
+    fallback's run, the services model's diff and the sheets' run."""
+    from . import plumbing, sequence
     from .params import values
 
     P = values(params)
-    fh, el = s7["fire"], s7["electrical"]
-    w = fh["worst"]
-    stair = next(c for c in fh["cases"] if c["kind"] == "stair")
-    house, pv = el["service"]["house"], el["pv"]
-    element = next(r for r in house["rows"] if r["key"] == "swing_element")
-    bf = fh["sizes"]["backflow"]
-    kw = P["systems.house.swing_element_va"] / 1000
-    # A butterfly valve, the usual alternative, at the same flow: its loss scales with its length.
-    s = "systems.sprinkler."
-    bfly = w["need_psi"] + w["valves_psi"] * (P[s + "butterfly_valve_el_ft"] / P[s + "shutoff_valve_el_ft"] - 1)
+    h, rt, ct, sb = "systems.hot_water.", "systems.routing.", "systems.controls.", "systems.substation."
+    w, L, el = s7["water"], s7["loop"], s7["electrical"]
+    sq_w = s7["square_water"]
+    lp, rc, c4 = w["loop"], w["recirc"], w["c404"]
+    house, sv = el["service"]["house"], el["service"]
+    held = plumbing.storage_held(P)
+    tm_kw = lambda d: d["tm"]["capacity_kbtuh"] / 3.412142  # noqa: E731
+    sh, hw = fb["space"], fb["water"]
+    least = min(sh["flats"], key=lambda n: sh["flats"][n]["capacity_w"] - sh["flats"][n]["load_w"])
+    lf = sh["flats"][least]
+    feeders = el["feeders"]
+    steps = sum(len(m["steps"]) for s in seq for m in s["modes"])
+    to_select = [t for t, _, k in sequence.POINTS if k == "to select"]
+    areas = list(dict.fromkeys(it["area"] for it in its))
+    coded = sum(1 for it in its if it["quotes"])
+    changed = "; ".join(f"{k} {v['added']} added, {v['changed']} changed, {v['deleted']} removed"
+                        for k, v in diff["by_system"].items())
     items = [
-        f"Item 1 (the fire service's control valves, NFPA 13R 2019 and IBC 2021 903.4): a listed indicating shutoff valve on each "
-        f"side of the {bf} in. double check valve assembly, OS&Y gate valves as the basis of design, each supervised by a tamper "
-        f"switch to the monitoring panel. Watts lists its {bf} in. LF007 as 'UL Classified without shutoff valves only', so the "
-        "assembly's own valves can't serve as the system's control valves, as step 6 had them. The hydraulics count the two "
-        f"(NFPA 13's chart: a 2 in. gate valve is {P['systems.sprinkler.shutoff_valve_el_ft']:g} ft of Schedule 40 steel pipe): "
-        f"{w['valves_psi']:.2f} psi at the most demanding design ({w['flat']}'s {w['comp']} area, {w['q_gpm']:.0f} gpm), which now "
-        f"needs {w['need_psi']:.1f} of the {fh['target_psi']:.0f} psi the street gives less its margin; {stair['valves_psi']:.2f} psi "
-        f"of {stair['need_psi']:.1f} at the stair's {stair['heads']} sprinklers. A butterfly valve is "
-        f"{P[s + 'butterfly_valve_el_ft']:g} ft on the same chart and would make it {bfly:.1f} psi, "
-        + ("over" if bfly > fh["target_psi"] else "within") + " what the street gives: an equal loses no more than a gate valve.",
-        f"Item 2 (the house panel, NEC 2020 Article 220 and 215.2(A)(1)): the swing tank's element is {kw:.1f} kW (Bradford White's "
-        f"RE340S6 takes 1.5 to 6 kW elements; the 1.75 kW the hot-water plant was sized at isn't made), and it is a {element['kind']} "
-        f"load: the design day's heat from it takes {house['element_h']:.1f} h at {kw:.1f} kW, in the quiet hours. The house loads come to "
-        f"{house['calculated_va']:,.0f} VA calculated, {house['amps']:.1f} A a leg: the house feeder, its breaker and its position "
-        f"on the meter stack are {house['breaker_a']:.0f} A (step 5 had 45 A, on 1.75 kW counted noncontinuous). The house "
-        f"panel's 120% rule now takes {pv['house_ac_kw']:.1f} kW AC of the roof's PV.",
-        f"Item 3 (the services drawn): the services set as {len(sheets['sheets'])} sheets, {sheets['path'].name}: the index and "
-        "general notes (G-001); each trade's plan of each storey and the roof, every run tagged with its system and size; the "
-        "four plumbing walls in elevation, every trade in them over the frame; the water service and the hot-water plant, the "
-        "heating loop and the flats' air, the one-line and the panel schedules, the fire service and its hydraulic summary. "
-        "Drawn from the bid set's models and the designs on the routes, they add nothing to the models.",
+        "Item 1 (the hot water, IECC 2021 C404): a plant serving several flats comes under the energy code's commercial hot-water "
+        "rules (R403.8), which the bid set's hot water didn't meet. Each flat's hot water is now a loop of its own: its hot branch "
+        "runs past its fixtures to its lavatory, where a thermostatic balancing valve in the vanity starts its "
+        f"{lp['flat_return_in']:g} in. return to the return riser: Caleffi ThermoSetter 116, 1/2 in. (basis of design), set "
+        f"{P[h + 'tbv_set_f']:g} F, reached through the vanity's doors (C404.6: with access). Each fixture's own pipe is sized for it "
+        f"({', '.join(f'{k} {v:g}' for k, v in c4['own_in'].items())} in.): no fixture holds more than {c4['limit_oz']:g} fl oz from the "
+        f"loop (C404.5.2; the worst {c4['worst']['oz']:.0f}, {c4['worst']['flat']}'s {c4['worst']['fixture']}). The flats' hot pipe and "
+        f"returns are insulated {P[rt + 'branch_insulation_in']:g} in. (C404.4, Table C403.12.3), stopped at each plate and joist, "
+        f"their holes bored for the bare pipe. P-3 runs while the return at the swing tank is under {P[h + 'return_min_f']:g} F and "
+        f"stops at {P[ct + 'recirc_stop_f']:g} F (C404.6.1); it moves {lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft round the longest circuit, "
+        f"within its rated {P[h + 'recirc_rated_gpm']:g} gpm at {P[h + 'recirc_rated_ft']:g} ft. The returns: {lp['return_main_in']:g} in. "
+        f"main, {lp['return_riser_in']:g} in. risers. The loop loses {lp['w_per_flat']:.0f} W a flat ({lp['riser_mains_w_per_flat']:.0f} in "
+        "the risers and mains).",
+        f"Item 2 (the hot-water plant): with each flat's loop, Ecosizer asks {w['primary']['storage_gal']:.0f} gal of storage on the routes "
+        f"({sq_w['primary']['storage_gal']:.0f} on the square lengths), over the 250 gal tank Addendum 5's model placed. The storage is "
+        f"now {P[rt + 'tank_count']:g} Lochinvar HP150G tanks in series, {held:g} gal (basis of design): cold in at ST-1B's bottom, hot "
+        f"out of ST-1A's top, for stratification. The next single tank, 450 gal and 49 in. across, wouldn't pass the mechanical room's "
+        f"42 in. door. The swing tank's element is {P['systems.house.swing_element_va'] / 1000:g} kW (Ecosizer asks "
+        f"{tm_kw(sq_w):.2f} kW on the square lengths, {tm_kw(w):.2f} on the routes; Bradford White makes 4.0 and 4.5 at 208 V); the plant's "
+        f"capacity {w['primary']['capacity_kbtuh'] / 3.412142:.2f} kW. The mechanical room's floor: the tanks along its far wall, the "
+        "heat pump by the door, the swing tank and the backup heater (Item 3) on the back wall, each with its maker's service space; "
+        "the plant's mains drop through the slab 12 in. off the wall to the building.",
+        f"Item 3 (when the data center's heat is gone): a backup heater, BK-1, on the heater circuit after HP-1: A. O. Smith "
+        f"DRE-52-12 (basis of design), {P[h + 'backup_w'] / 1000:.1f} kW against the plant's {hw['plant_w'] / 1000:.2f}, its elements "
+        "locked out unless the data center's water is gone, and never energized with HP-1 enabled (its contactor's coil wired "
+        "through a normally closed contact of HP-1's enable). The flats are heated by their mini-splits alone: each covers its "
+        f"flat at the design temperature ({sh['design_c']:g} C), the least margin {least}'s {lf['capacity_w']:,.0f} W against "
+        f"{lf['load_w']:,.0f}. The wiring counts each flat's heating as its heat pump and the ERV's preheater together: each "
+        f"feeder at most {max(f['amps'] for f in feeders.values()):.1f} A on its {min(f['breaker_a'] for f in feeders.values()):.0f} A "
+        f"breaker; the house panel {house['breaker_a']:.0f} A ({house['amps']:.1f} A calculated: BK-1 counted, HP-1 not, NEC 220.60); "
+        f"the service {sv['amps']:.0f} A on its {sv['main_a']} A main. The house panel's 120% rule now takes "
+        f"{el['pv']['house_ac_kw']:.1f} kW AC of the roof's PV.",
+        f"Item 4 (the building loop's pump): P-1, Grundfos ALPHA2 15-55F (basis of design), needs {L['pump_ft']:.1f} ft at "
+        f"{L['gpm']:.2f} gpm on its worst path ({L['pump_path']}), against {L['pump_curve_ft']:.1f} ft on its curve III, its highest "
+        f"fixed speed, with {P[sb + 'pump_margin']:.0%} kept in hand; the loop's risers {L['riser_in']:g} in.",
+        f"Item 5 (the control sequence): specification section 23 09 93 ({SPECS['23-09-93'][0]}) is issued, {steps} steps in "
+        f"{len(seq)} systems, normal running and the fallback, {len(sequence.INTERLOCKS)} interlocks wired, not programmed, and "
+        f"{len(sequence.POINTS)} control points. {len(to_select)} points are still to select by the bidder ({', '.join(to_select)}).",
+        f"Item 6 (the tests and inspections): specification section 01 45 00 ({SPECS['01-45-00'][0]}) is issued, {len(its)} items in "
+        f"{len(areas)} areas ({', '.join(a.lower() for a in areas)}): what, who, when and what passes, {coded} of them the codes' own "
+        "tests quoted in their words, the rest the design's claims to be proved at commissioning.",
+        f"Item 7 (the services model and the sheets, reissued): services-addendum-7.ifc, {diff['n_after']:,} elements. Against "
+        f"Addendum 5's, {len(diff['added'])} added (each flat's return and its balancing valve, the plant's two tanks and backup "
+        f"heater), {len(diff['deleted'])} removed (the one storage tank, and fittings of runs routed again), {len(diff['changed'])} "
+        f"changed in route, length or size, most of them routed again around the flats' returns; by system: {changed}. Its "
+        f"schedules are reissued with it. The services sheets, {sheets['path'].name}: {len(sheets['sheets'])} "
+        "sheets, G-002 (the tests) and M-602 (the sequence) new, P-601 and M-601 revised, every plan and elevation redrawn from the "
+        "revised model. They replace Addendum 6's sheets.",
     ]
     return {"items": items}
 
 
-def addendum_6_run(params: dict) -> dict:
-    """Addendum 6 (pass 3g step 8): it changes no element of the building, the frame or the services
-    model (the valves and the house panel aren't in them), so it is checked against the designs it
-    changes and the sheets it issues: the hydraulics with the valves, the house load with the
-    element at its nameplate, every element of the services model on a sheet. Its text and the
-    sheets go to `ifc_out("addendum-6")` and the sheets' own folder; the published bid set is left
-    alone."""
-    from . import routed, servicesheets
+def addendum_7_run(params: dict) -> dict:
+    """Addendum 7 (pass 3g step 9d): it changes no element of the building or the frame; it reissues
+    the services model (each flat's loop, the plant's tanks and backup heater) and the sheets, and
+    issues the sequence and the tests as specification sections. Checked on the designs on the
+    routes, the model's own checks (7d), the plant's room (7a), the fallback (9a), the sequence
+    (9b), the tests (9c) and the sheets. Its text, the sheets and the sections go to
+    `ifc_out("addendum-7")`; the published bid set is left alone."""
+    from . import acceptance, fallback, routed, routing, sequence, servicesheets, servicesifc
     from .params import values
 
     P = values(params)
     if latest_model().name != "apartment-addendum-5.json":
-        raise SystemExit(f"Addendum 6 is drawn on Addendum 5's models, and the latest is {latest_model().name}")
+        raise SystemExit(f"Addendum 7 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
     apt = load(latest_model())
     routes = routed.load(apt, P)
     if routes is None or not routes.fresh:
@@ -848,45 +900,58 @@ def addendum_6_run(params: dict) -> dict:
     s7 = routed.summary(apt, P, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
+    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
+    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    placed = routing.placements(apt, P)
+    plant = [c for c in routing.equipment_checks(apt, P, placed["equipment"], placed["plant"], placed["soffits"])
+             if "plant" in c[0]]
+    sh, hw = fallback.space_heat(apt, P, s7, placed), fallback.hot_water(P, s7)
+    seq, its = sequence.sequence(P, s7), acceptance.items(P, s7)
+    out = ifc_out("addendum-7")
+    out.mkdir(parents=True, exist_ok=True)
+    specs = {k: out / name for k, (name, _) in SPECS.items()}
+    specs["23-09-93"].write_text(sequence.markdown(seq), encoding="utf-8")
+    specs["01-45-00"].write_text(acceptance.markdown(P, its), encoding="utf-8")
     sheets = servicesheets.run(apt, P, routes=routes, s7=s7)
-    fh, house = s7["fire"], s7["electrical"]["service"]["house"]
-    element = next(r for r in house["rows"] if r["key"] == "swing_element")
-    valves = [c["valves_psi"] for c in fh["cases"]]
-    words = addendum_6_words(params, s7, sheets)
+    diff = servicesifc.changes(PUBLISHED / "services-addendum-5.ifc", model)
+    words = addendum_7_words(params, s7, {"space": sh, "water": hw}, diff, sheets, seq, its)
+    s7_bad = [c for c in s7["checks"] if not c[1]]
+    model_bad = [c[0] for c in rec["checks"] if not c[1]]
     checks = [
-        ("every sprinkler design on the routed pipe counts the fire service's two shutoff valves", min(valves) > 0,
-         f"{min(valves):.3f}-{max(valves):.3f} psi over {len(valves)} designs"),
-        ("the street, less its margin, still covers the most demanding design with them", fh["ok"] and fh["worst"]["need_psi"] <= fh["target_psi"],
-         f"{fh['worst']['flat']} {fh['worst']['comp']}: {fh['worst']['need_psi']:.2f} of {fh['target_psi']:.0f} psi"),
-        (f"the swing tank's element at its nameplate, continuous where its day's heat takes it {P['systems.house.continuous_h']:g} h "
-         "or more",
-         element["va"] == P["systems.house.swing_element_va"] and (element["kind"] == "continuous") == (house["element_h"] >= P["systems.house.continuous_h"]),
-         f"{element['va']:,.0f} VA, {house['element_h']:.1f} h: {element['kind']}"),
-        ("the house panel's breaker covers its load", house["breaker_a"] >= house["amps"], f"{house['amps']:.1f} A on {house['breaker_a']:.0f} A"),
-        ("nothing routed smaller than the designs on the routes ask", not s7["asks"], str(s7["asks"]) if s7["asks"] else "nothing asked"),
+        ("every check of 7c's designs on the routes passes", not s7_bad, f"{len(s7['checks'])} checks"),
+        ("the services model was built from these routes, and its own checks pass (7d)",
+         rec.get("model") == model.name and model.exists() and not model_bad,
+         f"{rec.get('model')}, {rec['elements']:,} elements" + (f"; failing: {model_bad}" if model_bad else "")),
+        *plant,
+        *fallback.checks(sh, hw, s7["electrical"], P),
+        *sequence.checks(P, s7),
+        *acceptance.checks(P, s7, its),
+        ("what the services model changed is read from every element of both files: Addendum 5's as published, Addendum 7's as 7d "
+         "counted them", diff["n_before"] > 0 and diff["n_after"] == rec["elements"],
+         f"{diff['n_before']:,} -> {diff['n_after']:,}: {len(diff['added'])} added, {len(diff['changed'])} changed, "
+         f"{len(diff['deleted'])} removed"),
         *sheets["checks"],
     ]
-    out = ifc_out("addendum-6")
-    out.mkdir(parents=True, exist_ok=True)
-    r = {"revision": "addendum-6", "words": words, "checks": checks, "second": [], "second_status": None, "sheets": sheets["path"],
-         "s7_checks": [c for c in s7["checks"] if not c[1]]}
-    path = out / "addendum-6.md"
-    path.write_text(addendum_6_report(r) + "\n", encoding="utf-8")
-    r["written"] = [path, sheets["path"]]
+    r = {"revision": "addendum-7", "words": words, "checks": checks, "second": [], "second_status": None, "sheets": sheets["path"],
+         "specs": specs, "diff": diff, "s7_checks": s7_bad}
+    path = out / "addendum-7.md"
+    path.write_text(addendum_7_report(r) + "\n", encoding="utf-8")
+    r["written"] = [path, sheets["path"], *specs.values()]
     return r
 
 
-def addendum_6_report(r: dict) -> str:
+def addendum_7_report(r: dict) -> str:
     from . import bidset
 
+    d = r["diff"]
     return "\n".join([
-        f"Addendum 6 (made up, pass 3g step 8, D28): {TITLES[6].lower()}", "",
+        f"Addendum 7 (made up, pass 3g step 9, D28): {TITLES[7].lower()}", "",
         *(f"  {x}" for x in r["words"]["items"]), "",
-        "What changed: no element of the building, the frame or the services model (the valves and the house panel aren't in "
-        "them; the sheets' diagrams show both). The designs: every sprinkler design asks the street the valves' loss more; the "
-        "house load, its breaker and the PV the house panel takes. The sheets are issued.", "",
+        f"What changed: no element of the building or the frame. The services model, against Addendum 5's ({d['before']} -> {d['after']}): "
+        + "; ".join(f"{k}: {v['added']} added, {v['changed']} changed, {v['deleted']} removed" for k, v in d["by_system"].items()) + ". "
+        "The sheets are reissued; the sequence and the tests are issued as specification sections.", "",
         "Checks:", *(f"  {x}" for x in bidset.report(r["checks"]).splitlines()),
-        *(["", "The designs on the routes: failing checks", *(f"  {label}: {d}" for label, _, d in r["s7_checks"])] if r["s7_checks"] else []),
+        *(["", "The designs on the routes: failing checks", *(f"  {label}: {dd}" for label, _, dd in r["s7_checks"])] if r["s7_checks"] else []),
     ])
 
 
@@ -929,17 +994,20 @@ def changes(old: Path, new: Path) -> dict:
 
 
 def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[Path]:
-    """Addenda 2 to 6 into the published bid set, with the manifest the plan room and the viewer
-    read (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
-    included. Only from runs whose every check passed (both readers'), and only Addenda 2 to 6's
-    own files are written; the bid set and Addendum 1's files are left as they are. Addendum 5
-    issues the frame and the services as bid documents (pass 3g step 7e); Addendum 6, which changes
-    no model, its text and the services' sheets (step 8)."""
+    """The addenda into the published bid set, with the manifest the plan room and the viewer read
+    (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
+    included. Only from runs whose every check passed (both readers'). Addenda 2 to 5 are written
+    again from their runs, byte for byte as issued; the bid set's and Addendum 1's files, and
+    Addendum 6's (its sheets were drawn from the services Addendum 7 reissues), are left as they
+    are, and Addendum 6's items are read from the manifest as issued. Addendum 5 issued the frame
+    and the services as bid documents (pass 3g step 7e); Addendum 6, which changes no model, its
+    text and the services' sheets (step 8); Addendum 7 the revised services model, its sheets and
+    two specification sections (step 9d)."""
     import shutil
 
     from . import addendum, bidset
 
-    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-6"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-7"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
@@ -955,8 +1023,15 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         written.append(to / f"drawings-{rev}")
     shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
     written.append(to / "rfi-002.bcf")
-    r6 = runs["addendum-6"]
-    for src, dst in ((ifc_out("addendum-6") / "addendum-6.md", to / "addendum-6.md"), (r6["sheets"], to / r6["sheets"].name)):
+    # Addendum 6, as issued: its files stay; its items are the manifest's.
+    issued = json.loads((to / "addenda.json").read_text(encoding="utf-8"))
+    a6 = next(a for a in issued["addenda"] if a["number"] == 6)
+    gone = [f["path"] for f in a6["files"] if not (to / f["path"]).exists()]
+    if gone:
+        raise SystemExit(f"Addendum 6's published files are missing: {gone}")
+    r7 = runs["addendum-7"]
+    for src, dst in ((ifc_out("addendum-7") / "addendum-7.md", to / "addendum-7.md"), (r7["sheets"], to / r7["sheets"].name),
+                     *((path, to / path.name) for path in r7["specs"].values())):
         shutil.copyfile(src, dst)
         written.append(dst)
     models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
@@ -980,7 +1055,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
              3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"],
-             5: runs["addendum-5"]["words"]["items"], 6: r6["words"]["items"]}
+             5: runs["addendum-5"]["words"]["items"], 6: a6["items"], 7: r7["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -1008,25 +1083,35 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("services-addendum-5/firestop.csv", "The firestop schedule, by condition (IBC 714)"),
             ("services-addendum-5/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
             ("services-addendum-5/fittings.csv", "Fittings, by system, kind and size")],
-        6: [("addendum-6.md", "The addendum: its items, what it changes and the checks"),
-            (r6["sheets"].name, "The services drawn: plans of each storey for each trade, the plumbing walls in elevation, the "
-                                "plants, the one-line, the panel schedules and the hydraulic summary")],
+        6: [(f["path"], f["label"]) for f in a6["files"]],
+        7: [("addendum-7.md", "The addendum: its items, what it changes and the checks"),
+            ("services-addendum-7.ifc", "The services, IFC4, revised: each flat's hot-water loop and its balancing valve, the "
+                                        "plant's two storage tanks and backup heater"),
+            ("changes-services-addendum-7.json", "What the revised services model changed against Addendum 5's, by GlobalId"),
+            ("services-addendum-7/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
+            ("services-addendum-7/equipment.csv", "Equipment"),
+            (r7["sheets"].name, "The services drawn, revised: plans of each storey for each trade, the plumbing walls in elevation, "
+                                "the plants, the one-line, the panel schedules, the hydraulic summary, the control sequence and the "
+                                "tests"),
+            *((path.name, SPECS[k][1]) for k, path in r7["specs"].items())],
     }
-    # The services model (pass 3g step 7d, `brownfield routes --ifc`), when it has been built.
+    # The services model as Addendum 7 reissues it (`brownfield routes --ifc`); Addendum 5's stays as issued.
     from . import servicesifc
 
-    services = servicesifc.publish(to, ISSUED[5], addendum=5)
-    written += [to / services["model"], to / f"services-{servicesifc.REVISION}"]
+    services = servicesifc.publish(to, ISSUED[7], addendum=7)
+    written += [to / services["model"], to / f"services-{servicesifc.ISSUE}", to / services["changes"]]
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-5.ifc", "revision": "addendum-5", "status": "Addendum 5",
                             "members": len(frame["members"]),
                             "note": "the completed wood frame: the shell, the flats' partitions and plumbing walls, the "
                                     "service annex, the stair halls' floors and the roof hatch's opening (D28 step 7)"},
-                # Addendum 6 changes no model: it has none of its own, and nothing to mark in 3D.
+                # Addenda 6 and 7 change no element of the building: no model of their own. Addendum 7's
+                # changes to the services are marked in the services' layers (`services.changes`).
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models.get(n), "changes": f"changes-addendum-{n}.json" if n in models else None,
-                             "rfi": {1: "rfi-001.bcf", 2: None, 3: "rfi-002.bcf", 4: None, 5: None, 6: None}[n],
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in (1, 2, 3, 4, 5, 6)],
+                             "services_changes": services["changes"] if n == 7 else None,
+                             "rfi": {1: "rfi-001.bcf", 3: "rfi-002.bcf"}.get(n),
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 8)],
                 "services": services}
     # The installers' round (step 8c), as `brownfield round --publish` last left it.
     from . import installers

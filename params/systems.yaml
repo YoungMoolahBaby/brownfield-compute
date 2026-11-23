@@ -2495,16 +2495,36 @@ routing:
     unit: in., the stack's height
     conf: high
     source: "Bosch WQB245B0UC specification p. 2 (above): stack height 67-3/4"
+  tank_gal:
+    value: 150
+    unit: gal, each hot-water storage tank's rated capacity (Lochinvar HP150G), not chosen
+    conf: medium
+    source: "Lochinvar HPT-Sub-03 (11/25) p. 1, the model table: 'HP150G 150 95-9/16\" 31\"' and 'HP250G 250 97-5/16\" 37\"' (rated gal, A the height, B the diameter; the IOM HP150-1000 Rev B p. 2 gives the same). Addendum 7 (pass 3g step 9d): the storage Ecosizer asks rose to 255 gal on the routes and 259 on the square lengths with each flat's loop (9c), over the HP250G's 250, which step 7a had placed for step 4's 238.6. The next single tank, the HP500G (450 gal), is 49 in. across: wider than the mechanical room's 42 in. door, and 109 in. on its diagonal, over the room's 108 in. ceiling, so it can't be stood up there. Two HP150G in series hold 300"
+  tank_count:
+    value: 2
+    unit: storage tanks, piped in series (ST-1A, the hot end; ST-1B, the cold end)
+    conf: medium
+    source: "Ecotope (Heller and Oram), Reverse Cycle Chiller Best Practices Design Guidelines, Seattle City Light, December 2015, p. A7: 'The design should be based around the use of multiple storage tanks plumbed in series. The series plumbing arrangement enables a high degree of temperature stratification throughout the system with the hottest water at the end of the storage system from where water is sent to the apartments. It also allows the use of smaller cheaper tanks that are easier to install.' (data/raw/pass3g/step9/ecotope/rcc_best_practices_2015.pdf). Ecosizer sizes the storage as one volume"
   tank_dia_in:
-    value: 37
-    unit: in., the hot-water storage tank's diameter (Lochinvar HP250G, 250 gal; step 4 needs 238.6), not chosen
+    value: 31
+    unit: in., each storage tank's diameter (Lochinvar HP150G), not chosen
     conf: medium
-    source: "Lochinvar HPT-Sub-03 (11/25) p. 1: 'HP250G 250 97-5/16\" 37\" 93-3/8\" 54-5/16\" 18-13/16\" 1530' (gal, A to the top tapping, B diameter, C jacket, D return, E cold, shipping lb). Not chosen: a basis of design (two 119 gal tanks would fall a gallon short)"
+    source: "Lochinvar HPT-Sub-03 (11/25) p. 1 (tank_gal): B 31"
   tank_h_in:
-    value: 97.3125
-    unit: in., the tank's height to its top tapping
+    value: 95.5625
+    unit: in., each storage tank's height
     conf: medium
-    source: "Lochinvar HPT-Sub-03 (above): A 97-5/16"
+    source: "Lochinvar HPT-Sub-03 (11/25) p. 1 (tank_gal): A 95-9/16"
+  backup_dia_in:
+    value: 27
+    unit: in., the backup heater's footprint each way (A. O. Smith DRE-52-12), not chosen
+    conf: medium
+    source: "A. O. Smith AOSCE15300 (September 2021) p. 2, the dimensions table: 'DRE-52 50 189 55-3/4 142 21-3/4 55.2 27 68.6' (gal, litres, A in. and cm, B, C). The sheet's text doesn't say which of B and C is the diameter (its drawing shows B across the base); the larger, 27 in., is taken each way, so the box holds the heater and its front control compartment either way"
+  backup_h_in:
+    value: 55.75
+    unit: in., the backup heater's height
+    conf: high
+    source: "A. O. Smith AOSCE15300 p. 2 (backup_dia_in): A 55-3/4"
   tank_anode_in:
     value: 36
     unit: in., kept clear at the tank's side anodes
@@ -2777,10 +2797,10 @@ routing:
     conf: low
     source: "IPC 2021 906.2: a vent not less than half its drain's size, nor under 1-1/4 in.; 1-1/2 in. taken for all, cast iron's 1.90 in. (from memory, to confirm)"
   plant_drop_x_in:
-    value: 24
+    value: 12
     unit: in., where the plant's mains drop through the annex's slab, from the mechanical room's wall to the building
     conf: placeholder
-    source: "placeholder until the plant's piping is drawn (the mains are routed from there)"
+    source: "placeholder until the plant's piping is drawn (the mains are routed from there). 24 in. until Addendum 7, which puts the backup heater on the room's back wall: at 24 in. the drop was in the heater's working space, so it moved to the fire main's 12 in. off the wall, 0.6 m from it along the wall"
   underslab_jacket_in:
     value: 1.0
     unit: in., the pre-insulated mains' jacket under the slab, each side

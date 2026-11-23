@@ -160,6 +160,8 @@
         <label class="chk"><input type="checkbox" id="opt-electrical" data-layer="electrical"> Wiring <span class="hint">feeders, branch circuits, panels</span></label>
         <label class="chk"><input type="checkbox" id="opt-sprinklers" data-layer="sprinklers"> Sprinklers</label>
         <p class="hint" id="services-note"></p>
+        <label class="chk" id="svc-changes-row" hidden><input type="checkbox" id="opt-svc-changes"> <span id="svc-changes-label">Mark what the services' addendum changed</span></label>
+        <div class="changes" id="svc-changes" hidden></div>
         <label class="chk" id="changes-row" hidden><input type="checkbox" id="opt-changes"> <span id="changes-label">Mark what this addendum changed</span></label>
         <div class="changes" id="changes" hidden></div>
       </section>
@@ -219,7 +221,8 @@
     }
     const sv = MANIFEST.services;
     if (sv) {
-      MODELS.services = { file: `./models/${sv.model}`, label: "Services" };
+      MODELS.services = { file: `./models/${sv.model}`, label: "Services", changes: sv.changes ? `./models/${sv.changes}` : null,
+                          status: sv.status || "" };
       $("#services-note").textContent = `Services: ${sv.elements.toLocaleString()} elements, routed through ${sv.frame} (${sv.note}).`;
     } else {
       for (const l of LAYERS) { $(`#opt-${l}`).disabled = true; $(`#opt-${l}`).closest("label").classList.add("off"); }
@@ -228,9 +231,10 @@
   }
   const LAYERS = ["plumbing", "hvac", "electrical", "sprinklers"];
   const state = { model: "base", storey: "all", walls: true, xray: false, slabs: true, safety: true, selected: null,
-                  rooms: false, frame: false, changes: false, layers: { plumbing: false, hvac: false, electrical: false, sprinklers: false } };
+                  rooms: false, frame: false, changes: false, svcChanges: false, layers: { plumbing: false, hvac: false, electrical: false, sprinklers: false } };
   const anyLayer = () => Object.values(state.layers).some(Boolean);
   const changeSets = {};  // model key: what that addendum changed (models/changes-addendum-N.json)
+  let svcChanges = null;  // what the services' latest addendum changed in them (models/changes-services-addendum-N.json)
   const loaded = {};
   let dirty = true;
 
@@ -478,7 +482,9 @@
         let show = state.storey === "all" || e.storey === state.storey;
         if (role === "service") {
           m.visible = show && !!state.layers[e.psets.BF_Service.Layer];
-          m.material.color.setHex(svcColour(e));
+          const sc = state.svcChanges && svcChanges;
+          m.material.color.setHex(sc ? (svcChanges.added.has(e.gid) ? CHANGE.added : svcChanges.changed.has(e.gid) ? CHANGE.changed : CHANGE.same)
+                                     : svcColour(e));
           m.material.emissive.setHex(0x000000);
           continue;
         }
@@ -752,6 +758,27 @@
     refresh();
   }
 
+  // What the services' latest addendum changed, by GlobalId, on the services' layers: shown once a
+  // layer is on, the elements it added and changed coloured as an addendum's are.
+  async function showSvcChanges() {
+    const m = MODELS.services, row = $("#svc-changes-row"), box = $("#svc-changes");
+    row.hidden = !(m && m.changes && anyLayer());
+    if (row.hidden) { box.hidden = true; refresh(); return; }
+    $("#svc-changes-label").textContent = `Mark what ${m.status} changed in the services`;
+    if (!svcChanges) {
+      try {
+        const c = await (await fetch(m.changes)).json();
+        svcChanges = { added: new Set(c.added), changed: new Set(c.changed), raw: c };
+      } catch { row.hidden = true; refresh(); return; }
+    }
+    const c = svcChanges.raw;
+    box.hidden = !state.svcChanges;
+    box.innerHTML = `<span class="sw" style="background:#2e9e5b"></span><span>${c.added.length} added</span>
+      <span class="sw" style="background:#e8a33b"></span><span>${c.changed.length} changed</span>
+      <span></span><span>${c.deleted.length ? `Removed: ${c.deleted.length} (${[...new Set(c.deleted.map((d) => esc(d.name.split(",")[0])))].slice(0, 4).join("; ")})` : "Nothing removed"}</span>`;
+    refresh();
+  }
+
   async function setFrame(on) {
     state.frame = on;
     if (on && !loaded.frame) {
@@ -787,7 +814,7 @@
       }
       $("#loading").hidden = true;
     }
-    refresh();
+    showSvcChanges();
   }
 
   $("#models").addEventListener("click", (ev) => {
@@ -822,6 +849,7 @@
   $("#opt-frame").addEventListener("change", (ev) => setFrame(ev.target.checked));
   for (const l of LAYERS) $(`#opt-${l}`).addEventListener("change", (ev) => setLayer(l, ev.target.checked));
   $("#opt-changes").addEventListener("change", (ev) => { state.changes = ev.target.checked; showChanges(); });
+  $("#opt-svc-changes").addEventListener("change", (ev) => { state.svcChanges = ev.target.checked; showSvcChanges(); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 
   function frame() {
@@ -850,6 +878,7 @@
     for (const [key, id] of [["rooms", "#opt-rooms"], ["xray", "#opt-xray"]]) if (q.has(key)) { state[key] = true; $(id).checked = true; }
     if (q.has("frame") && MODELS.frame) { $("#opt-frame").checked = true; setFrame(true); }
     // ?plumbing, ?hvac, ?wiring (or ?electrical), ?sprinklers: the services' layers.
+    if (q.has("svcchanges") && MODELS.services && MODELS.services.changes) { state.svcChanges = true; $("#opt-svc-changes").checked = true; }
     for (const [key, l] of [["plumbing", "plumbing"], ["hvac", "hvac"], ["wiring", "electrical"], ["electrical", "electrical"], ["sprinklers", "sprinklers"]]) {
       if (q.has(key) && MODELS.services) { $(`#opt-${l}`).checked = true; setLayer(l, true); }
     }

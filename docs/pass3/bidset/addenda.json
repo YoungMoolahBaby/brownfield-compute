@@ -18,6 +18,7 @@
    ],
    "model": "apartment-addendum-1.ifc",
    "changes": "changes-addendum-1.json",
+   "services_changes": null,
    "rfi": "rfi-001.bcf",
    "files": [
     {
@@ -55,6 +56,7 @@
    ],
    "model": "apartment-addendum-2.ifc",
    "changes": "changes-addendum-2.json",
+   "services_changes": null,
    "rfi": null,
    "files": [
     {
@@ -86,6 +88,7 @@
    ],
    "model": "apartment-addendum-3.ifc",
    "changes": "changes-addendum-3.json",
+   "services_changes": null,
    "rfi": "rfi-002.bcf",
    "files": [
     {
@@ -118,6 +121,7 @@
    ],
    "model": "apartment-addendum-4.ifc",
    "changes": "changes-addendum-4.json",
+   "services_changes": null,
    "rfi": null,
    "files": [
     {
@@ -153,6 +157,7 @@
    ],
    "model": "apartment-addendum-5.ifc",
    "changes": "changes-addendum-5.json",
+   "services_changes": null,
    "rfi": null,
    "files": [
     {
@@ -200,6 +205,7 @@
    ],
    "model": null,
    "changes": null,
+   "services_changes": null,
    "rfi": null,
    "files": [
     {
@@ -211,67 +217,121 @@
      "label": "The services drawn: plans of each storey for each trade, the plumbing walls in elevation, the plants, the one-line, the panel schedules and the hydraulic summary"
     }
    ]
+  },
+  {
+   "number": 7,
+   "title": "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests",
+   "issued": "2026-11-23T08:35:59-08:00",
+   "items": [
+    "Item 1 (the hot water, IECC 2021 C404): a plant serving several flats comes under the energy code's commercial hot-water rules (R403.8), which the bid set's hot water didn't meet. Each flat's hot water is now a loop of its own: its hot branch runs past its fixtures to its lavatory, where a thermostatic balancing valve in the vanity starts its 0.5 in. return to the return riser: Caleffi ThermoSetter 116, 1/2 in. (basis of design), set 124 F, reached through the vanity's doors (C404.6: with access). Each fixture's own pipe is sized for it (tub 0.75, lav 0.5, sink 0.75, dishwasher 0.75, washer 0.75 in.): no fixture holds more than 64 fl oz from the loop (C404.5.2; the worst 53, 1-back-left's tub). The flats' hot pipe and returns are insulated 1 in. (C404.4, Table C403.12.3), stopped at each plate and joist, their holes bored for the bare pipe. P-3 runs while the return at the swing tank is under 122 F and stops at 124 F (C404.6.1); it moves 4.79 gpm at 3.3 ft round the longest circuit, within its rated 10.7 gpm at 8.202 ft. The returns: 1.25 in. main, 0.75 in. risers. The loop loses 176 W a flat (72 in the risers and mains).",
+    "Item 2 (the hot-water plant): with each flat's loop, Ecosizer asks 255 gal of storage on the routes (259 on the square lengths), over the 250 gal tank Addendum 5's model placed. The storage is now 2 Lochinvar HP150G tanks in series, 300 gal (basis of design): cold in at ST-1B's bottom, hot out of ST-1A's top, for stratification. The next single tank, 450 gal and 49 in. across, wouldn't pass the mechanical room's 42 in. door. The swing tank's element is 4.5 kW (Ecosizer asks 4.03 kW on the square lengths, 3.70 on the routes; Bradford White makes 4.0 and 4.5 at 208 V); the plant's capacity 11.63 kW. The mechanical room's floor: the tanks along its far wall, the heat pump by the door, the swing tank and the backup heater (Item 3) on the back wall, each with its maker's service space; the plant's mains drop through the slab 12 in. off the wall to the building.",
+    "Item 3 (when the data center's heat is gone): a backup heater, BK-1, on the heater circuit after HP-1: A. O. Smith DRE-52-12 (basis of design), 12.3 kW against the plant's 11.63, its elements locked out unless the data center's water is gone, and never energized with HP-1 enabled (its contactor's coil wired through a normally closed contact of HP-1's enable). The flats are heated by their mini-splits alone: each covers its flat at the design temperature (-16.3 C), the least margin 1-back-left's 4,080 W against 1,986. The wiring counts each flat's heating as its heat pump and the ERV's preheater together: each feeder at most 91.0 A on its 100 A breaker; the house panel 110 A (108.4 A calculated: BK-1 counted, HP-1 not, NEC 220.60); the service 463 A on its 600 A main. The house panel's 120% rule now takes 6.7 kW AC of the roof's PV.",
+    "Item 4 (the building loop's pump): P-1, Grundfos ALPHA2 15-55F (basis of design), needs 10.7 ft at 6.04 gpm on its worst path (1-front-left), against 12.3 ft on its curve III, its highest fixed speed, with 10% kept in hand; the loop's risers 0.75 in.",
+    "Item 5 (the control sequence): specification section 23 09 93 (spec-23-09-93-sequence.md) is issued, 31 steps in 5 systems, normal running and the fallback, 3 interlocks wired, not programmed, and 17 control points. 8 points are still to select by the bidder (PC-1, TS-1, FS-1, V-1, P-2, TS-5, V-2, TS-2).",
+    "Item 6 (the tests and inspections): specification section 01 45 00 (spec-01-45-00-tests.md) is issued, 28 items in 9 areas (plumbing, hot water, building loop, mini-splits, ventilation, envelope, fire protection, general, electrical): what, who, when and what passes, 24 of them the codes' own tests quoted in their words, the rest the design's claims to be proved at commissioning.",
+    "Item 7 (the services model and the sheets, reissued): services-addendum-7.ifc, 3,162 elements. Against Addendum 5's, 59 added (each flat's return and its balancing valve, the plant's two tanks and backup heater), 15 removed (the one storage tank, and fittings of runs routed again), 532 changed in route, length or size, most of them routed again around the flats' returns; by system: cold 0 added, 55 changed, 0 removed; hot 47 added, 234 changed, 5 removed; loop 0 added, 35 changed, 0 removed; power 0 added, 148 changed, 0 removed; vent 12 added, 60 changed, 10 removed. Its schedules are reissued with it. The services sheets, services-sheets-addendum-7.pdf: 23 sheets, G-002 (the tests) and M-602 (the sequence) new, P-601 and M-601 revised, every plan and elevation redrawn from the revised model. They replace Addendum 6's sheets."
+   ],
+   "model": null,
+   "changes": null,
+   "services_changes": "changes-services-addendum-7.json",
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-7.md",
+     "label": "The addendum: its items, what it changes and the checks"
+    },
+    {
+     "path": "services-addendum-7.ifc",
+     "label": "The services, IFC4, revised: each flat's hot-water loop and its balancing valve, the plant's two storage tanks and backup heater"
+    },
+    {
+     "path": "changes-services-addendum-7.json",
+     "label": "What the revised services model changed against Addendum 5's, by GlobalId"
+    },
+    {
+     "path": "services-addendum-7/lengths.csv",
+     "label": "Pipe, duct, conduit and cable lengths, by system, material and size"
+    },
+    {
+     "path": "services-addendum-7/equipment.csv",
+     "label": "Equipment"
+    },
+    {
+     "path": "services-sheets-addendum-7.pdf",
+     "label": "The services drawn, revised: plans of each storey for each trade, the plumbing walls in elevation, the plants, the one-line, the panel schedules, the hydraulic summary, the control sequence and the tests"
+    },
+    {
+     "path": "spec-23-09-93-sequence.md",
+     "label": "Specification section 23 09 93: the sequence of operations"
+    },
+    {
+     "path": "spec-01-45-00-tests.md",
+     "label": "Specification section 01 45 00: the tests and inspections"
+    }
+   ]
   }
  ],
  "services": {
-  "model": "services-addendum-5.ifc",
+  "model": "services-addendum-7.ifc",
   "frame": "Addendum 5's frame",
-  "elements": 3118,
+  "elements": 3162,
   "layers": {
    "electrical": 305,
    "hvac": 867,
-   "plumbing": 1183,
+   "plumbing": 1227,
    "sprinklers": 763
   },
-  "issued": "2026-11-22T13:24:46-08:00",
+  "issued": "2026-11-23T08:35:59-08:00",
   "files": [
    {
-    "path": "services-addendum-5/lengths.csv",
+    "path": "services-addendum-7/lengths.csv",
     "label": "Pipe, duct, conduit and cable lengths, by system, material and size"
    },
    {
-    "path": "services-addendum-5/fittings.csv",
+    "path": "services-addendum-7/fittings.csv",
     "label": "Fittings, by system, kind and size"
    },
    {
-    "path": "services-addendum-5/equipment.csv",
+    "path": "services-addendum-7/equipment.csv",
     "label": "Equipment"
    },
    {
-    "path": "services-addendum-5/fixtures.csv",
+    "path": "services-addendum-7/fixtures.csv",
     "label": "Plumbing fixtures"
    },
    {
-    "path": "services-addendum-5/sprinklers.csv",
+    "path": "services-addendum-7/sprinklers.csv",
     "label": "Sprinklers"
    },
    {
-    "path": "services-addendum-5/air_terminals.csv",
+    "path": "services-addendum-7/air_terminals.csv",
     "label": "Registers, grilles and wall caps"
    },
    {
-    "path": "services-addendum-5/switches.csv",
+    "path": "services-addendum-7/switches.csv",
     "label": "Water-level switches (IMC 307.2.3)"
    },
    {
-    "path": "services-addendum-5/holes.csv",
+    "path": "services-addendum-7/holes.csv",
     "label": "Holes bored through the frame"
    },
    {
-    "path": "services-addendum-5/plates.csv",
+    "path": "services-addendum-7/plates.csv",
     "label": "Holes near a member's edge (steel plates)"
    },
    {
-    "path": "services-addendum-5/openings.csv",
+    "path": "services-addendum-7/openings.csv",
     "label": "Every opening through an assembly"
    },
    {
-    "path": "services-addendum-5/firestop.csv",
+    "path": "services-addendum-7/firestop.csv",
     "label": "The firestop schedule, by condition (IBC 714)"
    }
   ],
-  "status": "Addendum 5",
-  "note": "issued with Addendum 5; 345 rated openings firestopped by the maker's engineering judgment"
+  "status": "Addendum 7",
+  "changes": "changes-services-addendum-7.json",
+  "changes_against": "services-addendum-5.ifc",
+  "note": "issued with Addendum 7; 360 rated openings firestopped by the maker's engineering judgment"
  },
  "round": {
   "issued": "2026-11-22T17:54:51-08:00",

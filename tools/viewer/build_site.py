@@ -136,10 +136,14 @@ def manifest() -> dict:
         missing.append(m["framing"]["model"])
     s = m.get("services")
     if s:
-        missing += [x for x in [s["model"], *(f["path"] for f in s["files"])] if not (PUBLISHED / x).exists()]
+        missing += [x for x in [s["model"], s.get("changes"), *(f["path"] for f in s["files"])] if x and not (PUBLISHED / x).exists()]
     if missing:
         raise SystemExit(f"addenda.json names files that aren't published: {missing}")
     return m
+
+
+# The viewer's link options for the services' layers (index.html's `?plumbing`, `?hvac`, ...).
+SERVICE_LAYERS = ("plumbing", "hvac", "wiring", "sprinklers")
 
 
 def _kind(path: str) -> str:
@@ -209,8 +213,12 @@ def addenda(m: dict) -> tuple[str, str]:
     items = []
     for a in sorted(m["addenda"], key=lambda a: a["issued"], reverse=True):
         files = " · ".join(f'<a href="files/{e(f["path"])}">{e(f["path"].rsplit("/", 1)[-1])}</a>' for f in a["files"])
-        # An addendum that changes no model (Addendum 6) has nothing to mark in 3D.
-        seen = f' · <a href="model.html#addendum-{a["number"]}-changes">see what changed in 3D</a>' if a["model"] else ""
+        # An addendum that changes no model (Addendum 6) has nothing to mark in 3D; one that changes
+        # only the services (Addendum 7) marks them on the services' layers.
+        layers = "&amp;".join(SERVICE_LAYERS)
+        seen = (f' · <a href="model.html#addendum-{a["number"]}-changes">see what changed in 3D</a>' if a["model"]
+                else f' · <a href="model.html?{layers}&amp;svcchanges">see what changed in the services in 3D</a>'
+                if a.get("services_changes") else "")
         items.append(
             f'<li><div class="ah"><b>Addendum {a["number"]:02d}</b> <span>{e(a["title"])}</span>'
             f'<span class="n">issued {e(when(a["issued"]))}</span></div>'
@@ -243,6 +251,8 @@ def build(out: Path = DEFAULT_OUT) -> list[Path]:
         copies[f"models/{m['framing']['model']}"] = PUBLISHED / m["framing"]["model"]
     if m.get("services"):
         copies[f"models/{m['services']['model']}"] = PUBLISHED / m["services"]["model"]
+        if m["services"].get("changes"):
+            copies[f"models/{m['services']['changes']}"] = PUBLISHED / m["services"]["changes"]
     copies["models/addenda.json"] = MANIFEST
     missing = [str(src) for src in copies.values() if not src.exists()]
     if missing:

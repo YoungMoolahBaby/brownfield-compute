@@ -1566,3 +1566,22 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       "within 5 minutes" (10.2.3.1.1), and the main drain (10.2.4). NFPA 13's own test isn't
       saved: the USFA manual (`raw/sprinkler/USFA_sm_0263.txt`) gives its "post-installation
       hydrostatic test pressure of 200 psi", not its duration.
+  - **9d, the plant's tanks and the backup heater's box (2026-11-23).**
+    - Lochinvar's model table, HPT-Sub-03 (11/25), as step 7a saved it
+      (`step7/equipment/plant/lochinvar_LOC_HP_Sub.pdf`), with its IOM HP150-1000 Rev B, which agrees:
+      "HP150G 150 95-9/16" 31"", "HP250G 250 97-5/16" 37"", HP500G 450 gal at 49 in. (rated gal, A
+      the height, B the diameter). The text extraction scrambles the other columns, so only A and B
+      are taken. A 2023 brochure (`LOC_T_HPT_BR_1003_2023`, R30) lists the HP250G at 100 x 40 in.
+      and no HP150G. The newer sheet is used.
+    - Ecotope (Jonathan Heller and Shawn Oram), *Reverse Cycle Chiller (RCC) Best Practices Design
+      Guidelines*, for Seattle City Light, December 2015 (bpa.gov, `ecotope/rcc_best_practices_2015.pdf`),
+      p. A7: "The design should be based around the use of multiple storage tanks plumbed in series.
+      The series plumbing arrangement enables a high degree of temperature stratification throughout
+      the system with the hottest water at the end of the storage system from where water is sent to
+      the apartments. It also allows the use of smaller cheaper tanks that are easier to install."
+      Its limits: written for reverse-cycle chillers in a garage, not this plant; it doesn't say how
+      a sizing tool should count the tanks. Ecosizer counts the storage as one volume.
+    - A. O. Smith AOSCE15300 (above), p. 2's dimensions: "DRE-52 50 189 55-3/4 142 21-3/4 55.2 27
+      68.6" (gal, litres, A, B, C in in. and cm). The text doesn't say which of B and C is the
+      diameter. The drawing puts B across the base, but it can't be read here (no PDF renderer on
+      this machine), so the box takes the larger, 27 in., each way.
