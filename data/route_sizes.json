@@ -10,6 +10,7 @@
  },
  "vent_in": {},
  "main_in": {
-  "hot-return": 0.75
- }
+  "hot-return": 1.25
+ },
+ "return_in": {}
 }

@@ -1496,3 +1496,46 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     1500 / Maximum 6000" W), as step 7a read it. The rule that a load of 3 hours or more is
     continuous (NEC Article 100) is as the load-calculation guides state it: the 2020 text wasn't
     read.
+
+- **Step 9 (2026-11-22).** Under `data/raw/pass3g/step9/` (gitignored) unless said.
+  - **9a, the fallback.**
+    - Fujitsu's design and technical manual for the ARUH12-48KUAS / AOUH12-48KU (as step 3 read
+      it): section 4-2's heating table at 21.1 C indoor (p. 22,
+      `data/fujitsu_aruh12_heating.csv`), and section 6-1's correction for pipe length and height
+      (p. 121, `data/fujitsu_aouh12_heating_pipe_factors.csv`). Both "calculated based on the
+      maximum capacity".
+    - A. O. Smith, *Gold Series Commercial Electric* spec sheet AOSCE15300 (September 2021,
+      `aosmith/`): p. 4, the DRE-52-12 at 12.3 kW from three 4,100 W elements, 59 A at 208 V;
+      "Designed for use as a recovery heater having its own storage tank"; thermostats "adjustable
+      through a range of 120 to 181 F".
+  - **9c, the energy code's hot-water rules.** UpCodes' "Pennsylvania Energy Code 2021",
+    chapter CE 4 (up.codes/viewer/pennsylvania/iecc-2021/chapter/CE_4/, saved 2026-11-22,
+    `iecc/iecc_ce4.html` and `.txt`). The residential chapter (`dl/upc/iecc_re4.txt`, saved in
+    step 4) sends a central plant to it: R403.8, "Systems serving multiple dwelling units shall
+    comply with Sections C403 and C404 of the IECC—Commercial Provisions instead of Section R403."
+    - **C404.4:** pipe from the heater to the fixture's supply insulated by Table C403.12.3; "Pipe
+      insulation shall be continuous except where the piping passes through a framing member."
+      The table, 105-140 F: 1.0 in. under 1-1/2 in., 1.5 in. from 1-1/2 to 4 in.
+    - **C404.5:** C404.5.1 by length (1 in. pipe: 13 ft) or C404.5.2 by volume: "For other
+      plumbing fixtures or plumbing appliances; not more than 0.5 gallon (1.89 L)", from "the
+      nearest source of heated water", circulating systems included. Table C404.5.2.1's ounces a
+      foot by tube, `data/iecc2021_c404_5_2_1.csv`.
+    - **C404.6.1:** circulating pumps' controls "shall automatically turn off the pump when the
+      water in the circulation loop is at the desired temperature and when there is not a demand
+      for hot water". **C404.6.3:** a pump between a heater and its storage runs no more than 5
+      minutes past the heating cycle.
+    - **C403.12.3's exceptions** spare the building loop: "Piping that conveys fluids that have a
+      design operating temperature range between 60°F (15°C) and 105°F (41°C)", and "Piping that
+      conveys fluids that have not been heated or cooled through the use of fossil fuels or
+      electric power".
+  - **Each flat's balancing valve.** Caleffi 01325/21 NA, *ThermoSetter* 116 series
+    (caleffi.com, `caleffi/01325_NA.pdf`; pypdf and pdftotext both scramble its first table, its
+    p. 6-7 text gives it whole): 1/2 and 3/4 in. "Cv max: = 2.1 ... Cv min: = 0.23 minimum flow state
+    when operating at set point"; p. 8, for the circuit's head "use the design curve ... a typical
+    valve position under normal working conditions (dT = 10 F)", 0.52 Cv; settings 95-140 F;
+    "Max. differential pressure: 15 psi".
+  - **The recirculation pump's rated point.** Grundfos ALPHA2 15-55SF, product 99163937 (as step
+    7a saved it): "Rated flow: 10.7 US GPM; Rated head: 8.202 ft". Its full curve isn't on the
+    sheet: a need at or under both is under the curve, which falls with flow.
+  - **The swing tank's elements.** Bradford White 1201-0926 (step 7a's copy), its table of element
+    wattages by voltage: 1,500 to 6,000 W in 500 W steps at 208 V non-simultaneous.

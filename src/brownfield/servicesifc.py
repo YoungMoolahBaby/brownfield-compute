@@ -186,7 +186,7 @@ def run_kind(req: dict) -> tuple[str, str, str, str]:
     if s == "sprinkler":
         return "sprinkler", "IfcPipeSegment", "RIGIDSEGMENT", "cpvc"
     if s == "water":
-        return role, "IfcPipeSegment", "FLEXIBLESEGMENT", "pex"
+        return ("hot" if role == "hot-return" else role), "IfcPipeSegment", "FLEXIBLESEGMENT", "pex"
     if s == "main":
         k = req["kind"]
         return ("hot" if k == "hot-return" else "loop" if k.startswith("loop") else k), "IfcPipeSegment", "FLEXIBLESEGMENT", "pex_pre"
@@ -221,6 +221,8 @@ def piece_size(req: dict, tree, n: int, D: Designs) -> tuple[float | str | None,
             part = "branch" if len(e.below) == 1 else "feed"
         return D.fire[part], f"7c's sprinkler {part}"
     if s == "water":
+        if role == "hot-return":
+            return D.water["loop"]["flat_return_in"], "the flat's loop's return (Addendum 7), at its share of the loop's flow"
         return D.water["paths"][role]["sizes"]["branch"], "step 4's branch, held on the routes (7c)"
     if s == "main":
         k = req["kind"]
@@ -344,7 +346,9 @@ def fittings(req: dict, tree, n: int, size, top_of_column: bool) -> list[dict]:
     # stub-out; where the main turns up into a riser; where the top flat's branch leaves the riser's
     # end; where a tail reaches its manifold.
     if s in ("water", "main", "hydronic"):
-        if e.terminal is not None:
+        # A flat's loop's end (Addendum 7) is no stub-out: the tee joining its return is drawn with
+        # the flat (`elements`).
+        if e.terminal is not None and e.terminal != "loop-end":
             out.append({"kind": "elbow", "at": pts[-1], "dirs": [_dir(pts[-2], pts[-1]), np.array([0.0, 0.0, 1.0])]})
         if e.up is None and top_of_column and s in ("water", "hydronic"):
             out.append({"kind": "elbow", "at": pts[0], "dirs": [np.array([0.0, 0.0, 1.0]), _dir(pts[0], pts[1])]})
@@ -424,6 +428,27 @@ def elements(apt: dict, p: dict, routes, s7: dict, placed: dict) -> list[El]:
                       "Material": MATERIAL[mat], "Flat": req.get("flat") or ""}
                 out.append(El(f"fit/{rid}/{n}/{k}", fcls, _fitting_pre(fcls, f["kind"]), f"{f['kind']}, {rid} #{n}", system,
                               ("sweep", _fitting_geom(f, d), d * 1.25), fp))
+    # -- Each flat's loop's end (Addendum 7): the tee where its return leaves its hot branch's end,
+    # drawn along the hot pipe into it and the return out of it.
+    for f in apt["flats"]:
+        rid = f"plumbing/hot-return/{f['name']}"
+        if rid not in routes.recs:
+            continue
+        hot, ret = routes.tree(f"plumbing/hot/{f['name']}"), routes.tree(rid)
+        hb = next(b for b in hot.branches if b.terminal == "loop-end")
+        rb = next(b for b in ret.branches if b.terminal == "loop-end")
+        if len(hb.points) > 1 and math.dist(hb.points[-2], hb.points[-1]) > 1e-6:
+            u = _dir(hb.points[-2], hb.points[-1])
+        else:  # the loop's end on the tree already (a branch of no length): along the pipe it's on
+            par = hot.branches[hb.parent]
+            u = _dir(par.point_at(max(0.0, hb.at - 0.05)), par.point_at(min(par.length, hb.at + 0.05)))
+        v = _dir(rb.points[-1], rb.points[-2])
+        size = D.water["loop"]["flat_return_in"]
+        d = routes.reqs[rid]["od_m"]
+        fp = {"System": "hot", "Layer": SYSTEMS["hot"][2], "Run": rid, "Piece": 0, "Kind": "tee (the loop's end)", "Size": nominal(size),
+              "Material": MATERIAL["pex"], "Flat": f["name"]}
+        out.append(El(f"fit/{rid}/loop-end", "IfcPipeFitting", "JUNCTION", f"tee (the loop's end), {f['name']}", "hot",
+                      ("sweep", _fitting_geom({"at": hb.points[-1], "dirs": [u, v]}, d), d * 1.25), fp))
     # -- The pinned verticals and fixed pieces 7a placed (the router's own boxes).
     w = D.water
     for o in routes.body["obstacles"]:
@@ -749,8 +774,10 @@ def check(path: Path, els: list[El], routes, apt: dict, p: dict) -> list[tuple[s
     worst, gap, missing = 0.0, 0.0, []
     for rid, rec in routes.recs.items():
         req = routes.reqs[rid]
-        polys = [np.asarray(b["points"], float) for b in rec["branches"]]
-        extra = [np.asarray(req["root"], float)] + [np.asarray(b["to"], float) for b in rec["branches"]]
+        # A branch of one point (a flat's loop's end on its tree already) is a vertex, not a line.
+        polys = [np.asarray(b["points"], float) for b in rec["branches"] if len(b["points"]) > 1]
+        extra = ([np.asarray(req["root"], float)] + [np.asarray(b["to"], float) for b in rec["branches"]]
+                 + [np.asarray(b["points"][0], float) for b in rec["branches"] if len(b["points"]) == 1])
         pieces = [r for r in rb if r["props"].get("Run") == rid and r["props"].get("Key", "").startswith("run/")]
         if not pieces:
             missing.append(rid)
@@ -766,7 +793,7 @@ def check(path: Path, els: list[El], routes, apt: dict, p: dict) -> list[tuple[s
         forge = sum(b["length_m"] for b in rec["branches"])
         joins = sum(math.dist(t.branches[i].points[0], t.branches[b.parent].point_at(b.at)) for i, b in enumerate(t.branches)
                     if b.parent is not None)
-        tails = sum(b.tail_m for b in t.branches)
+        tails = sum(b.tail_m for b in t.branches if len(b.points) > 1)  # a one-point branch has no piece to carry it (`Tree`)
         gap = max(gap, abs(got - (forge + joins + tails + t.lead_m)))
     res.append(("every routed run in the file, each piece where forge routed it (to 1 mm)", not missing and worst < 1e-3,
                 f"{len(routes.recs)} runs; farthest vertex {worst * 1e3:.3f} mm" + (f"; missing {missing[:3]}" if missing else "")))

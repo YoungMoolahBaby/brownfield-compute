@@ -95,10 +95,13 @@ def slab_zone(apt: dict, p: dict) -> list[dict]:
 
 
 def wall_cavity(apt: dict, frame: dict, wall: dict, p: dict, z0: float | None = None, z1: float | None = None,
-                y0: float | None = None, y1: float | None = None) -> dict:
+                y0: float | None = None, y1: float | None = None, edge: bool = True) -> dict:
     """A wall's stud cavity on its storey: its studs' depth less 5/8 in. each side (IBC 2308.5.10:
     a bored hole's edge 5/8 in. from the stud's), its length, from the floor to the joists over it
-    (its plates included: crossed up through them)."""
+    (its plates included: crossed up through them). With `edge` False the studs' whole depth: for
+    a pipe whose insulation stops at each member it passes (IECC C404.4), insulated in the bay and
+    bare through the plates (cut plates strapped, IBC 2308.5.8); a stud it bores is still held to
+    the 5/8 in. by `routecheck`."""
     from .routing import _bounds
 
     along = 1 if wall["hi_m"][1] - wall["lo_m"][1] > wall["hi_m"][0] - wall["lo_m"][0] else 0
@@ -107,7 +110,7 @@ def wall_cavity(apt: dict, frame: dict, wall: dict, p: dict, z0: float | None = 
              and wall["lo_m"][c] - 1e-6 <= _bounds(m)[0][c] and _bounds(m)[1][c] <= wall["hi_m"][c] + 1e-6
              and wall["lo_m"][along] - 1e-6 <= _bounds(m)[0][along] <= wall["hi_m"][along]]
     s0, s1 = studs[0][0][c], studs[0][1][c]
-    e = p[R + "stud_edge_in"] * IN
+    e = p[R + "stud_edge_in"] * IN if edge else 0.0
     lo, hi = [0.0] * 3, [0.0] * 3
     lo[c], hi[c] = s0 + e, s1 - e
     lo[along], hi[along] = (wall["lo_m"][along] if y0 is None else y0), (wall["hi_m"][along] if y1 is None else y1)
@@ -167,6 +170,7 @@ def requests(apt: dict, p: dict) -> dict:
     roof_top = max(x["hi_m"][2] for x in apt["parts"] if x["kind"] == "roof")
     clear, hole = p[R + "riser_gap_in"] * IN, p[R + "hole_clear_in"] * IN
     v1, v2, vw = p[R + "voxel_in"] * IN, p[R + "slab_voxel_in"] * IN, p[R + "wall_voxel_in"] * IN
+    vh, band = p[R + "hot_voxel_in"] * IN, p[R + "hot_band_in"] * IN
     wall_clear, cable_clear = p[R + "wall_clear_in"] * IN, p[R + "cable_clear_in"] * IN
     # Under the slab, each kind of service at its own depth: the ground floor's drains just under it,
     # the feeders, the mains, the building drain lowest (it falls to the sewer).
@@ -220,6 +224,13 @@ def requests(apt: dict, p: dict) -> dict:
                 flat = s_["id"].split("/", 2)[2]
                 z0 = next(x for x in sf if x["id"] == f"{flat}/soffit-utility")["lo"][2]
                 z1 = roof_top
+            elif s_["kind"] == "hot-return":
+                # Up through the top flat's plates into its joists' space, so the top flat's loop's
+                # return joins it there as the floors below join theirs (Addendum 7).
+                z0 = zt
+                top = cavity(apt, names[-1])
+                z1 = (top["lo"][2] + top["hi"][2]) / 2
+                top_tee[s_["id"]] = z1
             else:
                 z0 = zt
                 z1 = ceiling_z(apt, storey_of(names[-1])) - p[R + "branch_drop_in"] * IN + 0.05
@@ -514,15 +525,45 @@ def requests(apt: dict, p: dict) -> dict:
             # In the wall only straight up and down: a column at each fixture and at the riser; across
             # in the ceiling.
             col_w = p[R + "wall_column_in"] * IN
-            cols = [wall_cavity(apt, frame, pw, p, y0=t_[1][1] - col_w, y1=t_[1][1] + col_w) for t_ in terms_]
-            cols.append(wall_cavity(apt, frame, pw, p, y0=riser["y"] - col_w, y1=riser["y"] + col_w))
+            bay = kind != "hot"  # the hot's insulation stops at the plates: the studs' whole depth (`wall_cavity`)
+            cols = [wall_cavity(apt, frame, pw, p, y0=t_[1][1] - col_w, y1=t_[1][1] + col_w, edge=bay) for t_ in terms_]
+            cols.append(wall_cavity(apt, frame, pw, p, y0=riser["y"] - col_w, y1=riser["y"] + col_w, edge=bay))
             # Below the top the riser goes on up through the ceiling cavity, and the branch tees off it
             # there (through the riser's own hole in the plates); at the top its tee is its end.
             top = storey_of(name) == max(storey_of(n) for n in fx if column(n) == col)
-            add(f"plumbing/{kind}/{name}", "water", temp_od, [riser["x"], riser["y"], tee_z], terms_, cols + [ceil],
+            extra, zone_ceil = {}, ceil
+            if kind == "hot":
+                # The flat's loop (IECC C404.5, Addendum 7): its hot branch on to the joists' space over
+                # its farthest hot fixture, where its return leaves for the return riser, so every
+                # fixture is a short way off circulating water. Its holes for the bare pipe: the
+                # insulation stops at each member it passes (C404.4).
+                far = max(terms_, key=lambda t_: abs(t_[1][1] - riser["y"]))
+                z_end = (ceil["lo"][2] + ceil["hi"][2]) / 2
+                end = [x, far[1][1], z_end]
+                terms_ = terms_ + [("loop-end", end)]
+                extra = {"bore_m": pex_od_in(branch["hot"]) * IN, "voxel": vh}
+                # On the finer voxel, in the joists' space along the wall (`hot_band_in`).
+                zone_ceil = _box([max(ceil["lo"][0], x - band), ceil["lo"][1], ceil["lo"][2]],
+                                 [min(ceil["hi"][0], x + band), ceil["hi"][1], ceil["hi"][2]])
+            add(f"plumbing/{kind}/{name}", "water", temp_od, [riser["x"], riser["y"], tee_z], terms_, cols + [zone_ceil],
                 attach=[riser["id"]], flat=name, role=kind, gap=wall_clear,
                 goals=part_of(riser["id"], fz + 0.3, tee_z if top else ceil["hi"][2]),
-                blocks=over_wall(apt, name, [(y_ - col_w, y_ + col_w) for y_ in [t_[1][1] for t_ in terms_] + [riser["y"]]]))
+                blocks=over_wall(apt, name, [(y_ - col_w, y_ + col_w) for y_ in [t_[1][1] for t_ in terms_] + [riser["y"]]]), **extra)
+            if kind == "hot":
+                # Its return: from the loop's end, a tee on the hot branch (the hot pipe open to it only
+                # within `return_tee_in` of the end, closed to it beyond), back through the joists'
+                # space to the return riser, through a thermostatic balancing valve (Addendum 7) at
+                # the riser.
+                rr = next(s_ for s_ in vs[col] if s_["kind"] == "hot-return")
+                ret_n = max(pd["loop"]["flat_return_in"], gs.get("return_in", {}).get("flat", 0.0))
+                ret_od = pex_od_in(ret_n, p[R + "branch_insulation_in"])
+                hot_id = f"plumbing/hot/{name}"
+                add(f"plumbing/hot-return/{name}", "water", ret_od, [rr["x"], rr["y"], tee_z], [("loop-end", end)],
+                    [wall_cavity(apt, frame, pw, p, y0=rr["y"] - col_w, y1=rr["y"] + col_w, edge=False), ceil],
+                    attach=[rr["id"], hot_id], attach_near=[{"id": hot_id, "at": [round(v, 6) for v in end], "m": p[R + "return_tee_in"] * IN}],
+                    flat=name, role="hot-return", gap=wall_clear, bore_m=pex_od_in(ret_n) * IN, after=hot_id, size_in=ret_n,
+                    goals=part_of(rr["id"], fz + 0.3, ceil["hi"][2]),
+                    blocks=over_wall(apt, name, [(end[1] - col_w, end[1] + col_w), (rr["y"] - col_w, rr["y"] + col_w)]))
         st, vst = stack[col], next(s_ for s_ in vs[col] if s_["kind"] == "vent")
         # The lav's, sink's and washer's drains: down the wall from the trap, through the floor, along
         # the joists' space under it (or under the slab) to the stack; nothing runs along the wall,
@@ -689,7 +730,7 @@ def requests(apt: dict, p: dict) -> dict:
     # grille between them (the middle storey's, round the strip's leg).
     order = {"arm": 0, "main": 1, "flat": 2, "erv-exhaust": 2.5, "erv-oa": 3, "erv-ea": 3, "ms-supply": 4, "condensate": 4.2, "erv-supply": 4.5, "drain": 6,
              "building-drain": 6, "vent": 7, "cold": 8, "hot": 8, "line-set": 9, "loop-supply": 11, "loop-return": 11,
-             "hot-return": 12, "feeder": 13, "branch": 14, "roof-line-set": 15}
+             "hot-return": 8.5, "feeder": 13, "branch": 14, "roof-line-set": 15}
     reqs.sort(key=lambda r: (order.get(r.get("role", ""), 20), r.get("priority", 0), r["id"]))
     from .systems import latest_model
     body = {"schema": 1, "frame": str(FRAME.relative_to(OUT_DIR.parent)).replace("\\", "/"), "geometry_sha": _sha(latest_model()),

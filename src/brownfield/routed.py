@@ -192,6 +192,7 @@ class Tree:
                     first[i] = n
                 at_cut[(i, round(s1, 6))] = n
                 prev = n
+        self._at_cut, self._first = at_cut, first
         # The terminals beyond each edge.
         for n, e in enumerate(self.edges):
             if e.terminal is not None:
@@ -227,8 +228,15 @@ class Tree:
         return [e.terminal for e in self.edges if e.terminal is not None]
 
     def chain(self, terminal: str) -> list[int]:
-        """The edges from the root out to a terminal, in order."""
-        n = next(k for k, e in enumerate(self.edges) if e.terminal == terminal)
+        """The edges from the root out to a terminal, in order. A terminal forge reached on the tree
+        already (its branch of no length, as a flat's loop's end can be) ends the edge its parent was
+        cut at there."""
+        n = next((k for k, e in enumerate(self.edges) if e.terminal == terminal), None)
+        if n is None:
+            b = next(b for b in self.branches if b.terminal == terminal)
+            if b.parent is None:
+                return []
+            n = self._edge_at(b.parent, b.at, self._at_cut, self._first)
         out = []
         m: int | None = n
         while m is not None:
@@ -341,7 +349,7 @@ def _basis() -> dict:
 
 def grown() -> dict:
     """The sizes step 7c's designs asked of the routes beyond steps 3-6's (`data/route_sizes.json`):
-    {fire: {part: nominal}, vent_in: {flat: nominal}, main_in: {kind: nominal}}, for `routes.requests`
+    {fire: {part: nominal}, vent_in: {flat: nominal}, main_in: {kind: nominal}, return_in: {"flat": nominal}}, for `routes.requests`
     to route at. Only for this model and frame; empty if none or another's."""
     if not GROWN.exists():
         return {}
@@ -356,12 +364,12 @@ def grow(asks: dict) -> dict:
 
     g = grown()
     out = {"source": SOURCE, "basis": _basis(), "fire": dict(g.get("fire", {})), "vent_in": dict(g.get("vent_in", {})),
-           "main_in": dict(g.get("main_in", {}))}
+           "main_in": dict(g.get("main_in", {})), "return_in": dict(g.get("return_in", {}))}
     new = {}
     for part, size in asks.get("fire", {}).items():
         if part not in out["fire"] or SIZES.index(size) > SIZES.index(out["fire"][part]):
             out["fire"][part] = new.setdefault("fire", {})[part] = size
-    for key in ("vent_in", "main_in"):
+    for key in ("vent_in", "main_in", "return_in"):
         for k, v in asks.get(key, {}).items():
             if v > out[key].get(k, 0.0) + 1e-9:
                 out[key][k] = new.setdefault(key, {})[k] = v
@@ -461,6 +469,10 @@ def asks(apt: dict, p: dict, routes, fire_h: dict, water: dict, vt: dict) -> dic
     for k, v in want.items():
         if v > used[k] + 1e-6:
             out.setdefault("main_in", {})[k] = v
+    # Each flat's loop's return (Addendum 7), routed at one size for all.
+    rets = [r["size_in"] for rid, r in routes.reqs.items() if rid.startswith("plumbing/hot-return/")]
+    if rets and water["loop"]["flat_return_in"] > min(rets) + 1e-9:
+        out.setdefault("return_in", {})["flat"] = water["loop"]["flat_return_in"]
     return out
 
 
@@ -511,7 +523,8 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
     ob = obstructions(apt, p, routes.body)
     pen = penetrations(apt, p, routes.body, routes.rt)
     want = asks(apt, p, routes, fh, water, vt)
-    pl, w = "systems.plumbing.", "systems.wiring."
+    pl, w, h = "systems.plumbing.", "systems.wiring.", "systems.hot_water."
+    c4, rc = water["c404"], water["recirc"]
     erv_ok = all(d[k]["ok"] for d in ducts.values() for k in ("erv_supply", "erv_exhaust"))
     ms_ok = all(d["ms"]["ok"] for d in ducts.values())
     esp = [d["ms"]["esp"] for d in ducts.values()]
@@ -557,10 +570,17 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
          f"{p[pl + 'street_psi']:.0f}"),
         (f"every water pipe within its velocity ({lim['fps']['cold']:g} ft/s cold, {lim['fps']['hot']:g} hot, {lim['fps']['return']:g} "
          "the return)", not over_fps and water["loop"]["return_fps"] <= p[pl + "return_fps"] + 1e-9, ", ".join(over_fps)),
-        ("no hot pipe more than 50 ft from the loop to a fixture, on the routes (IPC 607.2)", water["longest_hot_ft"] <= 50,
-         f"longest {water['longest_hot_ft']:.1f} ft (square {water['square_longest_hot_ft']:.1f})"),
-        (f"the loop's routed loss within Ecosizer's spread ({spread.low:g}-{spread.high:g} W a flat)",
-         spread.low - 1e-9 <= water["loop"]["w_per_flat"] <= spread.high + 1e-9, f"{water['loop']['w_per_flat']:.0f} W a flat"),
+        ("no hot pipe more than 50 ft from circulating water (each flat's loop, Addendum 7) to a fixture, on the routes (IPC 607.2)",
+         water["longest_hot_ft"] <= 50, f"longest {water['longest_hot_ft']:.1f} ft (square, from the risers: {water['square_longest_hot_ft']:.1f})"),
+        (f"no more than {c4['limit_oz']:g} fl oz (half a gallon) in any hot fixture's pipe off its flat's loop, on the routes (IECC C404.5.2, "
+         f"Table C404.5.2.1's PEX at {c4['size_in']:g} in.)", not c4["over"],
+         f"worst {c4['worst']['oz']:.0f} fl oz ({c4['worst']['flat']}, {c4['worst']['fixture']})"),
+        (f"the risers' and mains' routed loss within Ecosizer's spread ({spread.low:g}-{spread.high:g} W a flat); the flats' own loops "
+         "(C404.5) on top", spread.low - 1e-9 <= water["loop"]["riser_mains_w_per_flat"] <= spread.high + 1e-9,
+         f"{water['loop']['riser_mains_w_per_flat']:.0f} W a flat; with the flats' loops {water['loop']['w_per_flat']:.0f}"),
+        (f"the recirculation pump holds the loop's flow round its index circuit, within its rated {p[h + 'recirc_rated_gpm']:g} gpm at "
+         f"{p[h + 'recirc_rated_ft']:g} ft; each flat's balancing valve within its {p[h + 'tbv_max_dp_psi']:g} psi",
+         rc["ok"] and rc["tbv_ok"], f"{rc['gpm']:.2f} gpm at {rc['ft']:.1f} ft ({rc['index']}); valve {rc['tbv_psi']:.2f} psi at {rc['flat_gpm']:.2f} gpm"),
         (f"every branch vent routed, within {lim['vent_ft']:g} ft or a size up over its whole length (IPC 906.2); each vent stack "
          "by Table 906.1",
          all(v["routed_in"] >= v["need_in"] - 1e-9 and v["whole"] for v in vt["flats"].values())
@@ -617,7 +637,12 @@ def report(s: dict) -> str:
     lines.append(f"  The building loop: pump {sl['pump_ft']:.1f} -> {lp['pump_ft']:.1f} ft ({lp['pump_path']}); risers "
                  + ", ".join(f"{k} {r_['pipe_in']:g} in." for k, r_ in lp["risers"].items()))
     lines.append(f"  The hot-water loop: {sw['loop']['loss_btuh'] / 3.412142:.0f} -> {w['loop']['loss_btuh'] / 3.412142:.0f} W "
-                 f"({w['loop']['w_per_flat']:.0f} a flat); returns {w['loop']['return_main_in']:g} in. mains, {w['loop']['return_riser_in']:g} in. risers")
+                 f"({w['loop']['w_per_flat']:.0f} a flat, {w['loop']['flats_loss_btuh'] / 3.412142:.0f} W of it in the flats' own loops); "
+                 f"returns {w['loop']['return_main_in']:g} in. mains, {w['loop']['return_riser_in']:g} in. risers, "
+                 f"{w['loop']['flat_return_in']:g} in. in each flat; {w['loop']['gpm']:.2f} gpm, the pump {w['recirc']['ft']:.1f} ft")
+    c4 = w["c404"]
+    lines.append(f"  Off each flat's loop (C404.5): worst {c4['worst']['oz']:.0f} of {c4['limit_oz']:g} fl oz ({c4['worst']['flat']}, "
+                 f"{c4['worst']['fixture']})")
     for k in ("cold", "hot"):
         a, b = sw["paths"][k], w["paths"][k]
         lines.append(f"  {k.capitalize()} water: developed {a['developed_ft']:.0f} -> {b['developed_ft']:.0f} ft, spare {a['spare_psi']:.1f} -> "

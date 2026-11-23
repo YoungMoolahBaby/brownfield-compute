@@ -456,6 +456,48 @@ hot_water:
     unit: of the design day's hot water drawn in its busiest hour (07:00-08:00)
     conf: high
     source: "EcosizerEngine src/ecoengine/data/load_shapes/multi_family.json, 'loadshapes' 'Stream' (commit 7586430, data/raw/ecosizer/): hour 7 0.151975684; the evening's highest 0.091185"
+  c404_volume_oz:
+    value: 64
+    unit: fl oz, the most water in the pipe from the nearest source of heated water (a water heater or a circulating loop) to a fixture other than a public lavatory
+    conf: high
+    source: "PA 2021 IECC C404.5.2 (UpCodes, saved in step 9c): 'For other plumbing fixtures or plumbing appliances; not more than 0.5 gallon (1.89 L)'; 'Water heaters, circulating water systems and heat trace temperature maintenance systems shall be considered to be sources of heated water'; the volume by Table C404.5.2.1 (data/iecc2021_c404_5_2_1.csv)"
+  tbv_cv_design:
+    value: 0.52
+    unit: Cv, each flat's thermostatic balancing valve (1/2 in.) at its design position, for the loop's head
+    conf: high
+    source: "Caleffi 01325/21 NA, ThermoSetter 116 series (data/raw/pass3g/step9/caleffi/): 'Cv max: = 2.1 ... Cv min: = 0.23 minimum flow state when operating at set point'; p. 8: 'For pressure loss calculations across the ThermoSetter valve, use the design curve ... a typical valve position under normal working conditions (dT = 10 F)', the curve labelled '0.52 Cv design'"
+  tbv_set_f:
+    value: 124
+    low: 122
+    high: 124.5
+    unit: F, each flat's thermostatic balancing valve's setting (at it, the valve closes to its least flow)
+    conf: low
+    source: "judgement: between the loop's least return (122 F) and its supply (125 F), so each flat returns at 122 F or more; within the valve's 'Adjustment temperature range: sizes 1/2 & 3/4: 95 - 140 F' (Caleffi 01325/21 NA); set at commissioning"
+  tbv_min_f:
+    value: 95
+    unit: F, the least the balancing valve sets to
+    conf: high
+    source: "Caleffi 01325/21 NA: 'Adjustment temperature range: sizes 1/2 & 3/4: 95 - 140 F (35 - 60 C)'"
+  tbv_max_f:
+    value: 140
+    unit: F, the most the balancing valve sets to
+    conf: high
+    source: "Caleffi 01325/21 NA (as tbv_min_f)"
+  tbv_max_dp_psi:
+    value: 15
+    unit: psi, the most pressure difference across the balancing valve
+    conf: high
+    source: "Caleffi 01325/21 NA: 'Max. differential pressure: 15 psi (1 bar)'"
+  recirc_rated_gpm:
+    value: 10.7
+    unit: gpm, the recirculation pump's rated flow (on its highest curve)
+    conf: high
+    source: "Grundfos ALPHA2 15-55SF, product 99163937 (data/raw/pass3g/raw/equipment/): 'Rated flow: 10.7 US GPM; Rated head: 8.202 ft'"
+  recirc_rated_ft:
+    value: 8.202
+    unit: ft, the recirculation pump's head at its rated flow (at less flow its curve gives more, so a need at or under both is within it)
+    conf: high
+    source: "Grundfos ALPHA2 15-55SF, product 99163937 (as recirc_rated_gpm)"
   recirc_w_per_flat:
     value: 100
     low: 66
@@ -1691,10 +1733,10 @@ house:
     conf: medium
     source: "NEC 215.2(A)(1) and 215.3 (feeders: 125% of continuous loads), the rule as every load-calculation guide states it; its 2020 text not read here. 625.42 (quoted under ev) makes EV charging continuous"
   swing_element_va:
-    value: 2000
-    unit: VA, the swing tank's electric element at its nameplate (Addendum 6)
+    value: 4500
+    unit: VA, the swing tank's electric element at its nameplate (Addendum 7)
     conf: high
-    source: "Bradford White spec 1201-0926 p. 2, RE340S6: elements 'Minimum 1500 / Maximum 6000' W; step 4's 1.75 kW (Ecosizer's size) isn't made, so the element is 2.0 kW (pass 3g step 7a). The house load had taken Ecosizer's size (step 5); Addendum 6 takes the nameplate"
+    source: "Bradford White spec 1201-0926 p. 2, RE340S6: elements 'Minimum 1500 / Maximum 6000' W, and its wattage table, '4500W / 4500W' at 208 V non-simultaneous 'yes'. With the flats' own loops (Addendum 7) Ecosizer sizes the swing tank's element at 4.03 kW on the square lengths, less on the routes; 4.0 kW is made but under it, so 4.5 kW. Addendum 6 had 2.0 kW, for step 4's 1.75 (pass 3g step 7a); the house load takes the nameplate"
   continuous_h:
     value: 3
     unit: h, the least time at its maximum current that makes a load continuous
@@ -2524,7 +2566,7 @@ routing:
     source: "IBC 2021 2308.4.2.4: 'Holes bored in joists shall not be within 2 inches (51 mm) of the top or bottom of the joist'"
   hole_clear_in:
     value: 0.25
-    unit: in., a bored hole's diameter over the pipe's or cable's (with its insulation)
+    unit: in., a bored hole's diameter over the pipe's or cable's (with its insulation, but for a flat's hot water, whose insulation stops at the member, the bare pipe's; branch_insulation_in)
     conf: low
     source: "judgement: a hole saw a size up; the hole is what the frame's rules limit"
   voxel_in:
@@ -2532,6 +2574,21 @@ routing:
     unit: in., the router's voxel inside the building
     conf: medium
     source: "the design: an I-joist's web is 3/8 in., so a voxel no bigger than a stud's 1-1/2 in.; 1 in. keeps a search in a ceiling cavity under 4 million cells"
+  hot_voxel_in:
+    value: 0.75
+    unit: in., the router's voxel for a flat's hot branch (its loop's return, 2-5/8 in. across, keeps the 1 in., three voxels wide)
+    conf: medium
+    source: "the design (Addendum 7): with C404.4's 1 in. of insulation a 1 in. branch is 3-1/8 in. across, 3-3/8 with its clearance; the router rounds a pipe to an odd number of voxels, five at 1 in. (5 in.), which the plumbing wall's bays don't hold as it opens them; at 3/4 in. the same five are 3-3/4 in."
+  hot_band_in:
+    value: 84
+    unit: in., how far from its plumbing wall a flat's hot branch may run in the joists' space
+    conf: low
+    source: "judgement: a fitter's run along the wall, and it keeps the finer voxel's grid no larger than a 1 in. search over the whole flat (13.0 against 14.4 million cells)"
+  return_tee_in:
+    value: 6
+    unit: in., how near a flat's loop's end its return may run in its hot branch's pipe (the tee where it leaves)
+    conf: low
+    source: "the design (Addendum 7): past the two pipes' halves and their clearance (3.75 and 3 in. as the router rounds them), so the return can leave the end in any direction there is room; beyond it the hot pipe is closed to it"
   slab_voxel_in:
     value: 2
     unit: in., the router's voxel under the slab, where no member is bored
@@ -2793,10 +2850,10 @@ routing:
     conf: placeholder
     source: "placeholder: NFPA 13R's obstruction rules for residential sprinklers not read here (the listing's TFP403 gives them); step 9 to confirm"
   branch_insulation_in:
-    value: 0.75
-    unit: in., the insulation on a flat's own hot-water branches (R-3)
-    conf: medium
-    source: "PA 2021 IECC R403.5.2 (UpCodes, saved in step 4): 'Insulation for service hot water piping with a thermal resistance, R-value, of not less than R-3 shall be applied to ... Piping 3/4 inch (19.1 mm) and larger in nominal diameter located inside the conditioned space'; R-3 at about 4 per inch (a usual foam pipe insulation, to confirm with the product). The risers and mains keep ASHRAE 90.1's 1 in. and more (hot_water.insulation_in_*), past the code: at 1 in. a flat's 1 in. branch needs a 3-3/8 in. hole, over 2308.5.10's 60% of a 2x6 stud"
+    value: 1.0
+    unit: in., the insulation on a flat's own hot-water pipe (its branches and its loop); stopped at each member the pipe passes, whose hole fits the bare pipe
+    conf: high
+    source: "PA 2021 IECC (UpCodes, saved in step 9c, data/raw/pass3g/step9/iecc/): R403.8 'Systems serving multiple dwelling units shall comply with Sections C403 and C404 ... instead of Section R403'; C404.4 'Piping from a water heater to the termination of the heated water fixture supply pipe shall be insulated in accordance with Table C403.12.3 ... Pipe insulation shall be continuous except where the piping passes through a framing member'; Table C403.12.3, 105-140 F: 1.0 in. for '< 1' and '1 to < 1 1/2' in. Step 7 took R-3 (R403.5.2) to keep a 1 in. branch's hole under 2308.5.10's 60% of a 2x6 stud: with the insulation stopped at the member the hole fits the bare pipe (`bore_m`), and the 1 in. holds"
   tail_insulation_in:
     value: 0
     unit: in., the insulation on a flat's manifold tails
@@ -3024,3 +3081,10 @@ controls:
     unit: min it may stay so before the alarm
     conf: low
     source: "judgement: to set at commissioning"
+  recirc_stop_f:
+    value: 124
+    low: 123
+    high: 124.5
+    unit: F, the hot-water return at the swing tank (TS-5) at or over which the recirculation pump stops; it starts again under the least return (return_min_f)
+    conf: low
+    source: "judgement, to set at commissioning; PA 2021 IECC C404.6.1: 'Controls for circulating hot water system pumps shall automatically turn off the pump when the water in the circulation loop is at the desired temperature and when there is not a demand for hot water'; under the 125 F supply, or it never stops"

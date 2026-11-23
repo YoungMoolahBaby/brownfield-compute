@@ -37,19 +37,22 @@ def test_the_supply_counts_the_valves_in_what_the_street_must_give(P):
 
 
 def test_the_swing_element_is_its_nameplate_and_continuous_by_its_hours(apt, P):
+    # Addendum 6 took the element's nameplate (then 2.0 kW); Addendum 7's flats' loops raised it.
     h = electrical.house_loads(apt, P)
     row = next(r for r in h["rows"] if r["key"] == "swing_element")
-    assert row["va"] == P["systems.house.swing_element_va"] == 2000
-    # Its design day's heat takes it more than 3 h at 2.0 kW: continuous, at 125%.
+    va = P["systems.house.swing_element_va"]
+    assert row["va"] == va
+    # Its design day's heat takes it more than 3 h: continuous, at 125%.
     assert h["element_h"] >= P["systems.house.continuous_h"]
-    assert row["kind"] == "continuous" and row["calc_va"] == pytest.approx(2000 * P["systems.house.continuous_factor"])
+    assert row["kind"] == "continuous" and row["calc_va"] == pytest.approx(va * P["systems.house.continuous_factor"])
     assert h["breaker_a"] >= h["amps"]
     # Were the rule 10 h, the same element would count at 100%, and the house load fall by its 25%.
+    assert h["element_h"] < 10
     q = dict(P, **{"systems.house.continuous_h": 10.0})
     h10 = electrical.house_loads(apt, q)
     row10 = next(r for r in h10["rows"] if r["key"] == "swing_element")
-    assert row10["kind"] == "noncontinuous" and row10["calc_va"] == 2000
-    assert h["calculated_va"] - h10["calculated_va"] == pytest.approx(500)
+    assert row10["kind"] == "noncontinuous" and row10["calc_va"] == va
+    assert h["calculated_va"] - h10["calculated_va"] == pytest.approx(va * (P["systems.house.continuous_factor"] - 1))
 
 
 def test_addendum_6_changes_no_model(P):

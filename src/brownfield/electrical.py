@@ -511,7 +511,7 @@ def conduit_for(sizes: list[str], p: dict, kind: str = "THHN/THWN/THWN-2", sched
 
 HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous / by its hours), across the phases (208 V)?
     ("dhw_heat_pump", "the hot-water plant's water-to-water heat pump (ClimateMaster SW036)", "motor", True),
-    ("swing_element", "the swing tank's element at its nameplate (Bradford White's; Addendum 6)", "by its hours", True),
+    ("swing_element", "the swing tank's element at its nameplate (Bradford White's; Addendum 7)", "by its hours", True),
     ("backup_heater", "the plant's backup heater, its elements only when the data center's heat is gone (A. O. Smith DRE-52-12; "
                       "step 9a)", "continuous", True),
     ("loop_pump", "the building heating loop's pump (Grundfos ALPHA2 15-55F)", "motor", False),

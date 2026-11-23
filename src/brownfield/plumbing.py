@@ -22,6 +22,8 @@ model, and the supply pipes' measures relative to the usual building.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 RHO_CP = 8.353535  # Btu per gallon F, EcosizerEngine constants.py `_RHO_CP`
@@ -413,16 +415,84 @@ def _ft(tree, k: int) -> float:
     return (e.length + (tree.lead_m if e.up is None else 0.0)) / FT
 
 
-def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: float, ins, od) -> dict:
+def flat_loop(routes, name: str) -> dict:
+    """A flat's loop on its routes (Addendum 7): its hot branch from the riser to the loop's end, the
+    joint there to its return (the two routes' ends, a tee's width apart), and its return to the
+    return riser (m); the edges of the hot tree it circulates."""
+    hot, ret = routes.tree(f"plumbing/hot/{name}"), routes.tree(f"plumbing/hot-return/{name}")
+    a = next(b for b in hot.branches if b.terminal == "loop-end").points[-1]
+    b = next(b for b in ret.branches if b.terminal == "loop-end").points[-1]
+    return {"hot_m": hot.path("loop-end")["m"], "joint_m": math.dist(a, b), "return_m": ret.length_m,
+            "edges": set(hot.chain("loop-end")), "end": a, "return_end": b}
+
+
+def dead_legs(routes, name: str) -> dict[str, list[tuple[float, int]]]:
+    """Each hot fixture's pipe off its flat's circulating loop (IECC C404.5): the (m, edge) pieces of
+    the hot tree from the loop to its stub-out."""
+    t = routes.tree(f"plumbing/hot/{name}")
+    on = flat_loop(routes, name)["edges"]
+    out = {}
+    for x in t.terminals():
+        if x == "loop-end":
+            continue
+        out[x] = [(t.edges[k].length + (t.lead_m if t.edges[k].up is None else 0.0), k) for k in t.chain(x) if k not in on]
+    return out
+
+
+def tube_oz_ft(nominal_in: float, tube: str = "pex_cts_sdr9") -> float:
+    """IECC 2021 Table C404.5.2.1: the water a foot of tube holds (fl oz)."""
+    from .loads import _table
+
+    row = next((r for r in _table("iecc2021_c404_5_2_1.csv") if abs(float(r["nominal_in"]) - nominal_in) < 1e-9), None)
+    if row is None or not row[tube]:
+        raise ValueError(f"Table C404.5.2.1 has no {tube} at {nominal_in} in.")
+    return float(row[tube])
+
+
+def recirc_head(p: dict, gpm: float, n_cols: int, n_flats: int, L: dict, size: dict, hot_c: float, ret_c: float) -> dict:
+    """The recirculation pump's head (Addendum 7) round its index circuit (`L`, ft: the hot main to
+    the column, its riser to the flat, the flat's loop and return, the return riser and main), each
+    pipe at the flow it carries with no hot water drawn (the whole loop's on the mains, a column's
+    share on its risers, a flat's in the flat: taking every main at the whole flow, more than it
+    carries past the first column), with Appendix E's 50% for fittings; the flat's thermostatic
+    balancing valve at its design Cv (Caleffi's method); the master mixing valve at the loop's flow,
+    from its published points. Against the pump's rated point: its curve gives more head at less
+    flow."""
+    from .hvac import pex_psi_per_100ft, sdr9_bore_in
+
+    pl, h = "systems.plumbing.", "systems.hot_water."
+    q = {"main": gpm, "riser": gpm / n_cols, "flat": gpm / n_flats, "flat_return": gpm / n_flats, "return_riser": gpm / n_cols, "return_main": gpm}
+    ft = {"main": L["main_ft"], "riser": L["rise_ft"], "flat": L["flat_ft"], "flat_return": L["flat_return_ft"],
+          "return_riser": L["return_rise_ft"], "return_main": L["return_main_ft"]}
+    parts = {}
+    for k in q:
+        t_c = ret_c if "return" in k else hot_c
+        parts[k] = pex_psi_per_100ft(q[k], t_c, sdr9_bore_in(size[k])) * ft[k] * p[pl + "fittings_factor"] / 100
+    parts["tbv"] = (q["flat"] / p[h + "tbv_cv_design"]) ** 2
+    parts["mixing_valve"] = _device_psi(gpm, [(26, p[pl + "tmv_psi_26"]), (40, p[pl + "tmv_psi_40"])])
+    psi = sum(parts.values())
+    head_ft = psi / 0.433
+    return {"psi": psi, "ft": head_ft, "parts": parts, "gpm": gpm, "flat_gpm": q["flat"], "index": L.get("index"), "lengths": ft,
+            "ok": head_ft <= p[h + "recirc_rated_ft"] + 1e-9 and gpm <= p[h + "recirc_rated_gpm"] + 1e-9,
+            "rated": (p[h + "recirc_rated_gpm"], p[h + "recirc_rated_ft"]),
+            "tbv_psi": parts["tbv"], "tbv_ok": parts["tbv"] <= p[h + "tbv_max_dp_psi"]}
+
+
+def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: float, ins, od, n_branch: float) -> dict:
     """The recirculating loop's heat loss on its routes (7c): the hot and return mains under the slab
     (in ground at the mains' temperature) edge by edge, each the smallest PEX within its velocity for
     the flow it carries (the hot main the demand of the flats beyond it, the return its share of the
-    loop's flow); and each column's hot and return risers in the heated building, from the main up
-    to the top flat's tee. The returns' sizes and the loop's flow worked to agreement as in `design`."""
+    loop's flow); each column's hot and return risers in the heated building, from the main up to
+    the top flat's tee; and each flat's loop (Addendum 7: its hot branch to the loop's end at
+    `n_branch`, the joint, its return), insulated by C404.4. The returns' sizes and the loop's flow
+    worked to agreement as in `design`; the recirculation pump's index circuit, the flat whose
+    circuit is longest."""
     from .hvac import FT
     from .loads import hunter_gpm, water
 
     pl, h = "systems.plumbing.", "systems.hot_water."
+    fins = p["systems.routing.branch_insulation_in"]
+    fl = {f["name"]: flat_loop(routes, f["name"]) for f in apt["flats"]}
     w = water(apt, p)
     hot_per = w["per_flat"]["hot"]
     storeys = apt["storeys"]
@@ -437,25 +507,43 @@ def routed_loop(apt: dict, p: dict, routes, t_loop: float, t_in: float, air_f: f
     n_hot = {k: pex_for(hunter_gpm(len(e.below) * storeys * hot_per), p[pl + "hot_fps"], 1e9, hot_c)[0] for k, e in enumerate(hot_main.edges)}
     n_rise = pex_for(hunter_gpm(storeys * hot_per), p[pl + "hot_fps"], 1e9, hot_c)[0]
     n_ret = {k: 0.5 for k in range(len(ret_main.edges))}
-    n_ret_rise = 0.5
-    for _ in range(4):
+    n_ret_rise, n_flat_ret = 0.5, 0.5
+    for _ in range(6):
         loss = sum(_ft(hot_main, k) * pipe_loss_btuh_ft(od(n_hot[k]), ins(n_hot[k]), t_loop, t_in, p) for k in n_hot)
         loss += sum(_ft(ret_main, k) * pipe_loss_btuh_ft(od(n_ret[k]), ins(n_ret[k]), t_loop, t_in, p) for k in n_ret)
         loss += sum(L * (pipe_loss_btuh_ft(od(n_rise), ins(n_rise), t_loop, air_f, p) + pipe_loss_btuh_ft(od(n_ret_rise), ins(n_ret_rise), t_loop, air_f, p))
                     for L in rise.values())
+        hot_ft, ret_ft = pipe_loss_btuh_ft(od(n_branch), fins, t_loop, air_f, p), pipe_loss_btuh_ft(od(n_flat_ret), fins, t_loop, air_f, p)
+        flats = {n: {"hot_ft": v["hot_m"] / FT, "joint_ft": v["joint_m"] / FT, "return_ft": v["return_m"] / FT,
+                     "loss_btuh": v["hot_m"] / FT * hot_ft + (v["joint_m"] + v["return_m"]) / FT * ret_ft} for n, v in fl.items()}
+        flats_loss = sum(v["loss_btuh"] for v in flats.values())
+        loss += flats_loss
         gpm = loss / (60 * RHO_CP * (supply - ret_f))
         new = {k: pex_for(gpm * len(e.below) / len(cols), p[pl + "return_fps"], 1e9, ret_c)[0] for k, e in enumerate(ret_main.edges)}
         new_rise = pex_for(gpm / len(cols), p[pl + "return_fps"], 1e9, ret_c)[0]
-        if new == n_ret and new_rise == n_ret_rise:
+        new_flat = pex_for(gpm / len(fl), p[pl + "return_fps"], 1e9, ret_c)[0]
+        if new == n_ret and new_rise == n_ret_rise and new_flat == n_flat_ret:
             break
-        n_ret, n_ret_rise = new, new_rise
+        n_ret, n_ret_rise, n_flat_ret = new, new_rise, new_flat
+    else:
+        raise ValueError("the routed loop's returns and its loss didn't settle")
     fps = max([pex_for(gpm * len(e.below) / len(cols), p[pl + "return_fps"], 1e9, ret_c)[1] for e in ret_main.edges]
-              + [pex_for(gpm / len(cols), p[pl + "return_fps"], 1e9, ret_c)[1]])
+              + [pex_for(gpm / len(cols), p[pl + "return_fps"], 1e9, ret_c)[1], pex_for(gpm / len(fl), p[pl + "return_fps"], 1e9, ret_c)[1]])
     rows = [{"side": col, "main_ft": hot_main.path(col)["m"] / FT, "hot_main_in": max(n_hot.values()), "hot_riser_in": n_rise, "stacks": [col],
              "rise_ft": rise[col]} for col in cols]
+    # The pump's index circuit: the flat whose round from the plant and back is longest.
+    col_of = {n: col for col, names in cols.items() for n in names}
+    lengths = {}
+    for n, v in flats.items():
+        col = col_of[n]
+        up = (routes.tree(f"plumbing/hot/{n}").root[2] - hot_main.point(col)[2]) / FT
+        lengths[n] = {"main_ft": hot_main.path(col)["m"] / FT, "rise_ft": up, "flat_ft": v["hot_ft"],
+                      "flat_return_ft": v["joint_ft"] + v["return_ft"], "return_rise_ft": up, "return_main_ft": ret_main.path(col)["m"] / FT,
+                      "index": n}
+    index = max(lengths.values(), key=lambda L: sum(x for k, x in L.items() if k != "index"))
     return {"loss": loss, "gpm": gpm, "rows": rows, "return_main_in": max(n_ret.values()), "return_riser_in": n_ret_rise, "return_fps": fps,
             "hot_main_in": n_hot, "hot_riser_in": n_rise, "main_ft": {"hot": hot_main.length_m / FT, "return": ret_main.length_m / FT},
-            "rise_ft": rise}
+            "rise_ft": rise, "flat_return_in": n_flat_ret, "flats": flats, "flats_loss": flats_loss, "index": index}
 
 
 PEX_SIZES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0)  # hvac.PEX_SIZES_IN
@@ -602,15 +690,25 @@ def routed_paths(apt: dict, p: dict, routes, falloff: float, sub, tmv: float, st
 
 
 def routed_hot_lengths(apt: dict, routes) -> dict[str, float]:
-    """IPC 607.2 on the routes: each flat's longest hot pipe (ft) from its riser (the recirculated
-    loop) to a fixture, along its routed branch to the fixture's stub-out."""
+    """IPC 607.2 on the routes: each flat's longest hot pipe (ft) from the recirculated loop (its own,
+    Addendum 7) to a fixture, along its routed branch to the fixture's stub-out."""
     from .hvac import FT
 
-    out = {}
-    for f in apt["flats"]:
-        t = routes.tree(f"plumbing/hot/{f['name']}")
-        out[f["name"]] = max(t.path(x)["m"] for x in t.terminals()) / FT
-    return out
+    return {f["name"]: max(sum(m for m, _ in v) for v in dead_legs(routes, f["name"]).values()) / FT for f in apt["flats"]}
+
+
+def routed_volumes(apt: dict, p: dict, routes, size_in: float) -> dict:
+    """IECC C404.5.2 on the routes: the water (fl oz, Table C404.5.2.1's PEX) in each hot fixture's
+    pipe off its flat's loop, at the flat's branch size, against the half gallon. The pipe only: the
+    tee's branch outlet the code also counts is a fraction of an ounce at these sizes."""
+    from .hvac import FT
+
+    oz = tube_oz_ft(size_in)
+    by = {f["name"]: {x: sum(m for m, _ in v) / FT * oz for x, v in dead_legs(routes, f["name"]).items()} for f in apt["flats"]}
+    worst = max(((n, x, v) for n, d in by.items() for x, v in d.items()), key=lambda t: t[2])
+    limit = p["systems.hot_water.c404_volume_oz"]
+    return {"by_flat": by, "worst": {"flat": worst[0], "fixture": worst[1], "oz": worst[2]}, "limit_oz": limit,
+            "over": [(n, x) for n, d in by.items() for x, v in d.items() if v > limit + 1e-9], "size_in": size_in, "oz_per_ft": oz}
 
 
 def design(apt: dict, p: dict, routes=None) -> dict:
@@ -646,8 +744,17 @@ def design(apt: dict, p: dict, routes=None) -> dict:
     sides = _sides(apt, rs)
     n_main = pex_for(demand["half the building"]["hot"], p[pl + "hot_fps"], 1e9, hot_c)[0]
     n_rise = pex_for(demand["a stack (one flat a storey)"]["hot"], p[pl + "hot_fps"], 1e9, hot_c)[0]
-    ret_main, ret_rise = 0.5, 0.5  # the returns, sized to the loop's flow below, then the loss again
-    for _ in range(3):
+    # Each flat's loop (IECC C404.5: no more than half a gallon from circulating water to a fixture;
+    # Addendum 7): its hot branch on to its farthest wet room's far corner, square, and its return
+    # back, in the heated building, insulated by C404.4; the branch at the flat's demand.
+    n_branch = pex_for(demand["a flat"]["hot"], p[pl + "hot_fps"], 1e9, hot_c)[0]
+    fins = p["systems.routing.branch_insulation_in"]
+    flat_ft = {name: max(abs(x - r["xy"][0]) + abs(y - r["xy"][1]) for room in by_flat(apt)[name]
+                         if room["use"] in ("bath", "kitchen", "utility")
+                         for x in (room["lo_m"][0], room["hi_m"][0]) for y in (room["lo_m"][1], room["hi_m"][1])) / FT
+               for r in rs.values() for name in r["flats"]}
+    ret_main, ret_rise, ret_flat = 0.5, 0.5, 0.5  # the returns, sized to the loop's flow below, then the loss again
+    for _ in range(5):
         loss, rows = 0.0, []
         for side, keys in sides.items():
             main_ft = max(abs(rs[k]["xy"][0] - mc[0]) + abs(rs[k]["xy"][1] - mc[1]) for k in keys) / FT
@@ -658,18 +765,32 @@ def design(apt: dict, p: dict, routes=None) -> dict:
             loss += len(keys) * rise_ft * (pipe_loss_btuh_ft(od(n_rise), ins(n_rise), t_loop, air_f, p)
                                            + pipe_loss_btuh_ft(od(ret_rise), ins(ret_rise), t_loop, air_f, p))
             rows.append({"side": side, "main_ft": main_ft, "hot_main_in": n_main, "hot_riser_in": n_rise, "stacks": keys})
+        flat_btuh_ft = pipe_loss_btuh_ft(od(n_branch), fins, t_loop, air_f, p) + pipe_loss_btuh_ft(od(ret_flat), fins, t_loop, air_f, p)
+        flats_loss = sum(flat_ft.values()) * flat_btuh_ft
+        loss += flats_loss
         loop_gpm = loss / (60 * RHO_CP * (supply - ret_f))
         sized = (pex_for(loop_gpm / len(sides), p[pl + "return_fps"], 1e9, ret_c),
-                 pex_for(loop_gpm / len(rs), p[pl + "return_fps"], 1e9, ret_c))
-        if (sized[0][0], sized[1][0]) == (ret_main, ret_rise):
+                 pex_for(loop_gpm / len(rs), p[pl + "return_fps"], 1e9, ret_c),
+                 pex_for(loop_gpm / len(flat_ft), p[pl + "return_fps"], 1e9, ret_c))
+        if tuple(s_[0] for s_ in sized) == (ret_main, ret_rise, ret_flat):
             break
-        ret_main, ret_rise = sized[0][0], sized[1][0]
-    ret_fps = max(sized[0][1], sized[1][1])
-    square_loss, square_rows = loss, rows
+        ret_main, ret_rise, ret_flat = (s_[0] for s_ in sized)
+    else:
+        raise ValueError("the loop's returns and its loss didn't settle")
+    ret_fps = max(s_[1] for s_ in sized)
+    flats = {name: {"hot_ft": L, "return_ft": L, "loss_btuh": L * flat_btuh_ft} for name, L in flat_ft.items()}
+    square_loss, square_rows, square_flats_loss = loss, rows, flats_loss
+    lengths = {"main_ft": max(r_["main_ft"] for r_ in rows), "rise_ft": rise_ft, "flat_ft": max(flat_ft.values())}
+    lengths |= {"return_main_ft": lengths["main_ft"], "return_rise_ft": rise_ft, "flat_return_ft": lengths["flat_ft"],
+                "index": max(flat_ft, key=flat_ft.get)}
     if routes is not None:
-        rl = routed_loop(apt, p, routes, t_loop, t_in, air_f, ins, od)
+        rl = routed_loop(apt, p, routes, t_loop, t_in, air_f, ins, od, n_branch)
         loss, loop_gpm, rows = rl["loss"], rl["gpm"], rl["rows"]
         ret_main, ret_rise, ret_fps = rl["return_main_in"], rl["return_riser_in"], rl["return_fps"]
+        ret_flat, flats, flats_loss, lengths = rl["flat_return_in"], rl["flats"], rl["flats_loss"], rl["index"]
+    head = recirc_head(p, loop_gpm, len(rs), len(flats), lengths,
+                       {"main": n_main, "riser": n_rise, "flat": n_branch, "flat_return": ret_flat, "return_riser": ret_rise, "return_main": ret_main},
+                       hot_c, ret_c)
 
     # -- the plant: Ecosizer's swing tank on the design day (Jon, 2026-11-21). The loop returns to the
     # swing tank, whose element covers its loss only when no hot water is passing through.
@@ -756,8 +877,10 @@ def design(apt: dict, p: dict, routes=None) -> dict:
                     d = max(abs(x - r["xy"][0]) + abs(y - r["xy"][1]) for x in (a[0], b[0]) for y in (a[1], b[1]))
                     longest = max(longest, d / FT + 4.0)
     square_longest = longest
+    vols = None
     if routes is not None:
         longest = max(routed_hot_lengths(apt, routes).values())
+        vols = routed_volumes(apt, p, routes, paths["hot"]["sizes"]["branch"])
     return {"mains": m, "inlet_f": t_in, "day_gal": day_gal, "primary": prim,
             "heater": {"preheat_f": pre_f, "preheat_share": share_pre, "hp_cop": cop, "day_kbtu": day_kbtu,
                        "hp_kwh_day": day_kbtu * (1 - share_pre) / 3.412142 / cop,
@@ -772,7 +895,10 @@ def design(apt: dict, p: dict, routes=None) -> dict:
                        "hp_capacity_ok": p[h + "hp_capacity_btuh"] / 1000 >= prim["capacity_kbtuh"] * (1 - share_pre)},
             "loop": {"loss_btuh": loss, "square_loss_btuh": square_loss, "w_per_flat": loss / 3.412142 / len(apt["flats"]), "gpm": loop_gpm,
                      "return_main_in": ret_main, "return_riser_in": ret_rise, "return_fps": ret_fps,
-                     "sides": rows, "rise_ft": rise_ft},
+                     "sides": rows, "rise_ft": rise_ft, "flat_return_in": ret_flat, "flat_branch_in": n_branch, "flats": flats,
+                     "flats_loss_btuh": flats_loss, "square_flats_loss_btuh": square_flats_loss, "supply_f": supply, "return_f": ret_f,
+                     "riser_mains_w_per_flat": (loss - flats_loss) / 3.412142 / len(apt["flats"])},
+            "recirc": head, "c404": vols,
             "tm": {"volume_gal": prim["tm_volume_gal"], "capacity_kbtuh": prim["tm_capacity_kbtuh"], **sday,
                    "kwh_day": sday["element_kbtu"] / 3.412142, "plant_share": 1 - sday["element_kbtu"] / sday["loss_kbtu"]},
             "paths": paths, "falloff_psi": falloff, "street_need_psi": street_need, "upstream": upstream,
@@ -817,8 +943,15 @@ def summary(apt: dict, p: dict) -> dict:
             ("pipe heat loss against NAIMA's table (3/4 in. copper, 140 F in 75 F, k 0.28): within 5%, never under",
              naima <= 0.05 and all(pipe_loss_btuh_ft(0.875, t, 140, 75, p) >= v for t, v in NAIMA_3_4_TYPE_M.items()),
              f"worst {naima:.1%}"),
-            (f"the loop's loss within Ecosizer's spread of measured buildings ({lo:g}-{hi:g} W a flat)",
-             lo - 1e-9 <= d["loop"]["w_per_flat"] <= hi + 1e-9, f"{d['loop']['w_per_flat']:.0f} W a flat"),
+            (f"the risers' and mains' loss within Ecosizer's spread of measured buildings ({lo:g}-{hi:g} W a flat); the flats' own "
+             "loops (C404.5) on top", lo - 1e-9 <= d["loop"]["riser_mains_w_per_flat"] <= hi + 1e-9,
+             f"{d['loop']['riser_mains_w_per_flat']:.0f} W a flat; with the flats' loops {d['loop']['w_per_flat']:.0f}"),
+            ("the swing tank's element at least Ecosizer's temperature-maintenance capacity",
+             p["systems.house.swing_element_va"] >= d["tm"]["capacity_kbtuh"] * 1000 / 3.412142 - 1e-6,
+             f"{p['systems.house.swing_element_va'] / 1000:g} kW against {d['tm']['capacity_kbtuh'] / 3.412142:.2f}"),
+            (f"the recirculation pump holds the loop's flow round its index circuit, within its rated {d['recirc']['rated'][0]:g} gpm "
+             f"at {d['recirc']['rated'][1]:g} ft", d["recirc"]["ok"] and d["recirc"]["tbv_ok"],
+             f"{d['recirc']['gpm']:.2f} gpm at {d['recirc']['ft']:.1f} ft"),
             ("hot water stored at 140 F and the loop back at 122 F or more (WHO, CDC)",
              p[h + "storage_f"] >= 140 and p[h + "return_min_f"] >= 122, f"{p[h + 'storage_f']:g} / {p[h + 'return_min_f']:g} F"),
             ("every pipe within its velocity (8 ft/s cold, 5 hot, 2 the return)",
@@ -827,8 +960,8 @@ def summary(apt: dict, p: dict) -> dict:
             ("pressure to spare at the top floor's shower on both paths (Appendix E)",
              all(path["spare_psi"] >= 0 for path in d["paths"].values()),
              ", ".join(f"{k} {path['spare_psi']:.1f} psi" for k, path in d["paths"].items())),
-            ("no hot pipe more than 50 ft from the loop to a fixture (IPC 2021 607.2)", d["longest_hot_ft"] <= 50,
-             f"longest {d['longest_hot_ft']:.0f} ft"),
+            ("no hot pipe more than 50 ft from the loop to a fixture (IPC 2021 607.2; square, from the risers, as if no flat had "
+             "its own loop)", d["longest_hot_ft"] <= 50, f"longest {d['longest_hot_ft']:.0f} ft"),
             ("the primary storage at least Ecosizer's floor (half the peak hour)", d["primary"]["storage_gal"] >= d["primary"]["minimum_gal"],
              f"{d['primary']['storage_gal']:.0f} gal against {d['primary']['minimum_gal']:.0f}"),
             ("the heat pump inside its maker's table: its source at most 80 F, which the preheat exchanger can cool the data "
@@ -843,7 +976,7 @@ def summary(apt: dict, p: dict) -> dict:
             ("cast-iron stacks under CMHC's 33 dBA for a neighbour's plumbing", nz["margin_db"]["cast_iron"] > 0,
              f"{nz['drain_dba']['cast_iron']:g} dBA, {nz['margin_db']['cast_iron']:g} dB to spare (PVC {nz['margin_db']['pvc']:g})"),
         ],
-        "design": d, "drains": dv, "noise": nz,
+        "design": d, "drains": dv, "noise": nz, "element_kw": p["systems.house.swing_element_va"] / 1000,
     }
 
 
@@ -864,10 +997,15 @@ def report(s: dict) -> str:
              f"rest: {ht['hp_kw']:.1f} kW of heat, from the same water leaving the exchanger at {ht['source_f']:g} F "
              f"({ht['dc_per_circuit']:.2f} x the heater circuit's flow); COP {ht['hp_cop']:g} (ClimateMaster SW036's rating), "
              f"{ht['hp_heat_kwh_day']:.0f} kWh of heat for {ht['hp_kwh_day']:.1f} kWh.",
-             f"  The loop: {lp['loss_btuh'] / 3.412142:.0f} W ({lp['w_per_flat']:.0f} a flat), {lp['gpm']:.2f} gpm to hold 125 F "
-             f"out and 122 F back; returns {lp['return_main_in']:g} in. mains, {lp['return_riser_in']:g} in. risers (at most "
-             f"{lp['return_fps']:.2f} ft/s). It returns to a {tm['volume_gal']:.0f} gal swing tank (Ecosizer) with a "
-             f"{tm['capacity_kbtuh'] / 3.412142:.2f} kW element, which runs {tm['element_hr']:.1f} h on the design day: "
+             f"  The loop: {lp['loss_btuh'] / 3.412142:.0f} W ({lp['w_per_flat']:.0f} a flat), {lp['gpm']:.2f} gpm to hold {lp['supply_f']:g} F "
+             f"out and {lp['return_f']:g} F back; returns {lp['return_main_in']:g} in. mains, {lp['return_riser_in']:g} in. risers (at most "
+             f"{lp['return_fps']:.2f} ft/s). Each flat's own loop (IECC C404.5, Addendum 7): its {lp['flat_branch_in']:g} in. branch on "
+             f"to its farthest fixture and a {lp['flat_return_in']:g} in. return through a thermostatic balancing valve, "
+             f"{lp['flats_loss_btuh'] / 3.412142:.0f} W of the loss. The recirculation pump {d['recirc']['ft']:.1f} ft at "
+             f"{d['recirc']['gpm']:.2f} gpm round {d['recirc']['index'] or 'the farthest flat'} (rated {d['recirc']['rated'][1]:g} ft at "
+             f"{d['recirc']['rated'][0]:g} gpm). It returns to a {tm['volume_gal']:.0f} gal swing tank (Ecosizer) whose element "
+             f"Ecosizer sizes at {tm['capacity_kbtuh'] / 3.412142:.2f} kW ({s['element_kw']:g} kW installed, the next made), running "
+             f"{tm['element_hr']:.1f} h at that size on the design day: "
              f"{tm['kwh_day']:.1f} kWh, the plant carrying {tm['plant_share']:.0%} of the loop's {tm['loss_kbtu'] / 3.412142:.0f} kWh."]
     for side in lp["sides"]:
         lines.append(f"  {side['side']}: {side['main_ft']:.0f} ft of main, hot {side['hot_main_in']:g} in.; risers {side['hot_riser_in']:g} in. "

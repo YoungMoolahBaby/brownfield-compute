@@ -416,6 +416,9 @@ fn search(g: &Grid, r: usize, starts: &[usize], goal: &dyn Fn(usize, f64) -> boo
 struct Request {
     id: String,
     od: f64,
+    /// The diameter its holes in framing must pass (`bore_m`; its `od` unless set): an insulated pipe
+    /// whose insulation stops at each member it passes (IECC C404.4) bores for the bare pipe.
+    bore: f64,
     clear: f64,
     hole_clear: f64,
     h: f64,
@@ -435,6 +438,13 @@ struct Request {
     slope: f64,
     /// The flat it serves ("" for the building's).
     flat: String,
+    /// The request it must come after (`after`; "" for none): a flat's loop's return after its hot
+    /// branch, whose end it joins. The passes never move it ahead of that one.
+    after: String,
+    /// Attached routes it may enter only near a point (`attach_near`: [{id, at, m}]): a flat's
+    /// loop's return leaves its hot branch's end within `m` of it (the tee), and keeps clear of the
+    /// rest of that pipe.
+    near: std::collections::HashMap<String, (V3, f64)>,
     /// Terminals routed before the rest, in this order: those that failed in an earlier pass (`run`),
     /// so a branch with little room isn't shut out by its own tree's earlier branches.
     first: Vec<String>,
@@ -457,6 +467,7 @@ impl Request {
         Request {
             id: v["id"].as_str().unwrap().to_string(),
             od: v["od_m"].as_f64().unwrap(),
+            bore: v["bore_m"].as_f64().or_else(|| v["od_m"].as_f64()).unwrap(),
             clear: v["clear_m"].as_f64().unwrap_or(0.0),
             hole_clear: v["hole_clear_m"].as_f64().unwrap_or(0.0),
             h: v["voxel_m"].as_f64().unwrap(),
@@ -470,6 +481,9 @@ impl Request {
             blocks: boxes(&v["blocks"]),
             slope: v["slope"].as_f64().unwrap_or(0.0),
             flat: v["flat"].as_str().unwrap_or("").to_string(),
+            after: v["after"].as_str().unwrap_or("").to_string(),
+            near: v["attach_near"].as_array().into_iter().flatten()
+                .map(|x| (x["id"].as_str().unwrap().to_string(), (v3(&x["at"]), x["m"].as_f64().unwrap()))).collect(),
             first: vec![],
             straight: v["straight"].as_bool().unwrap_or(false),
         }
@@ -630,12 +644,27 @@ fn build_grid(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String,
     for s in routed {
         if !req.attached(&s.owner) {
             block(s.lo, s.hi, &mut g);
+        } else if let Some(&(at, m)) = req.near.get(&s.owner) {
+            // Attached only near `at`: its solid blocks every cell farther off.
+            if let Some((x, y)) = g.span(s.lo, s.hi) {
+                for k in x[2]..=y[2] {
+                    for j in x[1]..=y[1] {
+                        for i in x[0]..=y[0] {
+                            let c = g.centre([i, j, k]);
+                            if (0..3).any(|a| (c[a] - at[a]).abs() > m) {
+                                let ix = g.at([i, j, k]);
+                                g.cls[ix] = BLOCK;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     for (a, b) in &req.blocks {
         block(*a, *b, &mut g);
     }
-    let need = (req.od + req.hole_clear) as f32;
+    let need = (req.bore + req.hole_clear) as f32;
     let r = half_cells(req, h);
     let none = HashSet::new();
     for hole in holes {
@@ -980,7 +1009,7 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
                         let c = at(i0, ran[k]);
                         let piece = frame.pieces.iter().find(|q| q.member == m && q.bore.is_some()).unwrap();
                         let (allowed, d) = frame.limit_at_rules(&piece.bore.unwrap().1, c, rules);
-                        bores.push(json!({"member": frame.ids[m], "kind": frame.kinds[m], "at": c, "hole_m": req.od + req.hole_clear,
+                        bores.push(json!({"member": frame.ids[m], "kind": frame.kinds[m], "at": c, "hole_m": req.bore + req.hole_clear,
                                           "allowed_m": allowed, "from_support_m": if d.is_nan() { Value::Null } else { json!(d) },
                                           "axis": (g.cls[i] - BORE) as u64, "sleeve": sleeve[i]}));
                     }
@@ -1000,19 +1029,19 @@ fn route(req: &Request, frame: &Frame, rules: &Rules, obstacles: &[(String, V3, 
                 for (k, &i0) in path.iter().enumerate() {
                     let i = own(i0, ran[k]);
                     if g.cls[i] >= BORE && web[i] && seen.insert(who[i]) {
-                        let d = req.od + req.hole_clear;
+                        let d = req.bore + req.hole_clear;
                         new.push(Hole { member: who[i] as usize, c: at(i0, ran[k]), d, axis: (g.cls[i] - BORE) as usize,
                                         max: d > rules.smaller_size(g.hole[i] as f64) + 1e-9 });
                     }
                 }
                 if !new.is_empty() {
                     for hole in &new {
-                        exclude(&mut g, &who, &web, hole, req.od + req.hole_clear, r, &in_tree);
+                        exclude(&mut g, &who, &web, hole, req.bore + req.hole_clear, r, &in_tree);
                         if hole.max {
                             let n = maxes.entry(hole.member).or_default();
                             *n += 1;
                             if *n == 3 {
-                                limit_full(&mut g, &who, &web, hole.member, rules, (req.od + req.hole_clear) as f32);
+                                limit_full(&mut g, &who, &web, hole.member, rules, (req.bore + req.hole_clear) as f32);
                             }
                         }
                     }
@@ -1134,6 +1163,9 @@ pub fn run(root: &std::path::Path) -> std::io::Result<()> {
             }
             let pos = order.iter().position(|&x| x == k).unwrap();
             if let Some(prev) = (0..pos).rev().find(|&q| reqs[order[q]].flat == reqs[k].flat) {
+                if reqs[order[prev]].id == reqs[k].after {
+                    continue;
+                }
                 let item = order.remove(pos);
                 order.insert(prev, item);
             }
@@ -1301,8 +1333,8 @@ pub fn check() -> bool {
     let empty = Frame { ids: vec![], kinds: vec![], pieces: vec![] };
     let h = 0.0254;
     let req = |zones: Vec<(V3, V3)>, a: V3, b: V3| Request {
-        id: "check".into(), od: 0.02, clear: 0.0, hole_clear: 0.0, h, root: a, terminals: vec![("t".into(), b)], zones, snap: 0.05,
-        attach: HashSet::new(), grade: 0, goals: vec![], blocks: vec![], slope: 0.0, flat: String::new(), first: vec![],
+        id: "check".into(), od: 0.02, bore: 0.02, clear: 0.0, hole_clear: 0.0, h, root: a, terminals: vec![("t".into(), b)], zones, snap: 0.05,
+        attach: HashSet::new(), grade: 0, goals: vec![], blocks: vec![], slope: 0.0, flat: String::new(), after: String::new(), near: std::collections::HashMap::new(), first: vec![],
         straight: false,
     };
     // 1. An empty box: the route is the square length, with at most two bends.
@@ -1340,6 +1372,39 @@ pub fn check() -> bool {
     let (rec2, _, _) = route(&req(vec![([0.0, 0.48, 0.0], [1.0, 0.52, 0.1])], [0.1, 0.5, 0.05], [0.9, 0.5, 0.05]), &stud, &rules, &[], &[], &[]);
     say("a member bored across y lets a pipe through along y, not along it", bores == 1 && rec2["ok"] == false,
         format!("across: {bores} bore; along: {}", if rec2["ok"] == false { "refused" } else { "ROUTED" }));
+    // 3b. An insulated pipe whose insulation stops at the member it passes (IECC C404.4) bores for
+    // its bare pipe: through the 0.06 m the stud allows by its 0.04 m pipe, not by its 0.07 m whole.
+    let fat = |bore: f64| Request { od: 0.07, bore, ..req(vec![([0.0; 3], [1.0, 1.0, 0.1])], [0.5, 0.1, 0.05], [0.5, 0.9, 0.05]) };
+    let (bare, _, _) = route(&fat(0.04), &stud, &rules, &[], &[], &[]);
+    let (whole, _, _) = route(&fat(0.07), &stud, &rules, &[], &[], &[]);
+    let holes: Vec<f64> = bare["branches"][0]["bores"].as_array().into_iter().flatten().filter_map(|b| b["hole_m"].as_f64()).collect();
+    say("an insulated pipe bores for its bare pipe where its insulation stops at the member (IECC C404.4)",
+        holes.len() == 1 && (holes[0] - 0.04).abs() < 1e-9 && whole["ok"] == false,
+        format!("0.07 m insulated, 0.06 m allowed: by its 0.04 m pipe {:?} m; by its whole {}", holes,
+                if whole["ok"] == false { "refused" } else { "ROUTED" }));
+    // 3c. A pipe attached to another only near a point (a flat's loop's return at its hot branch's
+    // end) leaves it there and keeps clear of the rest of it: off that point, never nearer the first
+    // pipe's line than their two halves.
+    let room = vec![([0.0; 3], [1.0, 1.0, 0.1])];
+    let (_, a_sol, _) = route(&Request { id: "a".into(), ..req(room.clone(), [0.1, 0.5, 0.05], [0.9, 0.5, 0.05]) }, &empty, &rules, &[], &[], &[]);
+    let mut near = std::collections::HashMap::new();
+    near.insert("a".to_string(), ([0.9, 0.5, 0.05], 0.1));
+    let b = Request { id: "b".into(), attach: ["a".to_string()].into_iter().collect(), near, ..req(room, [0.1, 0.9, 0.05], [0.9, 0.5, 0.05]) };
+    let (rb, _, _) = route(&b, &empty, &rules, &[], &a_sol, &[]);
+    let pts: Vec<V3> = rb["branches"][0]["points"].as_array().into_iter().flatten().map(v3).collect();
+    let mut least = f64::INFINITY;
+    for w in pts.windows(2) {
+        for s in 0..=100 {
+            let t = s as f64 / 100.0;
+            let q: V3 = std::array::from_fn(|i| w[0][i] + t * (w[1][i] - w[0][i]));
+            if (q[0] - 0.9).abs() > 0.1 + h || (q[1] - 0.5).abs() > 0.1 + h {
+                least = least.min((q[1] - 0.5).abs().max(if q[0] > 0.9 { q[0] - 0.9 } else if q[0] < 0.1 { 0.1 - q[0] } else { 0.0 }));
+            }
+        }
+    }
+    say("a pipe attached to another only near a point leaves it there and keeps clear of the rest of it",
+        rb["ok"] != false && pts.len() > 1 && least >= 0.02 - 1e-9,
+        format!("off the point, at least {least:.3} m from the first pipe's line (their halves 0.020)"));
     // 4. APA's chart: the holes Table 5 allows on a full span, and note e's reduction on a short one.
     let full: Vec<f64> = [6.0, 7.0, 21.0, 36.0, 52.0, 69.0, 118.0].iter().map(|d| rules.apa_max_hole(d * 0.0254, 20.0 * 0.3048) / 0.0254).collect();
     let want = [1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 8.625];
@@ -1351,7 +1416,7 @@ pub fn check() -> bool {
     // from the first, must cross where the holes' edges are over twice 2 in. apart (centres 6 in.).
     let joist = Frame { ids: vec!["joist".into()], kinds: vec!["floor joists".into()], pieces: vec![
         Piece { member: 0, lo: [0.0, 0.495, 0.0], hi: [6.0, 0.505, 0.3], bore: Some((1, Limit::Apa { axis: 0, faces: (0.0, 6.0) })), sleeve: false }] };
-    let pipe = |x: f64| Request { od: 0.0508, ..req(vec![([0.0; 3], [6.0, 1.0, 0.3])], [x, 0.1, 0.15], [x, 0.9, 0.15]) };
+    let pipe = |x: f64| Request { od: 0.0508, bore: 0.0508, ..req(vec![([0.0; 3], [6.0, 1.0, 0.3])], [x, 0.1, 0.15], [x, 0.9, 0.15]) };
     let (r1, _, h1) = route(&pipe(3.0), &joist, &rules, &[], &[], &[]);
     let (r2, _, h2) = route(&pipe(3.05), &joist, &rules, &[], &[], &h1);
     let (r3, _, _) = route(&pipe(3.05), &joist, &rules, &[], &[], &[]);
@@ -1385,7 +1450,7 @@ pub fn check() -> bool {
     // 8. APA's rule 11: a joist with three maximum-size holes refuses a fourth (here a 2 in. hole
     // 8 in. from the support, where 2 in. is the limit) but takes a smaller one (1-1/2 in.).
     let three: Vec<Hole> = [3.0, 4.0, 5.0].iter().map(|&x| Hole { member: 0, c: [x, 0.5, 0.15], d: 0.1, axis: 1, max: true }).collect();
-    let near = |od: f64| Request { od, ..req(vec![([0.15, 0.0, 0.0], [0.25, 1.0, 0.3])], [0.2, 0.1, 0.15], [0.2, 0.9, 0.15]) };
+    let near = |od: f64| Request { od, bore: od, ..req(vec![([0.15, 0.0, 0.0], [0.25, 1.0, 0.3])], [0.2, 0.1, 0.15], [0.2, 0.9, 0.15]) };
     let (r4, _, _) = route(&near(0.0508), &joist, &rules, &[], &[], &three);
     let (r5, _, _) = route(&near(0.0381), &joist, &rules, &[], &[], &three);
     let (r6, _, _) = route(&near(0.0508), &joist, &rules, &[], &[], &[]);

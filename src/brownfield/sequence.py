@@ -55,8 +55,10 @@ POINTS = [
     ("BK-1", "the backup heater's contactor, its own thermostats", "A. O. Smith DRE-52-12 (basis of design)"),
     ("ST-2", "the swing tank's element thermostat", "Bradford White RE340S6 (basis of design)"),
     ("MV-1", "the master mixing valve", "ASSE 1017"),
-    ("P-3", "the recirculation pump", "Grundfos ALPHA2 15-55SF (basis of design)"),
+    ("P-3", "the recirculation pump, switched by PC-1", "Grundfos ALPHA2 15-55SF (basis of design)"),
     ("TS-5", "the hot-water return's temperature, at ST-2", "to select"),
+    ("TBV", "each flat's thermostatic balancing valve, on its return at the return riser (self-acting)",
+     "Caleffi ThermoSetter 116 series, 1/2 in. (basis of design; Addendum 7)"),
     ("TS-3", "the outdoor air's temperature, shaded, out of the sun and the exhausts", "with PC-1"),
     ("V-2", "the data center's water through HX-2, a modulating valve", "to select"),
     ("P-1", "the building loop's circulator", "Grundfos ALPHA2 15-55F (basis of design)"),
@@ -69,6 +71,7 @@ def sequence(p: dict, s7: dict) -> list[dict]:
     h, c = "systems.hot_water.", "systems.controls."
     w, L = s7["water"], s7["loop"]
     t_store, t_out, t_back = p[h + "storage_f"], p[h + "distribution_f"], p[h + "return_min_f"]
+    t_stop, t_tbv = p[c + "recirc_stop_f"], p[h + "tbv_set_f"]
     src = p[h + "hp_source_f"]
     t_in = p["pass3.loads.indoor_c"]
     sup = L["supply_c"]
@@ -81,7 +84,7 @@ def sequence(p: dict, s7: dict) -> list[dict]:
         {"system": "The hot-water plant (P-601)", "modes": [
             {"mode": "Normal: on the data center's heat", "steps": [
                 f"P-2 starts when TS-4, at {p[h + 'aquastat_fract']:.0%} of ST-1's height, falls below {t_store:g} F, and stops when it "
-                f"reaches {t_store:g} F (Ecosizer's primary aquastat).",
+                f"reaches {t_store:g} F (Ecosizer's primary aquastat): it runs only with the heating cycle (IECC C404.6.3).",
                 f"With P-2, V-1 opens and modulates the data center's water through HX-1 so it leaves HX-1 at {src:g} F, the heat pump's "
                 f"source (ClimateMaster's table goes to {p[h + 'hp_source_max_f']:g} F); HX-1 preheats the circuit to "
                 f"{w['heater']['preheat_f']:.1f} F.",
@@ -89,7 +92,10 @@ def sequence(p: dict, s7: dict) -> list[dict]:
                 "BK-1's elements stay locked out (the interlock below).",
                 f"ST-2's element switches on at {t_out:g} F and off at {t_out + SWING_DEADBAND_F:g} F (Ecosizer's swing tank).",
                 f"MV-1 sends {t_out:g} F to the flats.",
-                f"P-3 runs continuously; the loop returns to ST-2 at {t_back:g} F or more.",
+                f"P-3 runs while TS-5 reads under {t_back:g} F and stops when it reaches {t_stop:g} F: off when the loop is at "
+                "temperature (IECC C404.6.1).",
+                f"Each flat's TBV, set at {t_tbv:g} F, throttles its flat's return as it nears that, so every flat's loop returns at "
+                f"{t_back:g} F or more ({w['loop']['gpm']:.2f} gpm in all, {w['recirc']['flat_gpm']:.2f} a flat, at the design's loss).",
             ]},
             {"mode": "Fallback: the data center's heat gone (step 9a)", "steps": [
                 f"Entered when TS-1 reads below {src:g} F, or FS-1 proves no flow, for {p[c + 'fallback_enter_min']:g} min.",
@@ -103,7 +109,8 @@ def sequence(p: dict, s7: dict) -> list[dict]:
             {"mode": "Alarms, from PC-1 to the building's manager", "steps": [
                 "the plant in or out of its fallback;",
                 f"ST-1 at TS-4 below {t_out:g} F;",
-                f"the hot-water return at TS-5 below {t_back:g} F (WHO: not less than 50 C);",
+                f"the hot-water return at TS-5 below {t_back:g} F (WHO: not less than 50 C) after P-3 has run "
+                f"{p[c + 'loop_alarm_min']:g} min;",
                 "HP-1's or BK-1's fault.",
             ]},
         ]},
@@ -154,7 +161,7 @@ def sequence(p: dict, s7: dict) -> list[dict]:
 
 INTERLOCKS = [
     ("BK-1 never with HP-1", "BK-1's contactor coil is wired through a normally closed contact of HP-1's enable relay: BK-1 can't "
-     "energize while HP-1 is enabled. The house panel's 100 A counts only the larger of the two (220.60) and rests on it."),
+     "energize while HP-1 is enabled. The house panel's size counts only the larger of the two (220.60) and rests on it."),
     ("the preheater with its airflow", "the preheater's own airflow sensor and over-temperature cut-out (Ouellet's) in its circuit."),
     ("each mini-split with its drain", "the water-level switch on Fujitsu's forced-stop input (function 46-02)."),
 ]
@@ -186,6 +193,12 @@ def checks(p: dict, s7: dict) -> list[tuple[str, bool, str]]:
          f"{p[c + 'fallback_enter_min']:g} min in, {p[c + 'fallback_exit_min']:g} out"),
         ("the house panel counts BK-1 and HP-1 as the interlock runs them: the larger, once", hp["counted"] != bk["counted"],
          f"{'BK-1' if bk['counted'] else 'HP-1'} counted"),
+        ("the recirculation pump stops with the loop at temperature (IECC C404.6.1): its stop above the least return, under the supply",
+         p[h + "return_min_f"] < p[c + "recirc_stop_f"] < p[h + "distribution_f"],
+         f"runs under {p[h + 'return_min_f']:g} F, stops at {p[c + 'recirc_stop_f']:g}, the supply {p[h + 'distribution_f']:g}"),
+        ("each flat's balancing valve set within its range, at or over the least return and under the supply",
+         p[h + "tbv_min_f"] <= p[h + "tbv_set_f"] <= p[h + "tbv_max_f"] and p[h + "return_min_f"] <= p[h + "tbv_set_f"] < p[h + "distribution_f"],
+         f"{p[h + 'tbv_set_f']:g} F in {p[h + 'tbv_min_f']:g}-{p[h + 'tbv_max_f']:g}"),
     ]
 
 

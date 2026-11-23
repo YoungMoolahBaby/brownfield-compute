@@ -137,7 +137,19 @@ Step 9 started (Jon: the code's tests, the design's claims and the control seque
   data-center valves, have never been chosen. They're part of the plant's wall-hung equipment no
   step has placed.
 
-Next: 9c, the tests and inspections.
+9c started: reading the energy code's tests found three hot-water rules the design broke, now
+fixed for Addendum 7. A plant serving several flats falls under the commercial chapter (R403.8).
+- Each flat's hot water now circulates to its farthest fixture and back through a balancing
+  valve, so every fixture is within half a gallon of hot water (C404.5). The worst is 56 of 64 fl
+  oz; before, 52 of 60 were over.
+- The flats' hot pipe takes 1 in. of insulation (C404.4).
+- The recirculation pump stops at temperature (C404.6.1).
+- The cost: the loop loses 2,230 W, not 793. The swing tank's element goes from 2.0 to 4.5 kW,
+  the house panel from 100 to 110 A, and the PV it takes from 8.3 to 6.7 kW AC.
+- Found, not fixed: the building loop's pump head (13.4 ft routed) is never checked against its
+  curve.
+
+Next: the rest of 9c, the tests and inspections.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4114,6 +4126,95 @@ test. Then the township brief's ask.
              gets a cold flat until it's switched on. The plant's alarm tells the manager.
          - **What we don't know:** the reset's slope against the building as built. The floors'
            own heat and the flats' gains bend it; the balancing tunes it (9c).
+       - **9c, first: the energy code's hot-water rules the design broke, fixed for Addendum 7
+         (2026-11-22).** The test schedule starts from the code's own tests, so 9c read the energy
+         code's hot-water sections. The residential chapter's R403.8 sends a plant serving several
+         flats to the commercial chapter: "Systems serving multiple dwelling units shall comply with
+         Sections C403 and C404 ... instead of Section R403." Step 4 had read only R403. Three of
+         C404's rules failed:
+         - **C404.5, the water between circulating water and a fixture:** at most half a gallon
+           (64 fl oz, C404.5.2), counting a circulating loop as a source. The risers were the
+           nearest circulating water, and 52 of the 60 hot fixtures were over. The worst was
+           154 fl oz: 39.5 ft of 1 in. pipe to a tub.
+         - **C404.4, the flats' hot pipe insulated by Table C403.12.3:** 1 in. at 105-140 F under
+           1-1/2 in., not R403.5.2's R-3 (0.75 in.). Step 7 had kept R-3 so a 1 in. branch's hole
+           stayed under 60% of a 2x6 stud. But C404.4 lets the insulation stop where the pipe
+           passes a framing member, so the hole only has to fit the bare pipe.
+         - **C404.6.1, the recirculation pump turned off when the loop is at temperature:** 9b ran
+           it continuously.
+         - **The building loop isn't caught:** C403.12.3 exempts piping between 60 and 105 F, and
+           piping heated neither by fuel nor electricity.
+         - **Jon chose** recirculating into each flat, and fixing it before the test schedule
+           ("Recirculate into each flat", "Fix first, then 9c"). The alternatives, checked first:
+           - **A manifold per flat with a 1/2 in. home run to each fixture:** the tub's 4 gpm
+             makes 6.95 ft/s in 1/2 in., over the design's 5 ft/s for hot water. In 3/4 in. its
+             39.5 ft holds 93 fl oz.
+           - **Heat trace on each flat's branch:** no return pipe, so less loss, but twelve
+             electric circuits in the flats' walls. Recirculation is the plain plumbing an
+             installer and an inspector expect.
+         - **The fix:**
+           - **Each flat's own loop.** Its hot branch goes on to the joists' space over its
+             farthest hot fixture. There a 1/2 in. return leaves it, a tee, for the return riser,
+             through a thermostatic balancing valve: Caleffi's ThermoSetter 116, 1/2 in., basis
+             of design. It's set at 124 F, between the 122 F return and the 125 F supply.
+             Caleffi's design Cv of 0.52 goes into the pump's head.
+           - **The flats' hot pipe insulated 1 in.,** stopped at each plate and joist it passes.
+           - **P-3 runs while the return at the swing tank is under 122 F and stops at 124 F.**
+           - **P-3's head is checked now,** round the longest circuit: the mains at the whole
+             loop's flow, the flat's valve and the mixing valve. It's held against the sheet's
+             rated point of 10.7 gpm at 8.2 ft; the curve gives more head at less flow.
+         - **The router, for the thicker pipe and the tee** (forge's known cases, now 11, pass):
+           - **Each request can give the bare pipe's diameter for its holes** (`bore_m`).
+           - **Each flat's hot branch is on a 3/4 in. grid.** At 1 in. the 3-1/8 in. insulated
+             pipe rounds up to 5 in., which the plumbing wall's bays don't hold as the router
+             opens them. In those bays it gets the studs' whole depth: only its bare pipe passes
+             the plates, and any stud it bores is still held to 5/8 in. Its joists' space is kept
+             to 7 ft from the wall, so the finer grid is no larger than the old one.
+           - **The return starts in the hot pipe itself.** Forge opens the hot pipe to it only
+             within 6 in. of the loop's end (`attach_near`): a fixed point past the far fixture
+             was boxed in by the right-hand flats' tub vents. Forge's passes never move a return
+             ahead of its hot branch (`after`): pass 3 had routed one first, over its own tub's
+             drop.
+           - **The top floor's return riser goes up into its joists' space,** so the top flats'
+             returns join it there, as on the floors below. That alone didn't route the top
+             right-hand flats' returns; the tee did.
+           - **Results:** routed 442 of 442 on the third pass, with no clash. The return main grew
+             to 1-1/4 in. and was routed again. Every check of 7a-7c passes.
+         - **Run (2026-11-22), routed:**
+           - every hot fixture is within half a gallon: the worst is 56 of 64 fl oz, 2-front-left's
+             washer. IPC 607.2's longest hot pipe from circulating water is 14.2 ft (30.5 from the
+             risers);
+           - the loop loses 2,230 W, against 793 before: 1,353 W of it in the flats' loops, 186 W
+             a flat. That's over Ecosizer's 75th percentile of 175 W. The risers and mains alone
+             are 73 W a flat, within its spread, and the check now compares that part;
+           - the loop's flow rises from 1.80 to 5.06 gpm, 0.42 a flat. The returns are 1-1/4 in.
+             mains, 3/4 in. risers and 1/2 in. in each flat. P-3 needs 3.7 ft, and each valve
+             takes 0.66 psi, within Caleffi's 15;
+           - the swing tank's element goes from 2.0 to 4.5 kW. Ecosizer asks 4.03 kW on the square
+             lengths and 3.90 on the routes, and Bradford White makes 4.0, then 4.5, at 208 V.
+             The plant: Ecosizer's primary rises from 11.02 to 11.62 kW and its storage from 237
+             to 259 gal. The 12.3 kW backup heater still covers it;
+           - the house panel goes from 100 to 110 A (108.4 A). The PV it can take falls from
+             8.3 to 6.7 kW AC. The service is 463 A, on its 600 A main.
+           - Tests: `tests/test_walkup_c404.py`, 6. `tests/test_walkup_addendum6.py`'s element
+             test now reads the element from the params.
+         - **Found, not fixed:**
+           - **The energy.** The loops add 1,437 W of loss, about 12.6 MWh a year at the design's
+             temperatures. Much of it comes from the swing tank's resistance element: Ecosizer has
+             the plant carrying 40% of the loop's heat. That's the code's price on this layout,
+             with its fixtures spread 17 ft along the wall. Step 10 prices it.
+           - **The building loop's pump.** 7c's routed head is 13.4 ft (13.1 then). Nothing
+             checks it against the ALPHA2 15-55F, whose CP2 setting holds about 8.9 ft at 6 gpm,
+             as step 3 read the curve. A check to add, and 9c's balancing test.
+           - **The balancing valves aren't placed.** Each needs its access panel. The routes join
+             each return to its riser wherever there's room: in the wall, or in the joists' space
+             over a rated ceiling, where an access door would have to be listed. Like the plant's
+             wall-hung equipment, a placement still to make.
+         - **What we don't know:**
+           - the balancing valves' real flows: Caleffi's design curve stands for all of them;
+           - whether the 1 in. insulation is kept continuous in the walls as built;
+           - how the loss model fits in-flat loops. Ecosizer's buildings don't say how their
+             loops run.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
