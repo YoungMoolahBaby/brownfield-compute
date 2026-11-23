@@ -1,0 +1,173 @@
+# Pass 3g step 10 (D28): the usual walk-up, set against the engineered design. 10a: what the usual
+# walk-up has, by rule from the same layout (no prices yet: those are 10b's). Each walk-up's own
+# equipment is a basis of design, as the engineered design's is.
+
+usual:
+  ach50:
+    value: 3.0
+    low: 1.5
+    high: 3.0
+    unit: air changes an hour at 50 Pa, each flat of the usual walk-up
+    conf: medium
+    source: "PA 2021 IECC R402.4.1.3: '3.0 air changes per hour in Climate Zones 3 through 8' (the code's most, the usual walk-up's case); 1.5 a tight build"
+  heater_gal:
+    value: 50
+    low: 40
+    high: 50
+    unit: gal, each flat's water heater (the usual walk-up with a heater in each flat)
+    conf: medium
+    source: "RECS 2020 microdata, apartments in buildings of 5 or more units built 2010-2020, US: main water heater 31-49 gal 38%, 50 gal or more 37%, 30 or less 15%, tankless 11% (baseline.usual_practice); A. O. Smith's sizing (hotwater.com): '3 people ... 40 to 50 gallons' (a 2-bedroom flat: 3 people by Phius's bedrooms + 1)"
+  trunk_in:
+    value: 0.75
+    unit: in., the hot trunk along a flat's plumbing wall from its own heater
+    conf: low
+    source: "judgement: a flat's five hot fixtures (lavatory, tub, sink, dishwasher, washer) off one heater; the engineered flats' own branches run 1/2 to 1 in. from the riser"
+  drop_in:
+    value: 0.5
+    unit: in., each hot fixture's pipe off the trunk
+    conf: low
+    source: "judgement, as the engineered design's own fixture pipes (Addendum 7, item 1: 1/2 in. to the lavatory and its loop)"
+  trunk_insulation_in:
+    value: 0.5
+    low: 0.5
+    high: 1.0
+    unit: in., the insulation on the usual flat's 3/4 in. hot trunk (R-3)
+    conf: medium
+    source: "PA 2021 IECC R403.5.2: 'Insulation for service hot water piping with a thermal resistance, R-value, of not less than R-3 shall be applied to the following: Piping 3/4 inch (19.1 mm) and larger in nominal diameter located inside the conditioned space'; 1/2 in. closed-cell foam is about R-3 (to read in 10b)"
+  bath_fan_cfm:
+    value: 50
+    low: 31
+    high: 80
+    unit: cfm, the bath fan running continuously as the flat's whole ventilation (exhaust only)
+    conf: medium
+    source: "the code's rates for the flat (baseline: loads.ventilation's imc_cfm, 30.8 cfm) and the bath's 20 continuous (IMC 2021 Table 403.3.2.3); 50 cfm the common size"
+  gas_branch_ft:
+    value: 15
+    low: 10
+    high: 30
+    unit: ft of gas pipe in each flat, from its entry to its furnace and its water heater
+    conf: placeholder
+    source: "judgement: the furnace and the heater sit together in the utility closet, by the flat's entry from the stair"
+  combined_service_in:
+    value: 4
+    low: 3
+    high: 4
+    unit: in., the usual walk-up's one water service, its meter and backflow assembly, carrying the sprinklers and the flats together
+    conf: placeholder
+    source: "step 6 (PLAN D28): a shared main must add the flats' domestic demand (NFPA 13R 9.3.1): 170 gpm under the stair's reading, which outgrows the 2 in. service and meter; the water authority sizes it"
+  ipc_607_2_ft:
+    value: 50
+    unit: ft, the most hot pipe from its source to a fixture
+    conf: high
+    source: "IPC 2021 607.2 (Pennsylvania's, UpCodes, data/raw/pass3g/dl/upc/ipc6.html): 'The developed length of hot or tempered water piping, from the source of hot water to the fixtures that require hot or tempered water, shall not exceed 50 feet'"
+  gas_heater_gal:
+    value: 40
+    low: 40
+    high: 50
+    unit: gal, each flat's gas water heater (the gas walk-up)
+    conf: high
+    source: "basis of design Rheem PROG40-40N RH67 PDV (Rheem spec, 04/23 form PROG RHPDV Rev. 7, data/raw/pass3g/step10/equipment/): 40 gal nominal, 40,000 Btu/h, first-hour rating 67 (the 50 gal electric's is 62), UEF 0.63, 19-3/4 in. across, power direct vent, 'Two pipe system'"
+  heater_h_in:
+    value: 59
+    unit: in., each flat's electric water heater's height (its hot outlet at the top)
+    conf: high
+    source: "basis of design A. O. Smith ProLine ENT-50 (spec AOSRE50608, March 2025): row 'ENT-50 50 46 62 0.92 21 4500 3000 6000 59 51-1/4 20-1/2': 59 in. high, 20-1/2 in. across, first-hour rating 62 gal, UEF 0.92"
+  heater_dia_in:
+    value: 20.5
+    unit: in., each flat's electric water heater's diameter
+    conf: high
+    source: "A. O. Smith ENT-50 (above): 20-1/2 in."
+  heater_va:
+    value: 4500
+    low: 3000
+    high: 6000
+    unit: VA, each flat's electric water heater's nameplate (208 V elements, non-simultaneous)
+    conf: high
+    source: "A. O. Smith ENT-50 (above): 4500 W standard (3000-6000); its element sheet AOSTD63000 (Oct 2020) lists 208 V non-simultaneous elements of 4.5 kW for '30-Gallon through 50-Gallon Models' (ordered so: a 240 V element on 208 V gives about 3,380 W)"
+  gas_heater_dia_in:
+    value: 19.75
+    unit: in., each flat's gas water heater's diameter
+    conf: high
+    source: "Rheem PROG40-40N RH67 PDV (above): 19-3/4 in."
+  gas_heater_va:
+    value: 600
+    low: 300
+    high: 600
+    unit: VA, the power-direct-vent gas water heater's blower and controls (120 V)
+    conf: medium
+    source: "Rheem PDV use and care manual AP14896-3 (06/11), wiring diagram: '120V 50/60 Hz LESS THAN 5 AMPS' (5 A x 120 V taken: the most)"
+  furnace_va:
+    value: 892
+    low: 800
+    high: 1116
+    unit: VA, the gas furnace's blower and inducer, running (its heating load under NEC 220.84; with the cooling, its blower too)
+    conf: medium
+    source: "basis of design Goodman GR9S960403AN (spec SS-GR9S96_GD9S96-R32, 08/26): 40,000 Btu/h in, 38,800 out, AFUE 97, ECM blower 1/2 HP, 'Min. Circuit Ampacity 9.7', 115 V; the sheet: 'MCA = (1.25 x Circulator Blower Amps) + ID Blower amps', so the running amps about MCA/1.25: 7.8 A, 892 VA (the high end MCA x 115 V)"
+  furnace_w_in:
+    value: 14
+    unit: in., the furnace's width
+    conf: high
+    source: "Goodman GR9S960403AN (above); its product page: 'Height: 34-1/2 in, Width: 14 in, Depth: 29 in'"
+  furnace_d_in:
+    value: 29
+    unit: in., the furnace's depth
+    conf: high
+    source: "Goodman GR9S960403AN (above)"
+  ac_va:
+    value: 1841
+    low: 1700
+    high: 2267
+    unit: VA, the gas walk-up's split air conditioner's outdoor unit (its compressor and fan), at 208 V
+    conf: medium
+    source: "basis of design Goodman GLXS4BA1810A (spec SS-GLXS4B-R32, 03/26): 18,000 Btu/h, 208/230-1, 'RLA 8.2', 'Minimum Circuit Ampacity 10.9' (so the fan 10.9 - 1.25 x 8.2 = 0.65 A); (8.2 + 0.65) A x 208 V; the high end MCA x 208 V"
+  central_heater_kbtuh:
+    value: 120
+    unit: kBtu/h, the central walk-up's gas water heater's input
+    conf: high
+    source: "basis of design A. O. Smith Cyclone FLEX BTH-120 (spec ACGSS00125, March 2026): 60 gal, '120,000' Btu/h, '97%' thermal efficiency, 138 gph at a 100 F rise; vent PVC/CPVC 2 in. 75 ft, 3 in. 100 ft"
+  central_heater_gal:
+    value: 60
+    unit: gal, the central gas water heater's storage
+    conf: high
+    source: "A. O. Smith BTH-120 (above)"
+  central_recovery_gph:
+    value: 138
+    unit: gal/h, the central gas water heater's recovery at a 100 F rise
+    conf: high
+    source: "A. O. Smith BTH-120 (above)"
+  central_heater_va:
+    value: 600
+    unit: VA, the central gas water heater's fan and controls
+    conf: high
+    source: "A. O. Smith BTH-120 (above): '120V-60Hz A.C., 5.0 A'"
+  bath_fan_w:
+    value: 7.2
+    low: 7.2
+    high: 10.8
+    unit: W, the bath fan at its 50 cfm setting, at 0.25 in. w.c.
+    conf: high
+    source: "basis of design Panasonic FV-0511VQ1 WhisperCeiling DC (submittal IAQ19159ST R3): 'no less than 53-83-111 CFM and no more than 0.4/0.6/0.9 sone as certified by HVI at 0.25 w.g.', '7.2/10.8/16.4 watts at 0.25 w.g.', 'rated for continuous run', ENERGY STAR, 4 or 6 in. duct"
+  hood_duct_in:
+    value: 6
+    unit: in., the vented hood's round duct (the over-the-range microwave's)
+    conf: high
+    source: "GE JVM3162DJ Quick Specs (revised 9/19): 'Two-speed, 300-CFM venting system'; 'designed to mate with a standard 3-1/4 x 10 rectangular duct ... Do not use less than a 6 diameter duct'"
+  hood_max_eq_ft:
+    value: 140
+    unit: ft of equivalent length the vented hood's duct may have, its wall cap 40 ft and each elbow 10
+    conf: high
+    source: "GE JVM3162DJ Quick Specs (above): total duct 'should not exceed 140 equivalent feet'; a wall cap '40 ft.', a 90 degree elbow '10 ft.'"
+  closet_gap_in:
+    value: 1
+    low: 0
+    high: 3
+    unit: in., the space left between each piece of equipment side by side in a flat's utility closet
+    conf: placeholder
+    source: "judgement, to read against each maker's clearances to combustibles and for service"
+  central_usable:
+    value: 0.7
+    low: 0.6
+    high: 0.8
+    unit: share of a tank's storage drawn at temperature before its outlet cools
+    conf: placeholder
+    source: "judgement (the common rule of thumb for a tank's usable storage), to source"

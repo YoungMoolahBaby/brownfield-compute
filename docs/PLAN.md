@@ -176,8 +176,17 @@ gets the savings.
   flat to 0.30 cfm50/ft2, with a check that the test and the loads can't part again.
 - The packets are rebuilt with its G-002.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10
-(10a) runs alongside.
+10a done: the usual walk-up from Census 2025 and RECS 2020, first-hand.
+- In the Northeast gas and electric are both usual (Census: 52% electricity, 48% gas; heat pumps
+  43%, furnaces 37%).
+- Most newer apartments in 5+ unit buildings share a water heater (RECS: 65% ± 6, the flats' own 35%).
+- So three usual walk-ups (electric, gas, central hot water), each listed item by item beside the
+  engineered design: 248 items.
+- The usual flats need up to 29.7 kW at design against 19.4. The same heat pump still heats each
+  one.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Step 10b
+(both priced, and the fee) runs alongside.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4530,6 +4539,98 @@ test. Then the township brief's ask.
            - the plan room reads "Addenda (8)".
          - Tests: `tests/test_walkup_addendum8.py`, 5; `test_walkup_acceptance.py`,
            `test_walkup_installers.py` and `test_website.py` updated.
+       - **10a done 2026-11-23: the usual walk-up, and what each walk-up has**
+         (`uv run brownfield baseline`; `src/brownfield/baseline.py`, `params/baseline.yaml`; writes
+         `out/pass3/baseline.md|json` and `data/baseline_usual_practice.csv`).
+         - **What a new walk-up has here, first-hand:**
+           - **Census CHARS 2025, new multifamily units completed in the Northeast** (79 thousand):
+             - heat pumps 34 thousand (43%): 20 electric, 14 with gas;
+             - furnaces 29 thousand (37%): 18 gas, 10 electric;
+             - hot water or steam 7 thousand, other (baseboard) 10 thousand;
+             - by fuel, electricity 41 thousand, gas 38. The national 78% electric doesn't hold
+               here: gas and electric are both usual.
+           - **RECS 2020 microdata, apartments in 5+ unit buildings built 2010-2020** (EIA's
+             jackknife):
+             - **US:** a water heater of the flat's own 50% (electric 38%, gas 12%), shared 50%;
+             - **Northeast** (67 records, so wide): own electric 25% (±6), own gas 10% (±4), shared
+               electric 35% (±6), shared gas 28% (±7). Most of the region's newer apartments share
+               a water heater.
+             - Its sizes (US): 31-49 gal 38%, 50 or more 37%.
+           - **The known case:** the weights reproduce EIA's HC8.1 (13.32 and 8.79 million) and the
+             jackknife (59/60 of the squared deviations) its published errors (1.51%, 2.28%) exactly.
+             A first try with BRR's 4/60 made the errors four times too small.
+         - **So three usual walk-ups,** each on the engineered design's layout and envelope, with
+           PVC drains, the street's pressure, no submeters, no PV and one shared water service:
+           - *electric*: the same ducted heat pump in each flat, and a 50 gal electric water heater
+             (A. O. Smith ENT-50, 4.5 kW on 208 V elements);
+           - *gas*: a furnace (Goodman GR9S96, 40,000 Btu/h, 97%), a 1.5 ton split air conditioner
+             (Goodman GLXS4B) and a 40 gal power-direct-vent heater (Rheem PROG40 PDV) in each
+             flat;
+           - *central*: heat pumps in the flats; the hot water from a 120,000 Btu/h, 60 gal gas
+             heater (A. O. Smith BTH-120) through the same loops the code asks of any central
+             system (C404.5). It parts the code's cost from the plant's.
+           - Ventilation in all three: a continuous bath fan (Panasonic FV-0511VQ1, 53 cfm, 7.2 W)
+             and the kitchen's hood vented outdoors (GE JVM3162, 6 in. duct).
+         - **The item lists: 248 items.**
+           - Every element of the published services model is counted once, in the walk-ups that
+             have it. Its 14,827 ft, 1,600 fittings, 89 equipment rows, 60 fixtures, 118 sprinklers,
+             96 air terminals and 12 switches reproduce its schedules.
+           - The design's items the model doesn't hold:
+             - the radiant tubing, 18,084 ft;
+             - its 1.5 in. topping over the upper floors, 6,646 ft2;
+             - R-5 under the heated ground slab, 3,323 ft2;
+             - the plant's wall-hung equipment, the meters, the fire service's assembly and
+               supervision, the insulation by size, the PV;
+             - Addendum 8's air sealing (17,193 ft2) and whole-building test;
+             - each of 01 45 00's 28 tests in the walk-ups it applies to.
+           - Each usual walk-up's own, by stated rules. Where a usual run has no route of its own, a
+             routed run of the same reach stands in, said so:
+             - a flat's own hot pipe: a trunk along its plumbing wall from the heater in the utility
+               closet, a drop to each fixture: 192 ft of 3/4 in. and 162 ft of 1/2 in. in all,
+               against the engineered design's 1,542 ft of hot pipe and returns;
+             - the bath fans' and hoods' ducts, each at the ERVs' ducts' reach;
+             - the gas walk-up's gas lines (each at its flat's feeder's reach) and vents.
+         - **Checks:** 12, all pass. Three of them check that each usual walk-up works:
+           - **Each usual flat's heat pump carries its own heat.** At the code's 3.0 ACH50 with no
+             heat recovery the building needs at most 29.7 kW, against the engineered design's 19.4.
+             That's an upper bound: the exhaust fan's air and the leakage are added, though an
+             unbalanced fan and the envelope's leakage partly overlap.
+             The same 12k unit still covers each flat; the least spare is 1-back-left, 4,080 W
+             against 2,823.
+           - **Each walk-up's service on a main the meter stack offers (NEC 220.84):**
+             - engineered 463 A on 600;
+             - electric 450 A on 600;
+             - gas 393 A on 400;
+             - central 390 A on 400.
+           - **The rest:**
+             - each usual flat's own hot pipe is at most 11.9 ft (IPC 607.2 allows 50);
+             - the gas walk-up's furnace, heater and laundry stack fit along the 64.2 in. closet with
+               5 in. to spare;
+             - the hood's duct is 121 ft of GE's 140 equivalent;
+             - the central heater gives 189 gal in its first hour against the peak hour's 108 and
+               the loops' 9.
+         - **Found:** the gas walk-up's flat service was first counted with the furnace's blower
+           twice (as an appliance and as the heating): 404 A, so a 600 A main. Counted once, with
+           the cooling, it is 393 A on 400.
+         - **What we don't know:**
+           - RECS can't tell a 12-flat walk-up from a tower: its finest split is 5 or more units.
+           - The usual walk-ups aren't designed, only listed by rule. Their hot pipe, ducts, gas
+             lines and vents are by reach.
+           - The gas walk-up's furnace is taken to use the mini-split's ducts.
+           - How an exhaust-only fan's air and the leakage combine in the usual flats' heat (added
+             here, an upper bound). 10c needs a free source for it, such as LBNL's superposition
+             work, before the yearly energy rests on it.
+           - The shared water service's size (4 in.) and both services' length (60 ft) wait for
+             the water authority and a site plan.
+           - The envelope is the same in all four, ENERGY STAR's glass included. Addendum 3's walls
+             are the code's, so every walk-up has them.
+         - Tests: `tests/test_walkup_baseline.py`, 10. Among them:
+           - the jackknife against the textbook error;
+           - the drains' PVC twins;
+           - insulation by size;
+           - a lost run and an untraced item caught;
+           - the usual flats' heat;
+           - the services' swapped loads.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

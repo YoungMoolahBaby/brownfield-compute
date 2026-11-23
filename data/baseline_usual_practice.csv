@@ -1,0 +1,41 @@
+source,region,measure,value,se,unit
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,furnace total,29,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,furnace gas,18,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,furnace electricity,10,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,furnace other,0,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,heat_pump total,34,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,heat_pump gas,14,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,heat_pump electricity,20,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,heat_pump other,0,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,hot_water total,7,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,hot_water gas,5,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,hot_water electricity,2,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,hot_water other,0,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,other total,10,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,other gas,1,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,other electricity,9,,thousand new multifamily units completed in 2025
+Census CHARS 2025 (mfu_heatfuelbysystem),Northeast,other other,0,,thousand new multifamily units completed in 2025
+EIA RECS 2020 microdata (v7),US,water heater the flat's own, electric,37.9,2.7,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater the flat's own, gas,11.7,2.2,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater shared, electric,30.9,2.6,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater shared, gas,19.0,2.1,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater 31-49 gal,37.9,2.7,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater 50 gal or more,36.6,3.1,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater 30 gal or less,14.7,2.4,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,water heater tankless,10.7,1.8,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,heating a central heat pump or mini-split,22.0,2.7,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,heating a central furnace,43.4,2.8,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,heating built-in electric (baseboard),19.5,2.3,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),US,heating shared,31.3,2.2,% of apartments in 5+ unit buildings built 2010-2020 (352 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater the flat's own, electric,24.8,6.3,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater the flat's own, gas,10.5,3.9,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater shared, electric,35.0,6.4,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater shared, gas,27.8,7.0,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater 31-49 gal,37.6,5.7,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater 50 gal or more,41.6,6.8,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater 30 gal or less,8.3,3.5,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,water heater tankless,12.5,4.1,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,heating a central heat pump or mini-split,21.9,5.7,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,heating a central furnace,34.4,5.3,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,heating built-in electric (baseboard),31.4,5.1,% of apartments in 5+ unit buildings built 2010-2020 (67 records)
+EIA RECS 2020 microdata (v7),Northeast,heating shared,38.0,6.2,% of apartments in 5+ unit buildings built 2010-2020 (67 records)

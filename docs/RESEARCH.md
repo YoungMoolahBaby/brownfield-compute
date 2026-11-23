@@ -1632,3 +1632,51 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - **Not found free:** a total MEP cost per flat or per ft2 for low-rise multifamily (Cumming,
       JLL, NMHC, NAHB multifamily; Craftsman is paid; RLB has no PA city and no MEP split), a
       neutral NFPA 13R cost per ft2 (NFSA's $1.35 is 13D), and the MEP share of an A/E fee.
+  - **10a, the usual walk-up (2026-11-23), read first-hand** (`brownfield baseline`; downloads in
+    `data/raw/pass3g/step10/`, the derived table `data/baseline_usual_practice.csv`).
+    - **Census, Characteristics of New Housing** (2025 data, published 2026-07-01;
+      census.gov/construction/chars/current.html), multifamily units completed:
+      - `mfu_heatfuelbysystem_cust.xls`, Northeast, 2025, thousands: furnace 29 (gas 18,
+        electricity 10); heat pump 34 (gas 14, electricity 20); hot water or steam 7 (gas 5,
+        electricity 2); other or none 10 (gas 1, electricity 9). Its footnote: heat pumps include
+        "both air source and geothermal"; "other" includes "electric baseboard, panel, radiant heat,
+        space heater". "(Z)" is under 500 units.
+      - `mfu_heatingfuel_cust.xls`, Northeast, 2025: 79 thousand, gas 38 (48%), electricity 41
+        (52%). US: 484 thousand, electricity 378 (78%).
+      - Its limits: regions, not states; no water heater table.
+    - **EIA, RECS 2020 public microdata** (v7, `recs2020_public_v7.csv`, with the v7 codebook):
+      apartments in buildings of 5 or more units (TYPEHUQ 5) built 2010-2020 (YEARMADERANGE 8-9),
+      weighted by NWEIGHT. H2OAPT says whether the water heater serves several units; FUELH2O,
+      WHEATSIZ and EQUIPM are its fuel, size and the heating.
+      - Its errors: the 60 replicate weights by the jackknife (JK1, (R-1)/R times the squared
+        deviations). That reproduces EIA's published RSEs in HC8.1 exactly (5+ units, electric water
+        heating, 1.51%; gas 2.28%); Fay's BRR factor (4/R) gives a quarter of them.
+      - Its limits: 352 records in the US, 67 in the Northeast; the finest split by size is "5 or
+        more units", so a 12-flat walk-up and a tower are one class.
+    - **The usual walk-ups' basis-of-design sheets** (a research agent, saved under
+      `data/raw/pass3g/step10/equipment/`):
+      - A. O. Smith ProLine ENT-50 (AOSRE50608, March 2025): "ENT-50 50 46 62 0.92 21 4500 3000 6000
+        59 51-1/4 20-1/2". Its element sheet AOSTD63000 (Oct 2020) lists 208 V non-simultaneous
+        elements of 4.5 kW.
+      - Rheem PROG40-40N RH67 PDV (04/23, form PROG RHPDV Rev. 7): 40 gal, 40,000 Btu/h, first-hour
+        67, UEF 0.63, 19-3/4 in. across, "Two pipe system"; its manual's diagram: "120V 50/60 Hz LESS
+        THAN 5 AMPS".
+      - Goodman GR9S960403AN (SS-GR9S96_GD9S96-R32, 08/26): 40,000/38,800 Btu/h, AFUE 97, "Min.
+        Circuit Ampacity 9.7", "MCA = (1.25 x Circulator Blower Amps) + ID Blower amps"; 14 x 29 in.
+      - Goodman GLXS4BA1810A (SS-GLXS4B-R32, 03/26): 18,000 Btu/h, "RLA 8.2", "Minimum Circuit
+        Ampacity 10.9".
+      - A. O. Smith Cyclone FLEX BTH-120 (ACGSS00125, March 2026): 60 gal, 120,000 Btu/h, 97%, 138
+        gph at a 100 F rise, "120V-60Hz A.C., 5.0 A".
+      - Panasonic FV-0511VQ1 (IAQ19159ST R3): "53-83-111 CFM ... 0.4/0.6/0.9 sone", "7.2/10.8/16.4
+        watts at 0.25 w.g.", "rated for continuous run", ENERGY STAR.
+      - GE JVM3162DJ Quick Specs (revised 9/19, from a retailer's copy: GE's server returned 503):
+        "300-CFM venting", "Do not use less than a 6" diameter duct", the duct "should not exceed 140
+        equivalent feet", a wall cap 40 ft, an elbow 10.
+      - Sizing: A. O. Smith (hotwater.com): "3 people ... 40 to 50 gallons"; Rheem (Sept 2026): "2 to
+        4 People ... 40 to 50 gallons". Neither sizes by bedrooms.
+    - IPC 2021 607.2 (`dl/upc/ipc6.html`): "The developed length of hot or tempered water piping,
+      from the source of hot water to the fixtures that require hot or tempered water, shall not
+      exceed 50 feet". 607.3: a storage heater fed through "a check valve, pressure reducing valve or
+      backflow preventer" needs "a thermal expansion control device".
+    - PA 2021 IECC R403.5.2: R-3 on "Piping 3/4 inch (19.1 mm) and larger in nominal diameter
+      located inside the conditioned space".
