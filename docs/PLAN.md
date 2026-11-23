@@ -116,7 +116,18 @@ Addendum 6 (Jon's decision) fixes both before the round and issues the sheets:
 log for what comes back with only what a commenter agreed to published, and the round's folder in
 the plan room with the four question forms.
 
-Next: 8d, the round itself (Jon): send the packets, then relay the replies.
+8d, the round itself, is Jon's: send the packets, then relay the replies.
+
+Step 9 started (Jon: the code's tests, the design's claims and the control sequence, as Addendum
+7; step 10 from free sources). 9a done: when the data center's heat is gone.
+- Each flat is heated by its mini-split alone at the design temperature, with at least twice its
+  need to give.
+- The hot water falls to a 12.3 kW backup heater on the plant's heater circuit.
+- Found: step 5 had counted the mini-split only as cooling. Counted as the heat pump it is, with
+  the preheater, the service rises to 455 A, still on its 600 A main. The house panel goes to
+  100 A, so it can take less PV (8.3 kW AC).
+
+Next: 9b, the control sequence.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -3942,6 +3953,101 @@ test. Then the township brief's ask.
        - **8d, the round itself (Jon):** send the packets; relay each reply (an entry in the log);
          then each comment taken (Addendum 7) or answered, and published if its author agreed.
     9. **The inspection and commissioning plan.**
+       - **Jon's decisions (2026-11-22), all four recommendations:**
+         - **The depth:** the code's tests, the design's own claims verified, and the plant's
+           control sequence, issued as Addendum 7, not full third-party commissioning (ASHRAE
+           Guideline 0, rare on a 12-flat walk-up).
+         - **The fallback is designed here:** what heats the flats and the water when the data
+           center's heat stops. It's the first question anyone asks of waste heat, and the design
+           didn't answer it.
+         - **Step 10's costs from free sources** (Jon: "free sources then"), with honest ranges:
+           - the difference priced item by item;
+           - equipment from list prices;
+           - labour from the county's prevailing wages and stated hours, or NREL's installed costs;
+           - the usual walk-up's totals from public surveys.
+
+           RSMeans is paid, and its licence bars republishing its data in a public repo. Test
+           whether the report's conclusion survives the range; only if it doesn't, cross-check
+           privately.
+         - **Addendum 7 is step 9's;** the round's outcomes go in the addendum after it.
+       - **The parts:**
+         - 9a, the fallback: the flats on their mini-splits, the hot water on a backup heater,
+           and what that does to the wiring;
+         - 9b, the control sequence, the fallback included;
+         - 9c, the tests and inspections: what, who, when, the pass criteria and the code behind
+           each;
+         - 9d, Addendum 7, published.
+       - **Found while scoping (2026-11-22):** step 5 counted each flat's mini-split only as air
+         conditioning, taking the larger of it and the ERV's preheater ("never runs with the
+         cooling"). But it's a heat pump: a tenant can set it to heat, and the fallback needs it
+         to, with the preheater running too. 9a counts the two together.
+       - **9a done 2026-11-22: when the data center's heat is gone** (`uv run brownfield fallback`;
+         `src/brownfield/fallback.py`).
+         - **How:**
+           - **The flats on their mini-splits:**
+             - Fujitsu's own heating table for the 12k unit, at 70 F indoor
+               (`data/fujitsu_aruh12_heating.csv`): 4.54 kW at -15 C and 4.09 at -20.6 C, so
+               4.44 at the design -16.3 C, drawing 2.24 kW. Its 70 F column is a little under
+               the design's 20 C indoor, so it errs low.
+             - Corrected for each flat's routed line set and the outdoor unit's height above
+               the indoor one, from Fujitsu's heating pipe-length table
+               (`data/fujitsu_aouh12_heating_pipe_factors.csv`).
+             - The mini-split serves the same rooms the radiant floors heat.
+           - **The hot water on a backup heater:** an A. O. Smith DRE-52-12, the line's smallest
+             (12.3 kW, three 4,100 W elements, 59 A at 208 V single phase, its own 50 gal tank;
+             spec sheet AOSCE15300, 2021).
+             - It goes on the plant's heater circuit after HP-1, so it heats the 237 gal of
+               storage as the data center's heat does now, and the plant works as Ecosizer sized
+               it. Placed after the storage instead, it would have only its own 50 gal, and the
+               peak hours would fail.
+             - Its elements are locked out unless the data center's heat is gone: no
+               electricity in normal running (9b's sequence).
+           - **The wiring:**
+             - **Each flat's heating is its heat pump at its nameplate plus the preheater**, 65%
+               under 220.82 and 100% under 220.84 (`electrical.hvac_va`). It's larger than the
+               cooling, so it governs.
+             - **The backup heater is on the house panel, continuous.** It's interlocked
+               against HP-1, so of the two only the larger counts (220.60).
+         - **Run (2026-11-22):** 8 checks pass.
+           - **Two known cases:**
+             - the recovery against A. O. Smith's own table: 50.4 gal/h at a 100 F rise
+               (theirs 50);
+             - Fujitsu's tables read back at their own rows.
+           - **The flats:** every one is heated by its mini-split alone at -16.3 C. The tightest
+             is 1-back-left: 4,080 W against 1,986 W, the derate 0.920 for 51 ft of line with
+             the outdoor unit 7.6 m above. The top floor's units give 4,366-4,375 W against
+             1,687.
+           - **The hot water:** 12.3 kW against the plant's 11.02 kW; 54 gal/h through the
+             coldest inlet's 94 F rise.
+           - **The house panel:** 19,888 VA calculated, 93.4 A: a 100 A position (50 A after
+             Addendum 6).
+           - **Each flat's feeder:** 91.0 A on its 100 A breaker (87.8 before), the worst drop
+             1.98% against 2%.
+           - **The service:** 163,833 VA, 455 A (414 before), still on the 600 A main and its
+             two sets of 250 kcmil.
+           - **Rerouted:** on the square lengths the requests ask, 1-front-right's feeder now
+             needs 2 AWG, so its conduit was requested at 1-1/4 in. (1 in. before). Forge routed
+             all 430 runs again with no clashes (459 s), and 7a-7d pass (71).
+             - In the services model only that conduit and its five fittings change. The routed
+               design still sizes it 1 in. (its Size), on room for 1-1/4.
+             - So the published services model and Addendum 6's sheets are now a reroute behind
+               the routes. The sheets' check says so, and Addendum 7 issues both again (9d).
+           - Tests: `tests/test_walkup_fallback.py`, 5.
+         - **Found:**
+           - **Step 5's heating slip** (above): each flat's feeder 3.2 A more, the service 41 A
+             more. Step 2's load estimate had the same slip in its 220.84 figure, now counted the
+             same way.
+           - **The PV the house panel can take falls from 16.6 to 8.3 kW AC.** Its 100 A main
+             uses up most of the 120% rule's room on its 125 A bus. A bigger bus would give it
+             back, or the PV goes in on the supply side with FirstEnergy (the rest already must).
+           - **The flats' baths, kitchens and halls have no supply of their own** in the
+             fallback, as in cooling. They take the hall's moving air, so they run cooler than
+             the radiant floors keep them.
+         - **What we don't know:**
+           - Defrost: Fujitsu's tables are "based on the maximum capacity" and don't say whether
+             they count defrost. The tightest flat has twice its need to give.
+           - How long the data center's heat can be gone. The backup carries the design day for
+             as long as it lasts, at the electricity's cost: step 10 prices it.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing

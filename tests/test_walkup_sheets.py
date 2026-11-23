@@ -125,8 +125,16 @@ def drawn(tmp_path_factory):
 
 
 def test_every_element_is_on_a_sheet_and_the_pdf_reads_as_text(drawn):
+    import ifcopenshell
+
     ctx, res, path = drawn
-    assert [label for label, ok, _ in ss.checks(ctx, res, path) if not ok] == []
+    ch = {label: ok for label, ok, _ in ss.checks(ctx, res, path)}
+    # Between addenda the published model can be older than the routes (step 9a rerouted a feeder;
+    # Addendum 7 issues the model again): the check that says so must tell the truth either way.
+    same = "the services model was built from the routes these sheets' figures come from"
+    desc = ifcopenshell.open(str(ss.BIDSET / f"services-{ss.REV}.ifc")).by_type("IfcBuilding")[0].Description or ""
+    assert ch.pop(same) == (ctx["routes"].rt["requests_sha"] in desc)
+    assert all(ch.values()), ch
 
 
 def test_each_trades_plan_draws_its_own_layer_and_the_elevations_every_trade(drawn):

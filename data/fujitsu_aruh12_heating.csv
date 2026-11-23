@@ -1,0 +1,16 @@
+# Fujitsu ARUH12KUAS (ducted, with AOUH12KUBS1): heating capacity and input at 70 F (21.1 C) indoor, airflow 500 cfm,
+# by outdoor dry bulb. Fujitsu's design and technical manual for ARUH12-48KUAS / AOUH12-48KU, section 4-2 "Heating capacity",
+# p. 22, the metric table's 21.1 C column ("Values mentioned in the table are calculated based on the maximum capacity").
+# Pipe length 25 ft and no height difference; `fujitsu_aouh12_heating_pipe_factors.csv` corrects for both. Read from the
+# manual's text (data/raw/pass3g/fujitsu_dt.txt); the same rows in F: 5 F 15.50 kBtu/h, 2.25 kW (its 5 F rating).
+outdoor_c,capacity_kw,input_kw
+-20.6,4.09,2.20
+-15.0,4.54,2.25
+-10.0,4.94,2.18
+-8.3,5.08,2.12
+-5.0,5.34,2.00
+0.0,5.43,1.95
+5.0,5.52,1.89
+8.3,5.70,1.84
+10.0,6.28,1.83
+15.0,6.52,1.62

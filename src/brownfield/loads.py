@@ -550,7 +550,9 @@ def electrical(apt: dict, p: dict) -> dict:
     ft2 = apt["flats"][0]["floor_m2"] / FT2
     appliances = [appliance_va(p, k) for k in APPLIANCES]
     return {"flat_ft2": ft2, "flat_feeder": nec_220_82(ft2, appliances, hvac_va(p, 0.65), p),
-            "flats_220_84": nec_220_84(len(apt["flats"]), ft2, appliances, appliance_va(p, "preheater"), p[e + "cooling_va"], p)}
+            # The heating: the mini-split as the heat pump it is, with the preheater (`electrical.hvac_va`).
+            "flats_220_84": nec_220_84(len(apt["flats"]), ft2, appliances, p[e + "cooling_va"] + appliance_va(p, "preheater"),
+                                       p[e + "cooling_va"], p)}
 
 
 # ---- The step's summary ----

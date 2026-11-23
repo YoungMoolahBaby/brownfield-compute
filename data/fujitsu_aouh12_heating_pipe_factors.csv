@@ -1,0 +1,10 @@
+# Fujitsu AOUH12KUAS1 / AOUH12KUBS1: heating capacity compensation for pipe length and height difference, "Indoor unit is
+# lower than outdoor unit" (height negative: the walk-up's outdoor units are on the roof) and level (0). Fujitsu's design and
+# technical manual for ARUH12-48KUAS / AOUH12-48KU, section 6-1, p. 121 ("calculated based on the maximum capacity");
+# read from data/raw/pass3g/fujitsu_dt.txt. A blank is a length the manual gives no figure for at that height.
+height_m,len_5m,len_7.5m,len_10m,len_15m,len_20m,len_25m,len_30m
+0,1.017,1.000,0.981,0.933,0.885,0.877,0.869
+-5,1.012,0.995,0.976,0.928,0.880,0.872,0.864
+-7.5,,0.993,0.974,0.926,0.878,0.870,0.862
+-10,,,0.971,0.923,0.876,0.868,0.861
+-15,,,,0.914,0.867,0.859,0.851

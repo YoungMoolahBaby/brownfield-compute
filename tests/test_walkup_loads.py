@@ -211,6 +211,9 @@ def test_hot_water_design_day(apt3, P):
 def test_electrical(apt3, P):
     el = loads.electrical(apt3, P)
     f = el["flat_feeder"]
-    assert f["calculated_va"] == pytest.approx(10000 + 0.4 * (f["connected_less_hvac_va"] - 10000) + P["systems.electrical.cooling_va"])
+    # The heating (the heat pump with the preheater at 65%, step 9a) is larger than the cooling, so it counts.
+    from brownfield.electrical import hvac_va
+    assert hvac_va(P, 0.65) > P["systems.electrical.cooling_va"]
+    assert f["calculated_va"] == pytest.approx(10000 + 0.4 * (f["connected_less_hvac_va"] - 10000) + hvac_va(P, 0.65))
     b = el["flats_220_84"]
     assert b["calculated_va"] == pytest.approx(0.41 * b["connected_va"]) and b["per_unit_va"] > f["connected_less_hvac_va"]

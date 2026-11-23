@@ -285,8 +285,7 @@ def legs(circuits: list[dict]) -> dict:
 def flat_load(p: dict, ft2: float) -> dict:
     """The flat's feeder load by 220.82 with the appliances as chosen: every one fastened in place
     or on its own circuit at its nameplate (220.82(B)(3)); and under 220.82(C) the larger of the
-    mini-split at its minimum circuit ampacity and 65% of the ERV's preheater, which is fixed
-    electric space heating (a duct heater, Article 424) and never runs with the cooling."""
+    cooling and the heating (`hvac_va`)."""
     from .loads import nec_220_82
 
     appl = [appliance_va(p, k) for k in APPLIANCES]
@@ -295,11 +294,15 @@ def flat_load(p: dict, ft2: float) -> dict:
 
 
 def hvac_va(p: dict, heat_factor: float) -> float:
-    """The flat's heating-or-cooling load: the larger of the air conditioning and the preheater at
+    """The flat's heating-or-cooling load: the larger of the air conditioning and the heating. The
+    mini-split is a heat pump: its tenant can set it to heat, and it carries the flat when the data
+    center's heat is gone (pass 3g step 9a), so in winter it runs with the ERV's preheater, fixed
+    electric space heating (a duct heater, Article 424). The heating is the heat pump at its
+    nameplate (its minimum circuit ampacity, the same unit as the cooling) and the preheater at
     `heat_factor` (220.82(C)'s 65% of electric heat, as Holt's worked case takes it; 220.84(C)(5)
-    compares them at 100%)."""
+    compares them at 100%). Step 5 had taken the larger of the cooling and the preheater alone."""
     e = "systems.electrical."
-    return max(p[e + "cooling_va"], heat_factor * appliance_va(p, "preheater"))
+    return max(p[e + "cooling_va"], p[e + "cooling_va"] + heat_factor * appliance_va(p, "preheater"))
 
 
 def appliance_va(p: dict, key: str) -> float:
@@ -509,6 +512,8 @@ def conduit_for(sizes: list[str], p: dict, kind: str = "THHN/THWN/THWN-2", sched
 HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous / by its hours), across the phases (208 V)?
     ("dhw_heat_pump", "the hot-water plant's water-to-water heat pump (ClimateMaster SW036)", "motor", True),
     ("swing_element", "the swing tank's element at its nameplate (Bradford White's; Addendum 6)", "by its hours", True),
+    ("backup_heater", "the plant's backup heater, its elements only when the data center's heat is gone (A. O. Smith DRE-52-12; "
+                      "step 9a)", "continuous", True),
     ("loop_pump", "the building heating loop's pump (Grundfos ALPHA2 15-55F)", "motor", False),
     ("recirc_pump", "the hot-water recirculation pump (Grundfos ALPHA2 15-55SF)", "motor", False),
     ("controls", "the substation's and the plant's controls and the meters' reader", "continuous", False),
@@ -536,15 +541,24 @@ def house_loads(apt: dict, p: dict) -> dict:
     element_kind = "continuous" if element_h >= p[h + "continuous_h"] else "noncontinuous"
     rows = []
     for k, what, kind, ll in HOUSE_LOADS:
-        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"]}.get(k) or p[h + f"{k}_va"]
+        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"], "backup_heater": p["systems.hot_water.backup_w"]}.get(k) or p[h + f"{k}_va"]
         kind = element_kind if k == "swing_element" else kind
         factor = p[h + "continuous_factor"] if kind == "continuous" else 1.0
-        rows.append({"key": k, "what": what, "kind": kind, "ll": ll, "va": va, "calc_va": va * factor})
-    largest = max(r["va"] for r in rows if r["kind"] == "motor")
+        rows.append({"key": k, "what": what, "kind": kind, "ll": ll, "va": va, "calc_va": va * factor, "counted": True})
+    # The heat pump and the backup heater never run together (the plant's sequence interlocks them,
+    # step 9b): of noncoincident loads only the larger counts (220.60), the heat pump with its share
+    # of the largest motor.
+    hp, bk = (next(r for r in rows if r["key"] == k) for k in ("dhw_heat_pump", "backup_heater"))
+    hp_calc = hp["calc_va"] + p[h + "largest_motor_extra"] * hp["va"]
+    (hp if bk["calc_va"] >= hp_calc else bk)["counted"] = False
+    largest = max(r["va"] for r in rows if r["kind"] == "motor" and r["counted"])
     for r in rows:
-        if r["kind"] == "motor" and r["va"] == largest:
+        if r["kind"] == "motor" and r["counted"] and r["va"] == largest:
             r["calc_va"] += p[h + "largest_motor_extra"] * largest
             break
+    for r in rows:
+        if not r["counted"]:
+            r["calc_va"] = 0.0
     va_ll = sum(r["calc_va"] for r in rows if r["ll"])
     va_ln = sum(r["calc_va"] for r in rows if not r["ll"]) / 2
     z0 = feeder_drop(complex(0.0, 0.0), 0.0, va_ll, va_ln, va_ln, p[w + "pf"], FLAT_SYSTEM)
@@ -586,7 +600,8 @@ def service(apt: dict, p: dict) -> dict:
 
     e = "systems.electrical."
     ft2 = apt["flats"][0]["floor_m2"] / FT2
-    flats = nec_220_84(len(apt["flats"]), ft2, [appliance_va(p, k) for k in APPLIANCES], appliance_va(p, "preheater"),
+    # The space heating, the mini-split heating at its nameplate with the preheater (`hvac_va`).
+    flats = nec_220_84(len(apt["flats"]), ft2, [appliance_va(p, k) for k in APPLIANCES], p[e + "cooling_va"] + appliance_va(p, "preheater"),
                        p[e + "cooling_va"], p)
     house = house_loads(apt, p)
     total = flats["calculated_va"] + house["calculated_va"]
@@ -848,7 +863,7 @@ def report(s: dict) -> str:
     lines += ["", f"House loads ({h['connected_va']:,.0f} VA connected, {h['calculated_va']:,.0f} VA calculated, {h['amps']:.0f} A a leg: "
               f"a {h['breaker_a']:.0f} A position):"]
     for r in h["rows"]:
-        lines.append(f"  {r['va']:6,.0f} VA  {r['what']}")
+        lines.append(f"  {r['va']:6,.0f} VA  {r['what']}" + ("" if r.get("counted", True) else " (never with the larger: not counted, 220.60)"))
     lines += ["", f"The service, 208Y/120 V: the flats {svc['flats']['connected_va']:,.0f} VA x {svc['flats']['factor']:g} = "
               f"{svc['flats']['calculated_va']:,.0f} VA (220.84), the house {h['calculated_va']:,.0f}; {svc['total_va']:,.0f} VA, "
               f"{svc['amps']:.0f} A; a {svc['main_a']:.0f} A main; {svc['sets']} set(s) of {svc['size']} kcmil copper "

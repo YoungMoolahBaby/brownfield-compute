@@ -545,6 +545,21 @@ hot_water:
     unit: Btu/h ft2 F, a pipe's outer surface to still room air (convection and radiation)
     conf: medium
     source: "from NAIMA Insulation Facts #85 (CI226, 7/13) Table 3, a calculation to ASTM C680: bare 3/4 in. Type M copper at 140 F in 75 F air loses 29.64 Btuh/ft; over its surface (0.875 in. OD) and 65 F, 1.99. NAIMA is the insulation makers' association"
+  backup_w:
+    value: 12300
+    unit: W, the plant's backup heater (A. O. Smith DRE-52-12, three 4,100 W elements) on the heater circuit, for when the data center's heat is gone (pass 3g step 9a)
+    conf: high
+    source: "A. O. Smith Gold Series Commercial Electric spec sheet AOSCE15300 (September 2021), p. 4: '12.3 DRE-52-12 ... 3 4,100'; 'Designed for use as a recovery heater having its own storage tank'; thermostats 'adjustable through a range of 120 to 181 F' (data/raw/pass3g/step9/aosmith/AOSCE15300.pdf). The smallest of the line; the plant's capacity is 11.0 kW (Ecosizer)"
+  backup_a_208:
+    value: 59
+    unit: A, its full-load current at 208 V single phase
+    conf: high
+    source: "the same sheet, p. 4: 'Full Load Current in Amperes ... Single Phase 208V' 59 for 12.3 kW"
+  backup_gal:
+    value: 50
+    unit: gal, its own tank
+    conf: high
+    source: "the same sheet, p. 2: 'DRE-52 50' gal"
 electrical:
   # NEC 2020 Article 220 as Mike Holt works it (EC&M, 'Multifamily Dwelling Unit Service and Feeder
   # Calculations', 2009-12-01, free): the optional multifamily calculation, 220.84.
