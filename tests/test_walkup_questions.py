@@ -20,7 +20,7 @@ def made(tmp_path_factory):
     routes = routed.load(apt, P)
     if routes is None or not routes.fresh:
         pytest.skip("no fresh routes (`brownfield routes`)")
-    if not (qn.BIDSET / "services-addendum-5" / "holes.csv").exists():
+    if not (qn.BIDSET / f"services-{qn.ISSUE}" / "holes.csv").exists():
         pytest.skip("the services schedules aren't published")
     s7 = routed.summary(apt, P, routes)
     return P, s7, qn.run(apt, P, out=tmp_path_factory.mktemp("round"), s7=s7)
@@ -32,7 +32,7 @@ def test_each_trade_has_its_questions_and_the_common_ones(made):
     assert set(qs) == {"P", "M", "E", "FP", "common"}
     ids = [q["id"] for t in qs for q in qs[t]]
     assert len(ids) == len(set(ids))
-    assert [q["id"] for q in qs["common"]] == ["C1", "C2", "C3", "C4", "C5"]
+    assert [q["id"] for q in qs["common"]] == ["C1", "C2", "C3", "C4", "C5", "C6"]  # C6, the consent, last
     for t in qn.TRADES:
         assert len(qs[t]) >= 5, t
         text = r["md"].read_text(encoding="utf-8")

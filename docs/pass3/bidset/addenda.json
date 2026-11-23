@@ -334,7 +334,8 @@
   "note": "issued with Addendum 7; 360 rated openings firestopped by the maker's engineering judgment"
  },
  "round": {
-  "issued": "2026-11-22T17:54:51-08:00",
+  "issued": "2026-11-23T09:04:23-08:00",
+  "first_issued": "2026-11-22T17:54:51-08:00",
   "files": [
    {
     "path": "round/questions-plumber.pdf",

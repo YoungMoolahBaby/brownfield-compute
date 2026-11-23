@@ -1,7 +1,8 @@
 """Pass 3g step 8b (D28): a question sheet for each trade, for the installers' round.
 
-The round sends the services set (Addendum 6's sheets, the models and their schedules) to a
-plumber, an HVAC contractor, an electrician and a sprinkler contractor (Jon's choices, 2026-11-22),
+The round sends the services set (the latest addendum's sheets, Addendum 7's, the models and their
+schedules) to a plumber, an HVAC contractor, an electrician and a sprinkler contractor (Jon's
+choices, 2026-11-22),
 each with its own short list of questions. The questions are the design's open items the trade can
 answer: the ones flagged for this round in steps 3 to 8, each pointing at the sheet or schedule it
 is about and saying why we ask, with the design's own figure. Every figure comes from the designs on
@@ -25,7 +26,8 @@ import textwrap
 from pathlib import Path
 
 from . import OUT_DIR
-from .servicesifc import nominal
+from .servicesheets import SHEETS_REV
+from .servicesifc import ISSUE, nominal
 
 OUT = OUT_DIR / "pass3" / "round"
 BIDSET = Path(__file__).resolve().parents[2] / "docs" / "pass3" / "bidset"
@@ -34,7 +36,7 @@ TITLES = {"P": "Plumbing", "M": "Heating, cooling and air", "E": "Electrical", "
 
 
 def _rows(name: str) -> list[dict]:
-    with open(BIDSET / "services-addendum-5" / f"{name}.csv", encoding="utf-8") as fh:
+    with open(BIDSET / f"services-{ISSUE}" / f"{name}.csv", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
 
 
@@ -68,6 +70,7 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
     upsized = sorted({c["key"] for pn in el["panels"].values() for c in pn["circuits"]
                       if c["awg"] != c["min_awg"]})
     hm = "systems.heat_meter."
+    lp, c4 = w["loop"], w["c404"]
 
     out = {
         "P": [
@@ -95,10 +98,13 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "Addendum 5, item 4b; the holes schedule; P-201 and P-202",
                "Bored at the centre, every pipe clears IPC 305.6 without a steel plate. Off-centre, plates come back."),
             _q("P6", "The hot-water plant takes the data center's warm water: a plate exchanger preheats, a water-to-water heat pump "
-               "lifts to storage, a swing tank and a master mixing valve, the return to the swing tank. What would you change? Where "
-               "would you put its wall-hung equipment in the mechanical room?",
-               "P-601", f"The preheat gives {w['heater']['preheat_share']:.0%} of the plant's heat. The exchanger, pumps, mixing valve and "
-               "backflow assembly are on the diagram only: no place in the model yet."),
+               "lifts it into two storage tanks in series, then a swing tank and a master mixing valve; a backup electric heater on "
+               "the same circuit takes over when that water stops. Five pieces now stand on the mechanical room's floor. What would "
+               "you change? Where would you hang its wall-hung equipment, and is the room big enough?",
+               "Addendum 7, items 2 and 3; P-601; M-602",
+               f"The preheat gives {w['heater']['preheat_share']:.0%} of the plant's heat. Two {p['systems.routing.tank_gal']:g} gal tanks, "
+               "not one larger: the next single tank up won't pass the room's door. The exchanger, pumps, mixing valve and backflow "
+               "assemblies are on the diagram only: no place in the model yet (step 9d)."),
             _q("P7", f"The street must give {w['street_need_psi']:.1f} psi at the peak; the water authority publishes none. Would you plan "
                "a booster now, or wait for the hydrant test?",
                "P-601", f"The design takes {p['systems.plumbing.street_psi']:g} psi as a placeholder; the cold path leaves "
@@ -108,6 +114,14 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "P-601", "Step 4 took the double check; the authority decides."),
             _q("P9", "No fixture is chosen: the sizes drawn are placeholders. Which would you price, and do any change the rough-ins?",
                "the fixtures schedule; P-101 to P-103", "The water closets sit in joist bays; a different rough-in moves the bend."),
+            _q("P10", "Each flat's hot water is a loop of its own: its branch runs past the fixtures to the lavatory, where a "
+               f"thermostatic balancing valve in the vanity (set {p['systems.hot_water.tbv_set_f']:g} F) starts a "
+               f"{nominal(lp['flat_return_in'])} in. return to the return riser. Have you built flats' loops like this? Would you put the "
+               "valve somewhere else, or meet the energy code another way?",
+               "Addendum 7, item 1; P-601 (each flat's loop); P-201 and P-202",
+               f"IECC C404.5 holds every fixture to half a gallon from circulating water: the worst here holds {c4['worst']['oz']:.0f} fl oz. "
+               f"The flats' loops lose {lp['flats_loss_btuh'] / 3.412142:,.0f} W of the loop's {lp['loss_btuh'] / 3.412142:,.0f}. We weighed "
+               "a manifold in each flat and heat trace instead (step 9c)."),
         ],
         "M": [
             _q("M1", f"Each room's radiant loops are balanced to {min(gpm):.3f}-{max(gpm):.3f} gpm. Can a manifold's balancing valves "
@@ -138,7 +152,13 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "M-101 to M-103", "It saves a separate supply duct to each room (step 7b)."),
             _q("M9", f"The building loop: a plate exchanger off the data center's return, {L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft of "
                f"head, a {L['header_in']:g} in. header and a riser pair a column. Comments on the loop or its pump?",
-               "M-601", "The exchanger and pump are bases of design, not selections (step 3)."),
+               "Addendum 7, item 4; M-601", f"The pump's curve gives {L['pump_curve_ft']:.1f} ft at that flow at its highest speed. The "
+               "exchanger and pump are bases of design, not selections (step 3)."),
+            _q("M10", f"When the data center's heat stops, each flat's mini-split takes the rooms: it's set to heat "
+               f"{p['systems.controls.ms_offset_k']:g} K under the floor's setpoint, and the manager confirms the setting at the "
+               "season's change. Workable, or would you want a building-wide signal to the units?",
+               "Addendum 7, items 3 and 5; M-602",
+               "Fujitsu's units take only an operation/stop and a forced-stop input, so the plant can't switch them to heat (step 9b)."),
         ],
         "E": [
             _q("E1", "Each mini-split's outdoor unit is on a GFCI breaker (NEC 210.8(F)). Which breaker have you used on inverter "
@@ -164,11 +184,12 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                f"({', '.join(upsized)}). Would you wire them so?",
                "E-602", f"Feeder and branch together reach {max(el['total_drop'].values()):.1%} at worst, inside the "
                f"{s7['limits']['vd']['total']:.0%} the NEC's informational notes give."),
-            _q("E7", f"The house panel is {house['breaker_a']:.0f} A, with the swing tank's {p['systems.house.swing_element_va'] / 1000:.1f} kW "
-               f"element counted as {element['kind']}. Agree?",
-               "Addendum 6, item 2; E-601",
-               f"Its design day's heat takes it {house['element_h']:.1f} h, in the quiet hours (NEC Article 100: continuous at "
-               f"{p['systems.house.continuous_h']:g} h or more)."),
+            _q("E7", f"The house panel is {house['breaker_a']:.0f} A: the swing tank's {p['systems.house.swing_element_va'] / 1000:.1f} kW "
+               f"element counted as {element['kind']}, and the backup water heater counted in place of the heat pump, never both "
+               "(a wired interlock). Agree?",
+               "Addendum 7, item 3; E-601; M-602",
+               f"The element's design day takes it {house['element_h']:.1f} h (NEC Article 100: continuous at "
+               f"{p['systems.house.continuous_h']:g} h or more). NEC 220.60 counts the larger of two loads that can't run together."),
         ],
         "FP": [
             _q("F1", f"The most demanding design needs {worst['need_psi']:.1f} of the {fh['target_psi']:.0f} psi the street gives less its "
@@ -198,7 +219,9 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
         _q("C3", "What's missing that you'd need to price it?", "", ""),
         _q("C4", "Did you open the model (the IFC files) or the 3D viewer? Would you take quantities from them, or from the sheets "
            "and schedules?", "the plan room", "Whether trades use a model is an open question of the study (D27)."),
-        _q("C5", "May we publish your comments, by your trade and county only (no name)?", "", ""),
+        _q("C5", "G-002 lists the tests and inspections. Anything there you'd do otherwise for your work, or price separately?",
+           "G-002; Addendum 7, item 6", "Most are the codes' own tests; the rest prove the design's claims at commissioning."),
+        _q("C6", "May we publish your comments, by your trade and county only (no name)?", "", ""),
     ]
     return out
 
@@ -255,7 +278,7 @@ def write_pdf(trade: str, qs: dict[str, list[dict]], path: Path, png: Path | Non
             ax.text(MARGIN, y, f"{TITLES[trade]}: questions for the {TRADES[trade]}", fontsize=12, va="top")
             y -= 0.32
             for t in textwrap.wrap("Made up, from the brownfield-compute study: not a real project, nothing is out to bid. The set "
-                                   "(Addendum 6's sheets, the models and their schedules) was designed in full before bidding; we're "
+                                   f"({SHEETS_REV}'s sheets, the models and their schedules) was designed in full before bidding; we're "
                                    "asking the people who would install it whether it works. Short answers are fine: write on this "
                                    "sheet, mark up the drawings, or talk it through with whoever sent it.", 100):
                 ax.text(MARGIN, y, t, fontsize=8.5, va="top", color="#424242")

@@ -2,13 +2,14 @@
 
 **The packets** (`packet`): one PDF a trade, for Jon to send: a cover letter (from the study, no
 name: Jon's own message introduces him), the trade's question form (step 8b) and its sheets from
-Addendum 6's set (G-001 and the trade's own; the HVAC contractor and the electrician also get the
+the latest addendum's set, Addendum 7's (G-001, G-002's tests and the trade's own; the plumber and
+the HVAC contractor also get M-602's sequence, and the HVAC contractor and the electrician the
 plumbing walls, which their line sets, loop risers and feeders run in). Everything else, the
 models, schedules, other sheets and the 3D viewer, is a link to the plan room. No reply-by date.
 
 **The log** (`load_log`, `check_log`): every comment Jon relays goes into a private file on his
 machine, `data/raw/round/comments.yaml` (gitignored), with who sent it by trade and county only,
-what it's about, their words, whether they agreed to be published (question C5), and what became of
+what it's about, their words, whether they agreed to be published (question C6), and what became of
 it: open, taken (an addendum item) or answered. Only comments whose author said yes leave that
 file (`publish`): each into the public log (`docs/pass3/bidset/round/comments.md`) and as a BCF
 topic, as RFIs 001 and 002 were, in the plan room's RFIs folder. The rest are counted, never shown.
@@ -39,14 +40,17 @@ PLAN_ROOM = "https://youngmoolahbaby.github.io/brownfield-compute/"
 SHEETS_PDF = "services-sheets-addendum-7.pdf"  # the round's packets carry the latest sheets (Addendum 6's until Addendum 7)
 # When the round's question forms were first published to the plan room.
 QUESTIONS_ISSUED = "2026-11-22T17:54:51-08:00"
+# When they were published again, before any went out, with Addendum 7's figures and sheets and its
+# questions (P10, M10, C5; consent moved to C6). Jon: "they haven't gone out, rebuild them please".
+QUESTIONS_REISSUED = "2026-11-23T09:04:23-08:00"
 
 TRADES = questions.TRADES
 SLUG = {t: questions.TRADES[t].split()[0].lower() for t in TRADES}  # as the forms' files: plumber, hvac, ...
 SHEETS = {
-    "P": ["G-001", "P-101", "P-102", "P-103", "P-201", "P-202", "P-601"],
-    "M": ["G-001", "M-101", "M-102", "M-103", "M-104", "M-601", "P-201", "P-202"],
-    "E": ["G-001", "E-101", "E-102", "E-103", "E-601", "E-602", "P-201", "P-202"],
-    "FP": ["G-001", "FP-101", "FP-102", "FP-103", "FP-601"],
+    "P": ["G-001", "G-002", "P-101", "P-102", "P-103", "P-201", "P-202", "P-601", "M-602"],
+    "M": ["G-001", "G-002", "M-101", "M-102", "M-103", "M-104", "M-601", "M-602", "P-201", "P-202"],
+    "E": ["G-001", "G-002", "E-101", "E-102", "E-103", "E-601", "E-602", "P-201", "P-202"],
+    "FP": ["G-001", "G-002", "FP-101", "FP-102", "FP-103", "FP-601"],
 }
 # How the letter names each trade's sheets, and asks for it.
 SHEETS_OF = {"P": "plumbing", "M": "heating, cooling and air", "E": "electrical", "FP": "sprinkler"}
@@ -211,7 +215,7 @@ def check_log(entries: list[dict], ids: set[str], sheets: set[str]) -> list[str]
             if ref not in ids and ref not in sheets and ref != "general":
                 problems.append(f"{tag}: about {ref!r} is no question, sheet or 'general'")
         if not isinstance(e.get("publish"), bool):
-            problems.append(f"{tag}: publish must be yes or no (question C5)")
+            problems.append(f"{tag}: publish must be yes or no (question C6)")
         if e.get("received") and _day(e["received"]) is None:
             problems.append(f"{tag}: received {e['received']!r} isn't a date")
         status = e.get("status")
@@ -320,7 +324,9 @@ def publish(entries: list[dict], forms: dict[str, Path], to: Path = PUBLISHED) -
     shown = [e for e in entries if e.get("publish") is True]
     where = {}  # a services element's GlobalId and where it is, by its key
     if any(e.get("elements") for e in shown):
-        for r in services(BIDSET / "services-addendum-5.ifc"):
+        from .servicesifc import ISSUE
+
+        for r in services(BIDSET / f"services-{ISSUE}.ifc"):
             pts = np.asarray(r["sweep"] if r["sweep"] is not None else r["box"], float)
             where[r["key"]] = (r["gid"], pts.mean(axis=0))
     rfis = []
@@ -329,7 +335,7 @@ def publish(entries: list[dict], forms: dict[str, Path], to: Path = PUBLISHED) -
         write_bcf(e, path, where)
         rfis.append({"path": f"round/{path.name}", "label": f"{e['id']}, the {e['trade']} ({e['county']}): {e['status']} (BCF 3.0)",
                      "issued": _day(e["received"]).isoformat() + "T00:00:00-08:00"})
-    state = {"issued": QUESTIONS_ISSUED, "files": files, "rfis": rfis,
+    state = {"issued": QUESTIONS_REISSUED, "first_issued": QUESTIONS_ISSUED, "files": files, "rfis": rfis,
              "note": f"{s['received']} comments received, {s['public']} shown with their author's OK"}
     (to / "round.json").write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
     return state

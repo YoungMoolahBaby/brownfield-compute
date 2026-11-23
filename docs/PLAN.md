@@ -163,7 +163,11 @@ specification sections. Addenda 1-6 are left as issued.
   service space, the door and the ceiling, and the drops through the slab.
 - In 3D, Addendum 7's changes to the services are marked on their layers.
 
-Next: the installers' round (8d, Jon's), its packets now with Addendum 7's sheets; step 10.
+The round's packets and forms are rebuilt on Addendum 7, before any went out, with five new or
+revised questions (the plant, each flat's loop, the mini-splits' takeover, the house panel, the
+tests).
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then step 10.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4401,10 +4405,24 @@ test. Then the township brief's ask.
            - **BK-1's diameter,** taken at the larger figure until its drawing is read.
            - **Whether two tanks in series stratify as Ecosizer's one volume does.** Ecotope's
              guidance says they do; it's not measured here.
-           - **The installers' round.** Its packets carried Addendum 6's sheets, and its forms carry
-             figures 9a and 9c changed (the house panel's 50 A among them). The packets now take
-             Addendum 7's sheets (`installers.SHEETS_PDF`). Whether to rebuild and republish the
-             forms is Jon's: it depends on whether they've gone out.
+         - **The installers' round, rebuilt on Addendum 7 (2026-11-23).** Jon: "they haven't gone
+           out, rebuild them please".
+           - **Why:** the packets carried Addendum 6's sheets, and the forms had figures 9a and 9c
+             changed. The electrician's form still said the house panel was 50 A.
+           - **The packets:** each now has Addendum 7's sheets, G-002's tests in every packet and
+             M-602's sequence in the plumber's and the HVAC contractor's: plumber 14 pages, HVAC
+             contractor 15, electrician 13, sprinkler contractor 10.
+           - **The forms**, their figures read again from the designs on the routes, with new
+             questions:
+             - P6, the plant: now the two tanks, the backup heater, and whether the room is big
+               enough for its wall-hung equipment;
+             - P10, each flat's loop and its valve under the lavatory;
+             - M10, the mini-splits' takeover by setting, not by a signal;
+             - E7, the house panel at 110 A with the backup heater counted in place of the heat pump;
+             - C5 for every trade, the tests on G-002. The consent question is now C6, still the
+               last.
+           - **Republished** to the plan room's round folder, issued 2026-11-23 09:04 (UTC-8);
+             `round.json` keeps the first issue, 2026-11-22 17:54. The log is still empty.
     10. **The baseline and the report:** the usual walk-up priced from sources; the engineering
         fee, energy, noise and comfort against it; who gets the savings. `docs/pass3/systems.md`.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
