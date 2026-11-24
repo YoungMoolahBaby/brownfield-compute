@@ -62,7 +62,7 @@ def made(P):
         pytest.skip("no fresh routes (`brownfield routes`)")
     r = bl.run(apt, P)
     pr = pricing.run(r, apt, P)
-    fx = ranges.prepare(r, apt, P)
+    fx = ch.prepare(r, apt, P)
     central, sp, hw = ch.evaluate(fx, P)
     return {"r": r, "pr": pr, "fx": fx, "central": central, "sp": sp, "hw": hw}
 

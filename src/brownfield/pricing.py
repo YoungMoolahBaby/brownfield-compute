@@ -119,6 +119,8 @@ CLASSES = {
     **{f"nmb_{s}": ("electrician", "ft", f"NM-B {s} AWG", "trade") for s in ("14", "12", "10", "8")},
     "feeder_1": ("electrician", "ft", "feeder: 1 in. PVC conduit, three 3 AWG and a 8 AWG ground", "trade"),
     "feeder_1.25": ("electrician", "ft", "feeder: 1-1/4 in. PVC conduit, three 2 AWG and a 8 AWG ground", "trade"),
+    # 10h: a feeder a designed walk-up upsizes for drop at its flats' load (none in the published items)
+    "feeder_1.25_1awg": ("electrician", "ft", "feeder: 1-1/4 in. PVC conduit, three 1 AWG and a 8 AWG ground", "trade"),
     "conduit_elbow_1": ("electrician", "each", "PVC conduit elbow", "trade"),
     "qo130l125pg": ("electrician", "each", "load centre (Square D QO130L125PG)", "trade"),
     "service_600": ("electrician", "each", "the meter stack's 600 A main (EZM3600CB) and two sets of 250 kcmil", "trade"),
@@ -305,6 +307,8 @@ def unit_cost(cls: str, p: dict, test: str | None = None) -> tuple[float, float]
         mat = pp[pr + "pvc_conduit_1"] + 3 * pp[pr + "thhn_3"] + pp[pr + "thhn_8"]
     elif cls == "feeder_1.25":
         mat = pp[pr + "pvc_conduit_1.25"] + 3 * pp[pr + "thhn_2"] + pp[pr + "thhn_8"]
+    elif cls == "feeder_1.25_1awg":  # 1 AWG at its price over 2 AWG's, the same seller's (`thhn_1_over_2`)
+        mat = pp[pr + "pvc_conduit_1.25"] + 3 * pp[pr + "thhn_2"] * p[pr + "thhn_1_over_2"] + pp[pr + "thhn_8"]
     elif cls == "service_600":
         mat = pp[pr + "ezm3600cb"] + 2 * 4 * pp[pr + "service_250kcmil"] * p["baseline.usual.service_ft"]
     elif cls == "service_400":
@@ -333,6 +337,8 @@ def unit_cost(cls: str, p: dict, test: str | None = None) -> tuple[float, float]
     else:
         mat = pp[pr + cls]
     trade = CLASSES[cls][0]
+    if cls == "feeder_1.25_1awg":  # pulled in the same conduit as 2 AWG: its hours
+        return mat, p[hr + "feeder_1.25"]
     return mat, (p[hr + cls] if trade else 0.0)
 
 
@@ -383,6 +389,17 @@ def price(items: list[dict], p: dict) -> dict:
     for w in WALKUPS:
         out[w]["total"] = sum(v for k, v in out[w].items() if k in set(GROUPS.values()))
     return {"lines": lines, "totals": out, "unpriced": unpriced, "builder": builder, "trade_op": trade_op}
+
+
+def installed(cls: str, p: dict) -> float:
+    """One unit of a class, installed and marked up as `price` marks an item's (USD)."""
+    o = "baseline.markup."
+    builder = (1 + p[o + "general_requirements"] + p[o + "overhead"] + p[o + "profit"]) * (1 + p[o + "contingency"])
+    mat, h = unit_cost(cls, p)
+    trade, _, _, markup = CLASSES[cls]
+    base = mat + (h * wage(trade, p) if trade else 0.0)
+    hard = base * (1 + p[o + "trade_op"]) if markup == "trade" else base
+    return hard * builder if markup in ("trade", "builder") else hard
 
 
 # ---- the fee ----

@@ -1981,3 +1981,23 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
     - **26 U.S.C. 48E(a)(2)(A)** (Cornell LII): "the applicable percentage shall be 6 percent", or
       "30 percent" for a facility "with a maximum net output of less than 1 megawatt (as measured
       in alternating current)".
+  - **10h, the quality walk-up (2026-11-24).** One price, and the rule on a feeder's ground:
+    - **1 AWG THHN:** Wire & Cable Your Way's cut-to-length page
+      (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23, `el_thhn_wcyw.html`, saved
+      with 10b's prices): 2 AWG $3.46 /ft, 1 AWG $3.94 /ft. The ratio, 1.1387, prices a 1 AWG
+      feeder from 2 AWG's drawn price (`price.thhn_1_over_2`, fixed).
+    - **NEC 2020 250.122(B)** (ElectricalLicenseRenewal.com, above under step 5): "If ungrounded
+      conductors are increased in size for any reason other than as required in 310.15(B) or
+      310.15(C), wire-type equipment grounding conductors, if installed, shall be increased in size
+      proportionately to the increase in circular mil area of the ungrounded conductors." New in
+      2020, an exception lets a qualified person size the ground to an effective ground-fault path
+      (250.4(A)(5)). The trade press reads voltage drop as a reason that triggers it:
+      - Mike Holt, 250.122 (https://www.mikeholt.com/files/PDF/20_BG_250.122.pdf): the ground
+        sized from its cmil times the conductors' increase, then the next size up in Chapter 9's
+        Table 8;
+      - EC&M on equipment grounding conductors and voltage drop
+        (https://www.ecmweb.com/national-electrical-code/article/20899870/equipment-grounding-conductors-and-voltage-drop);
+      - Electrical Contractor on sizing equipment grounding conductors for voltage drop
+        (https://www.ecmag.com/section/codes-standards/voltage-drop-sizing-equipment-grounding-conductors).
+      - One EC&M article reads it narrower (only where the fault current would otherwise not trip
+        the breaker). That isn't the code's text; the report takes the text.

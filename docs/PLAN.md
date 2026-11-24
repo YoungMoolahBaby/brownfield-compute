@@ -263,18 +263,39 @@ Addendum 9 done (Jon: "1 then 2"): the water pipes held off the frame, and the E
   here. ("PV" is "solar panels" in the report now, Jon's word.)
 - Each choice is taken out of the design alone, the usual all-electric walk-up's way in its place,
   over 10f's 4,000 draws (`uv run brownfield choices --publish`).
-- None pays for itself in money, in any draw, except the hot-water plant in 18% of them. Over 20
+- None pays for itself in money, in any draw, except the hot-water plant in 20% of them. Over 20
   years a flat: the floors on the data center's water $11,374, the ERVs $5,697, the cast iron
   $4,860, the fee $2,234, the solar panels $1,575, the separate fire service $1,492, the plant
-  $1,226, the airtightness $983, the submeters $848, the pipes held off the frame $477, the PRV
-  $205, the cold risers' insulation $30; how they interact -$1,580.
+  $1,097, the airtightness $983, the submeters $848, the pipes held off the frame $477, the PRV
+  $205, the cold risers' insulation $30; how they interact -$1,450. (Corrected 2026-11-24 by 10h,
+  below: the plant was $1,226, paying in 18% of the draws, and the interaction -$1,580.)
 - With the floors on the data center's water, the heat the ERVs and the airtightness save is free.
   The ERVs use 606 kWh more electricity a flat a year than bath fans, and 187 kWh more even on the
   usual walk-up. Their case is the air.
 - Against one gas water heater for the building, the plant never pays ($3,638 over 20 years).
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`, now with
-Addendum 9's G-001. Its answers go in Addendum 10.
+10h done (Jon: "please price the quality walk-up the towns would actually build"):
+[docs/pass3/systems.md](pass3/systems.md#the-quality-walk-up-the-towns-would-build-10h).
+- It keeps the ERVs, the airtightness, the cast iron, the services apart, the submeters, the pipes
+  held off the frame, the cold risers' insulation and the design before bidding. It drops the
+  floors and the plant (the data center's water, which the towns' edges don't get, D18), the solar
+  panels and the PRV. The mini-splits heat; each flat has its own electric water heater.
+- Over 20 years it costs $15,315 a flat more than the usual all-electric walk-up, $120 a month
+  (the typical draw $140), more in every draw. The engineered design's premium is $231 a month.
+- The data center's water would add $97 a month to it ($117-187 with the network's share), and
+  saves money in no draw.
+- Found: held to the design's 2% drop, each flat's own water heater makes four feeders a size
+  larger, $130 a flat. 10g's plant line has the same heaters and didn't count it: corrected above.
+- Found, not fixed: three of the issued feeders were made 2 AWG for the drop and kept an 8 AWG
+  ground. NEC 250.122(B) wants 6 AWG, unless a qualified person shows the fault path works.
+
+Next: Jon's calls before the installers' packets go out (8d):
+- the feeders' grounds: an addendum, or a qualified person's fault-path sizing;
+- whether the bid set keeps the floors and the plant, or the walk-up is bid as the quality
+  walk-up the towns would build.
+
+Then the round: the packets are in `out/pass3/round/packets/`, now with Addendum 9's G-001. Its
+answers go in the addendum after it.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -5407,12 +5428,15 @@ test. Then the township brief's ask.
            406 A on that house (NEC 220.84), so 600 A stays. The run checks it.
          - **Over 20 years, a flat, central** (the typical draw and P10-P90 in the report): the
            floors $11,374; the ERVs $5,697; the cast iron $4,860; the fee $2,234; PV $1,575; the
-           separate fire service $1,492; the plant $1,226 (P10-P90 -$623 to $3,151, pays in 724 of
+           separate fire service $1,492; the plant $1,097 (P10-P90 -$753 to $3,014, pays in 814 of
            4,000 draws); the airtightness $983; the submeters $848; the pipes held off the frame
-           $477; the PRV $205; the cold risers' insulation $30; how they interact -$1,580; the whole
-           $29,420, 10f's.
+           $477; the PRV $205; the cold risers' insulation $30; how they interact -$1,450; the whole
+           $29,420, 10f's. (Corrected 2026-11-24 by 10h: taking the plant out leaves a water heater
+           in each flat, whose feeders the design's 2% drop makes larger, $130 a flat. Before, the
+           plant was $1,226, -$623 to $3,151, paying in 724; the interaction -$1,580; the floors
+           and the plant $12,648, $15,211 to $24,135.)
            - The plant against one gas water heater $3,638; the floors and the plant together
-             $12,648, with the network's share $15,211 (dense) to $24,135 (base).
+             $12,518, with the network's share $15,081 (dense) to $24,005 (base).
            - Added to the usual walk-up: the ERVs $4,691 (187 kWh more electricity a year than they
              save), the airtightness $764, PV $1,383.
            - What moves the plant most: the usual flats' water heaters' life, the hot water a person
@@ -5425,13 +5449,68 @@ test. Then the township brief's ask.
          - **Checks** (8, all pass): the 600 A main; every purpose owned or alike; parity with 10f
            at the central values (worst $7e-12) and draw for draw against 10f's saved draws (worst
            $6e-11); the lines add up to the whole; the draws reproduce; each percentile within 2.5%
-           of its spread (2.1% at worst); the tornado's centre.
+           of its spread (2.0% at worst); the tornado's centre.
          - Tests: `tests/test_walkup_choices.py`, 12 (the configs are 10c's; a purpose's source; a
            dearer price moves only its choice; with the heat priced the ERVs' and the airtightness's
            lines fall and the floors' rises; the fourth case between; the 600 A main; the workers
            reproduce; and the rest).
          - **Found:** the report's count of inputs with a range was 10f's 1,015; since Addendum 9 it
            is 1,021. Corrected.
+       - **10h done 2026-11-24: the quality walk-up the towns would build** (Jon: "please price
+         the quality walk-up the towns would actually build"; `uv run brownfield quality
+         --publish`, about an hour; `src/brownfield/quality.py`; writes `out/pass3/quality.md|json`
+         and `quality_draws.npz`, and `docs/pass3/systems_quality.png`). The report's section:
+         [docs/pass3/systems.md](pass3/systems.md#the-quality-walk-up-the-towns-would-build-10h).
+         - **What it is:** 10g's choices that buy quality kept (the ERVs, the airtightness, the
+           cast iron, the services apart, the submeters, the pipes held off the frame, the cold
+           risers' insulation) with the design before bidding. Dropped: the floors and the plant
+           (the data center's water, which the towns' edges don't get, D18), the solar panels and
+           the PRV (no quality a tenant feels). The mini-splits heat; each flat has its own 50 gal
+           electric water heater.
+         - **How:** one more mix of 10g's choices over 10f's draws (`choices.walkups`). Each kept
+           choice is taken out of it alone; the floors and the plant are added to it.
+         - **Found: a designed walk-up's feeders at its own flats' load.** A quality flat carries
+           the ERV and its preheater and its own water heater, up to 99.1 A on its 100 A breaker.
+           Held to the design's 2% drop (`vd_feeder_max`), four of the twelve feeders go a size up
+           (three 3 to 2 AWG, one 2 to 1 AWG), $130 a flat.
+           - `choices.feeder_sizes` sizes each kind of flat once, at the central inputs, as
+             `electrical.feeders` does. A feeder only grows from the issued one.
+           - The undesigned walk-ups keep the engineered feeders, within the NEC's informational
+             3% (2.08% at most).
+           - A 1 AWG feeder class is priced at 2 AWG's price times Wire & Cable Your Way's ratio of
+             the two ($3.94 over $3.46). It's fixed (`thhn_1_over_2`) so no draw moves.
+         - **10g corrected:** the plant taken out of the design leaves each flat its own water
+           heater on a designed walk-up, so the same $130 of feeders (the numbers above).
+         - **Found, not fixed: the issued feeders' grounds.** Step 7 made three feeders 2 AWG for
+           the drop where 3 AWG carries the load (2-front-left, 3-front-left, 3-front-right;
+           314 ft). They kept the 8 AWG ground of their 100 A breakers (Table 250.122).
+           - NEC 2020 250.122(B) grows the ground in proportion to the circular mils: 6 AWG. Its
+             exception lets a qualified person size it to an effective fault path (250.4(A)(5)).
+           - Three 2 AWG and a 6 AWG fill 27% of the 1-1/4 in. conduit.
+           - `quality.grounds` reports it. The fix is Jon's call, best made before the packets go.
+         - **Over 20 years, a flat, central:** the quality walk-up $15,315 over the all-electric
+           walk-up ($120 a month; the typical draw $17,829, P10-P90 $15,843-19,968), $17,875 over
+           the central walk-up; the engineered design $14,105 over it.
+           - By choice: the cast iron $4,860, the ERVs $4,500, the fee and the feeders $2,364, the
+             services apart $1,492, the submeters $848, the airtightness $553, the pipes held off
+             the frame $477, the cold risers' insulation $30; how they interact $191.
+           - The data center's water added: $12,326, with the network's share $14,889 (dense) to
+             $23,813 (base). Nothing pays in any draw.
+         - **On heat pumps** the heat the ERVs and the airtightness save costs money, so both cost
+           less than in 10g ($4,500 against $5,697; $553 against $983). The ERVs use 99 kWh a year
+           more than they save; the airtightness saves 128. The flats use 59 kWh more than the
+           usual walk-up's.
+         - **Checks** (13, all pass): kept and dropped each once; the 465 A main on 600 A; the
+           engineered kind's feeders are step 7's; the quality feeders on their breakers within
+           ampacity and 2% (1.87% at most); each upsized feeder priced and in its conduit; the
+           usual flats within 3%; parity with 10f at the central values and draw for draw; the
+           no-energy choices and the fee less its feeders as in 10g; the lines add up; the draws
+           reproduce; each percentile within 2.5% of its spread (2.0% at worst); the tornado's
+           centre.
+         - Tests: `tests/test_walkup_quality.py`, 11 (kept and dropped; the quality flat's load;
+           the walk-ups are 10f's; the no-energy lines are 10g's; a dearer ERV; priced heat; the
+           feeders at the engineered load are step 7's; undesigned walk-ups keep them; a 6 kW
+           heater breaks the breaker check; the grounds; the workers reproduce).
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

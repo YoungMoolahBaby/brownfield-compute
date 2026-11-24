@@ -91,7 +91,9 @@ with the command and code that make each one.
   in every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings
   ([the walk-up's systems](docs/pass3/systems.md)). Choice by choice, the quiet costs $4-38 a
   month a flat, the ducted bedroom air $45 and the warm floors $89; none pays for itself in money
-  but the hot-water plant, in 18% of the draws.
+  but the hot-water plant, in 20% of the draws. The walk-up the towns would build keeps the quiet
+  and the air on heat pumps, off the data center's water: $120 a month a flat over the usual
+  walk-up, about half the engineered design's premium.
 
 ## The design so far
 

@@ -2310,6 +2310,13 @@ price:
     source: 'Wire & Cable Your Way: ''2 AWG THHN/THWN-2 Building Wire – Cut to Length ... Price $3.46 /ft.'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23); Three sellers saved: Hardware
       World Southwire SIMpull 500 ft reel Our Price $1,478.15 = $2.956/ft (MSRP $3,995.00) (el_thhn2_hww.html); WCYW $3.46/ft cut (el_thhn_wcyw.html); Pro Wire and Cable Price Now $3.56/ft (el_thhn2_prowire.html).
       Typical = median; full'
+  thhn_1_over_2:
+    value: 1.1387
+    unit: 1 AWG THHN's price a foot over 2 AWG's
+    conf: low
+    source: 'Wire & Cable Your Way: ''2 AWG THHN/THWN-2 Building Wire ... Price $3.46 /ft.'' and ''1 AWG THHN/THWN-2 Wire (By-the-foot) O.D. (Inches) 0.435 Ampacity 150 Price $3.94 /ft.''
+      (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23; the page saved for 2 and 3 AWG, el_thhn_wcyw.html): $3.94/$3.46. One seller, so fixed: 1 AWG moves with 2 AWG''s
+      price in the draws, and draws nothing of its own. For the feeders a designed walk-up upsizes for drop (10h)'
   thhn_3:
     value: 2.8
     low: 2.79

@@ -107,10 +107,92 @@ def main_check(r10: dict) -> dict:
             "central_a": r10["services"]["central"]["main_a"]}
 
 
-def evaluate(fx: dict, p: dict, sp: dict | None = None, hw: dict | None = None) -> tuple[dict, dict, dict]:
-    """10g on inputs `p` (`ranges.evaluate`'s signature, for its draws and tornado): each choice's
-    20-year cost taken out of the engineered design and, for `ADDED`, added to the usual walk-up; a
-    flat, USD 2026. Returns (figures, sp, hw)."""
+# ---- the flats' feeders ----
+# 10a gives every walk-up the engineered design's feeders (routed, sized at its flats' load: step 7).
+# A walk-up designed before bidding (with the fee) holds the design's drop limit at its own flats'
+# load: where they carry more (their own water heater), a feeder that would drop more is upsized as
+# `electrical.feeders` sizes it, never down. Sized at the central inputs, as step 7 sizes the
+# engineered design's: the draws price them, not resize them. The usual walk-ups keep the engineered
+# design's (`quality.wiring` checks them within the NEC's informational 3%).
+FEEDER_CLASS = {"3": "feeder_1", "2": "feeder_1.25", "1": "feeder_1.25_1awg"}  # by the conductors' size (`pricing.CLASSES`)
+KINDS = tuple((erv, heater, radiant) for erv in (True, False) for heater in (True, False) for radiant in (True, False))
+ENGINEERED_FLAT = (True, False, True)  # the ERV, no water heater of its own, the floors' manifold
+
+
+def flat_kind(have: frozenset, hw_else: str = "electric") -> tuple[bool, bool, bool]:
+    """What a walk-up's flats carry on their feeders: the ERV and its preheater, their own water
+    heater, the floors' manifold controls (on the ERV's circuit)."""
+    return "erv" in have, "plant" not in have and hw_else == "electric", "radiant" in have
+
+
+def flat_load(p: dict, ft2: float, kind: tuple[bool, bool, bool]) -> tuple[dict, float]:
+    """A flat's feeder load by 220.82 (`electrical.flat_load`'s way) for what it carries, and its
+    heating-or-cooling load."""
+    from .electrical import APPLIANCES, appliance_va, hvac_va
+    from .loads import nec_220_82
+
+    e = "systems.electrical."
+    erv, heater, radiant = kind
+    appl = [appliance_va(p, k) for k in APPLIANCES if k != "erv"]
+    if erv:
+        appl.append(p[e + "erv_va"] + (p[e + "manifold_controls_va"] if radiant else 0.0))
+    if heater:
+        appl.append(p["baseline.usual.heater_va"])
+    hvac = hvac_va(p, p[e + "heat_demand_220_82"]) if erv else p[e + "cooling_va"]
+    return nec_220_82(ft2, appl, hvac, p), hvac
+
+
+def feeder_sizes(apt: dict, p: dict, s7: dict, kind: tuple[bool, bool, bool]) -> dict[str, dict]:
+    """Each flat's feeder for flats that carry `kind`, as `electrical.feeders` sizes it (the breaker by
+    the load; the conductors by the breaker's 83% and the load, then larger until the drop is within
+    the design's limit), from the engineered design's size up, on its routed length."""
+    from .baseline import FT2
+    from .electrical import FEEDER_CONDUIT, FEEDER_METAL, FLAT_SYSTEM, SIZES, ampacity, feeder_drop, impedance, next_standard, split_load
+
+    w = "systems.wiring."
+    out = {}
+    for f in apt["flats"]:
+        fd = s7["electrical"]["feeders"][f["name"]]
+        ld, hvac = flat_load(p, f["floor_m2"] / FT2, kind)
+        va_ll, va_ln = split_load(p, ld["calculated_va"], hvac)
+        z0 = feeder_drop(complex(0.0, 0.0), 0.0, va_ll, va_ln, va_ln, p[w + "pf"], FLAT_SYSTEM)
+        amps = max(z0["ia"], z0["ib"])
+        breaker = max(next_standard(amps, p), p[w + "feeder_min_a"])
+        least = max(amps, p[w + "feeder_83_fraction"] * breaker if 100 <= breaker <= 400 else breaker)
+        i = SIZES.index(fd["size"])
+        while ampacity(SIZES[i], FEEDER_METAL, 75) < least - 1e-9:
+            i += 1
+        while True:
+            d = feeder_drop(impedance(SIZES[i], FEEDER_METAL, FEEDER_CONDUIT), fd["ft"], va_ll, va_ln, va_ln, p[w + "pf"], FLAT_SYSTEM)
+            if max(d["ll"], d["an"], d["bn"]) <= p[w + "vd_feeder_max"] + 1e-12:
+                break
+            i += 1
+        out[f["name"]] = {"ft": fd["ft"], "from": fd["size"], "to": SIZES[i], "amps": amps, "breaker_a": breaker, "from_breaker_a": fd["breaker_a"],
+                          "least_a": least, "ampacity": ampacity(SIZES[i], FEEDER_METAL, 75), "drop": max(d["ll"], d["an"], d["bn"])}
+    return out
+
+
+def prepare(r10: dict, apt: dict, p: dict) -> dict:
+    """`ranges.prepare`'s, and each kind of flat's feeders at the central inputs `p` (`feeder_sizes`)."""
+    from .ranges import prepare as fixed
+
+    fx = fixed(r10, apt, p)
+    fx["feeders"] = {kind: feeder_sizes(apt, p, fx["s7"], kind) for kind in KINDS}
+    return fx
+
+
+def upsizing(sizes: dict[str, dict], p: dict) -> float:
+    """What upsizing the feeders `sizes` (`feeder_sizes`) adds, the building's (USD): each upsized
+    feeder's length at its new class's installed price less its old's."""
+    from .pricing import installed
+
+    return sum((installed(FEEDER_CLASS[v["to"]], p) - installed(FEEDER_CLASS[v["from"]], p)) * v["ft"] for v in sizes.values() if v["to"] != v["from"])
+
+
+def walkups(fx: dict, p: dict, sp: dict | None = None, hw: dict | None = None):
+    """A walk-up by its choices on inputs `p`: `walkup(have, hw_else)` gives its cost a flat (up front,
+    replacements, running and upkeep a year, and over the years counted) and its energy, memoized.
+    Shared by 10g and 10h (`quality.py`). Returns (walkup, sp, hw, the annuity, the network shares)."""
     from . import energy, pricing
     from .cost import annuity
     from .ranges import wear
@@ -138,38 +220,56 @@ def evaluate(fx: dict, p: dict, sp: dict | None = None, hw: dict | None = None) 
                 part = wr[src]["purpose"].get(why, ZERO)
                 rep, upk = rep + part["replace"], upk + part["upkeep"]
             up += fee if FEE in have else 0.0
+            feeders = upsizing(fx["feeders"][flat_kind(have, hw_else)], p) / n if FEE in have else 0.0
+            up += feeders
             m = c["meters"]
             run = c["total"] / n
-            memo[key] = {"up": up, "replace": rep, "running": run, "upkeep": upk, "life": up + rep + (run + upk) * a_T,
+            memo[key] = {"up": up, "feeders": feeders, "replace": rep, "running": run, "upkeep": upk, "life": up + rep + (run + upk) * a_T,
                          "kwh": (m["flats"] + m["house"] + m["pv"]) / n, "heat_mwh": m["heat"] / 1000 / n,
                          "gas_kwh": (m["gas flats"] + m["gas house"]) / n}
         return memo[key]
 
+    return walkup, sp, hw, a_T, nw
+
+
+def diff(o: dict, label: str, a: dict, b: dict) -> None:
+    """Walk-up `a` less walk-up `b` (`walkups`), into `o` under `label`."""
+    o[f"d life {label}"] = a["life"] - b["life"]
+    o[f"d up {label}"] = a["up"] - b["up"]
+    o[f"d replace {label}"] = a["replace"] - b["replace"]
+    o[f"d year {label}"] = (a["running"] + a["upkeep"]) - (b["running"] + b["upkeep"])
+    o[f"d kwh {label}"] = a["kwh"] - b["kwh"]
+    o[f"d heat {label}"] = a["heat_mwh"] - b["heat_mwh"]
+    o[f"d gas {label}"] = a["gas_kwh"] - b["gas_kwh"]
+
+
+def network_life(p: dict, share: dict, heat_mwh: float, a_T: float) -> float:
+    """A flat's share of the heat network (`pricing.network_share`, one case) over the years counted:
+    its capital, its upkeep and the network's pumping for the heat the flat takes."""
+    b = "pass3.block."
+    year = p[b + "om_share"] * share["flat"] + p[b + "pump_share"] * heat_mwh * p["cost.energy.elec_usd_mwh"]
+    return share["flat"] + year * a_T
+
+
+def evaluate(fx: dict, p: dict, sp: dict | None = None, hw: dict | None = None) -> tuple[dict, dict, dict]:
+    """10g on inputs `p` (`ranges.evaluate`'s signature, for its draws and tornado): each choice's
+    20-year cost taken out of the engineered design and, for `ADDED`, added to the usual walk-up; a
+    flat, USD 2026. Returns (figures, sp, hw)."""
+    walkup, sp, hw, a_T, nw = walkups(fx, p, sp, hw)
     o: dict[str, float] = {"annuity": a_T}
-
-    def diff(label: str, a: dict, b: dict) -> None:
-        o[f"d life {label}"] = a["life"] - b["life"]
-        o[f"d up {label}"] = a["up"] - b["up"]
-        o[f"d replace {label}"] = a["replace"] - b["replace"]
-        o[f"d year {label}"] = (a["running"] + a["upkeep"]) - (b["running"] + b["upkeep"])
-        o[f"d kwh {label}"] = a["kwh"] - b["kwh"]
-        o[f"d heat {label}"] = a["heat_mwh"] - b["heat_mwh"]
-        o[f"d gas {label}"] = a["gas_kwh"] - b["gas_kwh"]
-
     full, none = walkup(FULL), walkup(NONE)
     o["life engineered"], o["life electric"], o["life central"] = full["life"], none["life"], walkup(NONE, "central")["life"]
-    diff("whole", full, none)
+    diff(o, "whole", full, none)
     for c in KEYS + (FEE,):
-        diff(f"out {c}", full, walkup(FULL - {c}))
-    diff("out plant, central", full, walkup(FULL - {"plant"}, "central"))
-    diff("out dc", full, walkup(FULL - DC))
+        diff(o, f"out {c}", full, walkup(FULL - {c}))
+    o["feeders out plant"] = walkup(FULL - {"plant"})["feeders"]  # the feeders each flat's own heater would upsize
+    diff(o, "out plant, central", full, walkup(FULL - {"plant"}, "central"))
+    diff(o, "out dc", full, walkup(FULL - DC))
     for c in ADDED:
-        diff(f"in {c}", walkup(frozenset({c})), none)
+        diff(o, f"in {c}", walkup(frozenset({c})), none)
     o["d life interaction"] = o["d life whole"] - sum(o[f"d life out {c}"] for c in KEYS + (FEE,))
-    b = "pass3.block."
     for case, v in nw.items():
-        year = p[b + "om_share"] * v["flat"] + p[b + "pump_share"] * full["heat_mwh"] * p["cost.energy.elec_usd_mwh"]
-        o[f"d life out dc, network {case}"] = o["d life out dc"] + v["flat"] + year * a_T
+        o[f"d life out dc, network {case}"] = o["d life out dc"] + network_life(p, v, full["heat_mwh"], a_T)
     return o, sp, hw
 
 
@@ -258,7 +358,7 @@ def run(r10: dict, pr: dict, en: dict, co: dict, apt: dict, params: dict, n: int
     n = n or ranges.DRAWS
     seed = seed or ranges.SEED
     p = values(params)
-    fx = ranges.prepare(r10, apt, p)
+    fx = prepare(r10, apt, p)
     central, sp0, hw0 = evaluate(fx, p)
     ten, _, _ = ranges.evaluate(fx, p, sp0, hw0)
     parity = max(abs(central[k] - ten[k]) for k in ("life engineered", "life electric", "life central"))
@@ -322,7 +422,8 @@ def what_it_buys(key: str, r: dict, p: dict) -> str:
                 f"{c['d heat out radiant']:.1f} MWh of the data center's heat a year, and {elec('out radiant')}, net of the floors' pump")
     if key == "out plant":
         return (f"{c['d heat out plant']:.1f} MWh of the data center's heat a year, and {elec('out plant')}, net of the plant's own; no heater in each "
-                f"flat's closet. Against it: the tub's worst wait {b['tub_wait_s'][0]:.0f} s, against {b['tub_wait_s'][1]:.0f} s from a flat's own heater")
+                f"flat's closet, whose load would take {_usd(c['feeders out plant'])} a flat of larger feeders (10h). Against it: the tub's worst "
+                f"wait {b['tub_wait_s'][0]:.0f} s, against {b['tub_wait_s'][1]:.0f} s from a flat's own heater")
     if key == "out erv":
         e, u = b["bed_cfm"]["engineered"], b["bed_cfm"]["usual"]
         return (f"outdoor air to every bedroom, {e[0]:.1f}-{e[1]:.1f} cfm a person by duct at {b['erv_c']:.1f} C or more, against {u[0]:.1f}-{u[1]:.1f} "
