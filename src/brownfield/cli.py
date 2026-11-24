@@ -776,20 +776,33 @@ def cmd_fire(_args) -> int:
     return 0 if all(ok for _, ok, _ in s["checks"]) else 1
 
 
+def _design_params(args) -> dict:
+    """The parameters with the design `--design` names (the network or the edge design), else the
+    one `systems.design.network` names."""
+    from . import designs
+
+    params = load_params()
+    d = getattr(args, "design", None)
+    return designs.network(params) if d == "network" else designs.edge(params) if d == "edge" else params
+
+
 def cmd_routes(args) -> int:
     import json
 
-    from . import routecheck, routes, routing, systems
+    from . import designs, routecheck, routes, routing, systems
 
-    P = values(load_params())
+    P = values(_design_params(args))
+    files = designs.paths(P)
     apt = systems.load(systems.latest_model())
     if getattr(args, "requests", False):
         path = routes.write_requests(apt, P)
-        print("wrote " + str(path.relative_to(OUT_DIR.parent)) + "; now `cargo run --release -- routes-json` in forge/, then `brownfield routes`")
+        rel = lambda q: str(q.relative_to(OUT_DIR.parent)).replace("\\", "/")  # noqa: E731
+        print("wrote " + rel(path) + f"; now `cargo run --release -- routes-json {rel(path)} {rel(files['routes'])}` in forge/ "
+              f"(from the repo root's paths), then `brownfield routes --design {designs.name(P)}`")
         return 0
     s = routing.summary(apt, P)
     print(routing.report(s))
-    out = OUT_DIR / "pass3" / "routes-7a.json"
+    out = files["7a"]
     out.write_text(json.dumps(s, indent=1, default=str) + NL, encoding="utf-8")
     print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
     ok = all(c for _, c, _ in s["checks"])
@@ -799,12 +812,12 @@ def cmd_routes(args) -> int:
         print(NL + "FAIL no routes yet: `brownfield routes --requests`, then `cargo run --release -- routes-json` in forge/")
         return 1
     ch = routecheck.checks(apt, P, body, rt, routing.load_frame(apt, P), sha)
-    print(NL + "7b, forge's routes (" + str(routecheck.ROUTES.relative_to(OUT_DIR.parent)) + f", {rt['seconds']:.0f} s):")
+    print(NL + "7b, forge's routes (" + str(files["routes"].relative_to(OUT_DIR.parent)) + f", {rt['seconds']:.0f} s):")
     for label, c, detail in ch:
         print(("ok   " if c else "FAIL ") + label + ": " + detail)
     q = routecheck.quantities(body, rt)
     print(NL + "Routed, by system and outside diameter: " + "; ".join(f"{r['system']} {r['od_in']:g} in. {r['m']:.0f} m" for r in q))
-    out = OUT_DIR / "pass3" / "routes-7b.json"
+    out = files["7b"]
     out.write_text(json.dumps({"checks": ch, "quantities": q, "penetrations": routecheck.penetrations(apt, P, body, rt),
                                "requests_sha": sha}, indent=1) + NL, encoding="utf-8")
     print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
@@ -813,23 +826,23 @@ def cmd_routes(args) -> int:
     rts = routed.load(apt, P, body)
     s7 = routed.summary(apt, P, rts)
     print(NL + routed.report(s7))
-    out = OUT_DIR / "pass3" / "routes-7c.json"
+    out = files["7c"]
     out.write_text(json.dumps({k: v for k, v in s7.items() if k in ("checks", "asks", "stale", "incomplete")}
                               | ({"fire": {k: s7["fire"][k] for k in ("sizes", "grew", "worst", "target_psi")}} if "fire" in s7 else {}),
                               indent=1, default=str) + NL,
                    encoding="utf-8")
     print(NL + "wrote " + str(out.relative_to(OUT_DIR.parent)))
-    grew = routed.grow(s7["asks"])
+    grew = routed.grow(s7["asks"], P)
     if grew:
-        print("sizes grew (" + json.dumps(grew) + ", data/route_sizes.json): route again: `brownfield routes --requests`, "
-              "`cargo run --release -- routes-json` in forge/, `brownfield routes`")
+        print("sizes grew (" + json.dumps(grew) + f", {files['sizes'].relative_to(OUT_DIR.parent)}): route again: "
+              f"`brownfield routes --requests --design {designs.name(P)}`, forge's `routes-json`, `brownfield routes`")
     ok7d = True
     if getattr(args, "ifc", False):
         # 7d: the services as IFC, checked, and the schedules read back from it.
         from . import servicesifc
         sd = servicesifc.run(apt, P, routes=rts, s7=s7)
         print(NL + servicesifc.report(sd))
-        out = OUT_DIR / "pass3" / "routes-7d.json"
+        out = files["7d"]
         out.write_text(json.dumps({"checks": sd["checks"], "model": sd["path"].name if "path" in sd else None, "elements": sd.get("elements"),
                                    "counts": sd.get("counts"), "conduit_bends": sd.get("conduit_bends"),
                                    "firestop": sd.get("schedules", {}).get("firestop")},
@@ -912,17 +925,24 @@ def cmd_round(args) -> int:
     return 1 if r["problems"] else 0
 
 
+def _step10() -> tuple[dict, dict, dict]:
+    """Step 10's inputs: the params with the network design named (`designs.network`, whatever the
+    bid set's), their values and Addendum 5's model (`baseline.model`)."""
+    from . import baseline, designs
+
+    params = designs.network(load_params())
+    return params, values(params), baseline.model()
+
+
 def cmd_baseline(args) -> int:
     from . import baseline
 
-    r = baseline.run()
+    params, P, apt = _step10()
+    r = baseline.run(apt, P)
     text = baseline.report(r)
     print(text.split(NL + NL + "The walk-ups:")[0])
     print(NL + f"{len(r['items'])} items in the lists (out/pass3/baseline.md has them all)")
-    from . import ROOT, comfort, energy, pricing, ranges, savings, systems
-
-    params = load_params()
-    P, apt = values(params), systems.load(systems.latest_model())
+    from . import ROOT, comfort, energy, pricing, ranges, savings
     pr = pricing.run(r, apt, P)
     print(NL + pricing.report(pr))
     en = energy.run(r, pr, apt, P)
@@ -949,11 +969,10 @@ def cmd_baseline(args) -> int:
 
 
 def cmd_choices(args) -> int:
-    from . import ROOT, baseline, choices, comfort, energy, pricing, systems
+    from . import ROOT, baseline, choices, comfort, energy, pricing
 
-    r = baseline.run()
-    params = load_params()
-    P, apt = values(params), systems.load(systems.latest_model())
+    params, P, apt = _step10()
+    r = baseline.run(apt, P)
     pr = pricing.run(r, apt, P)
     en = energy.run(r, pr, apt, P)
     co = comfort.run(r, en, apt, P)
@@ -973,11 +992,10 @@ def cmd_choices(args) -> int:
 
 
 def cmd_quality(args) -> int:
-    from . import ROOT, baseline, comfort, energy, pricing, quality, systems
+    from . import ROOT, baseline, comfort, energy, pricing, quality
 
-    r = baseline.run()
-    params = load_params()
-    P, apt = values(params), systems.load(systems.latest_model())
+    params, P, apt = _step10()
+    r = baseline.run(apt, P)
     pr = pricing.run(r, apt, P)
     en = energy.run(r, pr, apt, P)
     co = comfort.run(r, en, apt, P)
@@ -1255,7 +1273,8 @@ def main(argv=None) -> int:
     sub.add_parser("questions", help="pass 3g step 8b: a question sheet for each trade (plumber, HVAC, electrician, sprinkler contractor), for the installers' round")
     sub.add_parser("sheets", help="pass 3g step 8a: the services drawn as sheets from the published models (plans of each storey for each trade, the plumbing walls in elevation, the diagrams and schedules), for the installers' round")
     rq = sub.add_parser("routes", help="pass 3g step 7: the services placed and routed through the frame (7a: the fixtures, the plumbing walls' risers, the feeder chases, the soffits, the ERV terminations, the roof's outdoor units; 7b: forge's routes, checked; 7c: steps 3-6 on the routes; 7d with --ifc: the services model and its schedules)")
-    rq.add_argument("--requests", action="store_true", help="write out/pass3/route-requests.json for forge's `routes-json` (7b) and stop")
+    rq.add_argument("--requests", action="store_true", help="write the design's requests (out/pass3/route-requests.json for the network design) for forge's `routes-json` (7b) and stop")
+    rq.add_argument("--design", choices=("network", "edge"), default=None, help="the walk-up's design (`designs.py`): the network design (Addenda 2-10) or the edge design (Addendum 11); default the one systems.design.network names")
     rq.add_argument("--ifc", action="store_true", help="also 7d: the services as IFC (out/pass3/services), checked, with its schedules")
     rq.add_argument("--publish", action="store_true", help="retired: the services model is published with its addendum (`brownfield systems --ifc --publish`)")
     sub.add_parser("fire", help="pass 3g step 6: sprinklers and alarms: the one stair, NFPA 13R layout and hydraulics, the stair's enclosure, smoke alarms, the roof hatch")

@@ -18,15 +18,12 @@ frame, the requests and the code's own numbers rather than taken from forge's re
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import numpy as np
 
-from . import OUT_DIR
 from .routing import FT, IN, ceiling_z
 
 R = "systems.routing."
-ROUTES = OUT_DIR / "pass3" / "routes.json"
 
 
 def _attached(req: dict, owner: str) -> bool:
@@ -459,8 +456,10 @@ def quantities(body: dict, rt: dict) -> list[dict]:
 def load(apt: dict, p: dict) -> tuple[dict, dict | None, str]:
     """The requests as they stand (worked out afresh), and forge's routes if it has run: (requests,
     routes or None, the requests' hash)."""
+    from .designs import paths
     from .routes import requests
 
     body = requests(apt, p)
-    rt = json.loads(ROUTES.read_text(encoding="utf-8")) if Path(ROUTES).exists() else None
+    path = paths(p)["routes"]
+    rt = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
     return body, rt, body["requests_sha"]

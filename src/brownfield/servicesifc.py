@@ -42,16 +42,15 @@ from pathlib import Path
 
 import numpy as np
 
-from . import OUT_DIR
-
 FT, IN = 0.3048, 0.0254
-OUT = OUT_DIR / "pass3" / "services"
+# Each design's services model goes to its own folder (`designs.paths(p)["services"]`; the network
+# design's is out/pass3/services) as `services-<issue>.ifc`, the issue the design's (`designs.ISSUE`).
 REVISION = "addendum-5"  # the frame the services are routed through (routing.FRAME); it keys their GlobalIds
-# The addendum that issues this services model: Addendum 5 issued the first (services-addendum-5.ifc,
-# published as it was); Addendum 7 (pass 3g step 9d) the revised one, each flat's hot-water loop and
-# the plant's tanks and backup heater in it; Addendum 10 the three feeders made larger for the drop
-# with their grounds grown in proportion (NEC 250.122(B), found by 10h), no geometry changed.
-ISSUE = "addendum-10"
+# The addenda that issued a services model: Addendum 5 the first (services-addendum-5.ifc, published
+# as it was); Addendum 7 (pass 3g step 9d) the revised one, each flat's hot-water loop and the plant's
+# tanks and backup heater in it; Addendum 10 the three feeders made larger for the drop with their
+# grounds grown in proportion (NEC 250.122(B), found by 10h), no geometry changed: the network
+# design's (`designs.ISSUE`).
 S = "systems.services."
 
 # Each system: IfcDistributionSystem's type, its name, the viewer's layer.
@@ -675,7 +674,7 @@ def _place_sweeps(f, ctx, product, points, diameter: float) -> None:
     geometry.assign_representation(f, product=product, representation=f.createIfcShapeRepresentation(ctx, "Body", "AdvancedSweptSolid", items))
 
 
-def write(els: list[El], apt: dict, path: Path, source: str) -> None:
+def write(els: list[El], apt: dict, path: Path, source: str, issue: str) -> None:
     import ifcopenshell.api.aggregate as aggregate
     import ifcopenshell.api.context as context
     import ifcopenshell.api.geometry as geometry
@@ -691,7 +690,7 @@ def write(els: list[El], apt: dict, path: Path, source: str) -> None:
     f = project.create_file("IFC4")
     f.header.file_name.time_stamp = bidset.HEADER_TIME
     proj = bidset._make(f, "IfcProject", f"services/{rev}/project",
-                        f"brownfield-compute: the walk-up's services ({ISSUE}, routed through {rev}'s frame)")
+                        f"brownfield-compute: the walk-up's services ({issue}, routed through {rev}'s frame)")
     unit.assign_unit(f, units=[unit.add_si_unit(f, unit_type=t) for t in ("LENGTHUNIT", "AREAUNIT", "VOLUMEUNIT", "PLANEANGLEUNIT")])
     model = context.add_context(f, context_type="Model")
     body = context.add_context(f, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=model)
@@ -1215,7 +1214,7 @@ def listed_systems() -> dict:
         return {r["condition"]: r for r in csv.DictReader(line for line in fh if not line.startswith("#"))}
 
 
-def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None) -> dict:
+def run(apt: dict, p: dict, out: Path | None = None, routes=None, s7: dict | None = None) -> dict:
     """Build the services model from the routes (and 7c's designs on them, `s7`, if already run),
     check it, and read its schedules back."""
     from . import routed, routing
@@ -1233,8 +1232,13 @@ def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None
         return {"checks": s7["checks"]}
     placed = routing.placements(apt, p)
     els = elements(apt, p, routes, s7, placed)
-    path = out / f"services-{ISSUE}.ifc"
-    write(els, apt, path, f"forge `routes-json` on {REVISION}'s frame (requests {routes.rt['requests_sha']}); sizes from 7c's designs")
+    from .designs import issue, paths
+
+    out = out or paths(p)["services"]
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / f"services-{issue(p)}.ifc"
+    write(els, apt, path, f"forge `routes-json` on {REVISION}'s frame (requests {routes.rt['requests_sha']}); sizes from 7c's designs",
+          issue(p))
     checks = check(path, els, routes, apt, p)
     why = webifc_status()
     checks += check_webifc(path, els) if why is None else [("web-ifc reads the services model", False, why)]
@@ -1359,39 +1363,42 @@ def changes(old: Path, new: Path, tol: float = 1e-3) -> dict:
             "by_system": dict(sorted(by.items()))}
 
 
-def publish(to: Path, issued: str, addendum: int) -> dict:
-    """The services model as `ISSUE` issues it, and its schedules, into the published bid set
-    (`to`), only from a run whose model checks all passed (`out/pass3/routes-7d.json`: the file
-    whole, where forge routed it, schema valid, web-ifc's geometry where it should be). The
+def publish(to: Path, issued: str, addendum: int, p: dict) -> dict:
+    """The services model the design `p` issues (`designs.issue`), and its schedules, into the
+    published bid set (`to`), only from a run whose model checks all passed (the design's 7d record:
+    the file whole, where forge routed it, schema valid, web-ifc's geometry where it should be). The
     design's own findings (a check of the code it doesn't yet meet) don't stop it: the manifest's
     note lists them. An earlier issue's model and schedules are left as published; what this one
-    changed against the latest of them goes beside it (`changes-services-<issue>.json`, for the
-    viewer to mark). Returns the manifest's `services` entry."""
+    changed against the latest issued before it goes beside it (`changes-services-<issue>.json`, for
+    the viewer to mark). Returns the manifest's `services` entry."""
     import shutil
 
-    if f"addendum-{addendum}" != ISSUE:
-        raise SystemExit(f"the services model is {ISSUE}'s, not Addendum {addendum}'s")
-    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
+    from .designs import issue, paths
+
+    iss, files = issue(p), paths(p)
+    if f"addendum-{addendum}" != iss:
+        raise SystemExit(f"the services model is {iss}'s, not Addendum {addendum}'s")
+    rec = json.loads(files["7d"].read_text(encoding="utf-8"))
     model_checks = [c for c in rec["checks"] if not c[0].startswith(("every feeder's conduit", "every rated opening whose code"))]
     bad = [c[0] for c in model_checks if not c[1]]
     if bad:
         raise SystemExit(f"won't publish the services model: {bad}")
-    src = OUT / f"services-{ISSUE}.ifc"
+    src = files["services"] / f"services-{iss}.ifc"
     if rec.get("model") != src.name:
         raise SystemExit(f"routes-7d.json is the run of {rec.get('model')}, not {src.name}: `brownfield routes --ifc` again")
-    before = sorted((q for q in to.glob("services-addendum-*.ifc") if q.name != src.name),
+    before = sorted((q for q in to.glob("services-addendum-*.ifc") if int(q.stem.rsplit("-", 1)[1]) < addendum),
                     key=lambda q: int(q.stem.rsplit("-", 1)[1]))
     shutil.copyfile(src, to / src.name)
-    sch = to / f"services-{ISSUE}"
+    sch = to / f"services-{iss}"
     if sch.exists():
         shutil.rmtree(sch)
     sch.mkdir()
     for name in PUBLISHED_SCHEDULES:
-        shutil.copyfile(OUT / "schedules" / f"{name}.csv", sch / f"{name}.csv")
+        shutil.copyfile(files["services"] / "schedules" / f"{name}.csv", sch / f"{name}.csv")
     diff = None
     if before:
         diff = changes(before[-1], to / src.name)
-        (to / f"changes-services-{ISSUE}.json").write_text(json.dumps(diff, indent=1) + "\n", encoding="utf-8")
+        (to / f"changes-services-{iss}.json").write_text(json.dumps(diff, indent=1) + "\n", encoding="utf-8")
     open_items = []
     over = [b for b in rec["conduit_bends"] if not b["ok"]]
     if over:
@@ -1406,7 +1413,7 @@ def publish(to: Path, issued: str, addendum: int) -> dict:
             "layers": dict(sorted(layers.items())), "issued": issued,
             "files": [{"path": f"{sch.name}/{n}.csv", "label": LABELS[n]} for n in PUBLISHED_SCHEDULES],
             "status": f"Addendum {addendum}",
-            "changes": f"changes-services-{ISSUE}.json" if diff else None,
+            "changes": f"changes-services-{iss}.json" if diff else None,
             "changes_against": before[-1].name if before else None,
             "note": f"issued with Addendum {addendum}"
             + (f"; {judged} rated openings firestopped by the maker's engineering judgment" if judged else "")

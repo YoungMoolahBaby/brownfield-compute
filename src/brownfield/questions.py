@@ -27,7 +27,7 @@ from pathlib import Path
 
 from . import OUT_DIR
 from .servicesheets import SHEETS_REV
-from .servicesifc import ISSUE, nominal
+from .servicesifc import nominal
 
 OUT = OUT_DIR / "pass3" / "round"
 BIDSET = Path(__file__).resolve().parents[2] / "docs" / "pass3" / "bidset"
@@ -35,8 +35,11 @@ TRADES = {"P": "plumber", "M": "HVAC contractor", "E": "electrician", "FP": "spr
 TITLES = {"P": "Plumbing", "M": "Heating, cooling and air", "E": "Electrical", "FP": "Sprinklers"}
 
 
-def _rows(name: str) -> list[dict]:
-    with open(BIDSET / f"services-{ISSUE}" / f"{name}.csv", encoding="utf-8") as fh:
+def _rows(name: str, p: dict) -> list[dict]:
+    """A schedule of the services model the design `p` last issued, as published."""
+    from .designs import issue
+
+    with open(BIDSET / f"services-{issue(p)}" / f"{name}.csv", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
 
 
@@ -54,9 +57,11 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
     esp = [d["ms"]["esp"] for d in s7["ducts"].values()]
     ms_hi = s7["limits"]["ms_hi"]
     lines = [c["line_ft"] for c in s7["cooling"].values()]
-    bends = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))["conduit_bends"]
-    holes = _rows("holes")
-    fire = _rows("firestop")
+    from .designs import paths
+
+    bends = json.loads(paths(p)["7d"].read_text(encoding="utf-8"))["conduit_bends"]
+    holes = _rows("holes", p)
+    fire = _rows("firestop", p)
     judged = sum(int(r["count"]) for r in fire if r["F"] and "listed" in r["asks"].split(";")[0] and r["fit"] in ("partial", "none"))
     cpvc_none = sum(int(r["count"]) for r in fire if r["F"] and r["fit"] == "none" and "CPVC" in r["penetrant"])
     house = el["service"]["house"]

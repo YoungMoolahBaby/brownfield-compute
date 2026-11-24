@@ -1106,10 +1106,16 @@ fn clashes(solids: &[Solid], attach: &std::collections::HashMap<String, Request>
     pairs.into_iter().map(|(a, b)| json!([a, b])).collect()
 }
 
+/// The request and route files of `routes-json [requests] [routes]`, relative to the repo's root:
+/// the network design's by default; the edge design's are given (`brownfield routes --requests
+/// --design edge` prints them).
+pub const REQUESTS: &str = "out/pass3/route-requests.json";
+pub const ROUTES: &str = "out/pass3/routes.json";
+
 /// `routes-json`: every request, in order, then the clash check.
-pub fn run(root: &std::path::Path) -> std::io::Result<()> {
+pub fn run(root: &std::path::Path, requests: &str, routes: &str) -> std::io::Result<()> {
     let t0 = std::time::Instant::now();
-    let rq: Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/route-requests.json"))?)?;
+    let rq: Value = serde_json::from_str(&std::fs::read_to_string(root.join(requests))?)?;
     let rules = Rules::from_json(&rq["rules"]);
     let fv: Value = serde_json::from_str(&std::fs::read_to_string(root.join(rq["frame"].as_str().unwrap()))?)?;
     let frame = Frame::from_json(&fv, &rules);
@@ -1180,7 +1186,7 @@ pub fn run(root: &std::path::Path) -> std::io::Result<()> {
     let env = json!({"source": "forge `routes-json` (CortenForge 0.9, cf-spatial's grid; our A*)", "geometry_sha": rq["geometry_sha"],
                      "framing_sha": rq["framing_sha"], "requests_sha": rq["requests_sha"], "routes": out, "clashes": cl,
                      "seconds": t0.elapsed().as_secs_f64()});
-    let path = root.join("out/pass3/routes.json");
+    let path = root.join(routes);
     std::fs::write(&path, serde_json::to_string(&env)?)?;
     println!("{} routes, {} clashes, {:.1} s: {}", env["routes"].as_array().unwrap().len(), cl.len(), t0.elapsed().as_secs_f64(), path.display());
     Ok(())
@@ -1188,8 +1194,8 @@ pub fn run(root: &std::path::Path) -> std::io::Result<()> {
 
 /// `routes-debug <id>`: one request's grid, written out to look at (`out/pass3/route-debug.json`):
 /// its origin, voxel and size, each cell's class run-length coded, and where its ends snapped.
-pub fn debug(root: &std::path::Path, id: &str) -> std::io::Result<()> {
-    let rq: Value = serde_json::from_str(&std::fs::read_to_string(root.join("out/pass3/route-requests.json"))?)?;
+pub fn debug(root: &std::path::Path, id: &str, requests: &str, routes: &str) -> std::io::Result<()> {
+    let rq: Value = serde_json::from_str(&std::fs::read_to_string(root.join(requests))?)?;
     let rules = Rules::from_json(&rq["rules"]);
     let fv: Value = serde_json::from_str(&std::fs::read_to_string(root.join(rq["frame"].as_str().unwrap()))?)?;
     let frame = Frame::from_json(&fv, &rules);
@@ -1202,7 +1208,7 @@ pub fn debug(root: &std::path::Path, id: &str) -> std::io::Result<()> {
     let mut routed = Vec::new();
     let mut holes = Vec::new();
     let index: std::collections::HashMap<&str, usize> = frame.ids.iter().enumerate().map(|(k, s)| (s.as_str(), k)).collect();
-    if let Ok(t) = std::fs::read_to_string(root.join("out/pass3/routes.json")) {
+    if let Ok(t) = std::fs::read_to_string(root.join(routes)) {
         let rv: Value = serde_json::from_str(&t)?;
         let reqs: std::collections::HashMap<String, &Value> = rq["requests"].as_array().into_iter().flatten()
             .map(|r| (r["id"].as_str().unwrap().to_string(), r)).collect();

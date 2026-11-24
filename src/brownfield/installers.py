@@ -313,10 +313,11 @@ def public_log(entries: list[dict], s: dict) -> str:
     return "\n".join(lines)
 
 
-def publish(entries: list[dict], forms: dict[str, Path], to: Path = PUBLISHED) -> dict:
+def publish(entries: list[dict], forms: dict[str, Path], to: Path = PUBLISHED, p: dict | None = None) -> dict:
     """The question forms, the public log and each consented comment's BCF topic into the plan
     room's round folder, and the round's state (`round.json`) the manifest carries. A comment
-    without its author's yes is never written there."""
+    without its author's yes is never written there. Its elements are found in the services model
+    the design `p` (else the bid set's, as the params name it) last issued."""
     from .servicesheets import services
 
     to.mkdir(parents=True, exist_ok=True)
@@ -333,9 +334,10 @@ def publish(entries: list[dict], forms: dict[str, Path], to: Path = PUBLISHED) -
     shown = [e for e in entries if e.get("publish") is True]
     where = {}  # a services element's GlobalId and where it is, by its key
     if any(e.get("elements") for e in shown):
-        from .servicesifc import ISSUE
+        from .designs import issue
+        from .params import load_params, values
 
-        for r in services(BIDSET / f"services-{ISSUE}.ifc"):
+        for r in services(BIDSET / f"services-{issue(p or values(load_params()))}.ifc"):
             pts = np.asarray(r["sweep"] if r["sweep"] is not None else r["box"], float)
             where[r["key"]] = (r["gid"], pts.mean(axis=0))
     rfis = []
@@ -381,7 +383,7 @@ def run(apt: dict, p: dict, publish_to: Path | None = None, intake: Path = INTAK
     if publish_to is not None:
         if problems:
             raise SystemExit("won't publish: the log has problems:\n  " + "\n  ".join(problems))
-        out["published"] = publish(entries, q["pdfs"], publish_to)
+        out["published"] = publish(entries, q["pdfs"], publish_to, p)
         set_manifest(publish_to.parent)
     return out
 

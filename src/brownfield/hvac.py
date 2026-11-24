@@ -398,7 +398,7 @@ def substation(apt: dict, p: dict, alt_covering: bool = False, routes=None) -> d
         # path with the margin in hand (9c: at the velocity limit's sizes alone it didn't).
         from .routed import grown
 
-        start = max(max(r["pipe_in"] for r in risers.values()), grown().get("loop_riser_in", {}).get("loop", 0.0))
+        start = max(max(r["pipe_in"] for r in risers.values()), grown(p).get("loop_riser_in", {}).get("loop", 0.0))
         for size in [n for n in PEX_SIZES_IN if n >= start]:
             rl = routed_building_loop(apt, p, routes, flats, supply - 5, meters, riser_in=size)
             if ft_of(rl["head"][rl["worst"]]) * (1 + margin) <= curve + 1e-9:

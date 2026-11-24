@@ -149,6 +149,13 @@ phius:
     source: "Phius 2024 Guidebook 1.5.2.3 (p. 186), Compartmentalization: 'Individual dwelling unit compartmentalization testing shall be performed to test the air barrier integrity of each dwelling unit'; 'The test threshold shall be 0.3 CFM50 / sq ft of unit Shell/Envelope'. The same as PA 2021 IECC R402.4.1.2's exception for dwelling units tested one by one: 'an air leakage rate not exceeding 0.30 cubic feet per minute per square foot ... of the dwelling unit enclosure area'"
 
 design:
+  # Which of the walk-up's two designs (`designs.py`). Step 10's report always prices the network
+  # design (`designs.network`); the bid set takes the design this names.
+  network:
+    value: 1
+    unit: the walk-up's design, 1 on the data center's heat network (Addenda 2-10), 0 for a town's edge (Addendum 11)
+    conf: decision
+    source: "Jon, 2026-11-24, on the bid set after 10h: '2: your call'; the call (PLAN.md D28): the quality walk-up the towns would build, off the network (D18), bid as Addendum 11. Set to 0 once Addendum 11's design is built (pass 3g step 11b)"
   heating_c:
     value: -16.3
     unit: C, the heating design dry bulb (99.6%)

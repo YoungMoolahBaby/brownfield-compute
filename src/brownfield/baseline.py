@@ -884,12 +884,15 @@ def checks(r: dict, p: dict) -> list[tuple[str, bool, str]]:
 
 def run(apt: dict | None = None, p: dict | None = None) -> dict:
     """10a: the usual walk-ups from sources, both item lists, their checks; written to
-    `out/pass3/baseline.json` and `.md`."""
-    from . import acceptance, routed, systems
+    `out/pass3/baseline.json` and `.md`. Step 10 prices the network design (`designs.network`) on
+    Addendum 5's model, whichever design the bid set's params name."""
+    from . import acceptance, designs, routed
     from .params import load_params, values
 
-    p = p or values(load_params())
-    apt = apt or systems.load(systems.latest_model())
+    p = p or values(designs.network(load_params()))
+    if not designs.on_network(p):
+        raise SystemExit("step 10 prices the network design: give it `designs.network(params)`'s values")
+    apt = apt or model()
     routes = routed.load(apt, p)
     if routes is None or not routes.fresh:
         raise SystemExit("no fresh routes for the latest model: `brownfield routes` first")
@@ -912,6 +915,13 @@ def run(apt: dict | None = None, p: dict | None = None) -> dict:
     (out / "baseline.md").write_text(report(r) + "\n", encoding="utf-8")
     r["written"] = [out / "baseline.json", out / "baseline.md", r["practice"]["derived"]]
     return r
+
+
+def model() -> dict:
+    """The building step 10 prices on: Addendum 5's (`designs.MODEL`), not whichever is latest."""
+    from . import designs, systems
+
+    return systems.load(OUT_DIR / "pass3" / designs.MODEL)
 
 
 def report(r: dict) -> str:

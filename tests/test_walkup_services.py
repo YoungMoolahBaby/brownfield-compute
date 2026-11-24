@@ -4,9 +4,11 @@ import math
 import numpy as np
 import pytest
 
-from brownfield import routing, servicesifc as sv, systems
+from brownfield import designs, routing, servicesifc as sv, systems
 from brownfield.params import load_params, values
-from brownfield.routecheck import ROUTES, penetration_hits
+from brownfield.routecheck import penetration_hits
+
+ROUTES = designs.paths(values(load_params()))["routes"]  # the routes of the design the params name
 
 IN = 0.0254
 

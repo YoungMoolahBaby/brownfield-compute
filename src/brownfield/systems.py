@@ -870,7 +870,7 @@ def addendum_8_run(params: dict) -> dict:
     model's own checks, the plant's room, the fallback, the sequence, the tests), now with E-1 held to
     the loads' leakage, and the reissued sheet. Its text, the section and the sheet go to
     `ifc_out("addendum-8")`; the published bid set is left alone."""
-    from . import acceptance, fallback, routed, routing, sequence, servicesheets, servicesifc
+    from . import acceptance, fallback, routed, routing, sequence, servicesheets
     from .params import values
 
     P = values(params)
@@ -883,8 +883,10 @@ def addendum_8_run(params: dict) -> dict:
     s7 = routed.summary(apt, P, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
-    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    from .designs import issue, paths
+
+    rec = json.loads(paths(P)["7d"].read_text(encoding="utf-8"))
+    model = paths(P)["services"] / f"services-{issue(P)}.ifc"
     placed = routing.placements(apt, P)
     plant = [c for c in routing.equipment_checks(apt, P, placed["equipment"], placed["plant"], placed["soffits"])
              if "plant" in c[0]]
@@ -1046,8 +1048,10 @@ def addendum_9_run(params: dict) -> dict:
     s7 = routed.summary(apt, P, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
-    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    from .designs import issue, paths
+
+    rec = json.loads(paths(P)["7d"].read_text(encoding="utf-8"))
+    model = paths(P)["services"] / f"services-{issue(P)}.ifc"
     iso = baseline.pipe_isolation(servicesifc.read_back(baseline.SERVICES), routes, P)
     out = ifc_out("addendum-9")
     out.mkdir(parents=True, exist_ok=True)
@@ -1160,15 +1164,17 @@ def addendum_10_run(params: dict) -> dict:
     routes and the model built from them (as Addendum 9's run); every feeder's and branch circuit's
     ground against 250.122, (B) included; the model's conductors as the design sizes them; what the
     model changed against Addendum 7's (those three feeders' conductors, nothing else); their
-    conduit's fill; the reissued sheets. Its text and sheets go to `ifc_out("addendum-10")`."""
+    conduit's fill; the reissued sheets. Its text and sheets go to `ifc_out("addendum-10")`. On the
+    network design (`designs.network`), whichever the bid set's: it stays a standing check of it."""
     import csv
     import re
 
     import numpy as np
 
-    from . import electrical, pricing, routed, servicesheets, servicesifc
+    from . import designs, electrical, pricing, routed, servicesheets, servicesifc
     from .params import values
 
+    params = designs.network(params)
     P = values(params)
     if latest_model().name != "apartment-addendum-5.json":
         raise SystemExit(f"Addendum 10 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
@@ -1179,10 +1185,10 @@ def addendum_10_run(params: dict) -> dict:
     s7 = routed.summary(apt, P, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
-    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
-    if servicesifc.ISSUE != "addendum-10":
-        raise SystemExit(f"the services model is {servicesifc.ISSUE}'s, not Addendum 10's")
+    rec = json.loads(designs.paths(P)["7d"].read_text(encoding="utf-8"))
+    model = designs.paths(P)["services"] / f"services-{designs.issue(P)}.ifc"
+    if designs.issue(P) != "addendum-10":
+        raise SystemExit(f"the network design's services model is {designs.issue(P)}'s, not Addendum 10's")
     el = s7["electrical"]
     gr = feeder_grounds(el)
     short = electrical.short_grounds(el)
@@ -1340,7 +1346,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     G-001 (step 10h's finding)."""
     import shutil
 
-    from . import addendum, bidset, servicesifc
+    from . import addendum, bidset, designs, servicesifc
+    from .params import values
 
     for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-10"):
         r = runs.get(rev)
@@ -1371,7 +1378,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     for src in (ifc_out("addendum-10") / "addendum-10.md", *r10["sheets"]):
         shutil.copyfile(src, to / src.name)
         written.append(to / src.name)
-    services = servicesifc.publish(to, ISSUED[10], 10)
+    services = servicesifc.publish(to, ISSUED[10], 10, values(designs.network(params)))
     written += [to / services["model"], to / services["changes"], *(to / f["path"] for f in services["files"])]
     models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
     for n in (1, 2, 3, 4, 5):
@@ -1427,7 +1434,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
              (services["model"], "The services, IFC4, reissued: the three feeders made larger for the drop, with their grounds "
                                  "larger in proportion"),
              (services["changes"], "What the reissued services model changed against Addendum 7's, by GlobalId"),
-             (f"services-{servicesifc.ISSUE}/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
+             (f"services-{designs.ISSUE['network']}/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
              (r10["sheets"][0].name, "Sheet E-601, the one-line diagram and feeder schedule, reissued with the feeders' grounds"),
              (r10["sheets"][1].name, "Sheet G-001, the cover and general notes, reissued with Addendum 10's note")],
     }

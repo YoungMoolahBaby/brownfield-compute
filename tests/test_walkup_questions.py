@@ -20,7 +20,9 @@ def made(tmp_path_factory):
     routes = routed.load(apt, P)
     if routes is None or not routes.fresh:
         pytest.skip("no fresh routes (`brownfield routes`)")
-    if not (qn.BIDSET / f"services-{qn.ISSUE}" / "holes.csv").exists():
+    from brownfield.designs import issue
+
+    if not (qn.BIDSET / f"services-{issue(P)}" / "holes.csv").exists():
         pytest.skip("the services schedules aren't published")
     s7 = routed.summary(apt, P, routes)
     return P, s7, qn.run(apt, P, out=tmp_path_factory.mktemp("round"), s7=s7)

@@ -16,7 +16,8 @@ import yaml
 
 from . import PARAMS_DIR
 
-CONFIDENCE = ("high", "medium", "low", "placeholder")
+# "decision": a choice of the design's, fixed, its source who made it and when (not a measured number).
+CONFIDENCE = ("high", "medium", "low", "placeholder", "decision")
 
 
 @dataclass(frozen=True)

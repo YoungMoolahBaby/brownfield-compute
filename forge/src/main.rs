@@ -714,14 +714,18 @@ fn main() {
         }
         // Pass 3g step 7b (D28): the services routed through the frame, and the router's known cases.
         "routes-json" => {
-            if let Err(e) = routing::run(root) {
+            let rq = std::env::args().nth(2).unwrap_or_else(|| routing::REQUESTS.to_string());
+            let rt = std::env::args().nth(3).unwrap_or_else(|| routing::ROUTES.to_string());
+            if let Err(e) = routing::run(root, &rq, &rt) {
                 eprintln!("{e}");
                 std::process::exit(1);
             }
         }
         "routes-debug" => {
             let id = std::env::args().nth(2).unwrap_or_default();
-            if let Err(e) = routing::debug(root, &id) {
+            let rq = std::env::args().nth(3).unwrap_or_else(|| routing::REQUESTS.to_string());
+            let rt = std::env::args().nth(4).unwrap_or_else(|| routing::ROUTES.to_string());
+            if let Err(e) = routing::debug(root, &id, &rq, &rt) {
                 eprintln!("{e}");
                 std::process::exit(1);
             }

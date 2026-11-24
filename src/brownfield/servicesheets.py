@@ -1603,9 +1603,11 @@ def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path =
     s7 = s7 or routed.summary(apt, p, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    if servicesifc.ISSUE != SERVICES_REV:
-        raise SystemExit(f"the services model is {servicesifc.ISSUE}'s; the sheets are drawn from {SERVICES_REV}'s")
-    services_path = services_path or servicesifc.OUT / f"services-{SERVICES_REV}.ifc"
+    from .designs import issue, paths
+
+    if issue(p) != SERVICES_REV:
+        raise SystemExit(f"the design's services model is {issue(p)}'s; the sheets are drawn from {SERVICES_REV}'s")
+    services_path = services_path or paths(p)["services"] / f"services-{SERVICES_REV}.ifc"
     return {"bld": building(src / f"apartment-{REV}.ifc"), "rb": services(services_path), "services_path": services_path,
             "members": framing(src / f"framing-{REV}.ifc"), "s7": s7, "p": p, "routes": routes, "src": src}
 

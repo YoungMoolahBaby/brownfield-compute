@@ -152,7 +152,7 @@ def test_the_two_ducts_round_the_legs_corner_in_lanes_that_dont_meet(apt, P):
                 assert any(min(u["hi"][i], v["hi"][i]) - max(u["lo"][i], v["lo"][i]) < 1e-6 for i in range(3)), (name, u, v)
 
 
-ROUTED = pytest.mark.skipif(not __import__("brownfield.routecheck", fromlist=["ROUTES"]).ROUTES.exists(),
+ROUTED = pytest.mark.skipif(not __import__("brownfield.designs", fromlist=["paths"]).paths(values(load_params()))["routes"].exists(),
                             reason="forge's routes not written (`brownfield routes --requests`, then `cargo run --release -- routes-json` in forge/)")
 
 

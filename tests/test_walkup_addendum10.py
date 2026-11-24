@@ -60,7 +60,9 @@ def test_the_feeders_are_priced_with_the_grounds_they_carry(P):
 def test_addendum_10_is_issued_with_the_services_model_and_two_sheets():
     from brownfield import servicesheets
 
-    assert servicesifc.ISSUE == "addendum-10" and servicesheets.SERVICES_REV == "addendum-10"
+    from brownfield import designs
+
+    assert designs.ISSUE["network"] == "addendum-10" and servicesheets.SERVICES_REV == "addendum-10"
     assert servicesheets.REVISED["E-601"] == ("Addendum 10", "services-sheet-e-601-addendum-10.pdf")
     assert servicesheets.REVISED["G-001"] == ("Addendum 10", "services-sheet-g-001-addendum-10.pdf")
     assert systems.TITLES[10] and 10 in systems.ISSUED
@@ -90,7 +92,10 @@ def test_the_three_feeders_made_larger_take_6_awg_grounds_and_none_is_short(s7):
 
 
 def test_the_reissued_model_changes_only_those_feeders_conductors():
-    old, new = systems.PUBLISHED / "services-addendum-7.ifc", servicesifc.OUT / "services-addendum-10.ifc"
+    from brownfield import designs
+
+    old = systems.PUBLISHED / "services-addendum-7.ifc"
+    new = designs.paths(designs.network(load_params()))["services"] / "services-addendum-10.ifc"
     if not old.exists() or not new.exists():
         pytest.skip("Addendum 7's published services model or Addendum 10's (`brownfield routes --ifc`) isn't there")
     d = servicesifc.changes(old, new)

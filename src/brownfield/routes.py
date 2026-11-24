@@ -37,8 +37,8 @@ from .plumbing import LOOP_END  # where each flat's hot-water loop ends and its 
 from .routing import FRAME, FT, IN, annex_drops, ceiling_z, column, placements, soffit_spans
 from .systems import by_flat
 
-REQUESTS = OUT_DIR / "pass3" / "route-requests.json"
-ROUTES = OUT_DIR / "pass3" / "routes.json"
+# Each design's requests and routes: `designs.paths` (the network design's are out/pass3/route-requests.json
+# and routes.json, as they always were).
 R = "systems.routing."
 
 
@@ -183,7 +183,7 @@ def requests(apt: dict, p: dict) -> dict:
     # Step 7c's sizes, where the routed designs asked more than steps 3-6 (`routed.grow`): a flat's
     # vents a size up over 40 ft (IPC 906.2: 2 in., the vent stack's no-hub), the mains, the fire riser.
     from .routed import grown
-    gs = grown()
+    gs = grown(p)
     vent_od = lambda n: p[R + "vent_stack_od_in"] if gs.get("vent_in", {}).get(n, 1.5) >= 2.0 else p[R + "vent_od_in"]  # noqa: E731
 
     def fall(size_in: float) -> float:
@@ -751,19 +751,22 @@ def p_size(p: dict, part: str) -> str:
     from .routed import grown
 
     step6 = _fire_sizes(p).get(part, SIZE_START[part])
-    g = grown().get("fire", {}).get(part)
+    g = grown(p).get("fire", {}).get(part)
     return g if g and SIZES.index(g) > SIZES.index(step6) else step6
 
 
-_FIRE: dict = {}
+_FIRE: dict = {}  # step 6's sizes, by design (a process may work out both)
 
 
 def _fire_sizes(p: dict) -> dict:
-    if "sizes" not in _FIRE:
+    from .designs import name
+
+    d = name(p)
+    if d not in _FIRE:
         from .fire import hydraulics
         from .systems import latest_model, load
-        _FIRE["sizes"] = hydraulics(load(latest_model()), p)["sizes"]
-    return _FIRE["sizes"]
+        _FIRE[d] = hydraulics(load(latest_model()), p)["sizes"]
+    return _FIRE[d]
 
 
 def _cpvc_rows() -> list[dict]:
@@ -1080,6 +1083,11 @@ def _lanes(zones: list[dict], strip: dict, leg: dict, inside: float, facade_hi: 
 
 
 def write_requests(apt: dict, p: dict) -> Path:
+    """The requests, to the design's own file (`designs.paths`), for forge's `routes-json`."""
+    from .designs import paths
+
+    path = paths(p)["requests"]
+    path.parent.mkdir(parents=True, exist_ok=True)
     body = requests(apt, p)
-    REQUESTS.write_text(json.dumps(body) + "\n", encoding="utf-8")
-    return REQUESTS
+    path.write_text(json.dumps(body) + "\n", encoding="utf-8")
+    return path

@@ -305,12 +305,52 @@ larger with their conductors.
   feeders $130 to $157, so the plant's line $27 less) and the quality walk-up ($44, so its premium
   $27 more: $15,342 over 20 years, $121 a month). 10f, 10g and 10h rerun; every check passes.
 
-Next, my call on Jon's second question: bid the quality walk-up, as Addendum 11, before the
-installers' packets go out. Eight of the trades' 33 questions are about the plant, the floors, the
-loop and the fallback, which by D18 no town walk-up gets. Addendum 11's plan comes to Jon first:
-- a 50 gal tank doesn't fit the flats' utility closet as drawn (the ERV's access door opens over
-  its only free floor), so where the hot water comes from is the plan's first question;
-- the floors' gypsum topping stays for sound (STC 57 with it, 48 without; IBC 1206.2 asks 50).
+Addendum 11 planned, and approved by Jon (2026-11-24): the quality walk-up as the bid set, my call
+on his second question. D16 and D18 put the towns' homes on heat pumps at their edges, off the
+network, and eight of the trades' 33 questions are about the plant, the floors, the loop and the
+fallback.
+- **Two designs, one switch** (`systems.design.network`, `designs.py`): the network design
+  (Addenda 2-10, beside the campus; step 10 prices it) and the edge design (Addendum 11). Both
+  stay computable.
+- **The edge design:**
+  - **Hot water:** the central plant kept (Jon's D28: "probably 1 water heater for the apartment
+    building"), heated by an outdoor CO2 heat pump water heater (Ecosizer's own design basis, its
+    engine's reference unit SANCO2 first) in place of HX-1 and HP-1; BK-1 its backup.
+  - **Heat:** the mini-splits, with supplies to every room IBC 1204.1 asks heat of.
+  - **Dropped:** the floors, the loop, the substation, the manifolds and heat meters, the solar
+    panels and the PRV.
+  - **Kept:** the topping (for sound), the R-5 under the slab (a choice now), and the building and
+    frame as Addendum 5 issued them.
+- **Found while scoping:**
+  - a 50 gal tank doesn't fit the utility closet as drawn (10h's, with the ERV; the usual walk-ups'
+    only in front of the washer);
+  - nothing heats the bath, kitchen, entry or hall of a flat heated by its mini-split (the ducts
+    supply only the rooms cooling needs). The usual walk-ups as priced share that gap.
+  - Both are for step 10i to correct.
+- **Steps:**
+  - 11a, the switch (a refactor), done below;
+  - 11b, the edge design;
+  - 11c, its routes;
+  - 11d, Addendum 11's documents;
+  - 11e, the packets;
+  - 10i, the report: the quality walk-up as bid, and the corrections.
+
+11a done: the switch, with nothing computed changed.
+- `designs.py`:
+  - `network(params)` and `edge(params)` set the switch on the Param dict, so the Monte Carlo's
+    workers get it;
+  - `paths(p)` gives each design its own requests, routes, 7a-7d records, grown sizes and services
+    folder. The network design's stay where they were, the edge design's go under `out/pass3/edge/`;
+  - `issue(p)`: the network design's services model is Addendum 10's, the edge design's will be
+    Addendum 11's.
+- forge's `routes-json` and `routes-debug` take the request and route files.
+- Step 10 is pinned to the network design on Addendum 5's model. Addendum 10's run stays live on
+  the network design, as a standing check of it.
+- **The parity guards:**
+  - the requests and the services model (with its schedules and 7a-7d) rebuild byte for byte;
+  - 10a-10e's outputs are the same;
+  - the central run and ten sampled draws of 10f, 10g and 10h equal the saved ones exactly;
+  - republishing the addenda leaves the plan room as it is.
 
 Then the round: the packets are in `out/pass3/round/packets/`, rebuilt after Addendum 11. Its
 answers go in the addendum after it.
@@ -5575,6 +5615,62 @@ test. Then the township brief's ask.
            free floor with its access door), and 10a's closet check passes the usual walk-up's only
            by lining the pieces up. The floors' gypsum topping stays for sound (Addendum 5 item 6:
            STC 57 / IIC 59 with it; 48 without, under IBC 1206.2's 50).
+       - **Addendum 11 planned 2026-11-24, Jon approved: the quality walk-up as the bid set.**
+         - **Why:** D16 and D18 (the towns' homes on heat pumps at their edges, off the network);
+           eight of the 33 questions are about what no town walk-up gets.
+         - **Two designs, one switch** (`systems.design.network`, conf "decision"; `designs.py`).
+           Step 10 reads the live design (`baseline.run` loads the model, the routes and
+           `routed.summary`), so changing the design in place would have priced the new one as the
+           engineered design. The network design stays live for step 10 and for the campus side.
+         - **The edge design:**
+           - **Hot water:** the central plant on an outdoor CO2 heat pump water heater (single-pass,
+             Ecosizer's own basis; its engine names SANCO2), BK-1 its backup. A tank in each flat
+             doesn't fit; resistance alone isn't recommended.
+           - **Heat:** the mini-splits, every room IBC 1204.1 asks heat of supplied.
+           - **Dropped:** the floors, the loop, the substation, the manifolds, the heat meters, the
+             solar panels and the PRV (IPC 604.8 asks one only over 80 psi).
+         - **Found:**
+           - The mini-splits' ducts supply only the rooms whose cooling load passes `room_min_w`
+             (hvac.py:766-770: living, bedrooms, study). The floors heated the bath, kitchen, entry,
+             hall and passage. The usual walk-ups as priced share those ducts.
+           - In the usual walk-ups the tank fits the closet only in front of the stack, leaving
+             about 17 in. to load the washer.
+           - Both are for 10i.
+         - **Steps:** 11a the switch; 11b the edge design; 11c its routes (forge, run alone); 11d
+           Addendum 11's documents; 11e the packets; 10i the report. Each ends with its checks and
+           a stop for "commit".
+         - **11a done 2026-11-24** (a refactor; nothing computed changes):
+           - **`designs.py`:**
+             - `network`/`edge` work on the Param dict (`dataclasses.replace`), so
+               `ranges.draws`' base, which the workers rebuild each draw on, carries the design;
+             - the readers `floors`, `plant_heat`, `pv`, `prv`, `issue`;
+             - `paths(p)`.
+           - **Each design's files:**
+             - `routes.write_requests`, `routed.load`/`grown`/`grow`, `routecheck.load`,
+               `cmd_routes` (`--design`), `servicesifc.run`/`publish` and `questions` read the
+               design's own;
+             - `servicesifc.ISSUE` and `OUT` are gone for `designs.issue`/`paths`;
+             - publishing diffs a model against the latest issued before its addendum;
+             - `routes._FIRE` is cached by design.
+           - **forge:** `routes-json [requests] [routes]` and `routes-debug <id> [requests]
+             [routes]`; the defaults are the network design's files.
+           - **Step 10:** `baseline.run` refuses the edge design and defaults to the network's on
+             `designs.MODEL` (Addendum 5's); `cli._step10` for `baseline`, `choices` and
+             `quality`. `addendum_10_run` takes `designs.network(params)`.
+           - **Not yet:** the `s7["loop"]` readers branch with the edge design itself (11b), and
+             the sheets' set constants (`SHEETS_REV`, `PDF_NAME`, `REVISED`) become the design's
+             with Addendum 11's set (11d).
+           - **Parity** (snapshot `before_a11`, each guard proved first on the unchanged code):
+             - G1: the requests byte for byte;
+             - G2: `routes --ifc` gives services-addendum-10.ifc, its schedules and routes-7a..7d
+               byte for byte (1 min);
+             - G3: `baseline --draws 0`, the ten 10a-10e files byte for byte (31 s);
+             - G4: 10f, 10g and 10h's central runs and ten draws each, through
+               `designs.network`, exactly the saved .json and .npz (80 s);
+             - `systems --ifc --publish` leaves `docs/` unchanged.
+           - Tests: `tests/test_walkup_designs.py`, 4 (the switch named and fixed; what each design
+             has; each its own files, the network's where they were; step 10 on the network design
+             whatever the params name, the draws' base included).
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

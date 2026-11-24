@@ -20,15 +20,11 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field
-from pathlib import Path
 
-from . import OUT_DIR
-
-REQUESTS = OUT_DIR / "pass3" / "route-requests.json"
-ROUTES = OUT_DIR / "pass3" / "routes.json"
-# The sizes 7c asked beyond steps 3-6's, kept in git: the router's result depends on the order sizes
-# grew in, so the requests are reproducible from these, not from rerunning the cycle afresh.
-GROWN = Path(__file__).resolve().parents[2] / "data" / "route_sizes.json"
+# Each design's requests, routes and grown sizes are `designs.paths`'s. The sizes 7c asked beyond
+# steps 3-6's are kept in git (data/route_sizes.json, the edge design's route_sizes-edge.json): the
+# router's result depends on the order sizes grew in, so the requests are reproducible from these,
+# not from rerunning the cycle afresh.
 JOIN_TOL_M = 0.02  # a branch's first point within this of its parent's polyline (in plan, on a graded run)
 
 
@@ -319,12 +315,14 @@ def load(apt: dict, p: dict, body: dict | None = None) -> Routes | None:
     """forge's routes with the requests they answer: fresh only if forge routed exactly these
     requests (worked out afresh from the model and the parameters unless `body` is given) on this
     model and frame. None if forge hasn't run."""
+    from .designs import paths
     from .routes import requests
 
-    if not ROUTES.exists():
+    path = paths(p)["routes"]
+    if not path.exists():
         return None
     body = body or requests(apt, p)
-    rt = json.loads(Path(ROUTES).read_text(encoding="utf-8"))
+    rt = json.loads(path.read_text(encoding="utf-8"))
     why = []
     for k in ("requests_sha", "geometry_sha", "framing_sha"):
         if rt.get(k) != body.get(k):
@@ -347,23 +345,27 @@ def _basis() -> dict:
     return {"geometry_sha": _sha(latest_model()), "framing_sha": _sha(FRAME)}
 
 
-def grown() -> dict:
-    """The sizes step 7c's designs asked of the routes beyond steps 3-6's (`data/route_sizes.json`):
+def grown(p: dict) -> dict:
+    """The sizes step 7c's designs asked of the design's routes beyond steps 3-6's (`designs.paths`'s
+    sizes, `data/route_sizes.json` for the network design):
     {fire: {part: nominal}, vent_in: {flat: nominal}, main_in: {kind: nominal}, return_in: {"flat": nominal},
     loop_riser_in: {"loop": nominal}}, for `routes.requests`
     to route at. Only for this model and frame; empty if none or another's."""
-    if not GROWN.exists():
+    from .designs import paths
+
+    path = paths(p)["sizes"]
+    if not path.exists():
         return {}
-    g = json.loads(GROWN.read_text(encoding="utf-8"))
+    g = json.loads(path.read_text(encoding="utf-8"))
     return g if g.get("basis") == _basis() else {}
 
 
-def grow(asks: dict) -> dict:
+def grow(asks: dict, p: dict) -> dict:
     """Merge 7c's asks into the grown sizes (they only grow) and write them if anything grew. Returns
     what grew (empty if nothing)."""
     from .fire import SIZES
 
-    g = grown()
+    g = grown(p)
     out = {"source": SOURCE, "basis": _basis(), "fire": dict(g.get("fire", {})), "vent_in": dict(g.get("vent_in", {})),
            "main_in": dict(g.get("main_in", {})), "return_in": dict(g.get("return_in", {})),
            "loop_riser_in": dict(g.get("loop_riser_in", {}))}
@@ -376,7 +378,9 @@ def grow(asks: dict) -> dict:
             if v > out[key].get(k, 0.0) + 1e-9:
                 out[key][k] = new.setdefault(key, {})[k] = v
     if new:
-        GROWN.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+        from .designs import paths
+
+        paths(p)["sizes"].write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
     return new
 
 
@@ -393,7 +397,7 @@ def vents(apt: dict, p: dict, routes) -> dict:
     from .plumbing import stack_vent_in
 
     w = water(apt, p)
-    g = grown().get("vent_in", {})
+    g = grown(p).get("vent_in", {})
     flats = {}
     for f in apt["flats"]:
         t = routes.tree(f"plumbing/vent/{f['name']}")
