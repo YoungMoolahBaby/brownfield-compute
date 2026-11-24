@@ -1918,3 +1918,54 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
         paper (2021); ACEEE 2022's listings experiment; Murtishaw and Sathaye (ACEEE 2008) and IEA's
         *Mind the Gap* (2007) on the split incentive's share; Gillingham, Harding and Rapson's
         California working paper.
+  - **10f, the ranges: what wears out, the upkeep, the sleeves (2026-11-23).** Saved under
+    `data/raw/pass3g/step10/life/` (gitignored), from a research agent, the quotes used read again
+    first-hand; each param in `params/baseline.yaml` (`life`, `upkeep`, `sleeves`) quotes its
+    source. Older dollars to 2026 by CPI-U (BLS API, CUUR0000SA0): 2014 annual 236.736, 2022
+    292.655, 2023 304.702, October 2026 337.511.
+    - **DOE's technical support documents** (regulations.gov refuses scripted downloads; read from
+      the Wayback Machine's copies, each named in its param):
+      - consumer furnaces, final rule (2023): Table 8.3.7, "North 23.9 3.7 1.0 22.5 22.6"
+        (Weibull alpha, beta, delay, mean, median); maintenance 102.98 and repair 29.32 a year
+        (2022$) at 90-98% AFUE;
+      - consumer water heaters, NOPR (2023): Table 8G.4.1, "Electric Storage Water Heater* 15.7
+        1.57 1.0 15.1 13.4", "Gas-fired Storage Water Heater 15.1 1.76 1.0 14.5 13.3"; maintenance
+        and repair 11.6 and 6.3 (electric), 14.5 and 9.1 (gas, power vented) a year, averaged over
+        households of whom DOE takes 10% to flush every year; a yearly flush 191.58. The 2024 final
+        rule: "around 15 years for storage water heaters";
+      - commercial water heating, final rule (2023): gas storage "10" years (literature "Ave=11,
+        Low=7, High=15"); maintenance $319 a year condensing (2022$), repair 17; a tank of 275 gal
+        or less cleaned in 2.67 labour-hours a year (Table 8E.2.1);
+      - circulator pumps, final rule (2024): "CP1 10" (wet rotor), Weibull (8.5, 2.0, 2.5), "CP1
+        repairs were negligible";
+      - CAC/HP direct final rule, 82 FR 1786 (2017), Table IV-16: heat pumps 16.4 years in the
+        North, air conditioners 24.1. DOE "did not include maintenance costs". Its TSD (with its
+        repair costs) couldn't be read.
+      - Water-source heat pumps (2015 ASHRAE equipment final rule): "a mean of 19 years"; "$334 for
+        a heat pump rated up to 60,000 btu/h" a year, repair "$93 to $240" (2014$).
+    - **EIA, Updated Buildings Sector Appliance and Equipment Costs and Efficiencies, Appendix A**
+      (Guidehouse and Leidos, 2023): ductless mini-splits 15.3 years, Weibull (15.88, 2, 1),
+      maintenance $100 a year (2022$), "the same services identified for air-source heat pumps",
+      whose range is 20 to 150; ground-source heat pumps (17.04, 1.64, 1), $90 residential, $180
+      commercial; a commercial electric storage water heater (119 gal, 18 kW) 12 years, $50.
+    - **Multifamily tables:** HUD's CNA e-Tool EUL table (HRVs 20, bath fans 15, DHW storage tanks
+      15, heat exchanger 35, PV inverters 10); Fannie Mae Form 4099.F Appendix F; NAHB's 2007
+      *Study of Life Expectancy of Home Components* (shell-and-tube exchangers 20, HRVs "20+").
+    - **Makers:** Panasonic's bath fans "a typical life of 100,000 hours" (11.4 years running);
+      Broan's ERV manual (filters "Quarterly", the core "Every 3 Years"), a MERV 13 filter $49
+      (Sylvane); Kamstrup MULTICAL 403 "16 years" battery wall-mounted, 14 on the flow sensor;
+      Badger E-Series "20-year battery life", not replaceable; Amtrol's expansion tanks "Seven (7)
+      Year" warranty (no life found); Lochinvar's tanks "flush ... at six-month intervals and clean
+      ... in yearly intervals".
+    - **PV:** NREL's ATB 2025, commercial PV fixed O&M "$20/kWDC-yr" (2023), $17.63 for 2024;
+      NREL's Q1 2022 benchmark counts inverter replacement in it; NREL's O&M best practices (3rd
+      ed.): "$21 ± $20/kW/year for systems <10 kW".
+    - **Backflow tests:** IPC 2021 312.10.2, "at least annually"; Mister Backflow (Pittsburgh)
+      "$97 for all devices 2" and smaller"; a Westmoreland tester's "$95 Flat Rate"; filing "$20
+      fee per device" (Municipal Authority of Westmoreland County), "$13" (PA American).
+    - **The sleeves:** IPC 2021 Table 308.5, PEX "1 inch and smaller | 2.67 (32 inches)", "1-1/4
+      inches and larger | 4"; K-Flex Insul-Tube 1/2 in. wall, 6 ft, at US Supply: 1-1/8 in. ID
+      $10.53, 7/8 in. $9.00, 5/8 in. $8.43 (no Armaflex price could be read). Holdrite's SILENCER
+      isolating hangers $3.26-4.87 each, an alternative.
+    - Not found free: ASHRAE's Service Life and Maintenance Cost Database (behind a challenge
+      page); a water-to-water heat pump's life; an expansion tank's; a measured inverter life.

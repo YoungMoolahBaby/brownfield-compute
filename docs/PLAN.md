@@ -235,8 +235,19 @@ the $535 a year.
   tie price, or $62 on its dense case, under the electric and gas walk-ups' ties.
 - Found: PHFA's 2027/2028 plan drops the Passive House points its plans have given since 2015.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10f,
-the ranges and the report.
+10f done: the ranges and the report, [docs/pass3/systems.md](pass3/systems.md).
+- Over 20 years the engineered design costs $29,200 a flat more than the electric walk-up, $20,400
+  more than gas and $31,800 more than central hot water. The typical draw is higher: $34,100,
+  $24,700, $37,300.
+- It costs more in every one of 4,000 draws of the 1,015 inputs with a range, so the sign holds and
+  no private cross-check is needed for it. Central hot water is the cheapest of the four.
+- The engineering's own extra, about $2,200 a flat, is small beside the systems' $31,600.
+- The tornado's largest inputs are placeholders: what contractors pay below list, the gypsum
+  topping, the fee's share. None of them flips the sign.
+- The supply pipes' sleeves are priced ($302 a flat), still for Addendum 9.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Its
+answers, and the sleeves, go in Addendum 9.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -5210,6 +5221,75 @@ test. Then the township brief's ask.
            - an energy model leaving each tenant where they were;
            - the rent's share moving only the market-rate gap;
            - the heat's price moving the tax-credit gap by its bill.
+       - **10f done 2026-11-23: the ranges and the report** (Jon: "lets do 10f"; `uv run brownfield
+         baseline --publish`, now 10a-10f, about 35 minutes; `src/brownfield/ranges.py`; params
+         `baseline.life`, `baseline.upkeep`, `baseline.sleeves`; writes `out/pass3/ranges.md|json`
+         and `ranges_draws.npz`, and `docs/pass3/systems_20yr.png`). The report:
+         [docs/pass3/systems.md](pass3/systems.md).
+         - **How:** every input with a range (1,015) drawn together 4,000 times (`params.draw`, seed
+           2610); 10b, 10c and 10e run again for each draw in ten processes; 10a's quantities held.
+           - Over 20 years: up front, plus replacements, plus each year's running cost and upkeep at
+             pass 3's 7% (×10.59).
+           - Replacements: an item lasting L years under the years counted costs its price spread
+             over L years, every year (`wear`). What lasts 20 years or more counts once, as pass 3
+             counts all equipment.
+           - The lives and upkeep from a research agent, the quotes read again first-hand (saved in
+             `data/raw/pass3g/step10/life/`). DOE's TSDs came from the Wayback Machine, since
+             regulations.gov refuses scripted downloads. Older dollars to 2026 by CPI-U.
+           - The tornado: each input low to high, the rest central. The energy model reruns only for
+             the inputs it reads (traced).
+           - `energy.space` takes `only`, so the draws skip the case between the two (10c's split).
+         - **The sleeves (10d's finding) priced:** one at each support of the engineered PEX water
+           pipe above the slab (IPC 2021 Table 308.5's 32 in. to 1 in., 4 ft above): 876 sleeves on
+           2,417 ft, $302 a flat. The engineered design's systems are now $59,451 a flat, $31,637
+           over the electric walk-up, and 10e's up-front premium $33,871. Still for Addendum 9.
+         - **Over 20 years, a flat** (central; the typical draw, P10-P90):
+           - engineered $70,999 ($83,666, $78,126-89,455);
+           - all electric $41,753 ($49,418);
+           - gas $50,572 ($58,869);
+           - central hot water $39,193 ($46,199).
+         - **The engineered design less each usual walk-up over 20 years:**
+           - all electric $29,246 ($34,080, $30,231-38,043);
+           - gas $20,427 ($24,701, $20,209-29,317);
+           - central hot water $31,805 ($37,338, $33,985-40,837).
+           - With the network share: +$2,563 (dense), +$11,487 (base).
+         - **The sign test holds** against every usual walk-up, with and without the network. The
+           engineered design costs less in none of the 4,000 draws, so no private cross-check is
+           needed for the sign. Central hot water costs least in 99.85% of draws.
+         - **Found:**
+           - **The draws run about 16% above the central values.** Most ranges reach further up
+             than down: the list discount (0.55-1.0 around 0.75) and every labour hour (half to
+             twice). The report gives both.
+           - **The tornado's top three are placeholders:** what contractors pay below list ($26,115
+             to $33,159 against electric), the gypsum topping ($27,635-33,349), the fee's share of
+             MEP ($27,012-31,479). None flips the sign. The energy model's inputs move it under
+             $1,000 each.
+           - **Upkeep and replacements** add about $1,000 a flat over 20 years on the engineered side
+             against electric ($92 in replacements, $89 a year in upkeep).
+           - **The 4,000 draws took about 30 minutes, not the 7 timed.** Ten processes on 6 cores
+             slow each other down (each used about 1,700 s of CPU for 400 draws timed at 1.25 s
+             each); not investigated further.
+         - **What we don't know:**
+           - **No free life for a water-to-water heat pump** (HP-1 takes EIA's ground-source one),
+             or an expansion tank (a placeholder over Amtrol's 7-year warranty). The engineered
+             flats' mini-splits heat only in the fallback but take the usual flats' life.
+           - **Not counted:** fewer change orders; the meters' reading and billing; the ERV's
+             cleaning labour; a replacement in a lived-in flat costing more than new construction.
+           - **The inputs are drawn independently.** Prices that move together would widen the range.
+         - **Checks:** 4 new, 44 in all, all pass:
+           - at every input's central value, with no upkeep and nothing replaced, 10f gives 10b's,
+             10c's and 10e's figures exactly;
+           - the draws reproduce, alone or by the workers;
+           - each half of the draws gives the percentiles within 5% of their spread (4.1%);
+           - the tornado's centre is the central run.
+         - Tests: `tests/test_walkup_ranges.py`, 11. Among them:
+           - an item lasting half the years bought again once, at mid-life;
+           - no replacement at or past the years counted, and no cliff just under;
+           - upkeep a unit of its classes;
+           - the sign test and the shares;
+           - a dearer engineered-only price widening only the difference;
+           - the same draws whatever the workers;
+           - the tornado's shortcut against a full run.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

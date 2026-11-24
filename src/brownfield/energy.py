@@ -160,11 +160,11 @@ def cases(apt: dict, p: dict) -> dict:
     return {"engineered": (eng, True), "engineered at the code's leakage": (code, True), "usual": (usual, False)}
 
 
-def space(apt: dict, p: dict, wx: dict) -> dict:
+def space(apt: dict, p: dict, wx: dict, only: tuple[str, ...] | None = None) -> dict:
     """Each case's year, a flat and the building: the heat delivered, the cooling removed, the
     preheater's electricity (kWh); the hours the building needs heat (the loop pump's); and, for the
     usual walk-ups, Fujitsu's full-capacity COP weighted by the year's heat (a floor on the
-    seasonal COP taken)."""
+    seasonal COP taken). `only` runs just those cases (10f's draws need the two `ledger` reads)."""
     from .fallback import heating_table
 
     tab = heating_table()
@@ -172,6 +172,8 @@ def space(apt: dict, p: dict, wx: dict) -> dict:
     m = p["baseline.energy.mass"]
     out = {}
     for key, (case, erv) in cases(apt, p).items():
+        if only is not None and key not in only:
+            continue
         parts = flat_parts(apt, p, case)
         flats = {n: {"heat_kwh": 0.0, "cool_kwh": 0.0, "pre_kwh": 0.0} for n in parts}
         on_h, wq, wi = 0.0, 0.0, 0.0

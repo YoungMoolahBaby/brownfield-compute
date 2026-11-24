@@ -503,6 +503,13 @@ hours:
     unit: "hours a unit (each)"
     conf: placeholder
     source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid); half to twice"
+  sleeve_support:
+    value: 0.05
+    low: 0.025
+    high: 0.1
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid): a sleeve slit and slipped on at a support, about 3 minutes; half to twice"
   radiant_pex_0.5:
     value: 0.012
     low: 0.006
@@ -1368,6 +1375,13 @@ price:
       (Ferguson needs certification; no public price elsewhere). low = Consolidated Badger M25 5/8 x 3/4 in. positive-displacement direct read $279.40; high = Badger M25 5/8 x 3/4 in. with HR-E register
       $464.20 (cs_badger_m25.json). Pri'
     note: book
+  armaflex_6ft:
+    value: 10.53
+    low: 8.43
+    high: 10.53
+    unit: USD a 6 ft length of closed-cell elastomeric pipe insulation, 1/2 in. wall, material only
+    conf: medium
+    source: "US Supply (ussupply.com, read 2026-11-23; 14_ussupply_kflex_*.html in data/raw/pass3g/step10/life/): K-Flex Insul-Tube 1/2 in. wall, 6 ft: 6RX048118 (1-1/8 in. ID, the 1 in. PEX's, most of the pipe) $10.53; 6RX048078 (7/8 in. ID, 3/4 in. PEX) $9.00; 6RX048058 (5/8 in. ID, 1/2 in. PEX) $8.43, the low. No AP Armaflex price could be read (SupplyHouse, Zoro, Ferguson and Global Industrial refused automated reads); K-Flex is the same class of product (closed-cell elastomeric)"
   bath_fan_panasonic:
     value: 172.15
     low: 153.2
@@ -2909,3 +2923,240 @@ split:
     unit: share of a tenant's lower energy bill that a market rent carries, when the tenant pays the meters
     conf: low
     source: "Myers, 'Asymmetric Information in Residential Rental Markets', Energy Institute at Haas WP 246R (2018; market/myers_wp246r_2018_asymmetric_information_rental.pdf), American Housing Survey 1985-2009, Northeast rentals: 'fuel price movements cause shifts in rent in the landlord-pay regime but not the tenant-pay regime'; Table 3 col. 2 (unit fixed effects), $6.667 a month per $1/MMBTU where the landlord pays, 6.667 - 6.773 = -$0.11 where the tenant pays (p = 0.975), against 'full pass-through would be $6-$9 per month'. Hence 0. Its standard error (from F = 0.000968) puts a 95% interval of about +-$6.7, so full pass-through isn't ruled out: the high. Beside it: Fannie Mae's Green Rewards term sheet lets a lender count '25% of the tenant-projected energy and water cost savings' in underwritten cash flow (an assumption, not a measurement); Levinson and Niemann (Resource and Energy Economics 26, 2004) find, rents with all utilities included, 'With the exception of one-bedroom apartments in cold climates, the increase in rent is never large enough to offset the costs of utilities'"
+
+# Pass 3g step 10f: what wears out within the years counted, the upkeep a year, and the supply pipes'
+# sleeves (a research agent, 2026-11-23; every source saved under data/raw/pass3g/step10/life/, gitignored,
+# the quotes used checked there). Older dollars to 2026 by CPI-U (BLS API, CUUR0000SA0, saved
+# bls_cpi_api*.json): 2014 annual 236.736, 2022 292.655, 2023 304.702, 2026 M10 337.511; so x1.4257, x1.1533,
+# x1.1077. Where a source gives a Weibull distribution, low and high are its P10 and P90, computed here
+# from its parameters as t = delay + scale x (-ln(1-p))^(1/shape).
+sleeves:
+  support_ft_small:
+    value: 2.67
+    unit: ft between supports, PEX water pipe 1 in. and smaller, horizontal
+    conf: high
+    source: "IPC 2021 Table 308.5 (UpCodes, Pennsylvania Plumbing Code 2021, saved 13_upcodes_pennsylvania_ipc2021_ch3.html): 'Cross-linked polyethylene (PEX) pipe, 1 inch and smaller | 2.67 (32 inches) | 10 (b)'; note b, 'For sizes 2 inches and smaller, a guide shall be installed midway between required vertical supports'. Taken along the whole run: an upper count on the risers, which take a support every 10 ft and a guide between"
+  support_ft_large:
+    value: 4.0
+    unit: ft between supports, PEX water pipe 1-1/4 in. and larger, horizontal
+    conf: high
+    source: "IPC 2021 Table 308.5 (as support_ft_small): 'Cross-linked polyethylene (PEX) pipe, 1-1/4 inches and larger | 4 | 10 (b)'"
+  sleeve_ft:
+    value: 0.5
+    low: 0.33
+    high: 1.0
+    unit: ft of sleeve at each support
+    conf: placeholder
+    source: "judgement: a short length of closed-cell elastomeric tube under each support's clamp. Warnock and Morin (NRCC-35548, 1990, Table 5) measured the plastic pipe 'Armaflex' against 'clamped rigidly'; their sleeve's length isn't taken from them here. Beside it, a maker's isolating hanger in place of the sleeve and the hanger: Holdrite SILENCER 263 (1 in.) $4.87 each, 262 (3/4 in.) $3.26 (FaucetDepot, read 2026-11-23, 15_faucetdepot_holdrite_26*.html)"
+life:
+  minisplit_fujitsu_12_ducted:
+    value: 16.4
+    low: 6.2
+    high: 25.1
+    unit: years a ducted mini-split lasts
+    conf: medium
+    source: "DOE, CAC/HP direct final rule, 82 FR 1786 (2017-01-06), Table IV-16, mean lifetime: 'Heat Pumps... 15.3 [National] 16.4 [North]' (01_FR_2017-01-06_CAC_HP_direct_final_rule_2016-29992.htm). low/high: EIA, Updated Buildings Sector Appliance and Equipment Costs and Efficiencies, Appendix A (Guidehouse and Leidos, 2023), ductless mini-split heat pumps, p. 43: 'Average Life (y) 15.3', 'Weibull ... (15.88, 2, 1)', its P10 and P90. The engineered flats' units heat only in the fallback; taken alike"
+  ac_goodman_15ton:
+    value: 24.1
+    low: 11
+    high: 25
+    unit: years a split air conditioner lasts
+    conf: medium
+    source: "DOE, 82 FR 1786 Table IV-16: 'Central Air Conditioners... 21.2 [National] 24.1 [North]'. low/high: EIA Appendix A p. 27, central air conditioners, North, 'Average Life (y)' 11 to 25 ('Ranges represent the span of typical values')"
+  furnace_goodman_40k:
+    value: 22.5
+    low: 14.0
+    high: 30.9
+    unit: years a gas furnace lasts
+    conf: high
+    source: "DOE consumer furnaces final rule TSD (2023-09, EERE-2014-BT-STD-0031-4100; Wayback copy 20241107150035 of downloads.regulations.gov), Table 8.3.7: 'North 23.9 3.7 1.0 22.5 22.6' (alpha, beta, delay, mean, median); low/high its P10 and P90. DOE's own sensitivity cases: 'median lifetimes of 16 (low lifetime scenario) and 27 years (high lifetime scenario)' (Table 8G.4.1)"
+  aosmith_ent50:
+    value: 15.1
+    low: 4.7
+    high: 27.7
+    unit: years a flat's electric water heater lasts
+    conf: high
+    source: "DOE consumer water heaters NOPR TSD (2023-07, EERE-2017-BT-STD-0019-0058; Wayback copy 20250924141326), Table 8G.4.1: 'Electric Storage Water Heater* 15.7 1.57 1.0 15.1 13.4' (alpha, beta, delay, mean, median); low/high its P10 and P90. The 2024 final rule (89 FR 37778): 'DOE estimates the average product lifetime to be around 15 years for storage water heaters'"
+  rheem_prog40_pdv:
+    value: 14.5
+    low: 5.2
+    high: 25.3
+    unit: years a flat's gas water heater lasts
+    conf: high
+    source: "DOE consumer water heaters NOPR TSD (as aosmith_ent50), Table 8G.4.1: 'Gas-fired Storage Water Heater 15.1 1.76 1.0 14.5 13.3'; low/high its P10 and P90"
+  aosmith_bth120:
+    value: 10
+    low: 7
+    high: 15
+    unit: years the central gas water heater lasts
+    conf: medium
+    source: "DOE commercial water heating final rule TSD (2023-07, EERE-2021-BT-STD-0027-0038; Wayback copy 20240619033129), Table 8.2.16: 'Commercial gas-fired storage and instantaneous gas-fired storage water heaters 10'. low/high: its literature table 8F.1.1, 'Ave=11, Low=7, High=15 DOE' (DOE's own Weibull, Table 9.4.4, is tighter: P10 8.4, P90 11.4)"
+  aosmith_dre52:
+    value: 12
+    low: 4
+    high: 20
+    unit: years a commercial electric water heater lasts (the engineered plant's backup heater, BK-1)
+    conf: medium
+    source: "EIA Appendix A p. 151, commercial electric storage water heater, 119 gal / 18 kW: 'Average Life (y) 12'. low/high: DOE's commercial water heating TSD literature table 8F.1.1 for electric storage: 'Ave=13, Low=4, High=20 DOE'. BK-1 heats only in the fallback but stands full at the storage temperature; taken alike"
+  bradford_re340s6:
+    value: 12
+    low: 4
+    high: 20
+    unit: years the engineered plant's swing tank lasts
+    conf: low
+    source: "as aosmith_dre52 (EIA Appendix A p. 151; DOE literature 'Low=4, High=20'): a residential electric tank on a commercial duty, its element covering the loops' loss all year (10c: 14.3 MWh)"
+  climatemaster_sw036:
+    value: 16.2
+    low: 5.3
+    high: 29.3
+    unit: years the water-to-water heat pump (HP-1) lasts
+    conf: low
+    source: "EIA Appendix A p. 45, residential ground-source heat pump, 3 ton: 'Weibull ... (17.04, 1.64, 1)', mean 16.2, P10 and P90 computed. Beside it, DOE's water-source heat pumps (2015 ASHRAE equipment final rule, energy.gov pre-publication pp. 92-94): 'a Weibull probability distribution, with a mean of 19 years'. No free source gives water-to-water units; ClimateMaster's residential warranty (RP3006) excludes 'commercial applications'"
+  lochinvar_hp150g:
+    value: 15
+    low: 10
+    high: 25
+    unit: years a 150 gal storage tank lasts
+    conf: low
+    source: "HUD CNA e-Tool EUL table (08_hud_eul_for_cna_e_tool.pdf): '3.4.1.2.2 DHW storage tanks 15 15'; Fannie Mae Form 4099.F Appendix F: 'Domestic Hot Water Storage Tanks, Small (up to 150 gallons) 15'. low/high judgement: Lochinvar's warranty is 'Ten-Year Limited' in its current submittal (HPT-Sub-03), 'Five-Year Limited Tank Warranty' in its older IOM"
+  bphe_50kw:
+    value: 20
+    low: 15
+    high: 35
+    unit: years a plate heat exchanger lasts
+    conf: low
+    source: "NAHB, Study of Life Expectancy of Home Components (2007), 'Shell-and-Tube 20'; HUD CNA EUL table '3.4.1.2.19 Heat Exchanger 35 35' (the high) and 'Exchanger, in tank or boiler 15 15' (the low). No source for brazed plates"
+  grundfos_alpha2:
+    value: 10
+    low: 5.3
+    high: 15.4
+    unit: years a wet-rotor circulator lasts
+    conf: high
+    source: "DOE circulator pumps final rule TSD (2024-04, EERE-2016-BT-STD-0004-0137; Wayback copy 20260828010630), Table 8.3.4: 'CP1 10' (CP1 the wet-rotor class); its Weibull (8.5, 2.0, 2.5), P10 and P90 computed"
+  erv_broan_blp120:
+    value: 20
+    low: 11.4
+    high: 20
+    unit: years an ERV lasts
+    conf: low
+    source: "HUD CNA EUL table '3.4.3.1.12 Air filtration/humidity control devices (humidifiers, HRV's) 20 20'; NREL REMDB 2024.12.23, 'ERV/HRV' 19.4; NAHB 2007 'Heat Recovery Ventilators 20+'. low: its two fans run all year, as the bath fan's does, whose maker gives 'a typical life of 100,000 hours' (11.4 years running); Broan's own warranty 5 years"
+  bath_fan_panasonic:
+    value: 11.4
+    low: 3.4
+    high: 15
+    unit: years a bath fan running all year lasts
+    conf: medium
+    source: "Panasonic (12_panasonic_iaq_homeowner_faqs.html): 'minimum of 30,000 hours, and a typical life of 100,000 hours', running all year 3.4 and 11.4 years. high: HUD CNA EUL '3.7.2.4.6 Bath/kitchen vent/exhaust fans 15 15'"
+  exp_tank_dhw_small:
+    value: 10
+    low: 7
+    high: 20
+    unit: years an expansion tank lasts
+    conf: placeholder
+    source: "no free life figure found; low the maker's warranty, Amtrol MC10253 (10/26): 'Thermal Expansion Tanks ST-1 through ST-12 Seven (7) Year'; the value and high judgement"
+  exp_tank_dhw_large:
+    value: 10
+    low: 7
+    high: 20
+    unit: years an expansion tank lasts
+    conf: placeholder
+    source: "as exp_tank_dhw_small"
+  exp_tank_hydronic:
+    value: 10
+    low: 7
+    high: 20
+    unit: years an expansion tank lasts
+    conf: placeholder
+    source: "as exp_tank_dhw_small; Amtrol MC10253: 'Extrol Expansion Tanks EX-PRO & EX Seven (7) Year Limited Warranty'"
+  kamstrup_403:
+    value: 16
+    low: 14
+    high: 16
+    unit: years a heat meter lasts (its battery's life, taken as the meter's)
+    conf: medium
+    source: "Kamstrup MULTICAL 403 data sheet 58101436_L1_GB_09.2020, p. 10: 'Wall-mounted 16 years @ tBAT < 30 C ... Mounted on flow sensor 14 years @ tBAT < 40 C'"
+  badger_eseries_34:
+    value: 20
+    low: 19
+    high: 20
+    unit: years a water submeter lasts (its sealed battery's life)
+    conf: medium
+    source: "Badger E-Series cold water data sheet: 'battery is fully encapsulated ... not replaceable; 20-year battery life'; its manual: alarm 'activated after 19 years', the low"
+upkeep:
+  heat_pump_usd:
+    value: 115.3
+    low: 23.1
+    high: 173.0
+    unit: USD 2026 a year, a mini-split's maintenance
+    conf: medium
+    source: "EIA Appendix A p. 43, ductless mini-split heat pumps: 'Annual Maintenance Cost (2022$) 100' (it 'covers the same services identified for air-source heat pumps'); low/high EIA's air-source heat pumps and central air conditioners, p. 39 and p. 27: 'Annual Maintenance Cost (2022$) 20 ... 150' ('Ranges represent the span of typical values'). x1.1533 CPI-U. DOE's 2017 rule left maintenance out"
+  ac_usd:
+    value: 115.3
+    low: 23.1
+    high: 173.0
+    unit: USD 2026 a year, an air conditioner's maintenance
+    conf: low
+    source: "EIA Appendix A p. 27, central air conditioners: 20 to 150 (2022$) a year; its value the mini-split's $100, the same services (EIA p. 43 note 3). x1.1533 CPI-U"
+  furnace_usd:
+    value: 152.6
+    low: 118.8
+    high: 183.8
+    unit: USD 2026 a year, a gas furnace's maintenance and repair
+    conf: medium
+    source: "DOE consumer furnaces final rule TSD (as life.furnace_goodman_40k), non-weatherized, 90-98% AFUE: maintenance Table 8.3.6 '102.98', repair Table 8.3.5 '29.32' (2022$), 132.30 together; low the maintenance alone; high EIA Appendix A p. 10's maintenance at 90%+ AFUE '130' with DOE's repair. x1.1533 CPI-U"
+  electric_heater_usd:
+    value: 20.6
+    low: 7.3
+    high: 228.2
+    unit: USD 2026 a year, a flat's electric water heater's maintenance and repair
+    conf: medium
+    source: "DOE consumer water heaters NOPR TSD Table 8.3.4, electric storage 20-55 gal, baseline: maintenance 11.6, repair 6.3 (2022$), averaged over households of whom DOE takes 10% to flush every year and 10% every 2-3 years (p. 8F-2). low the repair alone; high an owner who flushes every year, Table 8F.2.5 '191.58' with the repair. x1.1533 CPI-U"
+  gas_heater_usd:
+    value: 27.2
+    low: 10.5
+    high: 231.4
+    unit: USD 2026 a year, a flat's gas water heater's maintenance and repair
+    conf: medium
+    source: "DOE consumer water heaters NOPR TSD Table 8.3.4, gas storage 20-55 gal, level 3 (power vented, the nearest the Rheem): maintenance 14.5, repair 9.1 (2022$); low the repair alone; high a yearly flush, Table 8F.2.1 '191.58', with the repair. x1.1533 CPI-U"
+  central_heater_usd:
+    value: 387.5
+    low: 367.9
+    high: 400.2
+    unit: USD 2026 a year, the central gas water heater's maintenance and repair
+    conf: medium
+    source: "DOE commercial water heating final rule TSD: maintenance Table 8.2.15, condensing commercial gas storage '$319' (2022$; 'all maintenance is performed by one plumber'), repair Table 8.2.14 at 92-95% '17'; low the maintenance alone; high EIA Appendix A p. 148's '330' with the repair. x1.1533 CPI-U"
+  erv_usd:
+    value: 49
+    low: 0
+    high: 98
+    unit: USD 2026 a year, an ERV's filters
+    conf: low
+    source: "Broan EDGE ERV install manual 1115155WEB-A: clean the washable filters 'Quarterly' (p. 30), the core 'Every 3 Years' (p. 31), the optional MERV 13 filter 'replaced when it is too dirty'. One MERV 13 filter a year at Sylvane's $49.00 (Broan V27000, read 2026-11-23); low the washable filters alone, cleaned in place; high two filters. The cleaning's labour isn't counted"
+  hp_wtw_usd:
+    value: 207.6
+    low: 103.8
+    high: 818.4
+    unit: USD 2026 a year, the water-to-water heat pump's (HP-1) maintenance
+    conf: low
+    source: "EIA Appendix A p. 141, commercial ground-source heat pump, 4 ton: 180 (2022$) a year; low its residential 3-ton unit, p. 45, '90'; high DOE's water-source heat pumps (2015 ASHRAE equipment final rule pp. 92-94): '$334 for a heat pump rated up to 60,000 btu/h' and repair 'ranged from $93 to $240' (2014$), 574 together. x1.1533 and x1.4257 CPI-U"
+  tank_usd:
+    value: 57.7
+    low: 0
+    high: 127.8
+    unit: USD 2026 a year, a storage tank's or electric water heater's upkeep in the engineered plant
+    conf: low
+    source: "EIA Appendix A p. 151, commercial electric storage water heater: 'Annual Maintenance Cost (2022$) 50', x1.1533 CPI-U. high: Lochinvar's IOM for its tanks, 'flush the tank at six-month intervals and clean the tank in yearly intervals', at DOE's commercial water heating TSD Table 8E.2.1's 2.67 labour-hours a year to clean a tank of 275 gal or less, at a plumber's billed hour here (29.51 x 1.341 x 1.21 = $47.88)"
+  backflow_test_usd:
+    value: 110
+    low: 108
+    high: 127
+    unit: USD 2026 a year, a backflow assembly's annual test and its filing
+    conf: medium
+    source: "IPC 2021 312.10.2 (Pennsylvania edition, UpCodes): 'tested at the time of installation ... and at least annually'; 25 Pa. Code 109.709 puts the duty on the supplier and customer. Mister Backflow, Pittsburgh: '$97 for all devices 2\" and smaller. (When scheduled online - $107 for call-in scheduling)'; a Westmoreland County tester: '$95 Flat Rate'; the water company's filing, from the tester's FAQ: 'Municipal Of Westmoreland County charges a $20 fee per device and PA American Charges a $13 fee per device'. value 97 + 13"
+  pv_usd_kwdc:
+    value: 22.2
+    low: 19.5
+    high: 41
+    unit: USD 2026 a kW DC a year, rooftop PV's operation and maintenance, its inverter's replacement in it
+    conf: medium
+    source: "NREL Annual Technology Baseline 2025, commercial PV (atb.nlr.gov): 'The FOM cost of $20/kWDC-yr is based on modeled pricing for a commercial PV system quoted in 2023'; low its '$17.63/kWDC-yr for 2024'; x1.1077 CPI-U. Its categories, by NREL's Q1 2022 cost benchmark (TP-7A40-83586, pp. 52-53), include inverter replacement. high: NREL, Best Practices for O&M of PV, 3rd ed., p. 97: '$21 +- $20/kW/year for systems <10 kW', 41 not escalated"

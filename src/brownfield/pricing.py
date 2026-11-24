@@ -69,6 +69,7 @@ CLASSES = {
     "central_vent": ("plumber", "each", "the central heater's vent and combustion air", "trade"),
     "kamstrup_403": ("plumber", "each", "heat meter (Kamstrup MULTICAL 403)", "trade"),
     "badger_eseries_34": ("plumber", "each", "water submeter 3/4 in. (Badger E-Series)", "trade"),
+    "sleeve_support": ("plumber", "each", "a closed-cell elastomeric sleeve at a water pipe's support (Armaflex, cut to length)", "trade"),
     # Each flat's own water heater (its installed cost checked against REMDB's, `known_cases`).
     "aosmith_ent50": ("plumber", "each", "electric water heater 50 gal (A. O. Smith ENT-50)", "trade"),
     "rheem_prog40_pdv": ("plumber", "each", "gas water heater 40 gal, power direct vent (Rheem PROG40)", "trade"),
@@ -229,7 +230,7 @@ def classes_of(it: dict) -> list[tuple[str, float]]:
         "plant | PC-1": [("plant_controls", 1.0)],  # the controller, the sensors, the flow switch and the two valves, as one lot
         "plant | ET": [("exp_tank_hydronic", 2.0)], "plant | P-3": [("grundfos_alpha2", 1.0)], "plant | MV-1": [("leonard_tm186", 1.0)],
         "plant | ET-DHW": [("exp_tank_dhw_large", 1.0)], "water | submeters": [("badger_eseries_34", 1.0)],
-        "water | prv": [("watts_lfn45b_2", 1.0)], "water | domestic service": [("domestic_service", 1.0), ("tap_first", 1.0)],
+        "water | prv": [("watts_lfn45b_2", 1.0)], "water | sleeves": [("sleeve_support", 1.0)], "water | domestic service": [("domestic_service", 1.0), ("tap_first", 1.0)],
         "water | domestic line": [("ug_2in", 1.0)], "fire | underground": [("ug_4in", 1.0)],
         "fire | service": [("fire_service", 1.0), ("tap_fire_second", 1.0)], "fire | supervision": [("supervision", 1.0)],
         "fire | alarm": [("alarm", 1.0)], "fire | fdc": [("fdc", 1.0)], "fire | combined service": [("combined_service", 1.0), ("tap_first", 1.0)],
@@ -309,6 +310,8 @@ def unit_cost(cls: str, p: dict, test: str | None = None) -> tuple[float, float]
         mat = pp[pr + "pv_commercial_per_w"] * 1000.0 * p["systems.pv.dc_ac"]
     elif cls == "radiant_manifold":
         mat = pp[pr + "radiant_manifold"] + pp[pr + "radiant_cabinet"]
+    elif cls == "sleeve_support":  # a sleeve cut from a 6 ft length
+        mat = pp[pr + "armaflex_6ft"] / 6.0 * p["baseline.sleeves.sleeve_ft"]
     elif cls == "domestic_service":
         mat = pp[pr + "watts_lf007_2"]
     elif cls in ("fire_service", "combined_service"):
@@ -571,6 +574,8 @@ def purpose(line: dict) -> str:
         return "drains and vents: cast iron, or PVC"
     if k == "water | prv":
         return "the pressure-reducing valve, for quiet"
+    if k == "water | sleeves":
+        return "the supply pipes' sleeves, for quiet"
     if k == "water | submeters":
         return "the flats' water submeters"
     if k.startswith(("fire | service", "fire | supervision", "fire | combined", "water | domestic")):

@@ -85,6 +85,11 @@ with the command and code that make each one.
   A look in 3D found the stair and 12 fire doors missing from the model
   ([the bid set as data](docs/pass3/bidset.md)). Its documents and its model are in a
   [plan room online](https://youngmoolahbaby.github.io/brownfield-compute/), with the model in 3D in the browser.
+- **Its systems, designed before bidding.** The engineering adds about $2,200 a flat. The systems
+  this design chose (radiant floors on the data center's water, a central hot-water plant, ERVs,
+  cast-iron drains) cost $20,000-32,000 a flat more over 20 years than the usual walk-ups, and more
+  in every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings
+  ([the walk-up's systems](docs/pass3/systems.md)).
 
 ## The design so far
 

@@ -530,6 +530,27 @@ def insulation_items(model: dict, p: dict) -> dict:
     return items
 
 
+def sleeve_items(model: dict, p: dict) -> dict:
+    """The supply pipes' closed-cell sleeves at their supports, which step 4d's quiet takes (Warnock
+    and Morin's plastic pipe in Armaflex) and 10d found in no drawing or section: for Addendum 9. One
+    at each support of the engineered design's PEX water pipe above the slab, cold and hot, at IPC
+    Table 308.5's spacing for its size (`baseline.sleeves`)."""
+    sl = "baseline.sleeves."
+    count, ft = 0.0, 0.0
+    for it in model.values():
+        if not it.get("run") or it["system"] not in ("cold", "hot") or "under the slab" in it["role"] or not it["what"].startswith("PEX-a"):
+            continue
+        size = it["size"]
+        small = size in ("1/2", "3/4", "1")
+        count += it["qty"]["engineered"] / p[sl + ("support_ft_small" if small else "support_ft_large")]
+        ft += it["qty"]["engineered"]
+    items: dict = {}
+    _add(items, ("water", "sleeves"), f"closed-cell elastomeric sleeve at each support of the PEX water pipe ({ft:,.0f} ft above the slab; "
+         "Addendum 9's)", "each", _q(ENG, float(math.ceil(count))), "IPC Table 308.5's spacing on the model's PEX runs (baseline.sleeves)",
+         "rule", "cold")
+    return items
+
+
 def usual_items(apt: dict, p: dict, routes, rule: dict) -> dict:
     """Each usual walk-up's own, by stated rules from the same layout. Where a usual run has no
     route of its own, a routed run of the same reach stands in for its length, said so."""
@@ -730,7 +751,8 @@ def items(apt: dict, p: dict, s7: dict, routes, its: list[dict]) -> dict:
     model, seen = model_items(rb)
     rule = flat_hot_rule(apt, p, routes)
     fixtures = seen["fixtures"] + sum(1 for r in rb if r["props"].get("Kind", "").startswith("washer"))
-    out = {**model, **insulation_items(model, p), **design_items(apt, p, s7, its, fixtures), **usual_items(apt, p, routes, rule)}
+    out = {**model, **insulation_items(model, p), **sleeve_items(model, p), **design_items(apt, p, s7, its, fixtures),
+           **usual_items(apt, p, routes, rule)}
     return {"items": list(out.values()), "seen": seen, "rule": rule}
 
 
