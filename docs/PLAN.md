@@ -217,8 +217,26 @@ gets the savings.
 - Found: the supply pipes' sleeves, which step 4d's quiet takes, aren't in the bid documents or the
   prices (for Addendum 9). The ERV's sound isn't published.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10e,
-who gets the savings.
+10e done: who gets the savings. The owner pays the $33,600 a flat up front. The tenants keep most of
+the $535 a year.
+- On a market-rate walk-up the owner gets it back only through rent. The best study, from the
+  Northeast, finds tenant-paid energy costs don't move rents (Myers, AHS 1985-2009). Carrying the
+  premium would take $180 a month more rent, against a tenant saving of $34. No market-rate owner
+  builds it for the bills.
+- On a tax-credit walk-up the federal credits pay 30% of it (4%) or 67% (9%). The rest widens pass
+  4's gap per flat:
+  - by $17,600 (4%) or $5,000 (9%) if an engineer's energy model sets the allowance, which turns the
+    tenants' saving into the owner's rent;
+  - by $22,000 or $9,400 on the housing authority's schedule, which leaves most of the saving with
+    the tenants.
+- In a tax-credit building the data center's heat can't be billed by meter (26 CFR 1.42-10(e)), so
+  the owner provides it inside the rent.
+- The heat price that would carry its network is $276/MWh at pass 3 §4's base case, above every
+  tie price, or $62 on its dense case, under the electric and gas walk-ups' ties.
+- Found: PHFA's 2027/2028 plan drops the Passive House points its plans have given since 2015.
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Then 10f,
+the ranges and the report.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -2193,6 +2211,9 @@ test. Then the township brief's ask.
       since its 2015 plan, with a certified Passive House consultant on the team (PHFA's 2019
       presentation to DEP's Climate Change Advisory Committee; NCSHA 2018). Pass 4 found the
       walk-up pencils only with tax credits.
+      - **No longer (10e, 2026-11-23):** the 2025/2026 plan gave "Passive House – ten (10)
+        points", certification required. The 2027/2028 plan (approved 2026-10-08) never names it,
+        and scores green building and a reduced HERS index only "Pass-Basic".
     - **Germany doesn't choose it either:** most of it is law (energy, sound, a ventilation plan,
       balanced heating), and Germany is drafting "Gebäudetyp E" to let builders depart from the
       standards because they made housing too costly. A draft still in 2026, as far as found
@@ -5016,6 +5037,179 @@ test. Then the township brief's ask.
            - a closed door taking air from the usual bedrooms and none from the ducts;
            - more fallback hours running only the engineered heat pumps longer;
            - the central walk-up waiting as the engineered design.
+       - **10e done 2026-11-23: who gets the savings** (Jon: "lets do 10e"; `uv run brownfield
+         baseline`, now 10a-10e; `src/brownfield/savings.py`; params `baseline.split`; writes
+         `out/pass3/savings.md|json`).
+         - **How:** 10b's prices and 10c's bills, with only rules for who pays added. Each rule is
+           from a source (two research agents and the federal rule read first-hand; pages saved in
+           `data/raw/pass3g/step10/split/`, gitignored).
+           - **The owner** pays the construction, the engineered design's extra fee and the house
+             meter. **Each tenant** pays the flat's own meter and, in the gas walk-up, its gas account.
+           - The engineered flats' heat and hot-water meters are used two ways:
+             - **included:** the owner pays the heat and the hot water, in the rent;
+             - **billed:** each flat pays what its meters measure, at the owner's cost. That cost is
+               the house meter's bill less its bill without the plant.
+           - **A tax-credit flat** is pass 4's (`econ.flat`). Each walk-up's extra cost, allowance and
+             owner's bills move its gap, against the usual electric walk-up. The allowance is set two
+             ways:
+             - **by an energy consumption model,** 26 CFR 1.42-10(b)(4)(ii)(E). The allowance moves
+               with the tenants' modelled bills.
+             - **by the housing authority's schedule.** It sees only which utilities the tenant pays,
+               and by what fuel.
+           - **A market-rate flat:** the rent moves by a sourced share of the tenants' saving.
+           - **The data center:** what a price for its heat would move.
+         - **Up front, a flat, beyond the usual electric walk-up's** (the owner's):
+           - the engineered design $33,569 (the systems $31,335, the fee's extra $2,234);
+           - gas $10,073;
+           - central $2,030.
+           - Beside them, the heat network's share, the owner's only if the owner pays it: $9,844 at
+             pass 3 §4's base case, $2,144 on its dense one.
+         - **A year, a flat, by who pays** (the heat free):
+
+           | | engineered | electric | gas | central |
+           |---|---|---|---|---|
+           | the tenant (own meter, own gas) | $279 | $958 | $692 | $343 |
+           | the owner (house meter net of PV, house gas) | $247 | $102 | $102 | $268 |
+           | total | $525 | $1,060 | $794 | $611 |
+
+           - With the heat included, the engineered tenants save $679 a year over the electric
+             walk-up's, and the owner pays $145 more.
+           - Billed by the meters at cost, the plant's share is $270 a flat. The tenants then pay
+             $548 and save $409. The owner is left with −$23, the PV's credit against the house's
+             own loads, and saves $125.
+           - Either way the owner, who paid $33,569, keeps at most $125 a year of the $535.
+         - **A market-rate flat** (the engineered flats billed by their meters):
+           - **The evidence:** Myers (Energy Institute at Haas WP 246R, 2018; American Housing
+             Survey 1985-2009, Northeast rentals): "fuel price movements cause shifts in rent in the
+             landlord-pay regime but not the tenant-pay regime".
+             - Landlord pays: +$6.67 a month per $1/MMBtu. Tenant pays: −$0.11 (p = 0.975), against
+               the "$6-$9 per month" full pass-through would be (Table 3).
+             - So `rent_capture` is 0, with full pass-through as its high, since her interval
+               (about ±$6.7) doesn't rule it out.
+             - Fannie Mae's Green Rewards underwriting counts "25% of the tenant-projected" savings;
+               that's a lender's assumption, not a measurement.
+             - Green-label rent premiums buy something else. Bond and Devine (2016) found 8.9%, or
+               $0.18-0.23 a ft2 a month, for LEED rentals in US metropolitan areas. That's
+               $1,800-2,300 a year on an 836 ft2 flat, 4-6 times the tenant's $409.
+           - **The engineered design's market-rate gap rises $31,647 a flat,** or $25,666 if the
+             rent took the whole $409. Carrying the cost at pass 4's 6.5% yield needs $180 a month
+             more rent, against the tenant's $34.
+           - Gas: +$10,073 (+$6,187 at full capture). Central: +$4,584 (−$4,404 at full capture).
+         - **A tax-credit flat** (heat and hot water included; why below). The change in pass 4's
+           gap a flat, against the usual electric walk-up:
+
+           | | engineered | gas | central |
+           |---|---|---|---|
+           | **energy model:** the allowance, a month | −$57 | −$22 | −$51 |
+           | the tenant's rent and bills, a year | $0 | $0 | $0 |
+           | the gap, 4% credits | +$17,572 | +$4,053 | −$3,554 |
+           | the gap, 9% credits | +$5,017 | +$285 | −$4,314 |
+           | **the schedule:** the allowance, a month | −$24 | +$60 | −$10 |
+           | the tenant's rent and bills, a year | −$391 | −$986 | −$495 |
+           | the gap, 4% credits | +$21,995 | +$15,200 | +$2,042 |
+           | the gap, 9% credits | +$9,440 | +$11,433 | +$1,283 |
+
+           - **Who pays the engineered design's $33,569:**
+             - the credits $10,044 (4%) or $22,599 (9%): pass 4's 85% eligible basis × the rate ×
+               10 years × $0.88;
+             - the owner's higher net rent: $5,953 of debt under an energy model, $1,530 under the
+               schedule;
+             - the gap the rest.
+           - **Under an energy model the tenant is where they were.** The allowance falls with the
+             bill, the rent rises by as much, and the saving carries debt.
+           - **Under the schedule the tenant keeps most of it** ($391 a year). The schedule drops
+             only the heating and water-heating lines the owner now pays.
+           - **The schedule and the model disagree,** USD a month (the schedule's lines against 10c's
+             bills):
+             - heat-pump heating 14 against 17;
+             - electric water heating 10 against 51;
+             - gas heating 49 against 10;
+             - gas water heating 18 against 14.
+             - So on a schedule the gas walk-up's tenants are over-allowed and the electric walk-up's
+               under-allowed. The gas walk-up's gap is then $15,200 wider (4%).
+           - **PHFA (Tab 19, 2025 Underwriting Application, pp. 342-343)** takes the PHA schedule, a
+             utility's written estimate, HUD's model, or "a professional engineer licensed in
+             Pennsylvania using an energy consumption model". It "will not issue utility allowances
+             on new Applications".
+         - **The data center's heat** (3.92 MWh a flat a year). Included, every $1 a year of it
+           widens the tax-credit gap $11.90:
+
+           | the price | $/MWh | a flat a year | the building | the gap a flat |
+           |---|---|---|---|---|
+           | ties with electric (10c) | 136 | $534 | $6,410 | +$6,358 |
+           | ties with gas | 68 | $268 | $3,219 | +$3,193 |
+           | ties with central | 22 | $85 | $1,023 | +$1,015 |
+           | carries the network, base | 276 | $1,084 | $13,011 | +$12,905 |
+           | carries the network, dense | 62 | $242 | $2,904 | +$2,880 |
+
+           - The network's carrying price is its cost over pass 3's annuity (7%, 20 years), with its
+             upkeep and pumping.
+           - At §4's base case the heat can't carry its own network at any price the walk-ups would
+             pay. On the dense case it can, at $62. The engineered design's running cost would then
+             be $767 a flat a year, still under the electric walk-up's $1,060 and the gas walk-up's
+             $794.
+         - **So:**
+           - **The owner pays, and the tenants save.** That is the split incentive, with numbers: of
+             $535 a year, the owner who paid $33,569 keeps $125 at most.
+           - **On a market-rate walk-up nobody gets the premium back.** Even if rents took the whole
+             saving, the gap would rise $25,666 a flat.
+           - **On a tax-credit walk-up the public pays most of it.** The federal credits pay 30-67%.
+             The tenants' saving carries $1,500-6,000 of debt, and the gap, which pass 4 looks to
+             local money for, takes the rest. The tenants' saving goes to the owner's rent or stays
+             with them, as the allowance's method decides.
+           - **The data center's heat is worth at most $534 a flat a year to the building,** against
+             the electric walk-up. Its network costs $1,084 a flat a year to carry at the base case,
+             $242 on the dense one.
+         - **Found:**
+           - **The heat can't be billed by meter in a tax-credit building.** 26 CFR 1.42-10(e)(1)(i)
+             counts a submetered utility as the tenant's only if the owner buys it "from or through a
+             local utility company", or it's "produced from a renewable source": section 48's energy
+             property or section 45(d)'s facilities.
+             - A data center's heat is neither, as read. Section 48's "waste energy recovery
+               property" is property that "generates electricity solely from heat".
+             - So any charge for it is rent, and the heat meters bill nothing in a tax-credit flat.
+             - In a market-rate building, the PUC has held a landlord who bills tenants for water
+               isn't a public utility (Glazier, under the submetering above). Whether that reaches
+               heat is for counsel.
+           - **PHFA's 2027/2028 plan drops Passive House** (above, under D28's steer). The tax-credit
+             points D28 counted on are gone from the next round.
+           - **PHFA's Tab 19:** "Water and Sewer utilities must be project paid and cannot be billed
+             to the tenants." It sits in a note under the HOME and PHARE paragraph. If it covers
+             every PHFA building, the flats' water meters can't bill water there.
+           - **The Housing Authority of Indiana County** (PA048, the county's vouchers) posts no
+             schedule. Westmoreland County's 2026 schedule, the neighbour's, stands in.
+         - **What we don't know:**
+           - **Indiana County's own schedule.** Its lines decide the schedule column.
+           - **Myers's data are price swings in old buildings,** not efficiency built in. Her interval
+             reaches full pass-through, and 10f runs the share to 1.
+           - **Whether PHFA's engineer would model a data center's heat.** Tab 19 lets the engineer
+             use "units of similar size and construction in the same geographic area", and there are
+             none.
+           - **Whether a seller of the heat would be a utility.** 66 Pa.C.S. § 102 names steam "for
+             the production of light, heat, or power", and pipelines of "other fluid substance". If it
+             were one, 1.42-10(e)'s first route might open. For counsel.
+           - **Not counted here:** upkeep and replacement (10f's twenty years); PHFA's per-project
+             credit limits, which can stop more basis becoming more credits at 9%; who pays for the
+             network.
+           - **Pass 4's own placeholders.** Its rate, term, coverage and credit price set what a
+             dollar of rent or cost moves. Its $120 allowance and $7,500 operating cost don't: the
+             changes are linear, so their levels cancel.
+         - **Checks:** 5, all pass:
+           - every dollar of 10c's running cost has a payer, both ways;
+           - billed at cost, the engineered owner pays no more for the house meter than the electric
+             walk-up's owner;
+           - pass 4's gap moves as its parts add up (credits, debt, gap), no floor binding;
+           - at 10c's tie prices the running costs meet;
+           - the network's carrying price gives pass 3 §4's own cost of it (`block.per_home`).
+         - Tests: `tests/test_walkup_savings.py`, 10. Among them:
+           - a dollar of cost against the credits;
+           - a dollar of allowance against the debt;
+           - the schedule seeing only who pays;
+           - a network that costs nothing;
+           - billing moving dollars between payers, not the total;
+           - an energy model leaving each tenant where they were;
+           - the rent's share moving only the market-rate gap;
+           - the heat's price moving the tax-credit gap by its bill.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

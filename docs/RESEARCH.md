@@ -1833,3 +1833,88 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
         SW (catalogue RP3006), A. O. Smith's BTH-120.
     - **Warnock and Morin** (NRCC-35548, 1990), Table 5 again: plastic pipe clamped rigidly 62.3,
       in Armaflex sleeves 49.1, copper clamped rigidly 73.4 (relative dB, an ISO noise source).
+  - **10e, who gets the savings (2026-11-23).** Saved under `data/raw/pass3g/step10/split/`
+    (gitignored), from two research agents and the rule read first-hand; each param in
+    `params/baseline.yaml` (`split`) quotes its source.
+    - **26 CFR 1.42-10** (eCFR, current; T.D. 9755, 2016, and T.D. 9850, 2019):
+      - (b)(4)(ii): for a building without RHS or HUD assistance, the PHA's allowance unless the
+        owner takes a utility company's estimate, the Agency's, HUD's Utility Schedule Model, or
+        (E) an energy consumption model. The model must "take into account ... unit size, building
+        orientation, design and materials, mechanical systems, appliances", calculated "by a
+        properly licensed engineer or other qualified professional".
+      - (e)(1): a submetered utility counts as the tenant's only if the utility is "purchased from
+        or through a local utility company by the building owner", or isn't and is "produced from a
+        renewable source": energy from section 48's energy property or section 45(d)(1), (2), (3),
+        (4), (6), (9) or (11)'s facilities, or one the IRS names. The rate charged must not exceed
+        the owner's, or a utility's.
+    - **26 U.S.C. 48(a)(3)** (Cornell LII): energy property covers solar, geothermal, fuel cells,
+      combined heat and power, small wind, ground-source heat pumps, waste energy recovery property,
+      energy storage, biogas and microgrid controllers. "Waste energy recovery property" is property
+      that "generates electricity solely from heat from buildings or equipment". **Section 45(d)**:
+      wind, closed- and open-loop biomass, geothermal or solar, hydropower and the like. A data
+      center's heat sold as heat is none of them.
+    - **66 Pa.C.S. § 102** (palegis.us): a public utility furnishes "natural or artificial gas,
+      electricity, or steam for the production of light, heat, or power to or for the public for
+      compensation", or conveys "other fluid substance, by pipeline or conduit". Hot water isn't
+      named.
+    - **PHFA:**
+      - **Tab 19, Utility Information** (2025 Underwriting Application, pp. 342-343; the Tab
+        posted on 2026-11-23): the methods are the PHA's allowance, a utility's
+        written estimate, HUD's model (with "all input and output data"), or "a professional
+        engineer licensed in Pennsylvania using an energy consumption model".
+        - The Agency "will not issue utility allowances on new Applications".
+        - For new buildings "the engineer may use consumption data for the previous 12-month period
+          of units of similar size and construction in the same geographic area".
+        - "The same method must be used for calculating all applicable utility allowances."
+        - Its note "Water and Sewer utilities must be project paid and cannot be billed to the
+          tenants" sits under the HOME and PHARE paragraph; its reach isn't clear.
+      - **LIHTC Compliance Manual, ch. 2, 2.3:** "Conventional buildings - use Public Housing
+        Authority (PHA) utility allowances unless utility company data can show alternate amounts".
+      - **The Allocation Plans:**
+        - 2025/2026 (C.3): "Passive House – ten (10) points ... Passive House Certification is
+          required".
+        - 2027/2028 ("Final Version Approved By the Board on October 8, 2026"): no Passive House.
+          4.4.3 (a national green building program) and 4.4.4 (a reduced HERS index) score
+          "Pass-Basic", which "equate to 5 points".
+    - **The PHA schedule:**
+      - The Housing Authority of Indiana County (PA048 in HUD's contact report) runs the county's
+        vouchers and posts no schedule (its site searched).
+      - **Westmoreland County Housing Authority,** "Utility Allowance Schedule", January 1, 2026,
+        "Adapted ... from form HUD-52667", Multi-Family (... Walk-Up Apartment ...), 2-bedroom, USD a
+        month:
+        - heating: gas 49, electric 17, heat pump 14;
+        - water heating: gas 18, electric 10;
+        - other electric 16, air conditioning 2, cooking electric 5;
+        - the electric charge 12, the gas charge 17;
+        - water 49, sewer 64, trash 29.
+      - Its electric water heating is about a fifth of 10c's model, which RECS 2020 checks. Its gas
+        heating is five times the model's.
+      - HUD's Utility Schedule Model publishes no results; it needs each utility's rates entered.
+    - **Rents and tenants' bills:**
+      - **Myers,** "Asymmetric Information in Residential Rental Markets: Implications for the Energy
+        Efficiency Gap", Energy Institute at Haas WP 246R (2018). The journal version (J. Public
+        Economics 2020) wasn't read.
+        - American Housing Survey 1985-2009, Northeast rentals heated by oil or gas.
+        - "fuel price movements cause shifts in rent in the landlord-pay regime but not the
+          tenant-pay regime".
+        - Table 3, unit fixed effects: +$6.667 a month per $1/MMBTU where the landlord pays; the
+          tenant-pay sum −$0.11 (F = 0.000968, p = 0.975). "full pass-through would be $6–$9 per
+          month".
+        - Its limits: price swings, not efficiency built in; the interval (about ±$6.7, from the F)
+          doesn't rule out full pass-through.
+      - **Levinson and Niemann,** "Energy Use by Apartment Tenants When Landlords Pay for
+        Utilities", Resource and Energy Economics 26 (2004): including heat "raises rent by about
+        4%, or US$ 17 per month"; "With the exception of one-bedroom apartments in cold climates, the
+        increase in rent is never large enough to offset the costs of utilities".
+      - **Fannie Mae,** Green Rewards term sheet: "75% of the owner-projected and 25% of the
+        tenant-projected energy and water cost savings may be included in the Underwritten Net Cash
+        Flow". An underwriting assumption.
+      - **Bond and Devine,** "Certification Matters: Is Green Talk Cheap Talk?", J. Real Estate
+        Finance and Economics (2016; an offprint NMHC hosts): 97 LEED rentals against 193,
+        asking rents, in US metropolitan areas, urban and suburban: an "approximate 8.9 % rental rate
+        premium", "$0.18 to $0.23" per ft2 a month. On an 836 ft2 flat that's $1,800-2,300 a year,
+        4-6 times the engineered tenant's $409, so it prices something else.
+      - Read by the agent and not relied on: Cushman & Wakefield 2022 (3.1%); the DC CFO's LEED
+        paper (2021); ACEEE 2022's listings experiment; Murtishaw and Sathaye (ACEEE 2008) and IEA's
+        *Mind the Gap* (2007) on the split incentive's share; Gillingham, Harding and Rapson's
+        California working paper.

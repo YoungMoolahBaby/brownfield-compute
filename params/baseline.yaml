@@ -2868,3 +2868,44 @@ comfort:
     unit: dBA, the most a circulator (Grundfos ALPHA2, P-1 and P-2) is heard (sound pressure)
     conf: high
     source: "Grundfos ALPHA2/ALPHA3 installation and operating instructions (data/raw/pass3g/raw/equipment/grundfos_5564454.pdf): 'The sound pressure level of the pump is lower than 43 dB(A)'"
+
+# Pass 3g step 10e: who gets the savings. The rules for who pays come from the sources below; the
+# prices are 10b's and 10c's. Every page saved under data/raw/pass3g/step10/split/ (gitignored).
+# The allowance: 26 CFR 1.42-10 (eCFR, read 2026-11-23, ecfr_1_42_10.xml); PHFA's Tab 19 (2025
+# Underwriting Application, pp. 342-343: the PHA schedule, a utility's written estimate, HUD's model,
+# or "a professional engineer licensed in Pennsylvania using an energy consumption model"; PHFA "will
+# not issue utility allowances on new Applications"). The Housing Authority of Indiana County (PA048),
+# which runs the county's vouchers, posts no schedule; Westmoreland County's, the neighbour's, stands in.
+split:
+  pha_heat_hp_usd:
+    value: 14
+    unit: USD a month, a 2-bedroom flat's heating by electric heat pump on the housing authority's schedule
+    conf: medium
+    source: "Westmoreland County Housing Authority, Utility Allowance Schedule dated January 1, 2026 ('Adapted ... from form HUD-52667'; Unit Type: Multi-Family (Elevator High-Rise/ Garden/ Walk-Up Apartment/...); wcha_2026_s8_utility_allowances.pdf, posted 2026-01-07 at wchaonline.com): 'Heating ... d. Electric Heat Pump 10 11 14 15' (0-3 BR). A neighbouring county's: the Housing Authority of Indiana County's schedule isn't online (its site searched 2026-11-23, 'No results')"
+  pha_heat_gas_usd:
+    value: 49
+    unit: USD a month, a 2-bedroom flat's heating by natural gas on the housing authority's schedule
+    conf: medium
+    source: "Westmoreland County HA 2026 schedule, Multi-Family (as pha_heat_hp_usd): 'Heating a. Natural Gas (avg) 36 42 49 57' (0-3 BR)"
+  pha_wh_elec_usd:
+    value: 10
+    unit: USD a month, a 2-bedroom flat's electric water heating on the housing authority's schedule
+    conf: medium
+    source: "Westmoreland County HA 2026 schedule, Multi-Family (as pha_heat_hp_usd): 'Water Heating ... c. Electric 7 8 10 13' (0-3 BR). About a fifth of what 10c's model gives the usual electric flat's tank, which RECS 2020 checks (10c)"
+  pha_wh_gas_usd:
+    value: 18
+    unit: USD a month, a 2-bedroom flat's gas water heating on the housing authority's schedule
+    conf: medium
+    source: "Westmoreland County HA 2026 schedule, Multi-Family (as pha_heat_hp_usd): 'Water Heating a. Natural Gas (avg) 10 12 18 22' (0-3 BR)"
+  pha_gas_customer_usd:
+    value: 17
+    unit: USD a month, the gas account's customer charge on the housing authority's schedule (a tenant who pays for gas)
+    conf: medium
+    source: "Westmoreland County HA 2026 schedule (as pha_heat_hp_usd): 'Natural Gas Charge $17.03 (avg) 17 17 17 17' (every size); the electric charge ($12.18) is in every walk-up alike, so cancels"
+  rent_capture:
+    value: 0.0
+    low: 0.0
+    high: 1.0
+    unit: share of a tenant's lower energy bill that a market rent carries, when the tenant pays the meters
+    conf: low
+    source: "Myers, 'Asymmetric Information in Residential Rental Markets', Energy Institute at Haas WP 246R (2018; market/myers_wp246r_2018_asymmetric_information_rental.pdf), American Housing Survey 1985-2009, Northeast rentals: 'fuel price movements cause shifts in rent in the landlord-pay regime but not the tenant-pay regime'; Table 3 col. 2 (unit fixed effects), $6.667 a month per $1/MMBTU where the landlord pays, 6.667 - 6.773 = -$0.11 where the tenant pays (p = 0.975), against 'full pass-through would be $6-$9 per month'. Hence 0. Its standard error (from F = 0.000968) puts a 95% interval of about +-$6.7, so full pass-through isn't ruled out: the high. Beside it: Fannie Mae's Green Rewards term sheet lets a lender count '25% of the tenant-projected energy and water cost savings' in underwritten cash flow (an assumption, not a measurement); Levinson and Niemann (Resource and Energy Economics 26, 2004) find, rents with all utilities included, 'With the exception of one-bedroom apartments in cold climates, the increase in rent is never large enough to offset the costs of utilities'"

@@ -919,7 +919,7 @@ def cmd_baseline(_args) -> int:
     text = baseline.report(r)
     print(text.split(NL + NL + "The walk-ups:")[0])
     print(NL + f"{len(r['items'])} items in the lists (out/pass3/baseline.md has them all)")
-    from . import comfort, energy, pricing, systems
+    from . import comfort, energy, pricing, savings, systems
 
     P, apt = values(load_params()), systems.load(systems.latest_model())
     pr = pricing.run(r, apt, P)
@@ -928,8 +928,11 @@ def cmd_baseline(_args) -> int:
     print(NL + energy.report(en, P))
     co = comfort.run(r, en, apt, P)
     print(NL + comfort.report(co, P))
-    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r["written"] + pr["written"] + en["written"] + co["written"]))
-    return 0 if all(ok for _, ok, _ in r["checks"] + pr["checks"] + en["checks"] + co["checks"]) else 1
+    sv = savings.run(pr, en, P)
+    print(NL + savings.report(sv, P))
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r["written"] + pr["written"] + en["written"] + co["written"]
+                                  + sv["written"]))
+    return 0 if all(ok for _, ok, _ in r["checks"] + pr["checks"] + en["checks"] + co["checks"] + sv["checks"]) else 1
 
 
 def cmd_fallback(_args) -> int:
@@ -1173,7 +1176,7 @@ def main(argv=None) -> int:
     ps.add_argument("--publish", action="store_true", help="also write the pass report's figures and files to docs/pass3 (only if every check passes)")
     sub.add_parser("acceptance", help="pass 3g step 9c: the tests and inspections: what, who, when, what passes, and the code or design claim behind each (out/pass3/acceptance.md)")
     sub.add_parser("sequence", help="pass 3g step 9b: the control sequence: the plant normal and on its backup, the loop's outdoor reset, the mini-splits' takeover, the ERV, the interlocks (out/pass3/sequence.md)")
-    sub.add_parser("baseline", help="pass 3g step 10: the usual walk-up from sources (Census, RECS), set against the engineered design: what each has (10a), each priced item by item, and the fee (10b), each one's energy and running cost a year (10c), their noise and comfort side by side (10d)")
+    sub.add_parser("baseline", help="pass 3g step 10: the usual walk-up from sources (Census, RECS), set against the engineered design: what each has (10a), each priced item by item, and the fee (10b), each one's energy and running cost a year (10c), their noise and comfort side by side (10d), and who pays and who keeps each saving (10e)")
     sub.add_parser("fallback", help="pass 3g step 9a: when the data center's heat is gone: the flats on their mini-splits, the hot water on its backup heater, the wiring for both")
     rd = sub.add_parser("round", help="pass 3g step 8c: the installers' round: each trade's packet (a letter, its questions, its sheets), and the log of their comments (data/raw/round/comments.yaml, private) checked")
     rd.add_argument("--publish", action="store_true", help="also publish the question forms, the public log and each comment its author let us show, to the plan room (only if the log is sound)")
