@@ -1,0 +1,97 @@
+element,class,storey,Flat,Kind,Size,Run
+"exhaust grille, 1-back-left/bath",IfcAirTerminal (GRILLE),Level 1,1-back-left,exhaust grille,4,hvac/erv-exhaust/1-back-left
+"exhaust grille, 1-back-left/kitchen",IfcAirTerminal (GRILLE),Level 1,1-back-left,exhaust grille,4,hvac/erv-exhaust/1-back-left
+"exhaust grille, 1-back-right/bath",IfcAirTerminal (GRILLE),Level 1,1-back-right,exhaust grille,4,hvac/erv-exhaust/1-back-right
+"exhaust grille, 1-back-right/kitchen",IfcAirTerminal (GRILLE),Level 1,1-back-right,exhaust grille,4,hvac/erv-exhaust/1-back-right
+"exhaust grille, 1-front-left/bath",IfcAirTerminal (GRILLE),Level 1,1-front-left,exhaust grille,4,hvac/erv-exhaust/1-front-left
+"exhaust grille, 1-front-left/kitchen",IfcAirTerminal (GRILLE),Level 1,1-front-left,exhaust grille,4,hvac/erv-exhaust/1-front-left
+"exhaust grille, 1-front-right/bath",IfcAirTerminal (GRILLE),Level 1,1-front-right,exhaust grille,4,hvac/erv-exhaust/1-front-right
+"exhaust grille, 1-front-right/kitchen",IfcAirTerminal (GRILLE),Level 1,1-front-right,exhaust grille,4,hvac/erv-exhaust/1-front-right
+"exhaust grille, 2-back-left/bath",IfcAirTerminal (GRILLE),Level 2,2-back-left,exhaust grille,4,hvac/erv-exhaust/2-back-left
+"exhaust grille, 2-back-left/kitchen",IfcAirTerminal (GRILLE),Level 2,2-back-left,exhaust grille,4,hvac/erv-exhaust/2-back-left
+"exhaust grille, 2-back-right/bath",IfcAirTerminal (GRILLE),Level 2,2-back-right,exhaust grille,4,hvac/erv-exhaust/2-back-right
+"exhaust grille, 2-back-right/kitchen",IfcAirTerminal (GRILLE),Level 2,2-back-right,exhaust grille,4,hvac/erv-exhaust/2-back-right
+"exhaust grille, 2-front-left/bath",IfcAirTerminal (GRILLE),Level 2,2-front-left,exhaust grille,4,hvac/erv-exhaust/2-front-left
+"exhaust grille, 2-front-left/kitchen",IfcAirTerminal (GRILLE),Level 2,2-front-left,exhaust grille,4,hvac/erv-exhaust/2-front-left
+"exhaust grille, 2-front-right/bath",IfcAirTerminal (GRILLE),Level 2,2-front-right,exhaust grille,4,hvac/erv-exhaust/2-front-right
+"exhaust grille, 2-front-right/kitchen",IfcAirTerminal (GRILLE),Level 2,2-front-right,exhaust grille,4,hvac/erv-exhaust/2-front-right
+"exhaust grille, 3-back-left/bath",IfcAirTerminal (GRILLE),Level 3,3-back-left,exhaust grille,4,hvac/erv-exhaust/3-back-left
+"exhaust grille, 3-back-left/kitchen",IfcAirTerminal (GRILLE),Level 3,3-back-left,exhaust grille,4,hvac/erv-exhaust/3-back-left
+"exhaust grille, 3-back-right/bath",IfcAirTerminal (GRILLE),Level 3,3-back-right,exhaust grille,4,hvac/erv-exhaust/3-back-right
+"exhaust grille, 3-back-right/kitchen",IfcAirTerminal (GRILLE),Level 3,3-back-right,exhaust grille,4,hvac/erv-exhaust/3-back-right
+"exhaust grille, 3-front-left/bath",IfcAirTerminal (GRILLE),Level 3,3-front-left,exhaust grille,4,hvac/erv-exhaust/3-front-left
+"exhaust grille, 3-front-left/kitchen",IfcAirTerminal (GRILLE),Level 3,3-front-left,exhaust grille,4,hvac/erv-exhaust/3-front-left
+"exhaust grille, 3-front-right/bath",IfcAirTerminal (GRILLE),Level 3,3-front-right,exhaust grille,4,hvac/erv-exhaust/3-front-right
+"exhaust grille, 3-front-right/kitchen",IfcAirTerminal (GRILLE),Level 3,3-front-right,exhaust grille,4,hvac/erv-exhaust/3-front-right
+"supply register, 1-back-left/bed-1",IfcAirTerminal (REGISTER),Level 1,1-back-left,supply register,8,hvac/ms-supply/1-back-left
+"supply register, 1-back-left/bed-2",IfcAirTerminal (REGISTER),Level 1,1-back-left,supply register,8,hvac/ms-supply/1-back-left
+"supply register, 1-back-left/living",IfcAirTerminal (REGISTER),Level 1,1-back-left,supply register,8,hvac/ms-supply/1-back-left
+"supply register, 1-back-left/study",IfcAirTerminal (REGISTER),Level 1,1-back-left,supply register,8,hvac/ms-supply/1-back-left
+"supply register, 1-back-right/bed-1",IfcAirTerminal (REGISTER),Level 1,1-back-right,supply register,8,hvac/ms-supply/1-back-right
+"supply register, 1-back-right/bed-2",IfcAirTerminal (REGISTER),Level 1,1-back-right,supply register,8,hvac/ms-supply/1-back-right
+"supply register, 1-back-right/living",IfcAirTerminal (REGISTER),Level 1,1-back-right,supply register,8,hvac/ms-supply/1-back-right
+"supply register, 1-back-right/study",IfcAirTerminal (REGISTER),Level 1,1-back-right,supply register,8,hvac/ms-supply/1-back-right
+"supply register, 1-front-left/bed-1",IfcAirTerminal (REGISTER),Level 1,1-front-left,supply register,8,hvac/ms-supply/1-front-left
+"supply register, 1-front-left/bed-2",IfcAirTerminal (REGISTER),Level 1,1-front-left,supply register,8,hvac/ms-supply/1-front-left
+"supply register, 1-front-left/living",IfcAirTerminal (REGISTER),Level 1,1-front-left,supply register,8,hvac/ms-supply/1-front-left
+"supply register, 1-front-left/study",IfcAirTerminal (REGISTER),Level 1,1-front-left,supply register,8,hvac/ms-supply/1-front-left
+"supply register, 1-front-right/bed-1",IfcAirTerminal (REGISTER),Level 1,1-front-right,supply register,8,hvac/ms-supply/1-front-right
+"supply register, 1-front-right/bed-2",IfcAirTerminal (REGISTER),Level 1,1-front-right,supply register,8,hvac/ms-supply/1-front-right
+"supply register, 1-front-right/living",IfcAirTerminal (REGISTER),Level 1,1-front-right,supply register,8,hvac/ms-supply/1-front-right
+"supply register, 1-front-right/study",IfcAirTerminal (REGISTER),Level 1,1-front-right,supply register,8,hvac/ms-supply/1-front-right
+"supply register, 2-back-left/bed-1",IfcAirTerminal (REGISTER),Level 2,2-back-left,supply register,8,hvac/ms-supply/2-back-left
+"supply register, 2-back-left/bed-2",IfcAirTerminal (REGISTER),Level 2,2-back-left,supply register,8,hvac/ms-supply/2-back-left
+"supply register, 2-back-left/living",IfcAirTerminal (REGISTER),Level 2,2-back-left,supply register,8,hvac/ms-supply/2-back-left
+"supply register, 2-back-left/study",IfcAirTerminal (REGISTER),Level 2,2-back-left,supply register,8,hvac/ms-supply/2-back-left
+"supply register, 2-back-right/bed-1",IfcAirTerminal (REGISTER),Level 2,2-back-right,supply register,8,hvac/ms-supply/2-back-right
+"supply register, 2-back-right/bed-2",IfcAirTerminal (REGISTER),Level 2,2-back-right,supply register,8,hvac/ms-supply/2-back-right
+"supply register, 2-back-right/living",IfcAirTerminal (REGISTER),Level 2,2-back-right,supply register,8,hvac/ms-supply/2-back-right
+"supply register, 2-back-right/study",IfcAirTerminal (REGISTER),Level 2,2-back-right,supply register,8,hvac/ms-supply/2-back-right
+"supply register, 2-front-left/bed-1",IfcAirTerminal (REGISTER),Level 2,2-front-left,supply register,8,hvac/ms-supply/2-front-left
+"supply register, 2-front-left/bed-2",IfcAirTerminal (REGISTER),Level 2,2-front-left,supply register,8,hvac/ms-supply/2-front-left
+"supply register, 2-front-left/living",IfcAirTerminal (REGISTER),Level 2,2-front-left,supply register,8,hvac/ms-supply/2-front-left
+"supply register, 2-front-left/study",IfcAirTerminal (REGISTER),Level 2,2-front-left,supply register,8,hvac/ms-supply/2-front-left
+"supply register, 2-front-right/bed-1",IfcAirTerminal (REGISTER),Level 2,2-front-right,supply register,8,hvac/ms-supply/2-front-right
+"supply register, 2-front-right/bed-2",IfcAirTerminal (REGISTER),Level 2,2-front-right,supply register,8,hvac/ms-supply/2-front-right
+"supply register, 2-front-right/living",IfcAirTerminal (REGISTER),Level 2,2-front-right,supply register,8,hvac/ms-supply/2-front-right
+"supply register, 2-front-right/study",IfcAirTerminal (REGISTER),Level 2,2-front-right,supply register,8,hvac/ms-supply/2-front-right
+"supply register, 3-back-left/bed-1",IfcAirTerminal (REGISTER),Level 3,3-back-left,supply register,8,hvac/ms-supply/3-back-left
+"supply register, 3-back-left/bed-2",IfcAirTerminal (REGISTER),Level 3,3-back-left,supply register,8,hvac/ms-supply/3-back-left
+"supply register, 3-back-left/living",IfcAirTerminal (REGISTER),Level 3,3-back-left,supply register,8,hvac/ms-supply/3-back-left
+"supply register, 3-back-left/study",IfcAirTerminal (REGISTER),Level 3,3-back-left,supply register,8,hvac/ms-supply/3-back-left
+"supply register, 3-back-right/bed-1",IfcAirTerminal (REGISTER),Level 3,3-back-right,supply register,8,hvac/ms-supply/3-back-right
+"supply register, 3-back-right/bed-2",IfcAirTerminal (REGISTER),Level 3,3-back-right,supply register,8,hvac/ms-supply/3-back-right
+"supply register, 3-back-right/living",IfcAirTerminal (REGISTER),Level 3,3-back-right,supply register,8,hvac/ms-supply/3-back-right
+"supply register, 3-back-right/study",IfcAirTerminal (REGISTER),Level 3,3-back-right,supply register,8,hvac/ms-supply/3-back-right
+"supply register, 3-front-left/bed-1",IfcAirTerminal (REGISTER),Level 3,3-front-left,supply register,8,hvac/ms-supply/3-front-left
+"supply register, 3-front-left/bed-2",IfcAirTerminal (REGISTER),Level 3,3-front-left,supply register,8,hvac/ms-supply/3-front-left
+"supply register, 3-front-left/living",IfcAirTerminal (REGISTER),Level 3,3-front-left,supply register,8,hvac/ms-supply/3-front-left
+"supply register, 3-front-left/study",IfcAirTerminal (REGISTER),Level 3,3-front-left,supply register,8,hvac/ms-supply/3-front-left
+"supply register, 3-front-right/bed-1",IfcAirTerminal (REGISTER),Level 3,3-front-right,supply register,8,hvac/ms-supply/3-front-right
+"supply register, 3-front-right/bed-2",IfcAirTerminal (REGISTER),Level 3,3-front-right,supply register,8,hvac/ms-supply/3-front-right
+"supply register, 3-front-right/living",IfcAirTerminal (REGISTER),Level 3,3-front-right,supply register,8,hvac/ms-supply/3-front-right
+"supply register, 3-front-right/study",IfcAirTerminal (REGISTER),Level 3,3-front-right,supply register,8,hvac/ms-supply/3-front-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 1,1-back-left,wall cap (exhaust),8,hvac/erv-ea/1-back-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 1,1-back-right,wall cap (exhaust),8,hvac/erv-ea/1-back-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 1,1-front-left,wall cap (exhaust),8,hvac/erv-ea/1-front-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 1,1-front-right,wall cap (exhaust),8,hvac/erv-ea/1-front-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 2,2-back-left,wall cap (exhaust),8,hvac/erv-ea/2-back-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 2,2-back-right,wall cap (exhaust),8,hvac/erv-ea/2-back-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 2,2-front-left,wall cap (exhaust),8,hvac/erv-ea/2-front-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 2,2-front-right,wall cap (exhaust),8,hvac/erv-ea/2-front-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 3,3-back-left,wall cap (exhaust),8,hvac/erv-ea/3-back-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 3,3-back-right,wall cap (exhaust),8,hvac/erv-ea/3-back-right
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 3,3-front-left,wall cap (exhaust),8,hvac/erv-ea/3-front-left
+"wall cap (exhaust), exhaust",IfcAirTerminal (wall cap),Level 3,3-front-right,wall cap (exhaust),8,hvac/erv-ea/3-front-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 1,1-back-left,wall cap (intake),8,hvac/erv-oa/1-back-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 1,1-back-right,wall cap (intake),8,hvac/erv-oa/1-back-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 1,1-front-left,wall cap (intake),8,hvac/erv-oa/1-front-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 1,1-front-right,wall cap (intake),8,hvac/erv-oa/1-front-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 2,2-back-left,wall cap (intake),8,hvac/erv-oa/2-back-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 2,2-back-right,wall cap (intake),8,hvac/erv-oa/2-back-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 2,2-front-left,wall cap (intake),8,hvac/erv-oa/2-front-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 2,2-front-right,wall cap (intake),8,hvac/erv-oa/2-front-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 3,3-back-left,wall cap (intake),8,hvac/erv-oa/3-back-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 3,3-back-right,wall cap (intake),8,hvac/erv-oa/3-back-right
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 3,3-front-left,wall cap (intake),8,hvac/erv-oa/3-front-left
+"wall cap (intake), intake",IfcAirTerminal (wall cap),Level 3,3-front-right,wall cap (intake),8,hvac/erv-oa/3-front-right

@@ -1,0 +1,10 @@
+# Each copper NM-B cable's bare grounding conductor, by its conductors' size. Source: Southwire, Romex SIMpull Copper Type NM-B
+# Cable, SPEC 10028 (Revision 1.000.052, updated 2025-10-07), Table 1 - Weights and Measurements, column "Ground, No. x AWG"
+# (https://cabletechsupport.southwire.com/tile/42/spec/10028/?country=US, read 2026-11-24); its construction: "Ground: Solid soft
+# drawn bare copper with kraft paper wrap". A maker's sheet: the basis of design's cable. Rows by stock number (2 or 3 conductors).
+awg,conductors,ground_awg,stock
+14,2,14,288274
+12,2,12,288282
+10,2,10,288290
+8,3,10,639492
+6,3,10,639500

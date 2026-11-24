@@ -17,7 +17,7 @@
   Each has PVC drains and vents, the street's pressure (no reducing valve), no submeters, no PV,
   and the sprinklers on one shared service.
 - **The item lists** (`items`):
-  - every element of the published services model (Addendum 7's), in the walk-ups that have it;
+  - every element of the published services model (Addendum 10's), in the walk-ups that have it;
   - the design's items the model doesn't hold: the radiant tubing and its topping, the plant's
     wall-hung equipment, the meters, the fire service's, the insulation, the air sealing and the
     tests;
@@ -43,7 +43,7 @@ from . import OUT_DIR, ROOT
 
 RAW = ROOT / "data" / "raw" / "pass3g" / "step10"
 PUBLISHED = ROOT / "docs" / "pass3" / "bidset"
-SERVICES = PUBLISHED / "services-addendum-7.ifc"  # the services model in effect (Addendum 7's; Addendum 8 changed none)
+SERVICES = PUBLISHED / "services-addendum-10.ifc"  # the services model in effect (Addendum 10's: 7's, the feeders' grounds grown)
 DERIVED = ROOT / "data" / "baseline_usual_practice.csv"
 FT, FT2 = 0.3048, 0.09290304
 
@@ -828,7 +828,7 @@ def checks(r: dict, p: dict) -> list[tuple[str, bool, str]]:
     import csv
 
     seen, its = r["seen"], r["items"]
-    sched = PUBLISHED / "services-addendum-7"
+    sched = PUBLISHED / "services-addendum-10"
     with open(sched / "lengths.csv", encoding="utf-8") as fh:
         sched_ft = sum(float(x["ft"]) for x in csv.DictReader(fh))
     with open(sched / "fittings.csv", encoding="utf-8") as fh:

@@ -477,17 +477,52 @@ def feeders(apt: dict, p: dict, routed=None) -> dict:
         out[f["name"]] = {"ft": rt[f["name"]]["ft"], "square_ft": rt[f["name"]].get("square_ft", rt[f["name"]]["ft"]),
                           "floor": f["floor"], "load": ld, "amps": amps, "breaker_a": breaker,
                           "least_a": least, "size": SIZES[i], "min_size": first, "ampacity": ampacity(SIZES[i], FEEDER_METAL, 75),
-                          "drop": d, "va_ll": va_ll, "va_ln": va_ln, "egc": egc_for(breaker)}
+                          "drop": d, "va_ll": va_ll, "va_ln": va_ln, "egc": egc_for(breaker, SIZES[i], first)}
     return out
 
 
-def egc_for(ocpd_a: float) -> str:
+def egc_for(ocpd_a: float, size: str | None = None, least: str | None = None) -> str:
     """The copper equipment grounding conductor for an overcurrent device's rating (Table 250.122,
-    `data/nec2020_table_250_122.csv`)."""
+    `data/nec2020_table_250_122.csv`). Where the conductors (`size`) are larger than the least size
+    with the ampacity (`least`), as for the drop, it grows with them (NEC 2020 250.122(B): "shall be
+    increased in size proportionately to the increase in circular mil area of the ungrounded
+    conductors"): the table's ground times the conductors' increase in circular mils (Chapter 9
+    Table 8), then the next size up. Found by 10h, taken by Addendum 10: the design had sized the
+    feeders' grounds by the breaker alone."""
+    egc = None
     for r in _table_rows("nec2020_table_250_122.csv"):
         if ocpd_a <= float(r["ocpd_a"]) + 1e-9:
-            return r["cu"]
-    raise ValueError(ocpd_a)
+            egc = r["cu"]
+            break
+    if egc is None:
+        raise ValueError(ocpd_a)
+    if size is None or least is None or size == least:
+        return egc
+    cm = {s: float(r["cmil"]) for s, r in _rows("nec2020_ch9_table_8.csv").items()}
+    need = cm[egc] * cm[size] / cm[least]
+    return next(s for s in SIZES if s in cm and cm[s] >= need - 1e-6)
+
+
+def nmb_ground(awg: str) -> str:
+    """The bare ground in the basis of design's NM-B cable of conductors `awg` (Southwire SPEC 10028,
+    `data/southwire_nmb_ground.csv`)."""
+    return next(r["ground_awg"] for r in _table_rows("southwire_nmb_ground.csv") if r["awg"] == awg)
+
+
+def short_grounds(el: dict) -> list[str]:
+    """Every feeder and branch circuit of a design (`design`'s) whose ground is smaller than 250.122
+    asks of it, (B) included: a feeder's is the one it's drawn with (`egc`); a branch circuit's the
+    one its NM-B cable carries. Empty when every one meets it."""
+    cm = {s: float(r["cmil"]) for s, r in _rows("nec2020_ch9_table_8.csv").items()}
+    out = []
+    for n, f in el["feeders"].items():
+        if cm[f["egc"]] < cm[egc_for(f["breaker_a"], f["size"], f["min_size"])]:
+            out.append(f"{n}'s feeder ({f['size']} AWG, ground {f['egc']})")
+    for n, pn in el["panels"].items():
+        for c in pn["circuits"]:
+            if cm[nmb_ground(c["awg"])] < cm[egc_for(c["breaker_a"], c["awg"], c["min_awg"])]:
+                out.append(f"{n} {c['key']} ({c['awg']} AWG NM-B, ground {nmb_ground(c['awg'])})")
+    return out
 
 
 def conduit_for(sizes: list[str], p: dict, kind: str = "THHN/THWN/THWN-2", sched: str = "40") -> dict:
@@ -787,6 +822,7 @@ def summary(apt: dict, p: dict) -> dict:
     heater_ok = all(h["w"] >= h["need_w"] for h in d["heater"].values())
     stack_ok = fl["stack_a"] <= p[m + "main_kaic"] * 1000 and fl["tenant_breaker"] is not None
     flat_fault = max(fl["flats_a"].values())
+    short = short_grounds(d)
     return {
         "revision": apt.get("revision"),
         "checks": [
@@ -813,6 +849,10 @@ def summary(apt: dict, p: dict) -> dict:
             ("every feeder within 2% at its 220.82 load, its ampacity at least its load and 83% of its breaker (310.12(B))",
              not over_feeder, ", ".join(over_feeder)),
             ("feeder and branch together within 5% at every outlet", worst_total <= d["vd_total_max"] + 1e-12, f"worst {worst_total:.2%}"),
+            ("every feeder's and branch circuit's ground what 250.122 asks, larger in proportion where its conductors are (250.122(B))",
+             not short, "; ".join(short) if short else
+             f"{sum(f['size'] != f['min_size'] for f in fd.values())} feeders and "
+             f"{sum(c['awg'] != c['min_awg'] for c in circuits)} branch circuits larger than their ampacity asks"),
             ("every ERV preheater covers the design hour at the voltage it gets", heater_ok,
              f"least {min(h['w'] for h in d['heater'].values()):.0f} W against {max(h['need_w'] for h in d['heater'].values()):.0f} W"),
             ("every meter self-contained (125 A positions, FirstEnergy's limit 400 A); the service cables within what "

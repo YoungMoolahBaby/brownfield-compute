@@ -49,8 +49,9 @@ OUT = OUT_DIR / "pass3" / "services"
 REVISION = "addendum-5"  # the frame the services are routed through (routing.FRAME); it keys their GlobalIds
 # The addendum that issues this services model: Addendum 5 issued the first (services-addendum-5.ifc,
 # published as it was); Addendum 7 (pass 3g step 9d) the revised one, each flat's hot-water loop and
-# the plant's tanks and backup heater in it.
-ISSUE = "addendum-7"
+# the plant's tanks and backup heater in it; Addendum 10 the three feeders made larger for the drop
+# with their grounds grown in proportion (NEC 250.122(B), found by 10h), no geometry changed.
+ISSUE = "addendum-10"
 S = "systems.services."
 
 # Each system: IfcDistributionSystem's type, its name, the viewer's layer.

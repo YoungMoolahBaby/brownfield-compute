@@ -121,14 +121,16 @@ def test_a_bigger_water_heater_breaks_the_wiring_check(made, P):
     assert not all(x["breaker_a"] == x["from_breaker_a"] for x in wr["feeders"].values())
 
 
-def test_the_grounds_short_of_250_122_b(made):
-    """The engineered design's feeders upsized for the drop (2 AWG where 3 carries the load) keep the
-    breaker's 8 AWG ground; 250.122(B) wants 6."""
+def test_the_grounds_grow_with_the_feeders_and_are_priced_so(made):
+    """10h's finding, taken by Addendum 10: the feeders upsized for the drop (2 AWG where 3 carries the
+    load) take a 6 AWG ground, not the breaker's 8 (250.122(B)); the quality walk-up's 1 AWG one a 4.
+    Each feeder class is priced with the ground it carries."""
     gr = qu.grounds(made["fx"])
-    eng = {x["flat"]: x for x in gr["engineered"]}
+    grown = {label: {x["flat"]: x for x in rows if x["needs"] != x["breaker_egc"]} for label, rows in gr.items()}
     two = [n for n, v in made["fx"]["feeders"][ch.ENGINEERED_FLAT].items() if v["to"] == "2"]
-    assert sorted(eng) == sorted(two) and all(x["egc"] == "8" and x["needs"] == "6" for x in eng.values())
-    assert len(gr["quality"]) > len(gr["engineered"])
+    assert sorted(grown["engineered"]) == sorted(two) and all(x["needs"] == "6" and x["breaker_egc"] == "8" for x in grown["engineered"].values())
+    assert len(grown["quality"]) > len(grown["engineered"]) and {x["needs"] for x in grown["quality"].values()} <= {"6", "4"}
+    assert all(x["priced"] == x["needs"] for rows in gr.values() for x in rows)
 
 
 def test_the_draws_reproduce_whatever_the_workers(made, params):

@@ -333,10 +333,50 @@
      "label": "Sheet G-001, the cover and general notes, reissued with Addendum 9's two items"
     }
    ]
+  },
+  {
+   "number": 10,
+   "title": "The feeders' grounds, larger with their conductors (NEC 250.122(B))",
+   "issued": "2026-11-24T09:08:36-08:00",
+   "items": [
+    "Item 1 (the feeders' grounds, NEC 2020 250.122(B)): Three feeders were made 2 AWG, where 3 AWG carries their load, to hold the design's drop: 2-front-left (101 ft), 3-front-left (114 ft) and 3-front-right (99 ft). Their grounds were sized by their 100 A breakers alone (Table 250.122, 8 AWG). 250.122(B) grows a ground in proportion when its conductors are made larger: 8 AWG's 16,510 circular mils times 2 AWG's 66,360 over 3 AWG's 52,620 is 20,821, so 6 AWG (26,240). Each now takes a 6 AWG ground, in the same 1-1/4 in. conduit (27% full, within Chapter 9's 40%). Found in step 10h. The six branch circuits made a size larger for their drop (the living side's lighting, 14 to 12 AWG) already meet it: their NM-B cable carries a ground the size of its conductors (Southwire SPEC 10028).",
+    "Item 2 (the documents): the services model reissued (services-addendum-10.ifc, with its schedules), the three feeders' conductors corrected in each of their 6 elements and nothing else; sheet E-601 reissued (services-sheet-e-601-addendum-10.pdf) with the grounds in its feeder schedule and notes, and G-001 (services-sheet-g-001-addendum-10.pdf) with them as a general note and the sheet index marking the sheets reissued since Addendum 7. No element of the building, the frame or the services moves."
+   ],
+   "model": null,
+   "changes": null,
+   "services_changes": "changes-services-addendum-10.json",
+   "services_model": "services-addendum-10.ifc",
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-10.md",
+     "label": "The addendum: its items, what it changes and the checks"
+    },
+    {
+     "path": "services-addendum-10.ifc",
+     "label": "The services, IFC4, reissued: the three feeders made larger for the drop, with their grounds larger in proportion"
+    },
+    {
+     "path": "changes-services-addendum-10.json",
+     "label": "What the reissued services model changed against Addendum 7's, by GlobalId"
+    },
+    {
+     "path": "services-addendum-10/lengths.csv",
+     "label": "Pipe, duct, conduit and cable lengths, by system, material and size"
+    },
+    {
+     "path": "services-sheet-e-601-addendum-10.pdf",
+     "label": "Sheet E-601, the one-line diagram and feeder schedule, reissued with the feeders' grounds"
+    },
+    {
+     "path": "services-sheet-g-001-addendum-10.pdf",
+     "label": "Sheet G-001, the cover and general notes, reissued with Addendum 10's note"
+    }
+   ]
   }
  ],
  "services": {
-  "model": "services-addendum-7.ifc",
+  "model": "services-addendum-10.ifc",
   "frame": "Addendum 5's frame",
   "elements": 3162,
   "layers": {
@@ -345,57 +385,57 @@
    "plumbing": 1227,
    "sprinklers": 763
   },
-  "issued": "2026-11-23T08:35:59-08:00",
+  "issued": "2026-11-24T09:08:36-08:00",
   "files": [
    {
-    "path": "services-addendum-7/lengths.csv",
+    "path": "services-addendum-10/lengths.csv",
     "label": "Pipe, duct, conduit and cable lengths, by system, material and size"
    },
    {
-    "path": "services-addendum-7/fittings.csv",
+    "path": "services-addendum-10/fittings.csv",
     "label": "Fittings, by system, kind and size"
    },
    {
-    "path": "services-addendum-7/equipment.csv",
+    "path": "services-addendum-10/equipment.csv",
     "label": "Equipment"
    },
    {
-    "path": "services-addendum-7/fixtures.csv",
+    "path": "services-addendum-10/fixtures.csv",
     "label": "Plumbing fixtures"
    },
    {
-    "path": "services-addendum-7/sprinklers.csv",
+    "path": "services-addendum-10/sprinklers.csv",
     "label": "Sprinklers"
    },
    {
-    "path": "services-addendum-7/air_terminals.csv",
+    "path": "services-addendum-10/air_terminals.csv",
     "label": "Registers, grilles and wall caps"
    },
    {
-    "path": "services-addendum-7/switches.csv",
+    "path": "services-addendum-10/switches.csv",
     "label": "Water-level switches (IMC 307.2.3)"
    },
    {
-    "path": "services-addendum-7/holes.csv",
+    "path": "services-addendum-10/holes.csv",
     "label": "Holes bored through the frame"
    },
    {
-    "path": "services-addendum-7/plates.csv",
+    "path": "services-addendum-10/plates.csv",
     "label": "Holes near a member's edge (steel plates)"
    },
    {
-    "path": "services-addendum-7/openings.csv",
+    "path": "services-addendum-10/openings.csv",
     "label": "Every opening through an assembly"
    },
    {
-    "path": "services-addendum-7/firestop.csv",
+    "path": "services-addendum-10/firestop.csv",
     "label": "The firestop schedule, by condition (IBC 714)"
    }
   ],
-  "status": "Addendum 7",
-  "changes": "changes-services-addendum-7.json",
-  "changes_against": "services-addendum-5.ifc",
-  "note": "issued with Addendum 7; 360 rated openings firestopped by the maker's engineering judgment"
+  "status": "Addendum 10",
+  "changes": "changes-services-addendum-10.json",
+  "changes_against": "services-addendum-7.ifc",
+  "note": "issued with Addendum 10; 360 rated openings firestopped by the maker's engineering judgment"
  },
  "round": {
   "issued": "2026-11-23T09:04:23-08:00",

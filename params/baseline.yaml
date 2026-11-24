@@ -2333,6 +2333,20 @@ price:
     conf: medium
     source: 'Pro Wire and Cable: ''Price Now $0.93/ft'' (https://prowireandcable.com/8-awg-stranded-thhn-thwn-2-black/, read 2026-11-23); Three sellers saved: Pro Wire and Cable $0.93/ft stranded (el_thhn8_prowire.html);
       WCYW 8 AWG THHN/THWN-2 Price $0.93 /ft. (OD 0.213 in., consistent with stranded) (el_thhn_wcyw.html); Hardware World Southwire SIMpull stranded 500 ft Our Price $517.62 = $1.035'
+  thhn_6_over_8:
+    value: 1.5269
+    unit: 6 AWG THHN's price a foot over 8 AWG's
+    conf: low
+    source: 'Wire & Cable Your Way: ''8 AWG THHN/THWN-2 Copper Building Wire O.D. (Inches) 0.213 Ampacity 55 Price $0.93 /ft'' and ''6 AWG THHN/THWN-2 Copper Building Wire
+      O.D. (Inches) 0.249 Ampacity 75 Price $1.42 /ft'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23, el_thhn_wcyw.html, saved with 10b''s prices): $1.42/$0.93.
+      One seller, so fixed: 6 AWG moves with 8 AWG''s price in the draws. The ground of a 2 AWG feeder made larger for drop (NEC 250.122(B), Addendum 10)'
+  thhn_4_over_8:
+    value: 2.3656
+    unit: 4 AWG THHN's price a foot over 8 AWG's
+    conf: low
+    source: 'Wire & Cable Your Way: ''8 AWG THHN/THWN-2 Copper Building Wire ... Price $0.93 /ft'' and ''4 AWG THHN/THWN-2 Wire (By-the-foot) O.D. (Inches) 0.318 Ampacity 95
+      Price $2.20 /ft'' (https://www.wireandcableyourway.com/thhn-thwn, read 2026-11-23, el_thhn_wcyw.html): $2.20/$0.93. One seller, so fixed. The ground of a 1 AWG feeder
+      a designed walk-up makes larger for drop (NEC 250.122(B), 10h)'
   ug_2in:
     value: 90
     low: 44.5

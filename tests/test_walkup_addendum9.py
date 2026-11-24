@@ -62,9 +62,10 @@ def test_hangers_fill_the_spacing_the_holes_dont(P):
     assert iso["sleeves"] == iso["hangers"] + 10 and iso["ft"] == pytest.approx(20.0)
 
 
-def test_g001_is_reissued_alone_by_addendum_9_and_sizes_read_as_the_trade_writes_them():
-    rev, name = servicesheets.REVISED["G-001"]
-    assert rev == "Addendum 9" and name == "services-sheet-g-001-addendum-9.pdf"
+def test_g001_was_reissued_alone_by_addendum_9_and_sizes_read_as_the_trade_writes_them():
+    # Addendum 10 reissued G-001 again; Addendum 9's stays in the plan room as issued.
+    assert servicesheets.REVISED["G-001"][0] == "Addendum 10"
+    assert (systems.PUBLISHED / "services-sheet-g-001-addendum-9.pdf").is_file()
     assert servicesheets.REVISED["G-002"][0] == "Addendum 8"
     assert [servicesheets.inches(x) for x in (1.375, 2.0, 0.5, 2.125)] == ["1-3/8", "2", "1/2", "2-1/8"]
     assert systems.TITLES[9] and 9 in systems.ISSUED

@@ -1,0 +1,61 @@
+element,class,storey,Flat,Room,Kind,Drawn
+"bathtub, 1-back-left",IfcSanitaryTerminal (BATH),Level 1,1-back-left,1-back-left/bath,bathtub,its size from params
+"bathtub, 1-back-right",IfcSanitaryTerminal (BATH),Level 1,1-back-right,1-back-right/bath,bathtub,its size from params
+"bathtub, 1-front-left",IfcSanitaryTerminal (BATH),Level 1,1-front-left,1-front-left/bath,bathtub,its size from params
+"bathtub, 1-front-right",IfcSanitaryTerminal (BATH),Level 1,1-front-right,1-front-right/bath,bathtub,its size from params
+"bathtub, 2-back-left",IfcSanitaryTerminal (BATH),Level 2,2-back-left,2-back-left/bath,bathtub,its size from params
+"bathtub, 2-back-right",IfcSanitaryTerminal (BATH),Level 2,2-back-right,2-back-right/bath,bathtub,its size from params
+"bathtub, 2-front-left",IfcSanitaryTerminal (BATH),Level 2,2-front-left,2-front-left/bath,bathtub,its size from params
+"bathtub, 2-front-right",IfcSanitaryTerminal (BATH),Level 2,2-front-right,2-front-right/bath,bathtub,its size from params
+"bathtub, 3-back-left",IfcSanitaryTerminal (BATH),Level 3,3-back-left,3-back-left/bath,bathtub,its size from params
+"bathtub, 3-back-right",IfcSanitaryTerminal (BATH),Level 3,3-back-right,3-back-right/bath,bathtub,its size from params
+"bathtub, 3-front-left",IfcSanitaryTerminal (BATH),Level 3,3-front-left,3-front-left/bath,bathtub,its size from params
+"bathtub, 3-front-right",IfcSanitaryTerminal (BATH),Level 3,3-front-right,3-front-right/bath,bathtub,its size from params
+"dishwasher, 1-back-left",IfcElectricAppliance (DISHWASHER),Level 1,1-back-left,1-back-left/kitchen,dishwasher,its size from params
+"dishwasher, 1-back-right",IfcElectricAppliance (DISHWASHER),Level 1,1-back-right,1-back-right/kitchen,dishwasher,its size from params
+"dishwasher, 1-front-left",IfcElectricAppliance (DISHWASHER),Level 1,1-front-left,1-front-left/kitchen,dishwasher,its size from params
+"dishwasher, 1-front-right",IfcElectricAppliance (DISHWASHER),Level 1,1-front-right,1-front-right/kitchen,dishwasher,its size from params
+"dishwasher, 2-back-left",IfcElectricAppliance (DISHWASHER),Level 2,2-back-left,2-back-left/kitchen,dishwasher,its size from params
+"dishwasher, 2-back-right",IfcElectricAppliance (DISHWASHER),Level 2,2-back-right,2-back-right/kitchen,dishwasher,its size from params
+"dishwasher, 2-front-left",IfcElectricAppliance (DISHWASHER),Level 2,2-front-left,2-front-left/kitchen,dishwasher,its size from params
+"dishwasher, 2-front-right",IfcElectricAppliance (DISHWASHER),Level 2,2-front-right,2-front-right/kitchen,dishwasher,its size from params
+"dishwasher, 3-back-left",IfcElectricAppliance (DISHWASHER),Level 3,3-back-left,3-back-left/kitchen,dishwasher,its size from params
+"dishwasher, 3-back-right",IfcElectricAppliance (DISHWASHER),Level 3,3-back-right,3-back-right/kitchen,dishwasher,its size from params
+"dishwasher, 3-front-left",IfcElectricAppliance (DISHWASHER),Level 3,3-front-left,3-front-left/kitchen,dishwasher,its size from params
+"dishwasher, 3-front-right",IfcElectricAppliance (DISHWASHER),Level 3,3-front-right,3-front-right/kitchen,dishwasher,its size from params
+"kitchen sink, 1-back-left",IfcSanitaryTerminal (SINK),Level 1,1-back-left,1-back-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 1-back-right",IfcSanitaryTerminal (SINK),Level 1,1-back-right,1-back-right/kitchen,kitchen sink,its size from params
+"kitchen sink, 1-front-left",IfcSanitaryTerminal (SINK),Level 1,1-front-left,1-front-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 1-front-right",IfcSanitaryTerminal (SINK),Level 1,1-front-right,1-front-right/kitchen,kitchen sink,its size from params
+"kitchen sink, 2-back-left",IfcSanitaryTerminal (SINK),Level 2,2-back-left,2-back-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 2-back-right",IfcSanitaryTerminal (SINK),Level 2,2-back-right,2-back-right/kitchen,kitchen sink,its size from params
+"kitchen sink, 2-front-left",IfcSanitaryTerminal (SINK),Level 2,2-front-left,2-front-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 2-front-right",IfcSanitaryTerminal (SINK),Level 2,2-front-right,2-front-right/kitchen,kitchen sink,its size from params
+"kitchen sink, 3-back-left",IfcSanitaryTerminal (SINK),Level 3,3-back-left,3-back-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 3-back-right",IfcSanitaryTerminal (SINK),Level 3,3-back-right,3-back-right/kitchen,kitchen sink,its size from params
+"kitchen sink, 3-front-left",IfcSanitaryTerminal (SINK),Level 3,3-front-left,3-front-left/kitchen,kitchen sink,its size from params
+"kitchen sink, 3-front-right",IfcSanitaryTerminal (SINK),Level 3,3-front-right,3-front-right/kitchen,kitchen sink,its size from params
+"lavatory, 1-back-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 1,1-back-left,1-back-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 1-back-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 1,1-back-right,1-back-right/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 1-front-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 1,1-front-left,1-front-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 1-front-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 1,1-front-right,1-front-right/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 2-back-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 2,2-back-left,2-back-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 2-back-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 2,2-back-right,2-back-right/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 2-front-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 2,2-front-left,2-front-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 2-front-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 2,2-front-right,2-front-right/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 3-back-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 3,3-back-left,3-back-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 3-back-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 3,3-back-right,3-back-right/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 3-front-left",IfcSanitaryTerminal (WASHHANDBASIN),Level 3,3-front-left,3-front-left/bath,lavatory,its size a placeholder for the drawing
+"lavatory, 3-front-right",IfcSanitaryTerminal (WASHHANDBASIN),Level 3,3-front-right,3-front-right/bath,lavatory,its size a placeholder for the drawing
+"water closet, 1-back-left",IfcSanitaryTerminal (TOILETPAN),Level 1,1-back-left,1-back-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 1-back-right",IfcSanitaryTerminal (TOILETPAN),Level 1,1-back-right,1-back-right/bath,water closet,its size a placeholder for the drawing
+"water closet, 1-front-left",IfcSanitaryTerminal (TOILETPAN),Level 1,1-front-left,1-front-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 1-front-right",IfcSanitaryTerminal (TOILETPAN),Level 1,1-front-right,1-front-right/bath,water closet,its size a placeholder for the drawing
+"water closet, 2-back-left",IfcSanitaryTerminal (TOILETPAN),Level 2,2-back-left,2-back-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 2-back-right",IfcSanitaryTerminal (TOILETPAN),Level 2,2-back-right,2-back-right/bath,water closet,its size a placeholder for the drawing
+"water closet, 2-front-left",IfcSanitaryTerminal (TOILETPAN),Level 2,2-front-left,2-front-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 2-front-right",IfcSanitaryTerminal (TOILETPAN),Level 2,2-front-right,2-front-right/bath,water closet,its size a placeholder for the drawing
+"water closet, 3-back-left",IfcSanitaryTerminal (TOILETPAN),Level 3,3-back-left,3-back-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 3-back-right",IfcSanitaryTerminal (TOILETPAN),Level 3,3-back-right,3-back-right/bath,water closet,its size a placeholder for the drawing
+"water closet, 3-front-left",IfcSanitaryTerminal (TOILETPAN),Level 3,3-front-left,3-front-left/bath,water closet,its size a placeholder for the drawing
+"water closet, 3-front-right",IfcSanitaryTerminal (TOILETPAN),Level 3,3-front-right,3-front-right/bath,water closet,its size a placeholder for the drawing

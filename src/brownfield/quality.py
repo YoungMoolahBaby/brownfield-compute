@@ -105,7 +105,7 @@ def wiring(r10: dict, fx: dict, p: dict, nec_note: float) -> dict:
     usual = {w: feeder_sizes(apt, lax, fx["s7"], kind) for w, kind in USUAL_FLATS.items()}
     return {"amps": amps, "main_a": next(m[0] for m in MAINS if m[0] >= amps), "electric_a": sv["main_a"], "feeders": q, "upsized": up,
             "priced": all(v["to"] in FEEDER_CLASS for v in up.values()),
-            "conduits": {k: conduit_for([v["to"]] * 3 + ["8"], p)["trade"] for k, v in up.items()},
+            "conduits": {k: conduit_for([v["to"]] * 3 + [least_and_ground(v)[1]], p)["trade"] for k, v in up.items()},
             "classes": {k: FEEDER_CLASS[v["to"]] for k, v in up.items() if v["to"] in FEEDER_CLASS},
             "engineered": fx["feeders"][ENGINEERED_FLAT], "usual": usual, "nec_note": nec_note, "vd_max": p["systems.wiring.vd_feeder_max"]}
 
@@ -113,26 +113,37 @@ def wiring(r10: dict, fx: dict, p: dict, nec_note: float) -> dict:
 CONDUIT = {"feeder_1": "1", "feeder_1.25": "1-1/4", "feeder_1.25_1awg": "1-1/4"}  # each feeder class's conduit (`pricing.CLASSES`)
 
 
+def least_and_ground(v: dict) -> tuple[str, str]:
+    """A feeder's least size with the ampacity (`choices.feeder_sizes`'s entry: at least 8 AWG, as
+    `electrical.feeders` starts) and its ground by NEC 250.122, (B) included."""
+    from .electrical import FEEDER_METAL, SIZES, ampacity, egc_for
+
+    least = next(sz for k, sz in enumerate(SIZES) if k >= SIZES.index("8") and ampacity(sz, FEEDER_METAL, 75) >= v["least_a"] - 1e-9)
+    return least, egc_for(v["breaker_a"], v["to"], least)
+
+
 def grounds(fx: dict) -> dict[str, list[dict]]:
     """NEC 250.122(B): conductors made larger than the least size with the ampacity (here, for the
-    drop) take an equipment grounding conductor larger in proportion to their circular mils. The
-    design sizes each feeder's by its breaker alone (Table 250.122, `electrical.egc_for`). Each
-    feeder of the engineered design as issued, and of the quality walk-up, whose ground is short
-    of it. Found by 10h; reported, not fixed (the bid set's feeders are Addendum 7's)."""
-    from .choices import ENGINEERED_FLAT
-    from .electrical import FEEDER_METAL, SIZES, _table_rows, ampacity, egc_for
+    drop) take an equipment grounding conductor larger in proportion to their circular mils. Found by
+    10h; Addendum 10 sizes the design's so (`electrical.egc_for`) and prices each feeder class with
+    the ground it then carries (`pricing.CLASSES`). Each feeder of the engineered design and of the
+    quality walk-up: the ground the rule asks and the one its priced class carries, those grown
+    over the breaker's own marked."""
+    import re
 
-    cmil = {r["size"]: float(r["cmil"]) for r in _table_rows("nec2020_ch9_table_8.csv")}
+    from .choices import ENGINEERED_FLAT, FEEDER_CLASS
+    from .electrical import egc_for
+    from .pricing import CLASSES
+
     out = {}
     for label, kind in (("engineered", ENGINEERED_FLAT), ("quality", QUALITY_FLAT)):
         rows = []
         for name, v in fx["feeders"][kind].items():
-            least = next(sz for k, sz in enumerate(SIZES) if k >= SIZES.index("8") and ampacity(sz, FEEDER_METAL, 75) >= v["least_a"] - 1e-9)
-            egc = egc_for(v["breaker_a"])
-            need = cmil[egc] * cmil[v["to"]] / cmil[least]
-            req = next(sz for sz in SIZES if sz in cmil and cmil[sz] >= need - 1e-6)
-            if cmil[req] > cmil[egc]:
-                rows.append({"flat": name, "size": v["to"], "least": least, "egc": egc, "needs": req, "ft": v["ft"]})
+            least, needs = least_and_ground(v)
+            cls = FEEDER_CLASS[v["to"]]
+            priced = re.search(r"and a (\S+) AWG ground", CLASSES[cls][2]).group(1)
+            rows.append({"flat": name, "size": v["to"], "least": least, "breaker_egc": egc_for(v["breaker_a"]),
+                         "needs": needs, "class": cls, "priced": priced, "ft": v["ft"]})
         out[label] = rows
     return out
 
@@ -173,6 +184,10 @@ def checks(r: dict) -> list[tuple[str, bool, str]]:
         ("each feeder upsized has a priced class, and its conductors fit that class's conduit (Chapter 9)",
          wr["priced"] and all(CONDUIT[wr["classes"][k]] == t for k, t in wr["conduits"].items()),
          "; ".join(f"{k} in {t} in." for k, t in wr["conduits"].items()) or "none upsized"),
+        ("every feeder's priced class carries the ground NEC 250.122(B) asks of it, larger where its conductors are (Addendum 10)",
+         all(x["priced"] == x["needs"] for rows in r["grounds"].values() for x in rows),
+         "; ".join(f"{label}: " + (", ".join(f"{x['flat']} {x['size']} AWG with {x['needs']}" for x in rows if x["needs"] != x["breaker_egc"])
+                                   or "none grown") for label, rows in r["grounds"].items())),
         (f"the usual walk-ups' flats on the engineered design's feeders, on their breakers and within the NEC's informational {wr['nec_note']:.0%}",
          all(x["to"] == x["from"] and x["breaker_a"] == x["from_breaker_a"] for x in usual),
          f"drop at most {max(x['drop'] for x in usual):.2%}, at most {max(x['amps'] for x in usual):.1f} A"),
@@ -309,11 +324,12 @@ def report(r: dict, p: dict) -> str:
                                                                       for k, v in wr["upsized"].items())
               + f"; {_usd(c['feeders quality'])} a flat up front"]
     gr = r["grounds"]
-    lines += ["", "Found, not fixed: NEC 250.122(B) takes a feeder's ground up in proportion when its conductors are made larger than the "
-                  "least with the ampacity (here, for the drop). The design sizes the ground by the breaker alone, so:"]
+    lines += ["", "The grounds (NEC 250.122(B), found by 10h, taken by Addendum 10): a feeder made larger than the least with the ampacity "
+                  "(here, for the drop) takes a ground larger in proportion. Those grown over the breaker's own:"]
     for label, rows in gr.items():
         lines.append(f"  {label}: " + ("; ".join(f"{x['flat']} ({x['ft']:.0f} ft), {x['size']} AWG where {x['least']} would carry it: "
-                                                  f"its {x['egc']} AWG ground should be {x['needs']}" for x in rows) or "none"))
+                                                  f"a {x['needs']} AWG ground, priced {x['priced']}" for x in rows
+                                                  if x["needs"] != x["breaker_egc"]) or "none"))
     lines += ["", "The lowest and highest draw of each line over the years counted:"]
     lines += [f"  {k}: {_usd(r['lowest'][f'd life {k}'])} to {_usd(r['highest'][f'd life {k}'])}" for k in sg]
     return NL.join(lines)

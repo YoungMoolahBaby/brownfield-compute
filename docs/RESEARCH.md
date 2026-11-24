@@ -2001,3 +2001,16 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
         (https://www.ecmag.com/section/codes-standards/voltage-drop-sizing-equipment-grounding-conductors).
       - One EC&M article reads it narrower (only where the fault current would otherwise not trip
         the breaker). That isn't the code's text; the report takes the text.
+  - **Addendum 10, the feeders' grounds (2026-11-24).** Two more of the same seller's prices, and the
+    ground in the branch circuits' cable:
+    - **6 and 4 AWG THHN:** Wire & Cable Your Way's same saved page (`el_thhn_wcyw.html`, read
+      2026-11-23): 8 AWG $0.93 /ft, 6 AWG $1.42 /ft, 4 AWG $2.20 /ft. The ratios over 8 AWG, 1.5269
+      and 2.3656, price the grounds of the feeders made larger for the drop
+      (`price.thhn_6_over_8`, `price.thhn_4_over_8`, fixed, as `thhn_1_over_2` is).
+    - **NM-B's ground:** Southwire, Romex SIMpull Copper Type NM-B Cable, SPEC 10028 (Revision
+      1.000.052, updated 2025-10-07; https://cabletechsupport.southwire.com/tile/42/spec/10028/?country=US,
+      read 2026-11-24), Table 1, column "Ground, No. x AWG": 14/2 "1 x 14" (stock 288274), 12/2
+      "1 x 12" (288282), 10/2 "1 x 10" (288290), 8/3 "1 x 10" (639492), 6/3 "1 x 10" (639500);
+      "Ground: Solid soft drawn bare copper with kraft paper wrap". So a 14 AWG circuit made 12 AWG
+      for its drop carries the 12 AWG ground 250.122(B) asks; an 8 AWG cable on a 30 A breaker
+      would not (it would ask 8). `data/southwire_nmb_ground.csv`.

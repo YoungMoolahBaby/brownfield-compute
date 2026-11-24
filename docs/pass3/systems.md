@@ -8,7 +8,7 @@ trades, as they usually are in the US. Pass 3g (D28) asked two things:
 - what does that design cost, and what does it buy?
 
 Steps 0-9 designed them, to the 2021 I-codes as Pennsylvania enforces them, plus Phius where it
-asks more (ventilation, airtightness). The result is issued as Addenda 2-9: drawings, an open
+asks more (ventilation, airtightness). The result is issued as Addenda 2-10: drawings, an open
 model of every pipe, duct and cable, the specification sections, the tests, and a control
 sequence. They are in the [plan room](https://youngmoolahbaby.github.io/brownfield-compute/).
 
@@ -69,14 +69,14 @@ The code is in `src/brownfield/baseline.py`, `pricing.py`, `energy.py`, `comfort
     winter);
   - the solar panels ($12) and the PRV ($2) buy no quality here.
 
-  None pays for itself in money, except the hot-water plant in 20% of the draws. The ERVs even use
+  None pays for itself in money, except the hot-water plant in 21% of the draws. The ERVs even use
   606 kWh more electricity a year than bath fans; their case is the air.
 - **The quality walk-up the towns would build**
   ([10h](#the-quality-walk-up-the-towns-would-build-10h)) keeps the choices that buy quiet, air,
   and safe water and fire service, and the design before bidding. It drops what needs the data
   center's water, which the towns' edges don't get (D18), and the solar panels and the PRV. Its
   mini-splits heat, and each flat has its own water heater.
-  - It costs $15,300 a flat over 20 years more than the usual all-electric walk-up: $120 a month
+  - It costs $15,300 a flat over 20 years more than the usual all-electric walk-up: $121 a month
     (the typical draw $140, P10-P90 $125-157), about half the engineered design's $231.
   - The cast iron ($38 a month) and the ERVs ($35) are most of it.
   - The data center's water would add $97 a month to it ($117-187 with the network's share), and
@@ -143,11 +143,11 @@ A flat, USD 2026, with the trade's and the builder's markups (PHFA's caps):
 | plumbing | $18,668 | $7,212 | $15,972 | $9,198 |
 | heating | $11,630 | | | |
 | heating, cooling, ventilation | $12,091 | $8,276 | $9,769 | $8,276 |
-| electrical | $10,201 | $7,242 | $7,062 | $7,116 |
+| electrical | $10,218 | $7,259 | $7,080 | $7,134 |
 | sprinklers and services | $4,771 | $4,179 | $4,179 | $4,179 |
 | envelope (air sealing, its tests) | $1,279 | $419 | $419 | $419 |
 | tests and inspections | $984 | $485 | $485 | $656 |
-| **total** | **$59,626** | **$27,814** | **$37,887** | **$29,843** |
+| **total** | **$59,643** | **$27,831** | **$37,904** | **$29,861** |
 
 What the engineered design's $31,812 over the all-electric walk-up buys, a flat:
 
@@ -264,13 +264,13 @@ A flat, USD 2026: the central values, then the typical draw (P50) with P10-P90:
 
 | | engineered | all electric | gas | central hot water |
 |---|---|---|---|---|
-| the systems | $59,626 | $27,814 | $37,887 | $29,843 |
+| the systems | $59,643 | $27,831 | $37,904 | $29,861 |
 | the fee's extra | $2,234 | | | |
 | replacements | $1,269 | $1,177 | $1,053 | $1,219 |
 | running cost × 10.59 | $5,567 | $11,226 | $8,409 | $6,470 |
 | upkeep × 10.59 | $2,478 | $1,537 | $3,223 | $1,661 |
-| **over 20 years, central** | **$71,173** | **$41,753** | **$50,572** | **$39,193** |
-| the typical draw (P10-P90) | $83,847 ($78,391-89,865) | $49,488 ($45,448-54,442) | $58,956 ($54,743-63,563) | $46,274 ($42,933-50,192) |
+| **over 20 years, central** | **$71,191** | **$41,770** | **$50,589** | **$39,211** |
+| the typical draw (P10-P90) | $83,865 ($78,409-89,883) | $49,507 ($45,467-54,461) | $58,973 ($54,761-63,582) | $46,292 ($42,951-50,211) |
 
 The engineered design less each usual walk-up:
 
@@ -373,14 +373,14 @@ them at 7%.
 | cast-iron drains and vents | $4,860 | | | $4,860 | $38 | $5,680 ($4,772-6,652) |
 | the water and fire services apart, the fire's supervised | $1,395 | | $9 | $1,492 | $12 | $1,967 ($1,505-2,499) |
 | solar panels on the house meter | $2,550 | | -$92 | $1,575 | $12 | $1,704 ($1,307-2,168) |
-| the hot-water plant and the flats' loops | $4,572 | $74 | -$335 | $1,097 | $9 | $1,264 (-$753 to $3,014) |
+| the hot-water plant and the flats' loops | $4,545 | $74 | -$335 | $1,070 | $8 | $1,234 (-$782 to $2,984) |
 | airtightness to Phius, and its tests | $860 | | $12 | $983 | $8 | $1,314 ($929-1,910) |
 | a water submeter in each flat | $848 | | | $848 | $7 | $1,007 ($821-1,229) |
 | the water pipes held off the frame (Addendum 9) | $477 | | | $477 | $4 | $563 ($484-659) |
 | a pressure-reducing valve on the service | $205 | | | $205 | $2 | $194 ($161-218) |
 | the cold risers' insulation | $30 | | | $30 | $0 | $41 ($31-53) |
 | the engineering's fee | $2,234 | | | $2,234 | $18 | $2,192 ($978-3,636) |
-| how the choices interact | $130 | | -$149 | -$1,450 | -$11 | -$1,497 (-$2,155 to -$1,013) |
+| how the choices interact | $157 | | -$149 | -$1,424 | -$11 | -$1,469 (-$2,127 to -$985) |
 | **the whole, over the all-electric walk-up** | **$34,046** | **$92** | **-$445** | **$29,420** | **$231** | **$34,272 ($30,407-38,270)** |
 
 Taken out together, or set against other ways:
@@ -388,14 +388,14 @@ Taken out together, or set against other ways:
 | | over 20 years | the typical draw (P10-P90) |
 |---|---|---|
 | the plant and loops, against one gas water heater for the building (the central walk-up's way) | $3,638 | $4,280 ($3,618-5,089) |
-| the floors and the plant together: all the data center's water does | $12,518 | $14,672 ($11,781-17,598) |
-| the same, with the heat network's share, dense (pass 3 §4) | $15,081 | $17,627 ($14,688-20,665) |
-| the same, with the network's share, base | $24,005 | $26,163 ($20,658-35,865) |
+| the floors and the plant together: all the data center's water does | $12,491 | $14,646 ($11,754-17,568) |
+| the same, with the heat network's share, dense (pass 3 §4) | $15,055 | $17,598 ($14,659-20,635) |
+| the same, with the network's share, base | $23,978 | $26,135 ($20,630-35,837) |
 | the ERVs, added to the usual all-electric walk-up | $4,691 | $5,176 ($4,398-5,949) |
 | the airtightness, added to it | $764 | $1,154 ($768-1,760) |
 | solar panels, added to it | $1,383 | $1,508 ($1,095-1,978) |
 
-- **No choice pays for itself in money, in any draw, except the hot-water plant in 20% of them.**
+- **No choice pays for itself in money, in any draw, except the hot-water plant in 21% of them.**
   Every other line is a cost from its lowest draw to its highest, the fee's too.
 - **The floors are the largest line, $11,374 a flat.** Every flat keeps a mini-split big enough to
   heat it alone (step 9a), so the floors save only that mini-split's electricity: 333 kWh a flat a
@@ -405,18 +405,18 @@ Taken out together, or set against other ways:
 - **The plant is the only one that may pay.** Against each flat's own electric water heater, it
   saves 1,261 kWh a flat a year net of its own use, $335 with the upkeep, and brings 2.9 MWh of the
   data center's heat. Without it, each flat's own heater would make four of the feeders a size
-  larger to hold the design's 2% drop, $130 a flat (found by 10h, and counted here since). It pays
-  in 814 of the 4,000 draws. What decides it, each input from its low to its high, the rest central
-  (the central $1,097):
+  larger to hold the design's 2% drop, $157 a flat with the grounds they then take (found by 10h,
+  and counted here since; Addendum 10). It pays in 832 of the 4,000 draws. What decides it, each
+  input from its low to its high, the rest central (the central $1,070):
 
   | input | low | high |
   |---|---|---|
-  | a flat's electric water heater's life (4.7 to 27.7 years) | -$2,330 | $1,444 |
-  | hot water a person a day (FSEC) | $2,607 | -$484 |
-  | people a flat (1.99 to 3.0) | $2,173 | -$559 |
-  | a flat's electric water heater's upkeep ($7 to $228 a year) | $1,238 | -$1,103 |
-  | the discount rate (4% to 10%) | $118 | $1,775 |
-  | the plant's heat pump's life (5.3 to 29.3 years) | $2,565 | $973 |
+  | a flat's electric water heater's life (4.7 to 27.7 years) | -$2,356 | $1,418 |
+  | hot water a person a day (FSEC) | $2,580 | -$511 |
+  | people a flat (1.99 to 3.0) | $2,146 | -$586 |
+  | a flat's electric water heater's upkeep ($7 to $228 a year) | $1,211 | -$1,130 |
+  | the discount rate (4% to 10%) | $91 | $1,748 |
+  | the plant's heat pump's life (5.3 to 29.3 years) | $2,538 | $946 |
 
   Against one gas water heater for the building it never pays. It costs $2,514 more up front, uses
   1,444 kWh more electricity a flat a year and 4,226 kWh less gas, and runs $103 a year dearer
@@ -442,15 +442,15 @@ Taken out together, or set against other ways:
 - **The quiet choices are cheap:** the pipes held off the frame $4 a month a flat, the cast iron
   $38. The PRV, $2 a month, buys nothing at the street's 55 psi, under its 60. It's there for a
   street at the code's 80 psi, where it takes off 1.7 dB.
-- **How the choices interact, -$1,450:** taking them out one at a time counts $1,450 more than
-  taking them out together: $149 a year of running cost, less $130 up front.
+- **How the choices interact, -$1,424:** taking them out one at a time counts $1,424 more than
+  taking them out together: $149 a year of running cost, less $157 up front.
   - Most of the running cost is the ERVs and the airtightness. In the design the heat they save is
     free, so their lines are at their dearest. Added to the usual walk-up, they cost $1,225 less
     between them.
-  - The $130 is the feeders. The plant taken out alone leaves the design, and its 2% drop, to hold
+  - The $157 is the feeders. The plant taken out alone leaves the design, and its 2% drop, to hold
     with a water heater in each flat. Taken out together, the fee and its 2% go too.
-- **The data center's water, taken out whole** (the floors and the plant), costs $12,518 a flat
-  over 20 years net of what it saves; with the network's share, $15,081 (dense) to $24,005 (base).
+- **The data center's water, taken out whole** (the floors and the plant), costs $12,491 a flat
+  over 20 years net of what it saves; with the network's share, $15,055 (dense) to $23,978 (base).
   That's the part of the design that uses the data center's heat. What would change it is what
   would change the whole: density, and the heat's price.
 
@@ -471,23 +471,23 @@ the data center's water:
 It's priced as one more mix of 10g's choices, over 10f's 4,000 draws, against the usual walk-ups
 and the engineered design.
 
-![Each walk-up's 20-year cost a flat over the usual all-electric walk-up, the typical draw with P10-P90. The central walk-up about $3,100 less; the quality walk-up $17,800 more; the engineered design $34,300 more, and $37,200-46,000 with its share of the heat network](systems_quality.png)
+![Each walk-up's 20-year cost a flat over the usual all-electric walk-up, the typical draw with P10-P90. The central walk-up about $3,100 less; the quality walk-up $17,900 more; the engineered design $34,300 more, and $37,200-46,000 with its share of the heat network](systems_quality.png)
 
 A flat, USD 2026: the central values, then the typical draw. Each line is a cost in all 4,000
 draws.
 
 | | up front | replacements | a year | over 20 years | a month | the typical draw (P10-P90) |
 |---|---|---|---|---|---|---|
-| **the quality walk-up, over the usual all-electric walk-up** | **$14,703** | **-$145** | **$71** | **$15,315** | **$120** | **$17,829 ($15,843-19,968)** |
-| the quality walk-up, over the central walk-up (gas hot water, the cheapest usual one) | $12,674 | -$188 | $509 | $17,875 | $141 | $21,017 ($18,489-24,001) |
+| **the quality walk-up, over the usual all-electric walk-up** | **$14,730** | **-$145** | **$71** | **$15,342** | **$121** | **$17,857 ($15,872-19,995)** |
+| the quality walk-up, over the central walk-up (gas hot water, the cheapest usual one) | $12,700 | -$188 | $509 | $17,901 | $141 | $21,045 ($18,517-24,029) |
 | the engineered design, over the usual all-electric walk-up (10f) | $34,046 | $92 | -$445 | $29,420 | $231 | $34,272 ($30,407-38,270) |
-| the engineered design, over the quality walk-up | $19,342 | $238 | -$517 | $14,105 | $111 | $16,386 ($13,386-19,372) |
-| the data center's water (the floors and the plant), added to the quality walk-up | $16,588 | $238 | -$425 | $12,326 | $97 | $14,481 ($11,568-17,394) |
-| the same, with the heat network's share, dense (pass 3 §4) | | | | $14,889 | $117 | $17,430 ($14,479-20,477) |
-| the same, with the network's share, base | | | | $23,813 | $187 | $25,976 ($20,474-35,629) |
+| the engineered design, over the quality walk-up | $19,315 | $238 | -$517 | $14,078 | $111 | $16,358 ($13,358-19,345) |
+| the data center's water (the floors and the plant), added to the quality walk-up | $16,561 | $238 | -$425 | $12,299 | $97 | $14,451 ($11,540-17,365) |
+| the same, with the heat network's share, dense (pass 3 §4) | | | | $14,862 | $117 | $17,402 ($14,451-20,447) |
+| the same, with the network's share, base | | | | $23,786 | $187 | $25,948 ($20,447-35,598) |
 
-Over 20 years at the central values, a flat's systems cost $57,068 in the quality walk-up, $41,753
-in the usual all-electric walk-up, $39,193 with central gas hot water and $71,173 in the engineered
+Over 20 years at the central values, a flat's systems cost $57,112 in the quality walk-up, $41,770
+in the usual all-electric walk-up, $39,211 with central gas hot water and $71,191 in the engineered
 design.
 
 Each kept choice taken out of the quality walk-up alone, the usual walk-up's way in its place:
@@ -495,33 +495,34 @@ Each kept choice taken out of the quality walk-up alone, the usual walk-up's way
 | the choice | up front | replacements | a year | over 20 years | a month | the typical draw (P10-P90) |
 |---|---|---|---|---|---|---|
 | cast-iron drains and vents | $4,860 | | | $4,860 | $38 | $5,680 ($4,772-6,652) |
-| an ERV and its preheater in each flat | $3,889 | -$145 | $71 | $4,500 | $35 | $4,994 ($4,208-5,775) |
-| the design before bidding: its fee, and the feeders its 2% drop makes larger | $2,364 | | | $2,364 | $19 | $2,327 ($1,100-3,777) |
+| an ERV and its preheater in each flat | $3,899 | -$145 | $71 | $4,511 | $35 | $5,006 ($4,218-5,786) |
+| the design before bidding: its fee, and the feeders its 2% drop makes larger | $2,390 | | | $2,390 | $19 | $2,355 ($1,128-3,806) |
 | the water and fire services apart, the fire's supervised | $1,395 | | $9 | $1,492 | $12 | $1,967 ($1,505-2,499) |
 | a water submeter in each flat | $848 | | | $848 | $7 | $1,007 ($821-1,229) |
 | airtightness to Phius, and its tests | $860 | | -$29 | $553 | $4 | $957 ($554-1,562) |
 | the water pipes held off the frame (Addendum 9) | $477 | | | $477 | $4 | $563 ($484-659) |
 | the cold risers' insulation | $30 | | | $30 | $0 | $41 ($31-53) |
-| how the choices interact | -$20 | | $20 | $191 | $1 | $176 ($110-260) |
-| **the quality walk-up, over the all-electric walk-up** | **$14,703** | **-$145** | **$71** | **$15,315** | **$120** | **$17,829 ($15,843-19,968)** |
+| how the choices interact | -$30 | | $20 | $180 | $1 | $165 ($99-249) |
+| **the quality walk-up, over the all-electric walk-up** | **$14,730** | **-$145** | **$71** | **$15,342** | **$121** | **$17,857 ($15,872-19,995)** |
 
-- **Quality costs $120 a flat a month over the usual all-electric walk-up** (the typical draw $140,
-  P10-P90 $125-157). It costs more in every draw: $12,778 over 20 years at the lowest. That's about
+- **Quality costs $121 a flat a month over the usual all-electric walk-up** (the typical draw $140,
+  P10-P90 $125-157). It costs more in every draw: $12,805 over 20 years at the lowest. That's about
   half the engineered design's $231. Over the central walk-up, the cheapest usual way, it's $141.
 - **The cast iron and the ERVs are most of it,** $38 and $35 a month. The design before bidding is
   $19, the services apart $12, the submeters $7, the airtightness and the pipes held off the frame
   $4 each.
 - **On heat pumps, the heat the ERVs and the airtightness save costs money.** In the engineered
-  design it was the data center's, and free. So both cost less here than in 10g: the ERVs $4,500
+  design it was the data center's, and free. So both cost less here than in 10g: the ERVs $4,511
   over 20 years against $5,697, the airtightness $553 against $983. Net of the heat pump's
   electricity they save, the ERVs' fans and preheaters still use 99 kWh a flat a year more than
   bath fans; the airtightness saves 128 kWh. Together the flats use 59 kWh a year more than the
   usual walk-up's.
-- **The design before bidding** costs its fee, $2,234 a flat, and $130 of larger feeders.
+- **The design before bidding** costs its fee, $2,234 a flat, and $157 of larger feeders.
   - Each flat's own water heater, with the ERV and its preheater, puts up to 99.1 A on its 100 A
     breaker.
   - Held to the design's 2% voltage drop at that load, four of the twelve feeders go up a size:
-    three from 3 to 2 AWG, one from 2 to 1 AWG. Each fits the 1-1/4 in. conduit priced.
+    three from 3 to 2 AWG, one from 2 to 1 AWG, each with the larger ground 250.122(B) asks
+    (Addendum 10). Each fits the 1-1/4 in. conduit priced.
   - The main holds: 465 A on the all-electric walk-up's 600 A.
   - The usual walk-ups aren't designed, so nothing holds them to 2%. On the engineered design's
     feeders they reach 2.08%, within the NEC's informational 3%.
@@ -538,7 +539,7 @@ Each kept choice taken out of the quality walk-up alone, the usual walk-up's way
   - 3.9 MWh of the data center's heat a flat a year, and the 1,558 kWh of electricity it saves.
 
   It gains a shorter wait at the tub: 5 s from the flat's own heater, against the plant's 10 s.
-- **The data center's water, added to it** (the floors and the plant), would cost $12,326 a flat
+- **The data center's water, added to it** (the floors and the plant), would cost $12,299 a flat
   over 20 years, $97 a month. It saves money in none of the 4,000 draws. What it buys is the warm
   floors and quiet outdoor units in winter.
   - With pass 3 §4's network share (a block on a 0.5 or 1.5 km main) it's $117-187 a month.
@@ -577,15 +578,18 @@ found, each before a trade saw the drawings (PLAN.md D28 has each one's step):
 - **The supply pipes' sleeves** the quiet depends on were in no document (step 10d). Addendum 9
   adds them, and found on the way that a sleeve won't pass 56 of the hot pipe's holes within what
   their joists allow. The hot pipe takes the maker's through-stud isolators instead.
-- **The feeders' grounds** (found by 10h in the set as issued; not fixed).
+- **The feeders' grounds** (found by 10h in the set as issued; Addendum 10 fixes them).
   - Step 7 made three flats' feeders 2 AWG to hold the 2% drop where 3 AWG would carry the load
     (2-front-left, 3-front-left and 3-front-right; 314 ft). Each kept the 8 AWG ground its 100 A
     breaker takes (NEC Table 250.122).
   - But 250.122(B) grows the ground in proportion to the circular mils when the conductors are
-    made larger than their load needs: 6 AWG here. The 2020 code also lets a qualified person size
-    it otherwise, by showing the fault path works (250.4(A)(5)).
+    made larger than their load needs: 6 AWG here. (The 2020 code also lets a qualified person
+    size it otherwise, by showing the fault path works, 250.4(A)(5).)
   - Three 2 AWG and a 6 AWG fill 27% of the 1-1/4 in. conduit drawn, so the fix is the wire alone.
-    The quality walk-up's priced feeders carry the same 8 AWG grounds, six of them short.
+    Addendum 10 reissues the services model with it, and E-601 and G-001. The design now sizes
+    every ground so (`electrical.egc_for`), and checks every feeder and branch circuit against it.
+    The branch circuits made a size larger already met it: NM-B carries a ground the size of its
+    conductors (Southwire's data).
 - **Not yet chosen:** eight of the plant's sixteen control points.
 
 Whether a design-build trade, the plan reviewer or the inspector would have caught each of these,
@@ -640,8 +644,9 @@ the sources.
     NEC's informational 3%.
   - A 1 AWG feeder is priced at 2 AWG's price a foot times the same seller's ratio of the two
     (1.14), fixed, so every draw stays 10f's.
-  - Each feeder's ground is checked against 250.122(B), from the circular mils in Chapter 9's
-    Table 8.
+  - Each feeder's ground grows with its conductors by 250.122(B), from the circular mils in
+    Chapter 9's Table 8 (Addendum 10), and is priced so: the quality walk-up's 1 AWG feeder takes
+    a 4 AWG ground, its 2 AWG feeders a 6.
 
 ## Checks
 
@@ -680,12 +685,13 @@ the sources.
   - the draws reproduce, and each line's percentiles are known to within 2.5% of its spread (2.0%
     at worst);
   - the plant's line against central gas keeps the 600 A main (the 406 A above).
-- **10h** (`brownfield quality` runs 13, and all pass):
+- **10h** (`brownfield quality` runs 14, and all pass):
   - the choices kept and dropped are 10g's, each once;
   - the quality walk-up's main holds: 465 A on 600 A;
   - sized at the engineered flats' load, the feeders are step 7's;
   - the quality flats' feeders carry them on their breakers, within their ampacity and the 2% drop
     (99.1 A on 100 A, 1.87% at most), and each one made larger is priced and fits its conduit;
+  - every feeder's priced class carries the ground 250.122(B) asks of it (Addendum 10);
   - the usual walk-ups' flats stay within 3% on the engineered feeders (2.08% at most);
   - the walk-ups are 10f's at the central values and draw for draw;
   - the choices that use no energy, and the fee less its feeders, cost what they cost in 10g;
@@ -713,7 +719,8 @@ The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_w
   added to it; priced heat moves only that water's line;
 - the feeders at the engineered flats' load are step 7's, and undesigned walk-ups keep them;
 - a 6 kW water heater breaks the breaker check, on purpose;
-- the engineered design's 2 AWG feeders need a 6 AWG ground by 250.122(B).
+- the feeders made larger for the drop take the larger grounds 250.122(B) asks, and each feeder
+  class is priced with the ground it carries.
 
 ## What we don't know
 
@@ -754,8 +761,6 @@ The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_w
   - Each flat's water heater is the usual resistance tank. A heat-pump water heater (ENERGY STAR's
     variant) would use less electricity and cost more up front; it isn't priced here.
   - The ERV has no summer bypass here either.
-  - The feeders are priced with the 8 AWG grounds the bid set has
-    ([found](#what-the-engineering-found-before-bidding)).
 - **The inputs are drawn independently.** Prices that move together (copper, labour) would widen
   the range; the sign is far enough from zero that it would still hold.
 - **Indiana County's own utility allowance schedule** isn't posted; Westmoreland County's stands in.

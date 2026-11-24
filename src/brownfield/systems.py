@@ -533,10 +533,12 @@ RFI_002_ANSWER_AFTER_MIN = 30
 # the services' sheets, before the installers' round, step 8; 7 with each flat's hot-water loop,
 # the plant, the sequence and the tests, step 9d; 8 with the air-leakage tests, found scoping step 10,
 # before the round's packets went out; 9 with the water pipes held off the frame and the ERV's sound,
-# found in step 10d, before the round's packets went out).
+# found in step 10d, before the round's packets went out; 10 with the feeders' grounds, found in step
+# 10h, before the round's packets went out).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
           4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00", 6: "2026-11-22T16:06:49-08:00",
-          7: "2026-11-23T08:35:59-08:00", 8: "2026-11-23T10:28:20-08:00", 9: "2026-11-23T18:54:36-08:00"}
+          7: "2026-11-23T08:35:59-08:00", 8: "2026-11-23T10:28:20-08:00", 9: "2026-11-23T18:54:36-08:00",
+          10: "2026-11-24T09:08:36-08:00"}
 # When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
 # Addendum 5 to issue.
 SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
@@ -548,7 +550,8 @@ TITLES = {1: "The patio doors: their glass and their width",
           6: "The fire service's control valves, the house panel and the services drawn",
           7: "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests",
           8: "The air-leakage tests to Phius's limits, which the heat loads assume",
-          9: "The water pipes held off the frame, and the ERV's sound"}
+          9: "The water pipes held off the frame, and the ERV's sound",
+          10: "The feeders' grounds, larger with their conductors (NEC 250.122(B))"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -1102,6 +1105,188 @@ def addendum_9_report(r: dict) -> str:
     ])
 
 
+# ---- Addendum 10: the feeders' grounds (found in step 10h) ----
+
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven",
+         12: "twelve"}
+
+
+def feeder_grounds(el: dict) -> list[dict]:
+    """Each feeder made larger than its load asks (for the drop): its least size, its ground by its
+    breaker alone (as Addendum 7 drew it) and by NEC 250.122(B), in circular mils (Chapter 9 Table 8)."""
+    from .electrical import _rows, egc_for
+
+    cm = {k: float(r["cmil"]) for k, r in _rows("nec2020_ch9_table_8.csv").items()}
+    out = []
+    for n, f in sorted(el["feeders"].items()):
+        if f["size"] == f["min_size"]:
+            continue
+        was = egc_for(f["breaker_a"])
+        out.append({"flat": n, "size": f["size"], "least": f["min_size"], "ft": f["ft"], "breaker_a": f["breaker_a"], "was": was,
+                    "egc": f["egc"], "need_cmil": cm[was] * cm[f["size"]] / cm[f["min_size"]], "cmil": cm})
+    return out
+
+
+def addendum_10_words(params: dict, gr: list[dict], fill: dict, diff: dict, branch: dict) -> dict:
+    """Addendum 10's items (found in step 10h). Every figure from the run."""
+    from .servicesheets import REVISED
+
+    cm = gr[0]["cmil"]
+    g = gr[0]
+    names = ", ".join(f"{x['flat']} ({x['ft']:.0f} ft)" for x in gr[:-1]) + f" and {gr[-1]['flat']} ({gr[-1]['ft']:.0f} ft)"
+    items = [
+        f"Item 1 (the feeders' grounds, NEC 2020 250.122(B)): {WORDS[len(gr)].capitalize()} feeders were made {g['size']} AWG, "
+        f"where {g['least']} AWG "
+        f"carries their load, to hold the design's drop: {names}. Their grounds were sized by their {g['breaker_a']:.0f} A breakers "
+        f"alone (Table 250.122, {g['was']} AWG). 250.122(B) grows a ground in proportion when its conductors are made larger: "
+        f"{g['was']} AWG's {cm[g['was']]:,.0f} circular mils times {g['size']} AWG's {cm[g['size']]:,.0f} over {g['least']} AWG's "
+        f"{cm[g['least']]:,.0f} is {g['need_cmil']:,.0f}, so {g['egc']} AWG ({cm[g['egc']]:,.0f}). Each now takes a {g['egc']} AWG "
+        f"ground, in the same {fill['trade']} in. conduit ({fill['fill']:.0%} full, within Chapter 9's {fill['limit']:.0%}). Found in "
+        f"step 10h. The {WORDS.get(branch['n'], branch['n'])} branch circuits made a size larger for their drop ({branch['what']}) "
+        "already meet it: their "
+        f"NM-B cable carries a ground the size of its conductors (Southwire SPEC 10028).",
+        f"Item 2 (the documents): the services model reissued (services-addendum-10.ifc, with its schedules), the three feeders' "
+        f"conductors corrected in each of their {len(diff['changed'])} elements and nothing else; sheet E-601 reissued "
+        f"({REVISED['E-601'][1]}) with the grounds in its feeder schedule and notes, and G-001 ({REVISED['G-001'][1]}) with them as a "
+        "general note and the sheet index marking the sheets reissued since Addendum 7. No element of the building, the frame or the "
+        "services moves.",
+    ]
+    return {"items": items}
+
+
+def addendum_10_run(params: dict) -> dict:
+    """Addendum 10 (found in pass 3g step 10h): the services model reissued with the three feeders'
+    grounds grown (NEC 250.122(B)), E-601 and G-001 reissued alone. Checked: the designs on the
+    routes and the model built from them (as Addendum 9's run); every feeder's and branch circuit's
+    ground against 250.122, (B) included; the model's conductors as the design sizes them; what the
+    model changed against Addendum 7's (those three feeders' conductors, nothing else); their
+    conduit's fill; the reissued sheets. Its text and sheets go to `ifc_out("addendum-10")`."""
+    import csv
+    import re
+
+    import numpy as np
+
+    from . import electrical, pricing, routed, servicesheets, servicesifc
+    from .params import values
+
+    P = values(params)
+    if latest_model().name != "apartment-addendum-5.json":
+        raise SystemExit(f"Addendum 10 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
+    apt = load(latest_model())
+    routes = routed.load(apt, P)
+    if routes is None or not routes.fresh:
+        raise SystemExit("no fresh routes for Addendum 5's model: `brownfield routes` first")
+    s7 = routed.summary(apt, P, routes)
+    if "incomplete" in s7:
+        raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
+    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
+    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    if servicesifc.ISSUE != "addendum-10":
+        raise SystemExit(f"the services model is {servicesifc.ISSUE}'s, not Addendum 10's")
+    el = s7["electrical"]
+    gr = feeder_grounds(el)
+    short = electrical.short_grounds(el)
+    branch_up = [c for pn in el["panels"].values() for c in pn["circuits"] if c["awg"] != c["min_awg"]]
+    def said_as(c: dict) -> str:  # "lighting, the living side" -> "the living side's lighting"
+        w = c["what"]
+        what = f"the {w.removeprefix('lighting, the ')}'s lighting" if w.startswith("lighting, the ") else w
+        return f"{what}, {c['min_awg']} to {c['awg']} AWG"
+
+    branch = {"n": len(branch_up), "what": "; ".join(sorted({said_as(c) for c in branch_up}))}
+    fills = {x["flat"]: electrical.conduit_for([x["size"]] * 3 + [x["egc"]], P) for x in gr}
+    was = {x["flat"]: electrical.conduit_for([x["size"]] * 3 + [x["was"]], P) for x in gr}
+    worst = max(fills.values(), key=lambda c: c["fill"])
+    fill = {"trade": worst["trade"], "fill": worst["fill"], "limit": P["systems.wiring.fill_over_2"]}
+    # What the model changed against Addendum 7's: by GlobalId, the properties and the geometry.
+    before = PUBLISHED / "services-addendum-7.ifc"
+    diff = servicesifc.changes(before, model)
+    r0 = {r["gid"]: r for r in servicesifc.read_back(before)}
+    r1 = {r["gid"]: r for r in servicesifc.read_back(model)}
+    moved, props, flats = [], set(), set()
+    for g_ in diff["changed"]:
+        a, b = r0[g_], r1[g_]
+        keys = {k for k in set(a["props"]) | set(b["props"]) if k != "id" and a["props"].get(k) != b["props"].get(k)}
+        props |= keys
+        flats.add(b["props"].get("Flat"))
+        if a["cls"] != b["cls"] or (a["sweep"] is None) != (b["sweep"] is None) or (
+                a["sweep"] is not None and (len(a["sweep"]) != len(b["sweep"])
+                                            or float(np.abs(np.asarray(a["sweep"]) - np.asarray(b["sweep"])).max()) > 0)):
+            moved.append(g_)
+    # The model's conductors, as the design sizes each feeder.
+    said = {}
+    for r in r1.values():
+        pr = r["props"]
+        if pr.get("System") == "power" and pr.get("Conductors") and "feeder" in (pr.get("Run") or "") and pr.get("Flat"):
+            m = re.search(r"three (\S+) AWG and a (\S+) AWG ground", pr["Conductors"])
+            said.setdefault(pr["Flat"], set()).add((m.group(1), m.group(2)) if m else None)
+    want = {n: {(f["size"], f["egc"])} for n, f in el["feeders"].items()}
+    # What the three grounds cost: the 1-1/4 in. feeders' length in the model's schedule, at the class's price with the 6 AWG
+    # ground against the 8 AWG it had.
+    lengths = list(csv.DictReader(open(PUBLISHED / "services-addendum-7" / "lengths.csv", encoding="utf-8")))
+    ft = sum(float(r_["ft"]) for r_ in lengths if r_["material"].startswith("rigid PVC conduit") and r_["size_in"] == fills[gr[0]["flat"]]["trade"])
+    old = dict(P, **{"baseline.price.thhn_6_over_8": 1.0})
+    usd = ft * (pricing.installed("feeder_1.25", P) - pricing.installed("feeder_1.25", old)) / len(apt["flats"])
+    out = ifc_out("addendum-10")
+    out.mkdir(parents=True, exist_ok=True)
+    ctx = servicesheets.context(apt, P, routes=routes, s7=s7)
+    import pypdf
+
+    sheets = {}
+    for number in ("E-601", "G-001"):
+        rev, name = servicesheets.REVISED[number]
+        servicesheets.write(ctx, out / name, numbers=[number], title=f"walk-up services sheet {number} ({rev})")
+        pages = pypdf.PdfReader(str(out / name)).pages
+        sheets[number] = (out / name, len(pages), " ".join((pg.extract_text() or "") for pg in pages))
+    words = addendum_10_words(params, gr, fill, diff, branch)
+    s7_bad = [c for c in s7["checks"] if not c[1]]
+    model_bad = [c[0] for c in rec["checks"] if not c[1]]
+    e601, g001 = sheets["E-601"], sheets["G-001"]
+    grown = [x["flat"] for x in gr if x["egc"] != x["was"]]
+    checks = [
+        ("every check of 7c's designs on the routes passes", not s7_bad, f"{len(s7['checks'])} checks"),
+        ("the services model in effect (Addendum 10's) was built from these routes, and its own checks pass (7d)",
+         rec.get("model") == model.name and model.exists() and not model_bad,
+         f"{rec.get('model')}, {rec['elements']:,} elements" + (f"; failing: {model_bad}" if model_bad else "")),
+        ("every feeder's and branch circuit's ground is what NEC 250.122 asks, larger in proportion where its conductors are (250.122(B))",
+         not short, "; ".join(short) or f"{len(gr)} feeders made larger for the drop, {len(grown)} grounds grown: {', '.join(grown)}; "
+                                         f"{branch['n']} branch circuits made larger, in NM-B with its own ground"),
+        ("the grounds grown are 10h's finding: the feeders made larger for the drop, each a size up from what its breaker alone asks",
+         len(gr) == 3 and all(x["egc"] == "6" and x["was"] == "8" for x in gr), ", ".join(f"{x['flat']} {x['was']} to {x['egc']} AWG" for x in gr)),
+        ("every feeder's conductors in the model are what the design sizes", said == want,
+         f"{len(said)} feeders" + ("" if said == want else f"; differing: {sorted(n for n in want if said.get(n) != want[n])}")),
+        ("against Addendum 7's model, only those feeders' conductors change: nothing added, removed or moved",
+         not diff["added"] and not diff["deleted"] and not moved and props == {"Conductors"} and flats == set(grown),
+         f"{len(diff['changed'])} elements changed, in {sorted(props)}, of {sorted(f for f in flats if f)}"),
+        ("each grown feeder's conductors fit the conduit drawn (Chapter 9's 40%)",
+         all(fills[n]["trade"] == was[n]["trade"] and fills[n]["fill"] <= fill["limit"] + 1e-12 for n in fills),
+         "; ".join(f"{n} {fills[n]['trade']} in., {was[n]['fill']:.0%} to {fills[n]['fill']:.0%}" for n in fills)),
+        ("E-601 and G-001 are reissued alone, as Addendum 10, with the grounds in their text",
+         e601[1] == 1 and g001[1] == 1 and all("Addendum 10" in t for _, _, t in (e601, g001)) and "250.122(B)" in e601[2]
+         and "250.122(B)" in g001[2] and all(f"{n.upper()}: 100 A, 1-1/4 in. conduit, three 2 AWG and a 6 AWG ground" in e601[2] for n in grown),
+         f"{e601[0].name}, {g001[0].name}: one page each"),
+    ]
+    r = {"revision": "addendum-10", "words": words, "checks": checks, "second": [], "second_status": None, "sheets": [e601[0], g001[0]],
+         "s7_checks": s7_bad, "grounds": [{k: v for k, v in x.items() if k != "cmil"} for x in gr], "usd_flat": usd, "feeder_ft": ft,
+         "changed": len(diff["changed"])}
+    path = out / "addendum-10.md"
+    path.write_text(addendum_10_report(r) + "\n", encoding="utf-8")
+    r["written"] = [path, *r["sheets"]]
+    return r
+
+
+def addendum_10_report(r: dict) -> str:
+    from . import bidset
+
+    return "\n".join([
+        f"Addendum 10 (made up, found in pass 3g step 10h, D28): {TITLES[10][0].lower() + TITLES[10][1:]}", "",
+        *(f"  {x}" for x in r["words"]["items"]), "",
+        f"What changed: the services model, in the conductors of the three feeders' {r['changed']} elements; sheets E-601 and G-001 "
+        "reissued. The earlier addenda's documents stand.", "",
+        "Checks:", *(f"  {x}" for x in bidset.report(r["checks"]).splitlines()),
+        *(["", "The designs on the routes: failing checks", *(f"  {label}: {dd}" for label, _, dd in r["s7_checks"])] if r["s7_checks"] else []),
+    ])
+
+
 def addendum_2_items(r: dict) -> list[str]:
     """Addendum 2's items, from its run (`ifc_run`)."""
     (h1, h2) = r["hazards"]
@@ -1145,18 +1330,19 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     (`addenda.json`) and what each addendum changed (`changes-addendum-N.json`), Addendum 1's
     included. Only from runs whose every check passed (both readers'). Addenda 2 to 5 are written
     again from their runs, byte for byte as issued; the bid set's and Addendum 1's files, and
-    Addendum 6's and 7's (their sheets and sections were drawn from what a later addendum revised),
-    are left as they are, and their items, files and Addendum 7's services model are read from the
-    manifest as issued. Addendum 5 issued the frame and the services as bid documents (pass 3g step
-    7e); Addendum 6, which changes no model, its text and the services' sheets (step 8); Addendum 7
-    the revised services model, its sheets and two specification sections (step 9d); Addendum 8 the
-    revised section 01 45 00 and sheet G-002 (step 10's scoping); Addendum 9 section 22 05 29 and sheet
-    G-001 (step 10d's finding)."""
+    Addenda 6 to 9 (their sheets and sections were drawn from what a later addendum revised), are
+    left as they are, and their items and files are read from the manifest as issued. Addendum 5
+    issued the frame and the services as bid documents (pass 3g step 7e); Addendum 6, which changes
+    no model, its text and the services' sheets (step 8); Addendum 7 the revised services model, its
+    sheets and two specification sections (step 9d); Addendum 8 the revised section 01 45 00 and
+    sheet G-002 (step 10's scoping); Addendum 9 section 22 05 29 and sheet G-001 (step 10d's
+    finding); Addendum 10 the services model reissued with the feeders' grounds, and sheets E-601 and
+    G-001 (step 10h's finding)."""
     import shutil
 
-    from . import addendum, bidset
+    from . import addendum, bidset, servicesifc
 
-    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-8", "addendum-9"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-10"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
@@ -1172,20 +1358,21 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         written.append(to / f"drawings-{rev}")
     shutil.copyfile(ifc_out("addendum-3") / "rfi-002.bcf", to / "rfi-002.bcf")
     written.append(to / "rfi-002.bcf")
-    # Addenda 6 and 7, as issued: their files stay; their items are the manifest's, and so is the
-    # services model Addendum 7 issued, still the one in effect.
+    # Addenda 6 to 9, as issued: their files stay; their items are the manifest's, and so are the
+    # services model and schedules Addendum 7 issued.
     issued = json.loads((to / "addenda.json").read_text(encoding="utf-8"))
-    kept = {n: next(a for a in issued["addenda"] if a["number"] == n) for n in (6, 7)}
-    services = issued["services"]
+    kept = {n: next(a for a in issued["addenda"] if a["number"] == n) for n in (6, 7, 8, 9)}
     gone = [f["path"] for a in kept.values() for f in a["files"] if not (to / f["path"]).exists()]
-    gone += [f for f in (services["model"], services["changes"], *(x["path"] for x in services["files"])) if not (to / f).exists()]
     if gone:
-        raise SystemExit(f"Addendum 6's or 7's published files are missing: {gone}")
-    r8, r9 = runs["addendum-8"], runs["addendum-9"]
-    for src in (ifc_out("addendum-8") / "addendum-8.md", r8["spec"], r8["sheet"], ifc_out("addendum-9") / "addendum-9.md", r9["spec"],
-                r9["sheet"]):
+        raise SystemExit(f"Addenda 6 to 9's published files are missing: {gone}")
+    # Addendum 10: its text, its two sheets, and the services model it reissues (now the one in effect),
+    # with its schedules and what it changed against Addendum 7's.
+    r10 = runs["addendum-10"]
+    for src in (ifc_out("addendum-10") / "addendum-10.md", *r10["sheets"]):
         shutil.copyfile(src, to / src.name)
         written.append(to / src.name)
+    services = servicesifc.publish(to, ISSUED[10], 10)
+    written += [to / services["model"], to / services["changes"], *(to / f["path"] for f in services["files"])]
     models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
     for n in (1, 2, 3, 4, 5):
         path = to / f"changes-addendum-{n}.json"
@@ -1207,8 +1394,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
              3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"],
-             5: runs["addendum-5"]["words"]["items"], 6: kept[6]["items"], 7: kept[7]["items"], 8: r8["words"]["items"],
-             9: r9["words"]["items"]}
+             5: runs["addendum-5"]["words"]["items"], **{n: kept[n]["items"] for n in (6, 7, 8, 9)}, 10: r10["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -1236,28 +1422,29 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
             ("services-addendum-5/firestop.csv", "The firestop schedule, by condition (IBC 714)"),
             ("services-addendum-5/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
             ("services-addendum-5/fittings.csv", "Fittings, by system, kind and size")],
-        **{n: [(f["path"], f["label"]) for f in kept[n]["files"]] for n in (6, 7)},
-        8: [("addendum-8.md", "The addendum: its items, what it changes and the checks"),
-            (r8["spec"].name, "Specification section 01 45 00: the tests and inspections, revised (E-1, the air-leakage tests)"),
-            (r8["sheet"].name, "Sheet G-002, the tests and inspections, reissued with E-1 revised")],
-        9: [("addendum-9.md", "The addendum: its items, what it changes and the checks"),
-            (r9["spec"].name, "Specification section 22 05 29: the water pipes' supports, held off the frame (new)"),
-            (r9["sheet"].name, "Sheet G-001, the cover and general notes, reissued with Addendum 9's two items")],
+        **{n: [(f["path"], f["label"]) for f in kept[n]["files"]] for n in (6, 7, 8, 9)},
+        10: [("addendum-10.md", "The addendum: its items, what it changes and the checks"),
+             (services["model"], "The services, IFC4, reissued: the three feeders made larger for the drop, with their grounds "
+                                 "larger in proportion"),
+             (services["changes"], "What the reissued services model changed against Addendum 7's, by GlobalId"),
+             (f"services-{servicesifc.ISSUE}/lengths.csv", "Pipe, duct, conduit and cable lengths, by system, material and size"),
+             (r10["sheets"][0].name, "Sheet E-601, the one-line diagram and feeder schedule, reissued with the feeders' grounds"),
+             (r10["sheets"][1].name, "Sheet G-001, the cover and general notes, reissued with Addendum 10's note")],
     }
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-5.ifc", "revision": "addendum-5", "status": "Addendum 5",
                             "members": len(frame["members"]),
                             "note": "the completed wood frame: the shell, the flats' partitions and plumbing walls, the "
                                     "service annex, the stair halls' floors and the roof hatch's opening (D28 step 7)"},
-                # Addenda 6 to 9 change no element of the building: no model of their own. Addendum 7's
-                # changes to the services are marked in the services' layers (`services.changes`).
+                # Addenda 6 to 10 change no element of the building: no model of their own. Addendum 7's
+                # and 10's changes to the services are marked in the services' layers (`services_changes`).
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models.get(n), "changes": f"changes-addendum-{n}.json" if n in models else None,
-                             "services_changes": kept[7]["services_changes"] if n == 7 else None,
+                             "services_changes": {7: kept[7]["services_changes"], 10: services["changes"]}.get(n),
                              # The services model this addendum issued, if any (the viewer shows each addendum's).
                              "services_model": next((f for f, _ in files[n] if f.startswith("services-addendum-") and f.endswith(".ifc")), None),
                              "rfi": {1: "rfi-001.bcf", 3: "rfi-002.bcf"}.get(n),
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 10)],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 11)],
                 "services": services}
     # The installers' round (step 8c), as `brownfield round --publish` last left it.
     from . import installers

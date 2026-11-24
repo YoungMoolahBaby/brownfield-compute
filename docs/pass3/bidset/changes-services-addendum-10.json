@@ -1,0 +1,23 @@
+{
+ "before": "services-addendum-7.ifc",
+ "after": "services-addendum-10.ifc",
+ "n_before": 3162,
+ "n_after": 3162,
+ "added": [],
+ "changed": [
+  "0Ye9CN9lzK2f2EFwA6GZ5Y",
+  "17z2ZLJynVowG_LoQ2mdfu",
+  "182OOJMFrHwxc30mOJSKrc",
+  "3AS1LvowPN4AhS25zPGWjz",
+  "3ekN5obknPWuYAHU6W2LA5",
+  "3xZLcUZcbMmvZuT_JgRtPN"
+ ],
+ "deleted": [],
+ "by_system": {
+  "power": {
+   "added": 0,
+   "changed": 6,
+   "deleted": 0
+  }
+ }
+}

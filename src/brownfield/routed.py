@@ -607,6 +607,9 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
         (f"feeder and branch together within {lim['vd']['total']:.0%} at every outlet, on the routes",
          max(el["total_drop"].values()) <= el["vd_total_max"] + 1e-12,
          f"worst {max(el['total_drop'].values()):.2%} (square {max(sq_el['total_drop'].values()):.2%})"),
+        ("every feeder's and branch circuit's ground what 250.122 asks, larger in proportion where its conductors are, on the "
+         "routes (250.122(B))", not electrical.short_grounds(el), "; ".join(electrical.short_grounds(el))
+         or f"{sum(f['egc'] != electrical.egc_for(f['breaker_a']) for f in el['feeders'].values())} feeders' grounds grown"),
         ("nothing routed smaller than the routed designs ask", not want, str(want) if want else ""),
     ]
     sq_vent = hvac.ventilation_ducts(apt, p)

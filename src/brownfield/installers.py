@@ -5,7 +5,8 @@ name: Jon's own message introduces him), the trade's question form (step 8b) and
 the latest addendum's set, Addendum 7's (G-001, G-002's tests and the trade's own; the plumber and
 the HVAC contractor also get M-602's sequence, and the HVAC contractor and the electrician the
 plumbing walls, which their line sets, loop risers and feeders run in), each sheet a later
-addendum reissued alone from that addendum (`servicesheets.REVISED`: G-002 from Addendum 8).
+addendum reissued alone from that addendum (`servicesheets.REVISED`: G-002 from Addendum 8, G-001
+and E-601 from Addendum 10).
 Everything else, the models, schedules, other sheets and the 3D viewer, is a link to the plan room.
 No reply-by date.
 

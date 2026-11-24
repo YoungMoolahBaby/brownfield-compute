@@ -684,20 +684,14 @@ def cmd_systems(args) -> int:
             print(f"FAIL the second reader (web-ifc) didn't run: {r['second_status']}")
             return 1
         ok &= all(good for _, good, _ in r["checks"] + r["second"])
-    # Addenda 6 and 7 (pass 3g steps 8 and 9d) stay as issued: their sheets and sections were drawn
-    # from what a later addendum revised. Addendum 8 (found scoping step 10) changes no element: it
-    # revises the air-leakage tests, checked on everything Addendum 7's run checked, the tests held
-    # to the loads' leakage, and its reissued sheet.
-    r8 = runs["addendum-8"] = systems.addendum_8_run(load_params())
-    print(NL + systems.addendum_8_report(r8))
-    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r8["written"]))
-    ok &= all(good for _, good, _ in r8["checks"])
-    # Addendum 9 (found in step 10d) changes no element either: the water pipes held off the frame
-    # (a new section, 22 05 29) and the ERV's sound, as general notes on G-001, reissued alone.
-    r9 = runs["addendum-9"] = systems.addendum_9_run(load_params())
-    print(NL + systems.addendum_9_report(r9))
-    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r9["written"]))
-    ok &= all(good for _, good, _ in r9["checks"])
+    # Addenda 6 to 9 (pass 3g steps 8, 9d, 10's scoping and 10d) stay as issued: their sheets and
+    # sections were drawn from what a later addendum revised. Addendum 10 (found in step 10h) reissues
+    # the services model with the feeders' grounds larger in proportion (NEC 250.122(B)), checked on
+    # everything Addendum 9's run checked, the grounds, what the model changed, and its two sheets.
+    r10 = runs["addendum-10"] = systems.addendum_10_run(load_params())
+    print(NL + systems.addendum_10_report(r10))
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r10["written"]))
+    ok &= all(good for _, good, _ in r10["checks"])
     if args.publish:
         if not ok:
             print(NL + "a check fails: nothing published")

@@ -100,7 +100,7 @@ def test_the_plan_room_counts_are_the_models(site):
     assert facts[f"windows, in {w_types} types"] == len(windows)
     assert facts[f"doors, in {d_types} types"] == len(apt["openings"]) - len(windows)
     assert facts["openings the code calls for safety glass in"] == len(hazards)
-    assert facts["addenda; counts as of Addendum 9"] == 9
+    assert facts["addenda; counts as of Addendum 10"] == 10
 
 
 @ready
@@ -137,20 +137,22 @@ def test_the_addenda_are_the_manifests_and_the_runs(site):
     assert m["addenda"][3]["items"] == systems.addendum_4_words(load_params())["items"]
     raw5 = systems.load(systems.OUT_DIR / "pass3" / "apartment-addendum-5.json")
     assert m["addenda"][4]["items"] == systems.addendum_5_words(load_params(), raw5)["items"]
-    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in range(1, 10)]
-    # Addenda 6 to 9 change no element of the building: no model of their own, nothing to mark in
-    # its 3D; each one's items its text's. Addendum 7's changes to the services are marked on the
-    # services' layers, from the file the manifest names.
+    assert [a["issued"] for a in m["addenda"]] == [systems.ISSUED[n] for n in range(1, 11)]
+    # Addenda 6 to 10 change no element of the building: no model of their own, nothing to mark in
+    # its 3D; each one's items its text's. Addendum 7's and 10's changes to the services are marked
+    # on the services' layers, from the files the manifest names.
     for a in m["addenda"][5:]:
         assert a["model"] is None and a["changes"] is None and f"#addendum-{a['number']}-changes" not in page
         text = (site / "files" / f"addendum-{a['number']}.md").read_text(encoding="utf-8")
         assert all(item in text for item in a["items"])
-    a7 = m["addenda"][6]
-    assert a7["services_changes"] == m["services"]["changes"] and (site / "models" / a7["services_changes"]).is_file()
-    assert "svcchanges" in page and m["services"]["model"] == "services-addendum-7.ifc"
-    # Each addendum names the services model it issued (5 and 7), copied for the viewer, which shows
-    # each addendum with the building and the services as they stood; it opens at the latest.
-    assert [a.get("services_model") for a in m["addenda"]] == [None] * 4 + ["services-addendum-5.ifc", None, "services-addendum-7.ifc", None, None]
+    a7, a10 = m["addenda"][6], m["addenda"][9]
+    assert a7["services_changes"] == "changes-services-addendum-7.json" and (site / "models" / a7["services_changes"]).is_file()
+    assert a10["services_changes"] == m["services"]["changes"] and (site / "models" / a10["services_changes"]).is_file()
+    assert "svcchanges" in page and m["services"]["model"] == "services-addendum-10.ifc"
+    # Each addendum names the services model it issued (5, 7 and 10), copied for the viewer, which
+    # shows each addendum with the building and the services as they stood; it opens at the latest.
+    assert [a.get("services_model") for a in m["addenda"]] == [None] * 4 + ["services-addendum-5.ifc", None, "services-addendum-7.ifc",
+                                                                            None, None, "services-addendum-10.ifc"]
     assert all((site / "models" / a["services_model"]).is_file() for a in m["addenda"] if a.get("services_model"))
     assert f'href="model.html#addendum-{len(m["addenda"])}"' in page
 
@@ -160,7 +162,7 @@ def test_the_documents_are_in_folders(site):
     page = _page(site)
     for folder in ("01 Bid documents", "02 Addenda", "03 RFIs", "04 Framing model", "Drawings", "Model", "Schedules",
                    "Requirements", "Addendum 01:", "Addendum 02:", "Addendum 03:", "Addendum 04:", "Addendum 05:", "Addendum 06:",
-                   "Addendum 07:", "Addendum 08:", "Addendum 09:"):
+                   "Addendum 07:", "Addendum 08:", "Addendum 09:", "Addendum 10:"):
         assert f'<span class="fold">{folder}' in page, folder
     # Every published bid document and addendum file is listed once at least.
     for path in ("bidset.pdf", "apartment.ifc", "drawings/schedule.csv", "bidset.ids", "rfi-001.bcf", "rfi-002.bcf",
@@ -168,7 +170,9 @@ def test_the_documents_are_in_folders(site):
                  "services-sheets-addendum-6.pdf", "services-addendum-5.ifc", "addendum-7.md", "services-addendum-7.ifc",
                  "services-sheets-addendum-7.pdf", "spec-23-09-93-sequence.md", "spec-01-45-00-tests.md", "addendum-8.md",
                  "spec-01-45-00-tests-addendum-8.md", "services-sheet-g-002-addendum-8.pdf", "addendum-9.md",
-                 "spec-22-05-29-supports-addendum-9.md", "services-sheet-g-001-addendum-9.pdf"):
+                 "spec-22-05-29-supports-addendum-9.md", "services-sheet-g-001-addendum-9.pdf", "addendum-10.md",
+                 "services-addendum-10.ifc", "changes-services-addendum-10.json", "services-sheet-e-601-addendum-10.pdf",
+                 "services-sheet-g-001-addendum-10.pdf"):
         assert f'href="files/{path}"' in page, path
     m = json.loads((site / "models" / "addenda.json").read_text(encoding="utf-8"))
     if m.get("services"):  # the services model and every schedule read back from it

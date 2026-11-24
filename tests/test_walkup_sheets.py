@@ -8,7 +8,7 @@ from brownfield import routed, servicesheets as ss, systems
 from brownfield.params import load_params, values
 
 PUBLISHED = [ss.BIDSET / f"{k}-{ss.REV}.ifc" for k in ("apartment", "framing")]
-SERVICES = ss.OUT.parent / f"services-{ss.SERVICES_REV}.ifc"  # Addendum 7's, built by `brownfield routes --ifc`
+SERVICES = ss.OUT.parent / f"services-{ss.SERVICES_REV}.ifc"  # Addendum 10's, built by `brownfield routes --ifc`
 BANDS = [(1, -math.inf, 2.74), (2, 2.74, 5.79), (3, 5.79, 9.14), ("roof", 9.14, math.inf)]
 
 

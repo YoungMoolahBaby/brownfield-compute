@@ -68,9 +68,10 @@ def test_the_aquastat_is_where_ecosizer_puts_it_in_the_tanks(P):
 
 @pytest.fixture(scope="module")
 def diff():
-    old, new = systems.PUBLISHED / "services-addendum-5.ifc", servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    # Addendum 7's as issued: the model in effect since is Addendum 10's (the feeders' grounds).
+    old, new = systems.PUBLISHED / "services-addendum-5.ifc", systems.PUBLISHED / "services-addendum-7.ifc"
     if not old.exists() or not new.exists():
-        pytest.skip("Addendum 5's published services model or Addendum 7's (`brownfield routes --ifc`) isn't there")
+        pytest.skip("Addendum 5's or Addendum 7's published services model isn't there")
     return servicesifc.changes(old, new)
 
 
@@ -83,5 +84,5 @@ def test_the_services_diff_finds_what_addendum_7_added(diff):
     # Nothing the addendum doesn't touch is marked: the sprinklers and the ducts are as they were.
     assert "sprinkler" not in diff["by_system"] and "ventilation" not in diff["by_system"] and "air" not in diff["by_system"]
     # The same file against itself: nothing.
-    same = servicesifc.changes(servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc", servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc")
+    same = servicesifc.changes(systems.PUBLISHED / "services-addendum-7.ifc", systems.PUBLISHED / "services-addendum-7.ifc")
     assert not same["added"] and not same["changed"] and not same["deleted"]

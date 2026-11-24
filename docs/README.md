@@ -85,9 +85,9 @@ the sections below in order. Each line gives a report's finding in a sentence.
   - They buy quiet (25 dBA against 33 from a neighbour's drain), ducted fresh air to every bedroom
     and warm floors. The tenants keep most of the $535 a year they save; the owner pays.
   - Choice by choice, the quiet costs $4-38 a month a flat, the ducted bedroom air $45 and the
-    warm floors $89. None pays for itself in money but the hot-water plant, in 20% of the draws.
+    warm floors $89. None pays for itself in money but the hot-water plant, in 21% of the draws.
   - The quality walk-up the towns would build keeps the quiet and the air on heat pumps, off the
-    data center's water: $120 a month a flat over the usual walk-up, about half the engineered
+    data center's water: $121 a month a flat over the usual walk-up, about half the engineered
     design's $231.
 
 ## 4. The economic base (pass 4)

@@ -268,7 +268,8 @@ Addendum 9 done (Jon: "1 then 2"): the water pipes held off the frame, and the E
   $4,860, the fee $2,234, the solar panels $1,575, the separate fire service $1,492, the plant
   $1,097, the airtightness $983, the submeters $848, the pipes held off the frame $477, the PRV
   $205, the cold risers' insulation $30; how they interact -$1,450. (Corrected 2026-11-24 by 10h,
-  below: the plant was $1,226, paying in 18% of the draws, and the interaction -$1,580.)
+  below: the plant was $1,226, paying in 18% of the draws, and the interaction -$1,580. Again
+  by Addendum 10's grounds: the plant $1,070, paying in 21%, and the interaction -$1,424.)
 - With the floors on the data center's water, the heat the ERVs and the airtightness save is free.
   The ERVs use 606 kWh more electricity a flat a year than bath fans, and 187 kWh more even on the
   usual walk-up. Their case is the air.
@@ -282,19 +283,36 @@ Addendum 9 done (Jon: "1 then 2"): the water pipes held off the frame, and the E
   panels and the PRV. The mini-splits heat; each flat has its own electric water heater.
 - Over 20 years it costs $15,315 a flat more than the usual all-electric walk-up, $120 a month
   (the typical draw $140), more in every draw. The engineered design's premium is $231 a month.
+  (With Addendum 10's grounds: $15,342, $121 a month; the typical draw still $140.)
 - The data center's water would add $97 a month to it ($117-187 with the network's share), and
   saves money in no draw.
 - Found: held to the design's 2% drop, each flat's own water heater makes four feeders a size
-  larger, $130 a flat. 10g's plant line has the same heaters and didn't count it: corrected above.
-- Found, not fixed: three of the issued feeders were made 2 AWG for the drop and kept an 8 AWG
-  ground. NEC 250.122(B) wants 6 AWG, unless a qualified person shows the fault path works.
+  larger, $130 a flat ($157 with the grounds Addendum 10 gives them). 10g's plant line has the
+  same heaters and didn't count it: corrected above.
+- Found: three of the issued feeders were made 2 AWG for the drop and kept an 8 AWG ground. NEC
+  250.122(B) wants 6 AWG. Fixed by Addendum 10, below.
 
-Next: Jon's calls before the installers' packets go out (8d):
-- the feeders' grounds: an addendum, or a qualified person's fault-path sizing;
-- whether the bid set keeps the floors and the plant, or the walk-up is bid as the quality
-  walk-up the towns would build.
+Addendum 10 done (Jon: "1: fix the grounds as Addendum 10, 2: your call"): the feeders' grounds,
+larger with their conductors.
+- The three 2 AWG feeders (2-front-left, 3-front-left, 3-front-right) take a 6 AWG ground, in the
+  same 1-1/4 in. conduit (27% full). The services model is reissued with only their conductors
+  changed (6 elements; nothing added, removed or moved), with E-601 and G-001.
+- The design now sizes every ground by 250.122(B) (`electrical.egc_for`) and checks every feeder
+  and branch circuit against it. The six branch circuits made a size larger already met it: NM-B
+  carries a ground the size of its conductors (Southwire's SPEC 10028).
+- It adds $17 a flat up front to each of 10f's walk-ups (they share the feeders), so none of 10f's
+  differences moves. Where the drop makes more feeders larger, more moves: 10g's plant line (its
+  feeders $130 to $157, so the plant's line $27 less) and the quality walk-up ($44, so its premium
+  $27 more: $15,342 over 20 years, $121 a month). 10f, 10g and 10h rerun; every check passes.
 
-Then the round: the packets are in `out/pass3/round/packets/`, now with Addendum 9's G-001. Its
+Next, my call on Jon's second question: bid the quality walk-up, as Addendum 11, before the
+installers' packets go out. Eight of the trades' 33 questions are about the plant, the floors, the
+loop and the fallback, which by D18 no town walk-up gets. Addendum 11's plan comes to Jon first:
+- a 50 gal tank doesn't fit the flats' utility closet as drawn (the ERV's access door opens over
+  its only free floor), so where the hot water comes from is the plan's first question;
+- the floors' gypsum topping stays for sound (STC 57 with it, 48 without; IBC 1206.2 asks 50).
+
+Then the round: the packets are in `out/pass3/round/packets/`, rebuilt after Addendum 11. Its
 answers go in the addendum after it.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
@@ -4141,7 +4159,9 @@ test. Then the township brief's ask.
            whether the report's conclusion survives the range; only if it doesn't, cross-check
            privately.
          - **Addendum 7 is step 9's;** the round's outcomes go in the addendum after it (Addendum
-           10 now: Addenda 8 and 9 went out first, with step 10's findings).
+           10 now: Addenda 8 and 9 went out first, with step 10's findings). (2026-11-24: Addendum
+           10 went out with the feeders' grounds and Addendum 11, the quality walk-up, is planned
+           before the round; its answers go in the addendum after that.)
        - **The parts:**
          - 9a, the fallback: the flats on their mini-splits, the hot water on a backup heater,
            and what that does to the wiring;
@@ -5434,7 +5454,10 @@ test. Then the township brief's ask.
            $29,420, 10f's. (Corrected 2026-11-24 by 10h: taking the plant out leaves a water heater
            in each flat, whose feeders the design's 2% drop makes larger, $130 a flat. Before, the
            plant was $1,226, -$623 to $3,151, paying in 724; the interaction -$1,580; the floors
-           and the plant $12,648, $15,211 to $24,135.)
+           and the plant $12,648, $15,211 to $24,135. Again 2026-11-24 by Addendum 10: those
+           feeders take the larger grounds, $157 a flat, so the plant is $1,070, -$782 to $2,984,
+           paying in 832; the interaction -$1,424; the floors and the plant $12,491, $15,055 to
+           $23,978.)
            - The plant against one gas water heater $3,638; the floors and the plant together
              $12,518, with the network's share $15,081 (dense) to $24,005 (base).
            - Added to the usual walk-up: the ERVs $4,691 (187 kWh more electricity a year than they
@@ -5488,6 +5511,7 @@ test. Then the township brief's ask.
              exception lets a qualified person size it to an effective fault path (250.4(A)(5)).
            - Three 2 AWG and a 6 AWG fill 27% of the 1-1/4 in. conduit.
            - `quality.grounds` reports it. The fix is Jon's call, best made before the packets go.
+           - (2026-11-24) Jon: "fix the grounds as Addendum 10". Done, below.
          - **Over 20 years, a flat, central:** the quality walk-up $15,315 over the all-electric
            walk-up ($120 a month; the typical draw $17,829, P10-P90 $15,843-19,968), $17,875 over
            the central walk-up; the engineered design $14,105 over it.
@@ -5496,6 +5520,12 @@ test. Then the township brief's ask.
              the frame $477, the cold risers' insulation $30; how they interact $191.
            - The data center's water added: $12,326, with the network's share $14,889 (dense) to
              $23,813 (base). Nothing pays in any draw.
+           - (Rerun 2026-11-24 with Addendum 10's grounds, 14 checks, all pass: the quality walk-up
+             $15,342 over the all-electric walk-up, $121 a month, the typical draw $17,857
+             ($15,872-19,995); $17,901 over the central walk-up; the engineered design $14,078 over
+             it. The ERVs $4,511; the fee and the feeders $2,390 (the feeders $157); how the choices
+             interact $180. The data center's water $12,299; $14,862-23,786 with the network's
+             share.)
          - **On heat pumps** the heat the ERVs and the airtightness save costs money, so both cost
            less than in 10g ($4,500 against $5,697; $553 against $983). The ERVs use 99 kWh a year
            more than they save; the airtightness saves 128. The flats use 59 kWh more than the
@@ -5511,6 +5541,40 @@ test. Then the township brief's ask.
            the walk-ups are 10f's; the no-energy lines are 10g's; a dearer ERV; priced heat; the
            feeders at the engineered load are step 7's; undesigned walk-ups keep them; a 6 kW
            heater breaks the breaker check; the grounds; the workers reproduce).
+       - **Addendum 10 done 2026-11-24: the feeders' grounds, larger with their conductors** (Jon:
+         "1: fix the grounds as Addendum 10, 2: your call"; `uv run brownfield routes --ifc`, then
+         `uv run brownfield systems --ifc --publish`; `systems.addendum_10_run`).
+         - **The fix:** NEC 2020 250.122(B) grows a ground in proportion to its conductors' circular
+           mils when they're made larger than the load asks. 8 AWG's 16,510 cmil times 2 AWG's
+           66,360 over 3 AWG's 52,620 is 20,821, so 6 AWG. `electrical.egc_for` now sizes every
+           feeder's ground so, and `electrical.short_grounds` checks every feeder and branch circuit
+           (a branch circuit by the ground its NM-B cable carries, `data/southwire_nmb_ground.csv`).
+           The check is in step 5's and 7c's lists.
+         - **The documents:** the services model reissued as `services-addendum-10.ifc` (ISSUE),
+           with its schedules (the same as Addendum 7's) and `changes-services-addendum-10.json`;
+           E-601 and G-001 reissued alone (`servicesheets.REVISED`); G-001 gains a general note.
+           Addenda 6-9 are now kept as issued, their runs retired, as 6 and 7 were.
+         - **Checks** (8, all pass): 7c's designs (21 checks, the new one among them); the model
+           built from these routes; every ground against 250.122(B); the three grown are 10h's
+           finding; the model's conductors are the design's; against Addendum 7's model only those
+           conductors changed (6 elements, `Conductors` only, no geometry); the conduit's fill
+           (26% to 27%); the two sheets. Addenda 2-5 came out byte for byte.
+         - **The price:** the 2 AWG feeder class now carries a 6 AWG ground, and the quality walk-up's
+           1 AWG class a 4 AWG (26,258 cmil asked, 18 over 6 AWG's 26,240). Wire & Cable Your Way's
+           6 and 4 AWG at fixed ratios over 8 AWG's price (`thhn_6_over_8`, `thhn_4_over_8`), so no
+           draw moves. Every walk-up's systems rise $17.28 a flat (they share the feeders): 10f's
+           totals move by that, its differences not at all. Where the drop makes more feeders
+           larger, more moves: 10g's plant line's feeders $130 to $157, and the quality walk-up
+           $44.11, its premium $26.84 (10h).
+         - Tests: `tests/test_walkup_addendum10.py`, 7 (the rule's arithmetic; NM-B's ground; a short
+           ground caught, feeder or branch; the classes priced with their grounds; the documents;
+           the three feeders on the routes; the model's change only the conductors).
+         - **Next (my call on Jon's second question):** the quality walk-up as Addendum 11, before
+           the packets go. Found while scoping it: a 50 gal tank doesn't fit the utility closet as
+           drawn (64.25 x 37.5 in.; the washer and dryer centred on its back wall, the ERV over its
+           free floor with its access door), and 10a's closet check passes the usual walk-up's only
+           by lining the pieces up. The floors' gypsum topping stays for sound (Addendum 5 item 6:
+           STC 57 / IIC 59 with it; 48 without, under IBC 1206.2's 50).
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

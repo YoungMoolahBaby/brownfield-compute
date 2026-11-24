@@ -39,12 +39,13 @@ from .servicesifc import FT, IN, read_back
 BIDSET = Path(__file__).resolve().parents[2] / "docs" / "pass3" / "bidset"
 OUT = OUT_DIR / "pass3" / "services" / "sheets"
 REV = "addendum-5"  # the building and the frame the sheets are drawn on, as published
-SERVICES_REV = "addendum-7"  # the services model they're drawn from (servicesifc.ISSUE)
+SERVICES_REV = "addendum-10"  # the services model they're drawn from (servicesifc.ISSUE; Addendum 7's set from Addendum 7's)
 SHEETS_REV = "Addendum 7"  # the addendum that issues the sheets (Addendum 6 issued the first set, published as it was)
 PDF_NAME = "services-sheets-addendum-7.pdf"
 # Sheets a later addendum reissued alone, as an addendum reissues only the sheets it changes: the
 # revision each carries, and the file it was published in (Addendum 7's set stays as issued).
-REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf"), "G-001": ("Addendum 9", "services-sheet-g-001-addendum-9.pdf")}
+REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf"), "G-001": ("Addendum 10", "services-sheet-g-001-addendum-10.pdf"),
+           "E-601": ("Addendum 10", "services-sheet-e-601-addendum-10.pdf")}
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -1146,8 +1147,10 @@ def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
 
 
 def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
-    """E-601: the service, the meter stack, the feeders and the house panel."""
-    title_block(ax, "E-601", "ONE-LINE DIAGRAM AND FEEDER SCHEDULE")
+    """E-601: the service, the meter stack, the feeders and the house panel (reissued by Addendum 10 with
+    the feeders' grounds in proportion, NEC 250.122(B))."""
+    rev = REVISED.get("E-601", (SHEETS_REV,))[0]
+    title_block(ax, "E-601", "ONE-LINE DIAGRAM AND FEEDER SCHEDULE", revision=rev)
     el = s7["electrical"]
     sv, fa = el["service"], el["faults"]
     ax.text(1.4, SH - 1.2, "ONE-LINE DIAGRAM", fontsize=11, weight="bold", va="top")
@@ -1193,6 +1196,10 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         "Each tenant reaches the breaker on their own feeder outdoors at the meter stack (NEC 240.24(B)).",
         f"Feeders by NEC 310.16 at 75 C, held to {p['systems.wiring.vd_feeder_max']:.0%} drop on their routes; feeder and branch together "
         f"within {p['systems.wiring.vd_total_max']:.0%}: worst {max(el['total_drop'].values()):.2%}.",
+        "Each feeder's ground by Table 250.122 at its breaker; where its conductors are larger than its load asks (for the drop), "
+        "larger in proportion to their circular mils (250.122(B); Addendum 10): "
+        + ("; ".join(f"{n} {f['size']} AWG ({f['min_size']} by ampacity), a {f['egc']} AWG ground"
+                     for n, f in sorted(feeders.items()) if f["size"] != f["min_size"]) or "none") + ".",
         f"The flats share the phases in threes: {'; '.join(f'{k} {len(v)} flats' for k, v in sv['pairs'].items())}.",
         "Not in the model: the meter stack, the house panel and the electrical room's equipment. Fault currents from the "
         "transformer's assumed size and impedance until FirstEnergy gives them.",
@@ -1208,7 +1215,7 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
             ax.text(17.8, yy, p_, fontsize=6, va="top")
             yy -= 0.19
         yy -= 0.05
-    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the conductors and conduit from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {rev}'s services model was built from); the conductors and conduit from the "
             "services model.", fontsize=6, va="top", color="#616161")
 
 
@@ -1464,13 +1471,14 @@ def inches(x: float) -> str:
     return f"{whole}-{rest.numerator}/{rest.denominator}" if whole and rest else (f"{rest.numerator}/{rest.denominator}" if rest else f"{whole}")
 
 
-def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None) -> None:
-    """G-001 (Addendum 7; reissued by Addendum 9 with its two general notes, the sheet index marking the
-    sheets reissued since)."""
+def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None, s7: dict | None = None) -> None:
+    """G-001 (Addendum 7; reissued by Addendum 9 with its two general notes, and by Addendum 10 with the
+    feeders' grounds, the sheet index marking the sheets reissued since Addendum 7)."""
     rev = REVISED.get("G-001", (SHEETS_REV,))[0]
     title_block(ax, "G-001", "COVER, SHEET INDEX, NOTES AND LEGEND", revision=rev)
     ax.text(1.4, SH - 1.2, "12-FLAT WALK-UP: THE SERVICES", fontsize=22, weight="bold", va="top")
-    ax.text(1.4, SH - 2.0, f"Plumbing, heating, cooling and air, power and sprinklers, drawn from {SHEETS_REV}'s services model for review by the "
+    drawn_from = f"from {SHEETS_REV}'s services model" if rev == SHEETS_REV else "each from the services model of the addendum it carries,"
+    ax.text(1.4, SH - 2.0, f"Plumbing, heating, cooling and air, power and sprinklers, drawn {drawn_from} for review by the "
             "trades: the installers' round.", fontsize=10, va="top")
     ax.text(1.4, SH - 2.4, "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Not for construction.",
             fontsize=10, va="top", color="#c00000")
@@ -1498,7 +1506,8 @@ def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None) -> None:
         "P-601). The control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002).",
         "Basis of design: every make and model named is a basis of design, not a choice; equals by the bidder, with their data.",
     ]
-    if rev == "Addendum 9" and p is not None:
+    issue = int(rev.split()[-1])
+    if issue >= 9 and p is not None:
         sl = "baseline.sleeves."
         general += [
             "The water pipes are held off the frame (Addendum 9, item 1; specification section 22 05 29). Above the slab, every hanger "
@@ -1510,6 +1519,14 @@ def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None) -> None:
             "The ERV's submittal gives the maker's sound rating at each flat's continuous airflow (M-601), with the test it comes from. "
             "None is published for the basis of design; an equal without one is not accepted (Addendum 9, item 2).",
         ]
+    if issue >= 10 and s7 is not None:
+        grown = [n for n, f in sorted(s7["electrical"]["feeders"].items()) if f["size"] != f["min_size"]]
+        names = ", ".join(grown[:-1]) + " and " + grown[-1] if len(grown) > 1 else "".join(grown)
+        general.append(
+            "A conductor larger than its load asks takes a ground larger in proportion to its circular mils (NEC 250.122(B)). The "
+            f"feeders made larger for the drop, {names}, take a "
+            + "/".join(sorted({s7["electrical"]["feeders"][n]["egc"] for n in grown})) + " AWG ground (Addendum 10, item 1; E-601); "
+            "so does any conductor the installer makes larger.")
     missing = [
         "the mechanical and electrical rooms' wall-hung equipment: the exchangers, the pumps, the mixing valve, the backflow assemblies "
         "and the riser assembly, the pressure-reducing valve, the meter stack, the house panel (the diagrams P-601, M-601, E-601 and "
@@ -1546,7 +1563,7 @@ def draw_sheet(ax, number: str, ctx: dict, drawn: set) -> Labels | None:
     bld, rb, s7, p = ctx["bld"], ctx["rb"], ctx["s7"], ctx["p"]
     pre, num = number.split("-")
     if number == "G-001":
-        cover(ax, sheet_list(), p)
+        cover(ax, sheet_list(), p, s7)
     elif number == "G-002":
         tests_sheet(ax, s7, p)
     elif number == "M-602":
