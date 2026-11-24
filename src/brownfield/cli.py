@@ -954,6 +954,30 @@ def cmd_baseline(args) -> int:
     return 0 if ok else 1
 
 
+def cmd_choices(args) -> int:
+    from . import ROOT, baseline, choices, comfort, energy, pricing, systems
+
+    r = baseline.run()
+    params = load_params()
+    P, apt = values(params), systems.load(systems.latest_model())
+    pr = pricing.run(r, apt, P)
+    en = energy.run(r, pr, apt, P)
+    co = comfort.run(r, en, apt, P)
+    ch = choices.run(r, pr, en, co, apt, params, n=args.draws, workers=args.workers)
+    print(choices.report(ch, P))
+    runs = [r, pr, en, co, ch]
+    ok = all(ok for x in runs for _, ok, _ in x["checks"])
+    written = [q for x in runs for q in x["written"]]
+    if args.publish:
+        if ok:
+            choices.figure(ch, ROOT / "docs" / "pass3" / "systems_choices.png")
+            written.append(ROOT / "docs" / "pass3" / "systems_choices.png")
+        else:
+            print(NL + "not published: a check failed")
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in written))
+    return 0 if ok else 1
+
+
 def cmd_fallback(_args) -> int:
     from . import fallback, systems
 
@@ -1199,6 +1223,10 @@ def main(argv=None) -> int:
     bl.add_argument("--draws", type=int, default=4000, help="10f's Monte Carlo draws (default 4,000; 0 skips 10f)")
     bl.add_argument("--workers", type=int, default=None, help="processes for 10f's draws (default: the cores less two, at most 10); the result is the same for any number")
     bl.add_argument("--publish", action="store_true", help="also write 10f's figure to docs/pass3/systems_20yr.png (only if every check passes)")
+    ch = sub.add_parser("choices", help="pass 3g step 10g: which of the engineered design's choices pay their way: each taken out of it alone, the usual all-electric walk-up's way in its place, over 10f's draws (run `baseline` first: its draws are the check)")
+    ch.add_argument("--draws", type=int, default=4000, help="the draws (default 4,000, 10f's; the check against 10f's draws needs the same count)")
+    ch.add_argument("--workers", type=int, default=None, help="processes for the draws (default: the cores less two, at most 10); the result is the same for any number")
+    ch.add_argument("--publish", action="store_true", help="also write the figure to docs/pass3/systems_choices.png (only if every check passes)")
     sub.add_parser("fallback", help="pass 3g step 9a: when the data center's heat is gone: the flats on their mini-splits, the hot water on its backup heater, the wiring for both")
     rd = sub.add_parser("round", help="pass 3g step 8c: the installers' round: each trade's packet (a letter, its questions, its sheets), and the log of their comments (data/raw/round/comments.yaml, private) checked")
     rd.add_argument("--publish", action="store_true", help="also publish the question forms, the public log and each comment its author let us show, to the plan room (only if the log is sound)")
@@ -1228,7 +1256,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("sites", help="pass 1: the site screen")
     s.add_argument("--limit", type=int, default=0, help="only the N largest sites (for testing)")
     args = ap.parse_args(argv)
-    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "round": cmd_round, "fallback": cmd_fallback, "baseline": cmd_baseline, "sequence": cmd_sequence, "acceptance": cmd_acceptance, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
+    cmd = {"check": cmd_check, "sites": cmd_sites, "rank": cmd_rank, "module": cmd_module, "cost": cmd_cost, "homes": cmd_homes, "sensitivity": cmd_sensitivity, "house": cmd_house, "block": cmd_block, "frame": cmd_frame, "build": cmd_build, "steel": cmd_steel, "masonry": cmd_masonry, "compare": cmd_compare, "costcarbon": cmd_costcarbon, "economy": cmd_economy, "wall": cmd_wall, "creek": cmd_creek, "garden": cmd_garden, "food": cmd_food, "village": cmd_village, "site": cmd_site, "land": cmd_land, "conference": cmd_conference, "workforce": cmd_workforce, "scorecard": cmd_scorecard, "water": cmd_water, "air": cmd_air, "services": cmd_services, "bidset": cmd_bidset, "addendum": cmd_addendum, "systems": cmd_systems, "loads": cmd_loads, "hvac": cmd_hvac, "plumbing": cmd_plumbing, "electrical": cmd_electrical, "fire": cmd_fire, "routes": cmd_routes, "sheets": cmd_sheets, "questions": cmd_questions, "round": cmd_round, "fallback": cmd_fallback, "baseline": cmd_baseline, "choices": cmd_choices, "sequence": cmd_sequence, "acceptance": cmd_acceptance, "pdfset": cmd_pdfset, "viewer": cmd_viewer}.get(args.cmd or "check")
     return cmd(args)
 
 

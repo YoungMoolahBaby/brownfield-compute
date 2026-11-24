@@ -84,6 +84,8 @@ the sections below in order. Each line gives a report's finding in a sentence.
     a flat more over 20 years, and more in every one of 4,000 draws.
   - They buy quiet (25 dBA against 33 from a neighbour's drain), ducted fresh air to every bedroom
     and warm floors. The tenants keep most of the $535 a year they save; the owner pays.
+  - Choice by choice, the quiet costs $4-38 a month a flat, the ducted bedroom air $45 and the
+    warm floors $89. None pays for itself in money but the hot-water plant, in 18% of the draws.
 
 ## 4. The economic base (pass 4)
 
@@ -239,7 +241,7 @@ code is in `src/brownfield/`.
 | [The real land](pass3/land.md) | `brownfield land` | `land.py` |
 | [The conference of communities](pass3/conference.md) | `brownfield conference`, then forge `conference` | `conference.py`, `neighbourhood.py` |
 | [The bid set as data](pass3/bidset.md) | forge `apartment-json`; `brownfield bidset`, `addendum`, `pdfset`, `viewer` | `bidset.py`, `stair.py`, `addendum.py`, `pdfset.py`, `viewer.py`; forge `stair.rs` |
-| [The walk-up's systems](pass3/systems.md) | `brownfield routes`, then `brownfield baseline --publish` | `baseline.py`, `pricing.py`, `energy.py`, `comfort.py`, `savings.py`, `ranges.py` |
+| [The walk-up's systems](pass3/systems.md) | `brownfield routes`, then `brownfield baseline --publish`, then `brownfield choices --publish` | `baseline.py`, `pricing.py`, `energy.py`, `comfort.py`, `savings.py`, `ranges.py`, `choices.py` |
 | [Its website](https://youngmoolahbaby.github.io/brownfield-compute/) | built on GitHub by `.github/workflows/pages.yml` | `tools/viewer/build_site.py`, `planroom.html` |
 | [The economic base](pass4/README.md) | `brownfield economy` | `econ.py`, `acs.py` |
 | [The workforce](pass4/workforce.md) | `brownfield workforce` | `workforce.py` |

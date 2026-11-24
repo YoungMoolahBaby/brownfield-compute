@@ -19,7 +19,7 @@ def P(params):
 
 
 def _lines(cls: str, usd: float, qty: float = 1.0, walkups=("engineered",)) -> dict:
-    return {"lines": [{"class": cls, "qty": {w: qty if w in walkups else 0.0 for w in WALKUPS},
+    return {"lines": [{"id": f"test | {cls}", "what": cls, "class": cls, "qty": {w: qty if w in walkups else 0.0 for w in WALKUPS},
                        "usd": {w: usd * qty if w in walkups else 0.0 for w in WALKUPS}}]}
 
 

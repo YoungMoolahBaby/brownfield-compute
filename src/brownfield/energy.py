@@ -15,7 +15,8 @@ cooling design's shift) and PVGIS's sun on each wall.
     the code's 3.0 ACH50 leakage; the two combined by LBNL's sub-additivity (`loads.subadditive`,
     `baseline.usual_case`);
   - **between the two:** the engineered design at the code's leakage, so the ERV's share of the
-    saving and the airtightness's each have a line.
+    saving and the airtightness's each have a line; and the usual flats at Phius's leakage, the same
+    two the other way round (10g takes each out of the engineered design).
 - **Cooling:** the same model at 75 F, on the days that need no heat; at the mini-split's SEER2,
   or the gas walk-up's air conditioner's. Sensible heat only.
 - **Hot water:** each flat's gallons a day by FSEC's model (`fsec_gpd`), on the mains' temperature
@@ -149,15 +150,19 @@ def season(loss, gain, days: int, mass: float) -> tuple[np.ndarray, np.ndarray]:
 
 
 def cases(apt: dict, p: dict) -> dict:
-    """The three envelopes of air: the engineered design (Phius's leakage, the ERV and its
-    preheater), the same at the code's leakage (balanced, so the leakage adds), and the usual
-    walk-ups (the bath fan and the code's leakage, sub-additive). Each (case, has an ERV)."""
+    """The four envelopes of air: the engineered design (Phius's leakage, the ERV and its
+    preheater); the same at the code's leakage (balanced, so the leakage adds); the usual walk-ups
+    (the bath fan and the code's leakage, sub-additive); and the usual flats at Phius's leakage (the
+    bath fan's air and Phius's natural flow, sub-additive), which 10g needs to take the ERV out of
+    the engineered design. Each (case, has an ERV)."""
     from .baseline import usual_case
     from .loads import design_case
 
     eng, usual = design_case(apt, p, preheat=True), usual_case(apt, p)
     code = {"flats": {n: {**c, "infil_m3h": usual["flats"][n]["natural_m3h"]} for n, c in eng["flats"].items()}}
-    return {"engineered": (eng, True), "engineered at the code's leakage": (code, True), "usual": (usual, False)}
+    tight = usual_case(apt, p, natural_m3h={n: c["infil_m3h"] for n, c in eng["flats"].items()})
+    return {"engineered": (eng, True), "engineered at the code's leakage": (code, True), "usual": (usual, False),
+            "usual at Phius's leakage": (tight, False)}
 
 
 def space(apt: dict, p: dict, wx: dict, only: tuple[str, ...] | None = None) -> dict:
@@ -318,60 +323,88 @@ def plant_design_check(p: dict, s7: dict) -> dict:
 
 # ---- each walk-up's meters ----
 
+# The walk-ups that heat with heat pumps, as switches (`config_rows`), so 10g (`choices.py`) can
+# take each of the design's choices out of it: which of `cases` the flats are (their ventilation
+# and leakage); where the space heat comes from ("dc": the data center's water through the floors,
+# the fallback's hours on the mini-splits; "hp": the mini-splits); the hot water ("plant", or
+# "electric": each flat's own heater, or "central": one gas heater and the loops); the PV.
+CONFIGS = {"engineered": {"case": "engineered", "heat": "dc", "hw": "plant", "pv": True},
+           "electric": {"case": "usual", "heat": "hp", "hw": "electric", "pv": False},
+           "central": {"case": "usual", "heat": "hp", "hw": "central", "pv": False}}
+ERV_CASES = ("engineered", "engineered at the code's leakage")  # the `cases` with an ERV
+
+
+def config_rows(apt: dict, p: dict, s7: dict, sp: dict, hw: dict, cfg: dict, label: str) -> list[dict]:
+    """A walk-up's energy a year by end use and meter (`ledger`'s rows, labelled `label`) from its
+    switches (`CONFIGS`'s shape). The plant's controls run if anything takes the data center's
+    water."""
+    from .loads import ventilation
+
+    e = "baseline.energy."
+    n = len(apt["flats"])
+    fb = p[e + "fallback_h"] / 8766.0
+    scop = p[e + "hp_scop"]
+    s = sp[cfg["case"]]["building"]
+    rows = []
+
+    def add(use, meter, kwh):
+        rows.append({"walkup": label, "use": use, "meter": meter, "kwh": float(kwh)})
+
+    if cfg["heat"] == "dc":
+        loop = s7["loop"]
+        add("space heat", "heat", (1 - fb) * s["heat_kwh"])
+        add("space heat", "flats", fb * s["heat_kwh"] / scop)  # the fallback, on the mini-splits
+        add("space heat", "house", pump_w(loop["gpm"], loop["pump_ft"], p) * sp[cfg["case"]]["heat_on_h"] / 1000)  # P-1
+    else:
+        add("space heat", "flats", s["heat_kwh"] / scop)
+    if cfg["case"] in ERV_CASES:
+        erv_w = sum(v["design_cfm"] for v in ventilation(apt, p).values()) * p["systems.erv.watts_49cfm"] / 49.0  # HVI's 28 W at 49 cfm, by each flat's airflow
+        add("ventilation", "flats", erv_w * 8766 / 1000 + s["pre_kwh"])
+    else:
+        add("ventilation", "flats", n * p["baseline.usual.bath_fan_w"] * 8766 / 1000)
+    add("cooling", "flats", s["cool_kwh"] * BTU_KWH / p[e + "seer2_minisplit"] / 1000)
+    if cfg["hw"] == "plant":
+        pl = hw["plant"]
+        add("hot water", "house", (1 - fb) * pl["hp_kwh"] + fb * pl["plant_kwh"] + pl["element_kwh"] + hw["recirc_kwh"] + hw["p2_kwh"])
+        add("hot water", "heat", (1 - fb) * pl["dc_kwh"])
+    elif cfg["hw"] == "electric":
+        add("hot water", "flats", n * hw["electric_kwh"])
+    else:
+        add("hot water", "gas house", hw["central_gas_kwh"])
+        add("hot water", "house", hw["recirc_kwh"] + hw["central_fan_kwh"])
+    if cfg["heat"] == "dc" or cfg["hw"] == "plant":
+        add("controls", "house", p[e + "controls_w"] * 8766 / 1000)
+    if cfg["pv"]:
+        pv = s7["electrical"]["pv"]
+        add("pv", "pv", -pv["house_ac_kw"] * p["systems.pv.dc_ac"] * pv["kwh_per_kwp"])
+    add("the house's own", "house", house_own_w(apt, p) * 8766 / 1000)
+    return rows
+
+
 def ledger(apt: dict, p: dict, s7: dict, sp: dict, hw: dict) -> list[dict]:
     """Every walk-up's energy a year by end use and meter, the building's: `flats` (the flats' own
     electric meters), `house` (the house meter, before PV), `pv` (on the house meter), `gas flats`,
     `gas house` (kWh of gas), `heat` (kWh from the data center). The flats' lights, appliances and
     plugs, alike in every walk-up, are left out. The house's continuous loads (its lights, the fire
     alarm, the telecom backboard; `house_own_w`) are alike too but kept in: they set the house
-    meter's rate class with the rest."""
-    e, sx = "baseline.energy.", "systems.erv."
+    meter's rate class with the rest. The heat-pump walk-ups by their switches (`config_rows`); the
+    gas walk-up's furnace, air conditioner and heaters here."""
+    e = "baseline.energy."
     n = len(apt["flats"])
-    fb = p[e + "fallback_h"] / 8766.0
-    scop, s19, sac = p[e + "hp_scop"], p[e + "seer2_minisplit"], p[e + "seer2_ac"]
-    eng, usual = sp["engineered"], sp["usual"]
-    from .loads import ventilation
+    rows = [r for w, cfg in CONFIGS.items() for r in config_rows(apt, p, s7, sp, hw, cfg, w)]
 
-    erv_w = sum(v["design_cfm"] for v in ventilation(apt, p).values()) * p[sx + "watts_49cfm"] / 49.0  # HVI's 28 W at 49 cfm, by each flat's airflow
-    fan_w = n * p["baseline.usual.bath_fan_w"]
-    loop = s7["loop"]
-    pl = hw["plant"]
-    pv = s7["electrical"]["pv"]
-    pv_kwh = pv["house_ac_kw"] * p["systems.pv.dc_ac"] * pv["kwh_per_kwp"]
-    rows = []
+    def add(use, meter, kwh):
+        rows.append({"walkup": "gas", "use": use, "meter": meter, "kwh": float(kwh)})
 
-    def add(w, use, meter, kwh):
-        rows.append({"walkup": w, "use": use, "meter": meter, "kwh": float(kwh)})
-
-    # The engineered design.
-    add("engineered", "space heat", "heat", (1 - fb) * eng["building"]["heat_kwh"])
-    add("engineered", "space heat", "flats", fb * eng["building"]["heat_kwh"] / scop)  # the fallback, on the mini-splits
-    add("engineered", "space heat", "house", pump_w(loop["gpm"], loop["pump_ft"], p) * eng["heat_on_h"] / 1000)  # P-1
-    add("engineered", "ventilation", "flats", erv_w * 8766 / 1000 + eng["building"]["pre_kwh"])
-    add("engineered", "cooling", "flats", eng["building"]["cool_kwh"] * BTU_KWH / s19 / 1000)
-    add("engineered", "hot water", "house", (1 - fb) * pl["hp_kwh"] + fb * pl["plant_kwh"] + pl["element_kwh"]
-        + hw["recirc_kwh"] + hw["p2_kwh"])
-    add("engineered", "hot water", "heat", (1 - fb) * pl["dc_kwh"])
-    add("engineered", "controls", "house", p[e + "controls_w"] * 8766 / 1000)
-    add("engineered", "pv", "pv", -pv_kwh)
-    # The usual walk-ups.
-    for w in ("electric", "central"):
-        add(w, "space heat", "flats", usual["building"]["heat_kwh"] / scop)
-        add(w, "cooling", "flats", usual["building"]["cool_kwh"] * BTU_KWH / s19 / 1000)
-        add(w, "ventilation", "flats", fan_w * 8766 / 1000)
-    add("electric", "hot water", "flats", n * hw["electric_kwh"])
-    add("central", "hot water", "gas house", hw["central_gas_kwh"])
-    add("central", "hot water", "house", hw["recirc_kwh"] + hw["central_fan_kwh"])
-    heat_g = usual["building"]["heat_kwh"]
-    add("gas", "space heat", "gas flats", heat_g / p[e + "furnace_afue"])
-    add("gas", "space heat", "flats", heat_g * BTU_KWH / p[e + "furnace_out_btuh"] * p[e + "furnace_fan_w"] / 1000)
-    add("gas", "cooling", "flats", usual["building"]["cool_kwh"] * BTU_KWH / sac / 1000)
-    add("gas", "ventilation", "flats", fan_w * 8766 / 1000)
-    add("gas", "hot water", "gas flats", n * hw["own_gas_kwh"])
-    add("gas", "hot water", "flats", n * hw["own_gas_fan_kwh"])
-    own = house_own_w(apt, p) * 8766 / 1000
-    for w in WALKUPS:
-        add(w, "the house's own", "house", own)
+    usual = sp["usual"]["building"]
+    heat_g = usual["heat_kwh"]
+    add("space heat", "gas flats", heat_g / p[e + "furnace_afue"])
+    add("space heat", "flats", heat_g * BTU_KWH / p[e + "furnace_out_btuh"] * p[e + "furnace_fan_w"] / 1000)
+    add("cooling", "flats", usual["cool_kwh"] * BTU_KWH / p[e + "seer2_ac"] / 1000)
+    add("ventilation", "flats", n * p["baseline.usual.bath_fan_w"] * 8766 / 1000)
+    add("hot water", "gas flats", n * hw["own_gas_kwh"])
+    add("hot water", "flats", n * hw["own_gas_fan_kwh"])
+    add("the house's own", "house", house_own_w(apt, p) * 8766 / 1000)
     return rows
 
 
@@ -389,18 +422,33 @@ def house_demand(apt: dict, p: dict, s7: dict, hw: dict) -> dict:
     normal month, and in the month the data center's heat is gone. The engineered design's: HP-1 at
     its rated input with the swing element, the pumps, the controls and the house's own loads; in
     the fallback BK-1 in HP-1's place. The central walk-up's: its pump and its heater's blower."""
-    e, hs = "baseline.energy.", "systems.house."
-    own = house_own_w(apt, p)
-    loop, rc = s7["loop"], s7["water"]["recirc"]
-    pumps = pump_w(loop["gpm"], loop["pump_ft"], p) + pump_w(rc["gpm"], rc["ft"], p) + pump_w(p[e + "p2_gpm"], p[e + "p2_head_ft"], p)
-    base = p[hs + "swing_element_va"] + pumps + p[e + "controls_w"] + own
-    central = pump_w(rc["gpm"], rc["ft"], p) + p[e + "gas_heater_fan_w"] + own
-    return {"engineered": {"normal_kw": (base + p[e + "hp1_input_w"]) / 1000, "fallback_kw": (base + p["systems.hot_water.backup_w"]) / 1000},
-            "electric": {"normal_kw": own / 1000, "fallback_kw": own / 1000}, "gas": {"normal_kw": own / 1000, "fallback_kw": own / 1000},
-            "central": {"normal_kw": central / 1000, "fallback_kw": central / 1000}}
+    out = {w: config_demand(apt, p, s7, cfg) for w, cfg in CONFIGS.items()}
+    out["gas"] = dict(out["electric"])
+    return {w: out[w] for w in WALKUPS}
 
 
-def costs(rows: list[dict], p: dict, flats: int, demand: dict | None = None) -> dict:
+def config_demand(apt: dict, p: dict, s7: dict, cfg: dict) -> dict:
+    """`house_demand` for a walk-up given by its switches (`CONFIGS`'s shape): the loop's pump P-1
+    if the floors take the data center's water; the plant's swing element, its pumps and HP-1 (BK-1
+    in the fallback) if it has the plant; the central heater's pump and blower if it has that; the
+    controls if anything takes the data center's water; the house's own loads always."""
+    e = "baseline.energy."
+    rc = s7["water"]["recirc"]
+    w = house_own_w(apt, p)
+    normal = fallback = 0.0
+    if cfg["heat"] == "dc":
+        w += pump_w(s7["loop"]["gpm"], s7["loop"]["pump_ft"], p)
+    if cfg["hw"] == "plant":
+        w += p["systems.house.swing_element_va"] + pump_w(rc["gpm"], rc["ft"], p) + pump_w(p[e + "p2_gpm"], p[e + "p2_head_ft"], p)
+        normal, fallback = p[e + "hp1_input_w"], p["systems.hot_water.backup_w"]
+    elif cfg["hw"] == "central":
+        w += pump_w(rc["gpm"], rc["ft"], p) + p[e + "gas_heater_fan_w"]
+    if cfg["heat"] == "dc" or cfg["hw"] == "plant":
+        w += p[e + "controls_w"]
+    return {"normal_kw": (w + normal) / 1000, "fallback_kw": (w + fallback) / 1000}
+
+
+def costs(rows: list[dict], p: dict, flats: int, demand: dict | None = None, walkups: tuple[str, ...] = WALKUPS) -> dict:
     """Each walk-up's running cost a year (USD, the building's) by meter:
     - the flats' electricity at Penelec's residential price;
     - the house meter on GS-Small, or on GS-Medium if it takes more than GS-Small's 1,500 kWh a
@@ -410,13 +458,14 @@ def costs(rows: list[dict], p: dict, flats: int, demand: dict | None = None) -> 
       to compare (52 Pa. Code 75.13);
     - gas by the Mcf: each flat's own account (Peoples RS) or the central heater's (SGS, its customer
       charge by its tier);
-    - the data center's heat at `energy.heat_usd_mwh`."""
+    - the data center's heat at `energy.heat_usd_mwh`.
+    `walkups`: the rows' labels to cost (10g's own mixes of the design's choices)."""
     from .cost import MCF_MWH
 
     t = "baseline.tariff."
     fallback = p["baseline.energy.fallback_h"] > 0
     out = {}
-    for w in WALKUPS:
+    for w in walkups:
         m = {k: sum(r["kwh"] for r in rows if r["walkup"] == w and r["meter"] == k)
              for k in ("flats", "house", "pv", "gas flats", "gas house", "heat")}
         net = m["house"] + m["pv"]
@@ -583,6 +632,8 @@ def report(r: dict, p: dict) -> str:
     code = s["engineered at the code's leakage"]
     lines.append(f"  the saving over the usual flats' {s['usual']:,.0f}: the ERV's {s['usual'] - code:,.0f}, "
                  f"the airtightness's {code - s['engineered']:,.0f}")
+    tight = s["usual at Phius's leakage"]
+    lines.append(f"  the other way round: the airtightness's {s['usual'] - tight:,.0f}, then the ERV's {tight - s['engineered']:,.0f}")
     lines += ["", f"Hot water: {hw['gpd']:.1f} gal a day a flat at the tap ({hw['gpd_min']:.1f}-{hw['gpd_max']:.1f} through the year; "
                   f"FSEC, {p['baseline.energy.occupants']:g} people), {hw['flat_kwh']:,.0f} kWh of heat a flat a year; the loops lose {hw['loop_w']:,.0f} W.",
               f"  The engineered plant a year: HP-1 {hw['plant']['hp_kwh']:,.0f} kWh, the swing element {hw['plant']['element_kwh']:,.0f}, "

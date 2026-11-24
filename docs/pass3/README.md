@@ -29,7 +29,8 @@ Its plumbing, heating, cooling, ventilation, electrical work and sprinklers desi
 bidding (Addenda 2-9), and set against the usual US walk-up priced from free sources: [pass 3g,
 the walk-up's systems](systems.md). The engineering adds about $2,200 a flat. The systems this
 design chose cost $20,000-32,000 a flat more over 20 years than each usual walk-up, and more in
-every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings.
+every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings: choice by
+choice, the quiet costs $4-38 a month a flat, the ducted bedroom air $45 and the warm floors $89.
 
 ## 1. The first house, in CortenForge
 

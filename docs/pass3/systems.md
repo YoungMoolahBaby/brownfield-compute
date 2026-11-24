@@ -19,12 +19,13 @@ those need a licensed engineer's stamp.
 Run `uv run brownfield routes` (it needs forge's routes), then `uv run brownfield baseline
 --publish`. The run takes about 35 minutes: the Monte Carlo's 4,000 draws run in ten processes.
 It writes `out/pass3/baseline.md`, `pricing.md`, `energy.md`, `comfort.md`, `savings.md` and
-`ranges.md` with their `.json`, and the figure here. It writes the figure only if every check
-passes.
+`ranges.md` with their `.json`, and the first figure here. Then `uv run brownfield choices
+--publish` (10g, about an hour) writes `out/pass3/choices.md` and `.json` and the second figure,
+and checks itself against the first run's draws. Each writes its figure only if every check passes.
 
 The code is in `src/brownfield/baseline.py`, `pricing.py`, `energy.py`, `comfort.py`,
-`savings.py` and `ranges.py`. Every price, life and rate is in `params/baseline.yaml`, each with
-its range and source.
+`savings.py`, `ranges.py` and `choices.py`. Every price, life and rate is in
+`params/baseline.yaml`, each with its range and source.
 
 ![A flat's building systems over 20 years. The engineered design about $84,000 a flat, the usual walk-ups $46,000-59,000; with its share of the heat network, $87,000-97,000. Most of each bar is the systems up front](systems_20yr.png)
 
@@ -34,7 +35,7 @@ its range and source.
   - *The engineering* is the fee, paid so the design exists before bidding.
   - *The systems* are what this design chose: radiant floors on the data center's water, a central
     hot-water plant, an ERV in each flat, cast-iron drains, a separate fire service, submeters and
-    PV.
+    solar panels.
 
   A design-build trade could have chosen the same systems at the same cost. Mixing the two would
   credit the engineering with the data center's heat, or blame it for the plant.
@@ -58,6 +59,16 @@ its range and source.
   extra capital. They save mostly the heat pump's and the water heaters' electricity: $535 a year a
   flat. Over 20 years at 7% that's worth about $5,700, against a $34,000 premium up front. Pass 3
   §4 found the same for homes on the loop, except in big blocks close to the campus.
+- **Choice by choice** ([10g](#what-each-choice-buys-and-what-it-costs-10g)), the design buys
+  quality of life, not savings. A flat, a month over 20 years:
+  - quiet: the pipes held off the frame $4 (13 dB), the cast iron $38 (25 dBA against 33);
+  - air: the ERVs $45 (outdoor air ducted to every bedroom), the airtightness $8;
+  - warmth: the floors on the data center's water $89 (warm floors, the outdoor units quiet in
+    winter);
+  - the solar panels ($12) and the PRV ($2) buy no quality here.
+
+  None pays for itself in money, except the hot-water plant in 18% of the draws. The ERVs even use
+  606 kWh more electricity a year than bath fans; their case is the air.
 - **The cheapest of the four is the usual walk-up with central gas hot water**, in all but 5 of the
   4,000 draws: $39,200 a flat over 20 years, against $41,800 all-electric.
 - **What the premium buys** is quiet, air and warmth, not savings:
@@ -133,7 +144,7 @@ What the engineered design's $31,812 over the all-electric walk-up buys, a flat:
 | cast-iron drains and vents, for quiet | $4,860 | $4,860 | $4,860 |
 | the hot-water plant and its loops | $4,702 | $2,478 | $2,874 |
 | the ERVs and their preheaters | $3,869 | $3,869 | $3,869 |
-| PV | $2,550 | $2,550 | $2,550 |
+| solar panels | $2,550 | $2,550 | $2,550 |
 | the water and fire services, apart and supervised | $1,395 | $1,395 | $1,395 |
 | airtightness to Phius | $860 | $860 | $860 |
 | the flats' water submeters | $848 | $848 | $848 |
@@ -169,7 +180,7 @@ Peoples). With the data center's heat free, a flat's running cost a year:
 | | engineered | all electric | gas | central hot water |
 |---|---|---|---|---|
 | the flats' electricity | $279 | $958 | $198 | $343 |
-| the house meter, net of PV | $247 | $102 | $102 | $105 |
+| the house meter, net of the solar panels | $247 | $102 | $102 | $105 |
 | gas | | | $493 | $163 |
 | **total** | **$525** | **$1,060** | **$794** | **$611** |
 
@@ -227,7 +238,7 @@ cooling than the usual flats' (10c's model).
 
 ## Over 20 years, and the ranges (10f)
 
-Every input with a range, 1,015 of them, drawn together 4,000 times. 10b, 10c and 10e run again
+Every input with a range, 1,021 of them, drawn together 4,000 times. 10b, 10c and 10e run again
 for each draw; 10a's quantities are held, since they are the design. Over 20 years, each walk-up's
 cost is:
 - up front;
@@ -297,6 +308,134 @@ The engineered design less each usual walk-up:
   - the tie prices for the heat: electric $137/MWh ($120-153), gas $79 ($69-91), central hot water
     $25 ($14-38).
 
+## What each choice buys, and what it costs (10g)
+
+10f's premium is the design's choices together. 10g splits it up. Each choice is taken out of the
+engineered design alone, the rest as designed, and the usual all-electric walk-up's way is put in
+its place. A choice's line is what the design would save over 20 years without it: up front, the
+replacements, and each year's running cost and upkeep at 7% (×10.59). It runs over 10f's 4,000
+draws, so the lines split 10f's whole, draw for draw.
+
+The design is after quality of life: quiet, fresh air, warmth, safe water and fire service.
+What a flat gets from each choice, and what that costs it a month over 20 years (central):
+
+| what a flat gets | the choice | a month |
+|---|---|---|
+| **Quiet** | | |
+| supply pipes 13 dB quieter | the water pipes held off the frame | $4 |
+| a neighbour's flush at 25 dBA, against 33 (CMHC's limit) | cast-iron drains and vents | $38 |
+| nothing at the street's 55 psi; 1.7 dB if it were at the code's 80 | a pressure-reducing valve | $2 |
+| **Air** | | |
+| outdoor air ducted to every bedroom, 15 cfm a person at 16.5 C or warmer, against 4.5-9 through the walls at the outdoor temperature | an ERV and its preheater | $45 |
+| 0.31-0.75 ACH50 against 3.0, which keeps the floors' heat at the design hour at 19.4 kW against 23.4 | airtightness to Phius | $8 |
+| **Warmth** | | |
+| floors at 21-26 C at the design hour; the outdoor units heat 168 hours a year, against 4,229 | the floors on the data center's water | $89 |
+| **Water and fire** | | |
+| the sprinklers on a service of their own, supervised, alarms to a monitoring station | the services apart | $12 |
+| each flat billed for its own water | a submeter in each flat | $7 |
+| no condensation on the cold risers | the cold risers' insulation | $0 |
+| **Energy, not comfort** | | |
+| 2.9 MWh of the data center's heat a year and no heater in the closet; the tub's worst wait 10 s, against 5 | the hot-water plant and the loops | $10 |
+| 797 kWh a year on the house meter | solar panels | $12 |
+
+- **Per dollar, the most quality** is in the pipes held off the frame and the airtightness. The cast
+  iron and the ERVs buy quiet and air a tenant notices every day. The floors are the dearest, and
+  dearer still with the network's share.
+- **The solar panels and the PRV buy no quality a tenant feels here.** The panels don't pay in
+  money either (below). The PRV guards against a street pressure this one doesn't have. On a
+  quality-of-life brief they're the first to question.
+- **What no free source here measures** is what a tenant or a buyer would pay for each, or what
+  each does for sleep and health ([what we don't know](#what-we-dont-know)).
+
+![Each choice's net cost a flat over 20 years, the typical draw with P10-P90. The floors on the data center's water about $13,300, the ERVs $6,400, the cast iron $5,700, the other choices under $2,000 each and the fee $2,200. Only the hot-water plant's range crosses zero](systems_choices.png)
+
+**In money,** a flat, USD 2026: the central values, then the typical draw. "A year" is the
+running cost and upkeep; negative, the choice saves. "A month" is the 20 years' cost spread over
+them at 7%.
+
+| the choice | up front | replacements | a year | over 20 years | a month | the typical draw (P10-P90) |
+|---|---|---|---|---|---|---|
+| the floors on the data center's water | $12,016 | $163 | -$76 | $11,374 | $89 | $13,303 ($11,495-15,482) |
+| an ERV and its preheater in each flat | $3,869 | -$145 | $186 | $5,697 | $45 | $6,361 ($5,684-7,131) |
+| cast-iron drains and vents | $4,860 | | | $4,860 | $38 | $5,680 ($4,772-6,652) |
+| the water and fire services apart, the fire's supervised | $1,395 | | $9 | $1,492 | $12 | $1,967 ($1,505-2,499) |
+| solar panels on the house meter | $2,550 | | -$92 | $1,575 | $12 | $1,704 ($1,307-2,168) |
+| the hot-water plant and the flats' loops | $4,702 | $74 | -$335 | $1,226 | $10 | $1,385 (-$623 to $3,151) |
+| airtightness to Phius, and its tests | $860 | | $12 | $983 | $8 | $1,314 ($929-1,910) |
+| a water submeter in each flat | $848 | | | $848 | $7 | $1,007 ($821-1,229) |
+| the water pipes held off the frame (Addendum 9) | $477 | | | $477 | $4 | $563 ($484-659) |
+| a pressure-reducing valve on the service | $205 | | | $205 | $2 | $194 ($161-218) |
+| the cold risers' insulation | $30 | | | $30 | $0 | $41 ($31-53) |
+| the engineering's fee | $2,234 | | | $2,234 | $18 | $2,192 ($978-3,636) |
+| how the choices interact | | | -$149 | -$1,580 | -$12 | -$1,620 (-$2,259 to -$1,162) |
+| **the whole, over the all-electric walk-up** | **$34,046** | **$92** | **-$445** | **$29,420** | **$231** | **$34,272 ($30,407-38,270)** |
+
+Taken out together, or set against other ways:
+
+| | over 20 years | the typical draw (P10-P90) |
+|---|---|---|
+| the plant and loops, against one gas water heater for the building (the central walk-up's way) | $3,638 | $4,280 ($3,618-5,089) |
+| the floors and the plant together: all the data center's water does | $12,648 | $14,803 ($11,915-17,710) |
+| the same, with the heat network's share, dense (pass 3 §4) | $15,211 | $17,749 ($14,801-20,797) |
+| the same, with the network's share, base | $24,135 | $26,308 ($20,790-35,982) |
+| the ERVs, added to the usual all-electric walk-up | $4,691 | $5,176 ($4,398-5,949) |
+| the airtightness, added to it | $764 | $1,154 ($768-1,760) |
+| solar panels, added to it | $1,383 | $1,508 ($1,095-1,978) |
+
+- **No choice pays for itself in money, in any draw, except the hot-water plant in 18% of them.**
+  Every other line is a cost from its lowest draw to its highest, the fee's too.
+- **The floors are the largest line, $11,374 a flat.** Every flat keeps a mini-split big enough to
+  heat it alone (step 9a), so the floors save only that mini-split's electricity: 333 kWh a flat a
+  year net of their pump, $76 with the upkeep. They bring 1.1 MWh of the data center's heat a flat
+  a year. What they buy is warm floors (21-26 C at the design hour) and outdoor units that heat only
+  in the fallback: 168 hours a year, against 4,229.
+- **The plant is the only one that may pay.** Against each flat's own electric water heater, it
+  saves 1,261 kWh a flat a year net of its own use, $335 with the upkeep, and brings 2.9 MWh of the
+  data center's heat. It pays in 724 of the 4,000 draws. What decides it, each input from its low
+  to its high, the rest central (the central $1,226):
+
+  | input | low | high |
+  |---|---|---|
+  | a flat's electric water heater's life (4.7 to 27.7 years) | -$2,200 | $1,574 |
+  | hot water a person a day (FSEC) | $2,736 | -$354 |
+  | people a flat (1.99 to 3.0) | $2,302 | -$429 |
+  | a flat's electric water heater's upkeep ($7 to $228 a year) | $1,367 | -$973 |
+  | the discount rate (4% to 10%) | $248 | $1,905 |
+  | the plant's heat pump's life (5.3 to 29.3 years) | $2,694 | $1,102 |
+
+  Against one gas water heater for the building it never pays. It costs $2,514 more up front, uses
+  1,444 kWh more electricity a flat a year and 4,226 kWh less gas, and runs $103 a year dearer
+  with the upkeep.
+- **The ERVs and the airtightness save heat that's free here.**
+  - With the floors on the data center's water, the ERVs save 1.6 MWh of that heat a flat a year.
+    Their fans and preheaters use 606 kWh more electricity than the bath fans they replace.
+  - Added to the usual walk-up, where the heat is the mini-split's, they still use 187 kWh more
+    than they save.
+  - Their case is the air, not the bill: 15 cfm a person ducted to every bedroom at 16.5 C or
+    warmer, against 4.5-9 through the walls at the outdoor temperature.
+  - The airtightness saves 567 kWh of heat a flat a year behind the ERVs, but 143 with only bath
+    fans. So the order matters. It also keeps the floors' heat at the design hour at 19.4 kW,
+    against 23.4 at the code's leakage.
+  - The tight flats carry a larger cooling load, 3,672 kWh a flat a year against 3,360 (the model
+    has no ERV bypass and the windows shut). With the heat free, the airtightness uses 51 kWh more
+    electricity a year than it saves.
+- **The solar panels don't pay at 7%.** Their 797 kWh a flat a year are worth $92 on the design's
+  house meter and $110 on the usual walk-up's. No federal credit is counted. A solar facility
+  whose construction begins after July 4, 2026 gets section 48E's credit only if it's in service
+  by the end of 2027 (IRS Notice 2025-42). If this one made it, the credit's 30% (under 1 MW)
+  would take about $765 off the panels' line, leaving about $810 a flat: still a cost.
+- **The quiet choices are cheap:** the pipes held off the frame $4 a month a flat, the cast iron
+  $38. The PRV, $2 a month, buys nothing at the street's 55 psi, under its 60. It's there for a
+  street at the code's 80 psi, where it takes off 1.7 dB.
+- **How the choices interact, -$1,580:** taking them out one at a time counts $1,580 more than
+  taking them out together, almost all of it running cost ($149 a year). Most of it is the ERVs and
+  the airtightness. In the design the heat they save is free, so their lines are at their
+  dearest. Added to the usual walk-up, they cost $1,225 less between them.
+- **The data center's water, taken out whole** (the floors and the plant), costs $12,648 a flat
+  over 20 years net of what it saves; with the network's share, $15,211 (dense) to $24,135 (base).
+  That's the part of the design that uses the data center's heat. What would change it is what
+  would change the whole: density, and the heat's price.
+
 ## What the engineering found before bidding
 
 The fee buys a design that exists before anyone prices it. These are what designing it in full
@@ -356,10 +495,20 @@ the sources.
     fixed seed (2610). The draws run in ten processes and give the same result in any number.
   - **The lives and upkeep:** from DOE's appliance-standards analyses (furnaces, water heaters,
     commercial water heaters, circulators, heat pumps), EIA's equipment study, HUD's and Fannie
-    Mae's useful-life tables, NREL's PV O&M figures, and the makers'.
+    Mae's useful-life tables, NREL's upkeep figures for solar panels, and the makers'.
   - **Older dollars** to 2026 by CPI-U.
   - **The tornado:** each input from its low to its high, the rest central. The slow energy model
     runs again only for the inputs it reads.
+- **10g, which choices pay their way** (`choices.py`):
+  - Each choice is taken out of the engineered design alone, the rest as designed, and the usual
+    all-electric walk-up's way is put in its place.
+  - Its cost up front, replacements and upkeep are its own lines'. Its running cost is the energy
+    model's with that one switch flipped: the flats' ventilation and leakage, where the space heat
+    and the hot water come from, the solar panels.
+  - A fourth case of the energy model, the usual flats at Phius's leakage, lets the ERVs and the
+    airtightness each be taken out without the other.
+  - The service's main stays at 600 A in every mix but the central walk-up itself. The design's
+    flats with their ERVs and preheaters need 406 A even on the central walk-up's house.
 
 ## Checks
 
@@ -389,6 +538,15 @@ the sources.
   - each difference's P10, P50 and P90 is known to within 2.5% of its spread (the bootstrap's
     standard error; 1.7% at worst);
   - the tornado's centre is the central run.
+- **10g** (`brownfield choices` runs 8, and all pass):
+  - every priced line belongs to one choice, or is alike in the engineered and all-electric
+    walk-ups;
+  - with every choice in, and with none, it gives 10f's walk-ups exactly at the central values, and
+    draw for draw against 10f's saved draws;
+  - the choices one at a time, the fee and their interaction add up to the whole;
+  - the draws reproduce, and each line's percentiles are known to within 2.5% of its spread (2.1%
+    at worst);
+  - the plant's line against central gas keeps the 600 A main (the 406 A above).
 
 The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_walkup_energy.py`,
 `test_walkup_comfort.py`, `test_walkup_savings.py` and `test_walkup_ranges.py`. 10f's tests check:
@@ -396,6 +554,13 @@ The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_w
 - a dearer engineered-only price widens the difference and moves no usual walk-up;
 - the draws are the same whatever the number of workers;
 - the tornado's shortcut gives what a full run gives.
+
+10g's (`test_walkup_choices.py`) check:
+- the whole design and none of it are 10c's walk-ups;
+- a dearer price moves only its own choice's line;
+- with the data center's heat priced, taking out the ERVs or the airtightness costs that heat,
+  and the floors' line rises with the heat they bring;
+- the fourth case's heat lies between the engineered and the usual flats'.
 
 ## What we don't know
 
@@ -420,7 +585,18 @@ The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_w
 - **The usual walk-ups aren't designed,** only listed by rule. Their hot pipes, ducts, gas lines and
   vents are taken by reach.
 - **The rents:** whether a tenant or a buyer pays for quiet, fresh air and warm floors. The studies
-  found are of green labels in big-city stock, not of these.
+  found are of green labels in big-city stock, not of these. Nor is what bedroom air and quiet do
+  for sleep and health measured here: 10g prices each in dollars a month, and the reader weighs
+  it.
+- **10g's limits:**
+  - The ERV is modelled with no summer bypass, and the windows shut all year. Both cost the tight,
+    ventilated flats some free cooling, which counts against the ERVs and the airtightness here.
+  - Without the ERVs, the flats would need 29.8 kW at the design hour. The floors are checked at
+    19.4 kW, and at 23.4 kW at the code's leakage, but not at that. So the ERVs' line assumes the
+    floors would still carry the heat.
+  - How much water the submeters save isn't modelled. Their line is their cost alone.
+  - Taking one choice out at a time is one way to split the whole, and the order matters where
+    choices share the heat. The interaction line is what that split leaves over.
 - **The inputs are drawn independently.** Prices that move together (copper, labour) would widen
   the range; the sign is far enough from zero that it would still hold.
 - **Indiana County's own utility allowance schedule** isn't posted; Westmoreland County's stands in.
@@ -429,7 +605,7 @@ The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_w
 
 ## Sources
 
-Every source is in `docs/RESEARCH.md` under step 10 (10a-10f), with its numbers and limits, and
+Every source is in `docs/RESEARCH.md` under step 10 (10a-10g), with its numbers and limits, and
 each param in `params/baseline.yaml` quotes its own. The downloads are saved under
 `data/raw/pass3g/step10/` (not in git). The main ones:
 - **What is built:** Census CHARS 2025; EIA's RECS 2020 microdata.
@@ -440,9 +616,10 @@ each param in `params/baseline.yaml` quotes its own. The downloads are saved und
 - **Energy:** ERA5 and PVGIS; FSEC-PF-464-15; LBNL's infiltration superposition; Penelec's and
   Peoples' tariffs; the makers' certified ratings (AHRI, HVI).
 - **Noise and comfort:** Warnock and Morin (NRC, 1990); CMHC; ASHRAE 55; Phius 2024.
-- **Who pays:** 26 CFR 1.42-10; 26 USC 45 and 48; 66 Pa.C.S. § 102; PHFA's Tab 19, compliance
-  manual and allocation plans; the Westmoreland County Housing Authority's 2026 schedule; Myers
-  (2018); Levinson and Niemann (2004); Fannie Mae's Green Rewards.
+- **Who pays:** 26 CFR 1.42-10; 26 USC 45, 48 and 48E; IRS Notice 2025-42; 66 Pa.C.S. § 102;
+  PHFA's Tab 19, compliance manual and allocation plans; the Westmoreland County Housing
+  Authority's 2026 schedule; Myers (2018); Levinson and Niemann (2004); Fannie Mae's Green
+  Rewards.
 - **Lives and upkeep:** DOE's technical support documents for consumer furnaces (2023), consumer
   water heaters (2023), commercial water heating (2023) and circulator pumps (2024); DOE's CAC/HP
   rule (82 FR 1786); EIA's *Updated Buildings Sector Appliance and Equipment Costs and

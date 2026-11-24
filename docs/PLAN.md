@@ -239,7 +239,7 @@ the $535 a year.
 - Over 20 years the engineered design costs $29,400 a flat more than the electric walk-up, $20,600
   more than gas and $32,000 more than central hot water (with Addendum 9's sleeves and isolators).
   The typical draw is higher: $34,300, $24,900, $37,500.
-- It costs more in every one of 4,000 draws of the 1,015 inputs with a range, so the sign holds and
+- It costs more in every one of 4,000 draws of the 1,021 inputs with a range, so the sign holds and
   no private cross-check is needed for it. Central hot water is the cheapest of the four.
 - The engineering's own extra, about $2,200 a flat, is small beside the systems' $31,800.
 - The tornado's largest inputs are placeholders: what contractors pay below list, the gypsum
@@ -254,8 +254,27 @@ Addendum 9 done (Jon: "1 then 2"): the water pipes held off the frame, and the E
 - G-001 reissued with both items as notes. The ERV's submittal must give the maker's sound rating.
 - 10f's halves check is replaced by the bootstrap's standard error (it failed for the wrong reason).
 
+10g done (Jon: "now let's do 2"): which of the design's choices pay their way,
+[docs/pass3/systems.md](pass3/systems.md#what-each-choice-buys-and-what-it-costs-10g).
+- Jon: "they may not pay for themselves in money but what we are going for is quality of life,
+  anti enshittification". So the section leads with what a flat gets from each choice and what it
+  costs a month: quiet $4 (the pipes held off the frame) and $38 (cast iron), bedroom air $45 (the
+  ERVs), warm floors $89. The solar panels ($12) and the PRV ($2) buy no quality a tenant feels
+  here. ("PV" is "solar panels" in the report now, Jon's word.)
+- Each choice is taken out of the design alone, the usual all-electric walk-up's way in its place,
+  over 10f's 4,000 draws (`uv run brownfield choices --publish`).
+- None pays for itself in money, in any draw, except the hot-water plant in 18% of them. Over 20
+  years a flat: the floors on the data center's water $11,374, the ERVs $5,697, the cast iron
+  $4,860, the fee $2,234, the solar panels $1,575, the separate fire service $1,492, the plant
+  $1,226, the airtightness $983, the submeters $848, the pipes held off the frame $477, the PRV
+  $205, the cold risers' insulation $30; how they interact -$1,580.
+- With the floors on the data center's water, the heat the ERVs and the airtightness save is free.
+  The ERVs use 606 kWh more electricity a flat a year than bath fans, and 187 kWh more even on the
+  usual walk-up. Their case is the air.
+- Against one gas water heater for the building, the plant never pays ($3,638 over 20 years).
+
 Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`, now with
-Addendum 9's G-001. Its answers go in Addendum 10. Then which of the design's choices pay their way.
+Addendum 9's G-001. Its answers go in Addendum 10.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -5359,6 +5378,60 @@ test. Then the township brief's ask.
            standard error by the bootstrap (300 resamples), within 2.5% of its spread: 1.7% at worst.
            The lowest of the 4,000 draws is now in the report: the engineered design is still $11,617
            dearer than gas there, $22,459 than electric.
+       - **10g done 2026-11-23: which choices pay their way** (Jon: "now let's do 2: which of the
+         design's choices pay their way"; `uv run brownfield choices --publish`, about an hour;
+         `src/brownfield/choices.py`; writes `out/pass3/choices.md|json` and `choices_draws.npz`,
+         and `docs/pass3/systems_choices.png`). The report's section:
+         [docs/pass3/systems.md](pass3/systems.md#what-each-choice-buys-and-what-it-costs-10g).
+         - **Framed for quality (Jon: "what we are going for is quality of life, anti
+           enshittification"):** the section leads with what a flat gets from each choice and what
+           it costs a month, grouped as quiet, air, warmth, water and fire, and energy; the money
+           follows. What no free source measures here: what a tenant pays for each, and what each
+           does for sleep and health.
+         - **How:** 11 choices and the fee. Each is taken out of the engineered design alone, the
+           rest as designed, the all-electric walk-up's way in its place. Its line is the design's
+           20-year cost less the design's without it. The ERVs, the airtightness and PV are also
+           added to the usual walk-up alone. What the one-at-a-time lines leave of the whole is
+           "how the choices interact".
+           - Each priced line's purpose belongs to one choice (`choices.OWNER`), or is alike in the
+             two walk-ups. A mix takes each purpose's lines from the walk-up that has it.
+           - The energy model's ledger and the house meter's demand are now built from switches
+             (`energy.CONFIGS`, `config_rows`, `config_demand`): the case, where the space heat and
+             the hot water come from, PV. They give 10c's three walk-ups exactly.
+           - A fourth case, the usual flats at Phius's leakage (`usual_case(natural_m3h=)`), lets
+             the ERVs and the airtightness come out one without the other.
+           - `ranges.wear` keeps each purpose's upkeep and replacements; `monte_carlo` and `tornado`
+             take the function to evaluate.
+         - **Found on the way: the main.** Taking the plant out against central gas first gave the
+           central walk-up's 400 A main. But the design's flats with their ERVs and preheaters need
+           406 A on that house (NEC 220.84), so 600 A stays. The run checks it.
+         - **Over 20 years, a flat, central** (the typical draw and P10-P90 in the report): the
+           floors $11,374; the ERVs $5,697; the cast iron $4,860; the fee $2,234; PV $1,575; the
+           separate fire service $1,492; the plant $1,226 (P10-P90 -$623 to $3,151, pays in 724 of
+           4,000 draws); the airtightness $983; the submeters $848; the pipes held off the frame
+           $477; the PRV $205; the cold risers' insulation $30; how they interact -$1,580; the whole
+           $29,420, 10f's.
+           - The plant against one gas water heater $3,638; the floors and the plant together
+             $12,648, with the network's share $15,211 (dense) to $24,135 (base).
+           - Added to the usual walk-up: the ERVs $4,691 (187 kWh more electricity a year than they
+             save), the airtightness $764, PV $1,383.
+           - What moves the plant most: the usual flats' water heaters' life, the hot water a person
+             a day, the people a flat, those heaters' upkeep, the discount rate.
+           - The airtightness saves 567 kWh of heat a flat a year behind the ERVs, 143 with only
+             bath fans.
+         - **PV's federal credit isn't counted:** begun after July 4, 2026, a solar facility gets
+           48E only if in service by the end of 2027 (IRS Notice 2025-42). At 30% it would take
+           about $765 off PV's line, still a cost. Said in the report.
+         - **Checks** (8, all pass): the 600 A main; every purpose owned or alike; parity with 10f
+           at the central values (worst $7e-12) and draw for draw against 10f's saved draws (worst
+           $6e-11); the lines add up to the whole; the draws reproduce; each percentile within 2.5%
+           of its spread (2.1% at worst); the tornado's centre.
+         - Tests: `tests/test_walkup_choices.py`, 12 (the configs are 10c's; a purpose's source; a
+           dearer price moves only its choice; with the heat priced the ERVs' and the airtightness's
+           lines fall and the floors' rises; the fourth case between; the 600 A main; the workers
+           reproduce; and the rest).
+         - **Found:** the report's count of inputs with a range was 10f's 1,015; since Addendum 9 it
+           is 1,021. Corrected.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

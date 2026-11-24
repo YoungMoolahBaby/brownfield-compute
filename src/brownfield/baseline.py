@@ -728,19 +728,21 @@ def services(apt: dict, p: dict, s7: dict) -> dict:
     return out
 
 
-def usual_case(apt: dict, p: dict) -> dict:
+def usual_case(apt: dict, p: dict, natural_m3h: dict[str, float] | None = None) -> dict:
     """The usual walk-up's flats for `loads.room_heat`: the bath fan exhausting all the time, the
     flat's whole ventilation (`usual.bath_fan_cfm`), its air made up through the envelope with no
     heat recovery; the code's leakage; the two combined by LBNL's sub-additivity
     (`loads.subadditive`, hourly: `energy.subadditivity_k`), so the fan's air counts in full and the
     leakage's natural flow (its ACH50 over pass 3's n-factor, `natural_m3h`) only in part. The same
-    walls and glass as the engineered design."""
+    walls and glass as the engineered design. `natural_m3h` ({flat: m3/h}) sets each flat's natural
+    flow instead of the code's (10g: the usual flats at Phius's leakage)."""
     from .loads import CFM_M3H, subadditive
 
     fan = p["baseline.usual.bath_fan_cfm"] * CFM_M3H
     flats = {}
     for f in apt["flats"]:
-        natural = p["baseline.usual.ach50"] / p["pass3.air.n_factor"] * f["interior_volume_m3"]
+        natural = p["baseline.usual.ach50"] / p["pass3.air.n_factor"] * f["interior_volume_m3"] if natural_m3h is None \
+            else natural_m3h[f["name"]]
         flats[f["name"]] = {"infil_m3h": subadditive(fan, fan, natural, p["baseline.energy.subadditivity_k"]) - fan,
                             "natural_m3h": natural, "vent_m3h": fan, "recovery": 0.0,
                             **({"wall_u": p["systems.addendum_3.wall_u"]} if apt.get("continuous_insulation_m", 0.0) > 0.0 else {}),

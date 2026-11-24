@@ -76,31 +76,36 @@ def wear(pr: dict, p: dict, n: int) -> dict:
     flat. An item that lasts L years, fewer than the years counted T, costs its 10b price spread
     over its own L years as an annuity, every year of the T: its price x (annuity(T) / annuity(L)
     - 1) beyond the first. (When L divides T this is each replacement at its year, discounted.)
-    What lasts T years or more is counted once, as pass 3 counts all equipment."""
+    What lasts T years or more is counted once, as pass 3 counts all equipment. `purpose` gives
+    each walk-up's upkeep and replacements by what each line is for (`pricing.purpose`, 10g's)."""
     from .cost import annuity
+    from .pricing import purpose
 
     r, T = p["cost.money.discount"], p["cost.money.life_yr"]
     a_T = annuity(r, T)
     lives = {k.removeprefix(L): p[k] for k in p if k.startswith(L)}
-    qty: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    out = {w: {"upkeep": 0.0, "replace": 0.0, "by": defaultdict(float)} for w in WALKUPS}
+    upkeep = {c: (key, 1.0 if scale is None else p[scale]) for key, (classes, scale) in UPKEEP.items() for c in classes}
+    out = {w: {"upkeep": 0.0, "replace": 0.0, "by": defaultdict(float),
+               "purpose": defaultdict(lambda: {"upkeep": 0.0, "replace": 0.0})} for w in WALKUPS}
     for ln in pr["lines"]:
-        for w in WALKUPS:
-            qty[ln["class"]][w] += ln["qty"][w]
+        why = purpose(ln)
         life = lives.get(ln["class"])
         if life is not None and life < T:
             f = a_T / annuity(r, life) - 1
             for w in WALKUPS:
-                out[w]["replace"] += ln["usd"][w] * f / n
-                out[w]["by"][f"replace {ln['class']}"] += ln["usd"][w] * f / n
-    for key, (classes, scale) in UPKEEP.items():
-        k = 1.0 if scale is None else p[scale]
-        for w in WALKUPS:
-            v = p[U + key] * k * sum(qty[c][w] for c in classes) / n
-            out[w]["upkeep"] += v
-            out[w]["by"][f"upkeep {key}"] += v
+                v = ln["usd"][w] * f / n
+                out[w]["replace"] += v
+                out[w]["by"][f"replace {ln['class']}"] += v
+                out[w]["purpose"][why]["replace"] += v
+        if ln["class"] in upkeep:
+            key, k = upkeep[ln["class"]]
+            for w in WALKUPS:
+                v = p[U + key] * k * ln["qty"][w] / n
+                out[w]["upkeep"] += v
+                out[w]["by"][f"upkeep {key}"] += v
+                out[w]["purpose"][why]["upkeep"] += v
     for w in WALKUPS:
-        out[w]["by"] = dict(out[w]["by"])
+        out[w]["by"], out[w]["purpose"] = dict(out[w]["by"]), dict(out[w]["purpose"])
     return out
 
 
@@ -169,11 +174,12 @@ def evaluate(fx: dict, p: dict, sp: dict | None = None, hw: dict | None = None) 
 
 _FX: dict | None = None
 _BASE: dict | None = None
+_FN = None
 
 
-def _init(fx: dict, base: dict) -> None:
-    global _FX, _BASE
-    _FX, _BASE = fx, base
+def _init(fx: dict, base: dict, fn=None) -> None:
+    global _FX, _BASE, _FN
+    _FX, _BASE, _FN = fx, base, fn or evaluate
 
 
 def _work(cols: dict[str, np.ndarray]) -> list[dict]:
@@ -182,7 +188,7 @@ def _work(cols: dict[str, np.ndarray]) -> list[dict]:
     for i in range(len(next(iter(cols.values())))):
         p = dict(_BASE)
         p.update({k: float(v[i]) for k, v in cols.items()})
-        out.append(evaluate(_FX, p)[0])
+        out.append(_FN(_FX, p)[0])
     return out
 
 
@@ -194,18 +200,19 @@ def draws(params: dict, n: int, seed: int) -> tuple[dict, dict[str, np.ndarray]]
     return values(params), {k: d[k] for k in sorted(params) if params[k].varies}
 
 
-def monte_carlo(fx: dict, params: dict, n: int = DRAWS, seed: int = SEED, workers: int | None = None) -> dict[str, np.ndarray]:
+def monte_carlo(fx: dict, params: dict, n: int = DRAWS, seed: int = SEED, workers: int | None = None, fn=None) -> dict[str, np.ndarray]:
     """`n` draws evaluated, split over `workers` processes (one: in this one). The result is the
-    same for any number of workers: the draws are made here, by `seed`, and kept in order."""
+    same for any number of workers: the draws are made here, by `seed`, and kept in order. `fn`
+    evaluates a draw (`evaluate`'s signature; 10g's `choices.evaluate`), a module's function."""
     base, vary = draws(params, n, seed)
     workers = workers or max(1, min((os.cpu_count() or 2) - 2, 10))
     size = max(1, -(-n // (workers * 4)))
     chunks = [{k: v[a:a + size] for k, v in vary.items()} for a in range(0, n, size)]
     if workers == 1:
-        _init(fx, base)
+        _init(fx, base, fn)
         done = [_work(ch) for ch in chunks]
     else:
-        with ProcessPoolExecutor(max_workers=workers, initializer=_init, initargs=(fx, base)) as ex:
+        with ProcessPoolExecutor(max_workers=workers, initializer=_init, initargs=(fx, base, fn)) as ex:
             done = list(ex.map(_work, chunks))
     rows = [r for ch in done for r in ch]
     return {k: np.array([r[k] for r in rows]) for k in rows[0]}
@@ -257,20 +264,22 @@ class _Reads(dict):
         return super().__getitem__(k)
 
 
-def energy_reads(fx: dict, p: dict) -> dict[str, set[str]]:
-    """The inputs `energy.space` and `energy.hot_water` read (the slow stages), so the tornado reruns
-    them only for those."""
+def energy_reads(fx: dict, p: dict, only: tuple[str, ...] = SPACE_CASES) -> dict[str, set[str]]:
+    """The inputs `energy.space` (its cases `only`) and `energy.hot_water` read (the slow stages),
+    so the tornado reruns them only for those."""
     from . import energy
 
     a, b = _Reads(p), _Reads(p)
-    energy.space(fx["apt"], a, fx["wx"], only=SPACE_CASES)
+    energy.space(fx["apt"], a, fx["wx"], only=only)
     energy.hot_water(fx["apt"], b, fx["s7"])
     return {"space": a.seen, "hot_water": b.seen}
 
 
-def tornado(fx: dict, params: dict, p: dict, keys: tuple[str, ...], sp0: dict, hw0: dict, reads: dict) -> dict[str, list]:
+def tornado(fx: dict, params: dict, p: dict, keys: tuple[str, ...], sp0: dict, hw0: dict, reads: dict, fn=None) -> dict[str, list]:
     """How far each figure in `keys` moves as each input goes from its low to its high, the rest
-    central; largest swing first. Inputs that move none of them by a dollar are left out."""
+    central; largest swing first. Inputs that move none of them by a dollar are left out. `fn`
+    evaluates (`evaluate`'s signature)."""
+    fn = fn or evaluate
     rows: dict[str, list] = {k: [] for k in keys}
     for name in sorted(params):
         v = params[name]
@@ -281,7 +290,7 @@ def tornado(fx: dict, params: dict, p: dict, keys: tuple[str, ...], sp0: dict, h
             q = dict(p, **{name: x})
             sp = None if name in reads["space"] else sp0
             hw = None if name in reads["hot_water"] else hw0
-            ends.append(evaluate(fx, q, sp, hw)[0])
+            ends.append(fn(fx, q, sp, hw)[0])
         for k in keys:
             lo, hi = ends[0][k], ends[1][k]
             if abs(hi - lo) >= 1.0:

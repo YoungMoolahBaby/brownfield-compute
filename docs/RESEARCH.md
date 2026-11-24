@@ -1969,3 +1969,15 @@ rents), `params/site.yaml` (moat). Read by research agents and checked where not
       isolating hangers $3.26-4.87 each, an alternative.
     - Not found free: ASHRAE's Service Life and Maintenance Cost Database (behind a challenge
       page); a water-to-water heat pump's life; an expansion tank's; a measured inverter life.
+  - **10g, which choices pay their way (2026-11-23).** Nothing new is priced. One source, for a
+    sentence on the solar panels' federal credit, saved under `data/raw/pass3g/step10/choices/` (gitignored):
+    - **IRS Notice 2025-42** (irs.gov/pub/irs-drop/n-25-42.pdf), section 1: §§ 70513(a) and
+      (g)(5) of the OBBBA (Public Law 119-21, July 4, 2025) terminate "the clean electricity
+      investment credit determined under § 48E (§ 48E credit), in the case of an applicable wind
+      facility or applicable solar facility that is placed in service after December 31, 2027";
+      "The credit termination date applies to applicable wind and solar facilities the
+      construction of which begins after July 4, 2026". Section 6 keeps the Five Percent Safe
+      Harbor for a "low output solar facility" of "not greater than 1.5 megawatt (MW)".
+    - **26 U.S.C. 48E(a)(2)(A)** (Cornell LII): "the applicable percentage shall be 6 percent", or
+      "30 percent" for a facility "with a maximum net output of less than 1 megawatt (as measured
+      in alternating current)".

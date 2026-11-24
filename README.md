@@ -89,7 +89,9 @@ with the command and code that make each one.
   this design chose (radiant floors on the data center's water, a central hot-water plant, ERVs,
   cast-iron drains) cost $20,000-32,000 a flat more over 20 years than the usual walk-ups, and more
   in every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings
-  ([the walk-up's systems](docs/pass3/systems.md)).
+  ([the walk-up's systems](docs/pass3/systems.md)). Choice by choice, the quiet costs $4-38 a
+  month a flat, the ducted bedroom air $45 and the warm floors $89; none pays for itself in money
+  but the hot-water plant, in 18% of the draws.
 
 ## The design so far
 
