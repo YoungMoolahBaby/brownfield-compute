@@ -236,18 +236,26 @@ the $535 a year.
 - Found: PHFA's 2027/2028 plan drops the Passive House points its plans have given since 2015.
 
 10f done: the ranges and the report, [docs/pass3/systems.md](pass3/systems.md).
-- Over 20 years the engineered design costs $29,200 a flat more than the electric walk-up, $20,400
-  more than gas and $31,800 more than central hot water. The typical draw is higher: $34,100,
-  $24,700, $37,300.
+- Over 20 years the engineered design costs $29,400 a flat more than the electric walk-up, $20,600
+  more than gas and $32,000 more than central hot water (with Addendum 9's sleeves and isolators).
+  The typical draw is higher: $34,300, $24,900, $37,500.
 - It costs more in every one of 4,000 draws of the 1,015 inputs with a range, so the sign holds and
   no private cross-check is needed for it. Central hot water is the cheapest of the four.
-- The engineering's own extra, about $2,200 a flat, is small beside the systems' $31,600.
+- The engineering's own extra, about $2,200 a flat, is small beside the systems' $31,800.
 - The tornado's largest inputs are placeholders: what contractors pay below list, the gypsum
   topping, the fee's share. None of them flips the sign.
-- The supply pipes' sleeves are priced ($302 a flat), still for Addendum 9.
 
-Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`. Its
-answers, and the sleeves, go in Addendum 9.
+Addendum 9 done (Jon: "1 then 2"): the water pipes held off the frame, and the ERV's sound.
+- Every hanger and strap on the water pipe clamps over a closed-cell sleeve, and the cold pipe passes
+  its holes in the same sleeve (section 22 05 29, new).
+- Found: a sleeve won't pass 56 of the hot pipe's holes within what their joists allow. So the hot
+  pipe and its return take the maker's through-stud isolators in their 452 holes, each within its
+  member. 656 sleeves and 452 isolators, $477 a flat.
+- G-001 reissued with both items as notes. The ERV's submittal must give the maker's sound rating.
+- 10f's halves check is replaced by the bootstrap's standard error (it failed for the wrong reason).
+
+Next: the installers' round (8d, Jon's): the packets are in `out/pass3/round/packets/`, now with
+Addendum 9's G-001. Its answers go in Addendum 10. Then which of the design's choices pay their way.
 
 **The walk-up's website (2026-11-20).** Jon: "can we make a github pages for the building", then
 "what if we just put the files on the page? so its like a project from a builders exchange?".
@@ -4093,7 +4101,7 @@ test. Then the township brief's ask.
            whether the report's conclusion survives the range; only if it doesn't, cross-check
            privately.
          - **Addendum 7 is step 9's;** the round's outcomes go in the addendum after it (Addendum
-           9 now: Addendum 8 went out first, with step 10's scoping finding).
+           10 now: Addenda 8 and 9 went out first, with step 10's findings).
        - **The parts:**
          - 9a, the fallback: the flats on their mini-splits, the hot water on a backup heater,
            and what that does to the wiring;
@@ -5281,6 +5289,8 @@ test. Then the township brief's ask.
              10c's and 10e's figures exactly;
            - the draws reproduce, alone or by the workers;
            - each half of the draws gives the percentiles within 5% of their spread (4.1%);
+             *replaced 2026-11-23 (Addendum 9's rerun):* by each percentile's bootstrap standard
+             error, within 2.5% of its spread, since the halves test doubles the noise (below);
            - the tornado's centre is the central run.
          - Tests: `tests/test_walkup_ranges.py`, 11. Among them:
            - an item lasting half the years bought again once, at mid-life;
@@ -5290,6 +5300,65 @@ test. Then the township brief's ask.
            - a dearer engineered-only price widening only the difference;
            - the same draws whatever the workers;
            - the tornado's shortcut against a full run.
+       - **Addendum 9 done 2026-11-23: the water pipes held off the frame, and the ERV's sound** (Jon:
+         "1 then 2", Addendum 9 now, the round's answers in Addendum 10; `systems.addendum_9_run`;
+         published, issued 2026-11-23 18:54 UTC-8).
+         - **Why:** 10d found that the quiet supply pipes (step 4d, Warnock and Morin's sleeved plastic
+           pipe, 13 dB under rigid clamps) rest on sleeves no drawing or section asked for, and that no
+           one publishes the ERV's sound.
+         - **Found on the way: a sleeve doesn't fit every hole.** A 1/2 in.-wall sleeve adds an inch
+           to a pipe's diameter (`baseline.pipe_isolation`, every bore of the routes against its
+           member's allowance):
+           - the cold pipe's 308 holes were bored for it in 1/2 in. of insulation, so they take it
+             as bored;
+           - the hot pipe's and its return's 452 were bored for the bare pipe (the insulation stops
+             at the member, C404.4), and a sleeve would overfill 56 of them past what their floor
+             joists allow (2 in.).
+           - So the hot pipe takes an acoustic through-stud isolator in each hole instead (Holdrite
+             SILENCER 261-263, basis of design): 1-3/8 in. holes for 1/2 and 3/4 in. pipe, 2 in. for
+             1 in., every one within its member's allowance (the tightest exactly at 2 in.). Its
+             evidence is the maker's own lab test, not Warnock and Morin's.
+         - **What was issued:**
+           - a new section, `spec-22-05-29-supports-addendum-9.md`: IPC 2021 Table 308.5's spacing,
+             the sleeves at every hanger and strap and in the cold pipe's holes, the isolators in the
+             hot pipe's, the holes schedule's sizes for those runs superseded, a look before the walls
+             close;
+           - G-001 reissued alone, with the two items as general notes (the ERV's submittal gives
+             the maker's sound rating at each flat's airflow; no equal without one) and its sheet
+             index marking G-002 (Addendum 8);
+           - no element of the building, the frame or the services changes.
+         - **The count, from the model:** 656 sleeves (308 cold holes and 348 hangers, a support a
+           spacing of each segment, its holes counting) and 452 isolators (170 for 1/2 in. pipe, 150
+           for 3/4, 132 for 1). Priced in 10a-10b: $477 a flat, against 10f's $302 for the
+           sleeves at IPC's spacing alone.
+         - **Run:** `systems --ifc --publish` passes every check. Addenda 2-5 and 8 come out byte
+           for byte; the manifest only gains Addendum 9. Its six checks:
+           - 7c's designs on the routes and the services model in effect, as Addendum 8's;
+           - every hole of the water pipe takes its sleeve as bored or its isolator within its member;
+           - the holes counted from the model's segments are the routes' bores (308 and 452);
+           - a sleeve would overfill some hot holes (56: why the isolators);
+           - G-001 reissued alone with both notes as text.
+         - **The packets rebuilt:** each takes G-001 from Addendum 9 (and G-002 from 8) and lists it
+           as reissued. The question forms stand.
+         - **Seen in headless Chrome:** the viewer opens at "Addendum 9, the latest", the building as
+           Addendum 5 left it and the services as Addendum 7 issued them; the plan room reads
+           "Addenda (9)".
+         - Tests: `tests/test_walkup_addendum9.py`, 6 (a cold hole bored bare caught; a hot hole
+           under the isolator caught, and the sleeve that would overfill it counted; hangers where the
+           holes don't reach; the section's figures; G-001 reissued; every hole on the model);
+           `test_website.py` updated.
+         - **Rerun:** `brownfield baseline --publish` with them priced: the engineered design's systems
+           $59,626 a flat, $31,812 over the electric walk-up. Over 20 years it costs $29,420 more than
+           the electric walk-up (the typical draw $34,272, $30,407-38,270), $20,601 more than gas and
+           $31,980 more than central hot water. `docs/pass3/systems.md` takes this run's figures.
+         - **Found in the rerun: 10f's halves check was the wrong test.** The new params moved every
+           draw after them in name order (`params.draw` takes them in turn), and one half's P90 of the
+           difference with the base network's share came out 9.7% of its spread from the other's,
+           against the 5% allowed (4.1% before). Two halves double the noise, and the worst of 27
+           comparisons is all but sure to stray. Replaced by what it meant to show: each percentile's
+           standard error by the bootstrap (300 resamples), within 2.5% of its spread: 1.7% at worst.
+           The lowest of the 4,000 draws is now in the report: the engineered design is still $11,617
+           dearer than gas there, $22,459 than electric.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

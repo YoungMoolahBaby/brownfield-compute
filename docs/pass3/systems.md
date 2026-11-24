@@ -8,7 +8,7 @@ trades, as they usually are in the US. Pass 3g (D28) asked two things:
 - what does that design cost, and what does it buy?
 
 Steps 0-9 designed them, to the 2021 I-codes as Pennsylvania enforces them, plus Phius where it
-asks more (ventilation, airtightness). The result is issued as Addenda 2-8: drawings, an open
+asks more (ventilation, airtightness). The result is issued as Addenda 2-9: drawings, an open
 model of every pipe, duct and cable, the specification sections, the tests, and a control
 sequence. They are in the [plan room](https://youngmoolahbaby.github.io/brownfield-compute/).
 
@@ -39,41 +39,42 @@ its range and source.
   A design-build trade could have chosen the same systems at the same cost. Mixing the two would
   credit the engineering with the data center's heat, or blame it for the plant.
 - **The engineering is cheap.** It adds about $2,200 a flat over the usual walk-up's fee, against
-  the systems' $31,600. PHFA's fee cap for a walk-up already buys mechanical and electrical
+  the systems' $31,800. PHFA's fee cap for a walk-up already buys mechanical and electrical
   drawings, so the extra is depth, not a design from nothing. The range runs from nothing to
   $4,500, the whole mechanical and electrical share of a public-works fee.
 - **The systems cost more over 20 years than every usual walk-up, in every draw.** Over 20 years
   the engineered design costs, a flat:
-  - $29,200 more than the usual all-electric walk-up (the typical draw $34,100, P10-P90
-    $30,200-38,000);
-  - $20,400 more than gas ($24,700, $20,200-29,300);
-  - $31,800 more than central hot water ($37,300, $34,000-40,800).
+  - $29,400 more than the usual all-electric walk-up (the typical draw $34,300, P10-P90
+    $30,400-38,300);
+  - $20,600 more than gas ($24,900, $20,300-29,600);
+  - $32,000 more than central hot water ($37,500, $34,100-41,100).
 
-  None of the 4,000 draws puts it ahead of any of them. Its share of the heat network adds $2,600
+  None of the 4,000 draws puts it ahead of any of them: the closest, against gas, still has it $11,600
+  dearer. Its share of the heat network adds $2,600
   (pass 3 §4's dense case) to $11,500 (its base case).
 - **Why:** every engineered flat has a mini-split big enough to heat it alone, for when the data
   center's heat is gone (step 9a). The usual all-electric walk-up's mini-split *is* its heating. So
   the radiant floors and the loop that feeds them ($12,000 a flat), the plant and the network are
   extra capital. They save mostly the heat pump's and the water heaters' electricity: $535 a year a
-  flat. Over 20 years at 7% that's worth about $5,700, against a $33,900 premium up front. Pass 3
+  flat. Over 20 years at 7% that's worth about $5,700, against a $34,000 premium up front. Pass 3
   §4 found the same for homes on the loop, except in big blocks close to the campus.
-- **The cheapest of the four is the usual walk-up with central gas hot water**, in all but 6 of the
+- **The cheapest of the four is the usual walk-up with central gas hot water**, in all but 5 of the
   4,000 draws: $39,200 a flat over 20 years, against $41,800 all-electric.
 - **What the premium buys** is quiet, air and warmth, not savings:
   - a neighbour's flush through cast iron at 25 dBA, against 33 through PVC (CMHC's limit);
-  - supply pipes 13 dB quieter, if their sleeves are built (Addendum 9's, priced here);
+  - supply pipes 13 dB quieter, held off the frame at every hole and hanger (Addendum 9);
   - outdoor air ducted to every bedroom, 15 cfm a person, against 4.5-9 through the walls;
   - warm floors (21-26 C at the design hour);
   - no outdoor units running in winter, except in the fallback;
   - tenants' own bills of $279 a year, against $958.
 - **Who pays:** the owner pays the premium. The tenants keep most of the $535 a year.
   - **A market-rate owner** gets it back only through rent. The best study, from the Northeast,
-    finds tenant-paid energy costs don't move rents. Carrying the premium would take $182 a month
+    finds tenant-paid energy costs don't move rents. Carrying the premium would take $183 a month
     more rent, against a $409 a year saving to the tenant. No market-rate owner builds this for the
     bills.
   - **On a tax-credit walk-up** the federal credits pay 30% (4% credits) or 67% (9%) of it. The rest
-    widens pass 4's gap per flat by $17,800 (4%) or $5,100 (9%) if an engineer's energy model sets
-    the utility allowance, or by $22,200 or $9,500 on the housing authority's schedule. With the
+    widens pass 4's gap per flat by $17,900 (4%) or $5,200 (9%) if an engineer's energy model sets
+    the utility allowance, or by $22,300 or $9,600 on the housing authority's schedule. With the
     upkeep and replacements counted, the typical draw is $22,600 and $7,900 (energy model).
 - **What would change it:**
   - density: pass 3 §4's dense block carries the network for $62/MWh of heat, its base case $276;
@@ -83,7 +84,7 @@ its range and source.
     here.
 - **What moves the answer most:** what contractors pay below list prices, the gypsum topping over
   the radiant tubing, and how much of the fee the design adds. None of them moves the 20-year
-  difference against the electric walk-up outside $25,800-33,400.
+  difference against the electric walk-up outside $26,000-33,500.
 - **The engineering found problems before bidding** ([below](#what-the-engineering-found-before-bidding)):
   52 of 60 fixtures too far from hot water for the energy code, a heat pump counted only as
   cooling, a tank too small, an airtightness test four to ten times too loose, among others.
@@ -105,7 +106,7 @@ So three usual walk-ups, each on the same layout as the engineered design:
 - **central hot water:** each flat's mini-split, with one gas water heater for the building and the
   hot-water loops the energy code then asks for.
 
-Each walk-up's items, 255 rows: the engineered design's from Addendum 7's model and schedules
+Each walk-up's items, 258 rows: the engineered design's from Addendum 7's model and schedules
 (14,827 ft of pipe, duct and cable; 1,600 fittings; 89 pieces of equipment), the usual walk-ups'
 by stated rules. Shared items count in every total and cancel in the differences.
 
@@ -115,16 +116,16 @@ A flat, USD 2026, with the trade's and the builder's markups (PHFA's caps):
 
 | | engineered | all electric | gas | central hot water |
 |---|---|---|---|---|
-| plumbing | $18,494 | $7,212 | $15,972 | $9,198 |
+| plumbing | $18,668 | $7,212 | $15,972 | $9,198 |
 | heating | $11,630 | | | |
 | heating, cooling, ventilation | $12,091 | $8,276 | $9,769 | $8,276 |
 | electrical | $10,201 | $7,242 | $7,062 | $7,116 |
 | sprinklers and services | $4,771 | $4,179 | $4,179 | $4,179 |
 | envelope (air sealing, its tests) | $1,279 | $419 | $419 | $419 |
 | tests and inspections | $984 | $485 | $485 | $656 |
-| **total** | **$59,451** | **$27,814** | **$37,887** | **$29,843** |
+| **total** | **$59,626** | **$27,814** | **$37,887** | **$29,843** |
 
-What the engineered design's $31,637 over the all-electric walk-up buys, a flat:
+What the engineered design's $31,812 over the all-electric walk-up buys, a flat:
 
 | | over all electric | over gas | over central hot water |
 |---|---|---|---|
@@ -136,14 +137,14 @@ What the engineered design's $31,637 over the all-electric walk-up buys, a flat:
 | the water and fire services, apart and supervised | $1,395 | $1,395 | $1,395 |
 | airtightness to Phius | $860 | $860 | $860 |
 | the flats' water submeters | $848 | $848 | $848 |
-| the supply pipes' sleeves, for quiet | $302 | $302 | $302 |
+| the water pipes held off the frame, for quiet (Addendum 9) | $477 | $477 | $477 |
 | the pressure-reducing valve, for quiet | $205 | $205 | $205 |
 | the cold risers' insulation | $30 | $30 | $30 |
 | the flats' heating and cooling | | -$1,520 | |
 | gas service, meters, piping and vents | | -$6,487 | -$359 |
 | the electrical service's main | | $158 | $158 |
 
-- The premium is 17.8% of HUD's 2024 construction cost for a Johnstown walk-up flat, taken to
+- The premium is 17.9% of HUD's 2024 construction cost for a Johnstown walk-up flat, taken to
   2026.
 - **The fee:** the building's construction cost is $2.13 million.
   - PHFA's cap is $147,644, mechanical and electrical drawings in it.
@@ -210,14 +211,14 @@ cooling than the usual flats' (10c's model).
     would move $270 a year a flat from the owner to the tenant.
 - **A tax-credit flat** (pass 4's): the rent is capped at 30% of the 60% income limit, less the
   utility allowance.
-  - Of the engineered design's $33,871 a flat up front, the credits pay $10,134 (4%) or $22,802
+  - Of the engineered design's $34,046 a flat up front, the credits pay $10,186 (4%) or $22,920
     (9%). The owner's higher net rent carries $5,953 of debt if an energy model sets the
     allowance, $1,530 on the schedule.
   - In a tax-credit building the data center's heat can't be billed by meter (26 CFR
     1.42-10(e)), so the owner provides it inside the rent.
 - **A market-rate flat:**
   - the tenant saves $409 a year, billed by the meters;
-  - the rent that would carry the premium at pass 4's yield is $182 a month more;
+  - the rent that would carry the premium at pass 4's yield is $183 a month more;
   - the best evidence, Myers (2018, American Housing Survey, Northeast), finds tenant-paid energy
     costs don't reach the rent. The range runs the rent's share of the saving from none to all.
 - **The data center:** in a tax-credit building the owner would pay any price on its heat, and
@@ -239,25 +240,26 @@ A flat, USD 2026: the central values, then the typical draw (P50) with P10-P90:
 
 | | engineered | all electric | gas | central hot water |
 |---|---|---|---|---|
-| the systems | $59,451 | $27,814 | $37,887 | $29,843 |
+| the systems | $59,626 | $27,814 | $37,887 | $29,843 |
 | the fee's extra | $2,234 | | | |
 | replacements | $1,269 | $1,177 | $1,053 | $1,219 |
 | running cost × 10.59 | $5,567 | $11,226 | $8,409 | $6,470 |
 | upkeep × 10.59 | $2,478 | $1,537 | $3,223 | $1,661 |
-| **over 20 years, central** | **$70,999** | **$41,753** | **$50,572** | **$39,193** |
-| the typical draw (P10-P90) | $83,666 ($78,126-89,455) | $49,418 ($45,439-54,022) | $58,869 ($54,767-63,571) | $46,199 ($42,933-50,013) |
+| **over 20 years, central** | **$71,173** | **$41,753** | **$50,572** | **$39,193** |
+| the typical draw (P10-P90) | $83,847 ($78,391-89,865) | $49,488 ($45,448-54,442) | $58,956 ($54,743-63,563) | $46,274 ($42,933-50,192) |
 
 The engineered design less each usual walk-up:
 
 | | all electric | gas | central hot water |
 |---|---|---|---|
-| up front, central | $33,871 | $23,798 | $31,841 |
+| up front, central | $34,046 | $23,972 | $32,016 |
 | a year (running cost and upkeep), central | -$445 | -$339 | -$8 |
-| over 20 years, central | $29,246 | $20,427 | $31,805 |
-| the typical draw (P10-P90) | $34,080 ($30,231-38,043) | $24,701 ($20,209-29,317) | $37,338 ($33,985-40,837) |
-| with the network share, dense | $37,084 ($33,155-41,120) | $27,636 ($23,157-32,340) | $40,275 ($36,835-43,907) |
-| with the network share, base | $45,820 ($39,549-56,378) | $36,418 ($29,605-47,433) | $48,947 ($42,899-59,607) |
+| over 20 years, central | $29,420 | $20,601 | $31,980 |
+| the typical draw (P10-P90) | $34,272 ($30,407-38,270) | $24,933 ($20,348-29,609) | $37,452 ($34,125-41,069) |
+| with the network share, dense | $37,214 ($33,340-41,304) | $27,929 ($23,338-32,718) | $40,415 ($37,070-44,068) |
+| with the network share, base | $45,981 ($39,557-55,552) | $36,685 ($29,653-46,979) | $49,214 ($42,956-58,789) |
 | draws in which the engineered design costs less | 0 of 4,000 | 0 | 0 |
+| the lowest draw | $22,459 | $11,617 | $29,376 |
 
 - **The sign holds** from P10 to P90 against every usual walk-up, with and without the network.
   So the plan's private cross-check of the prices isn't needed for the sign. It would still narrow
@@ -272,27 +274,27 @@ The engineered design less each usual walk-up:
   (DOE: 16.4 years in the North). The engineered design adds the plant's heat pump, tanks,
   circulators and heat meters; the electric walk-up has each flat's water heater.
 - **What moves the engineered design less the electric walk-up most**, each input from its low to
-  its high (the central $29,246):
+  its high (the central $29,420):
 
   | input | low | high |
   |---|---|---|
-  | what a contractor pays below list (55% to par) | $26,115 | $33,159 |
-  | the gypsum topping over the radiant tubing, a ft2 | $27,635 | $33,349 |
-  | how much of the MEP fee the design adds (none to all) | $27,012 | $31,479 |
-  | the trades' overhead and profit | $27,191 | $30,966 |
-  | an electric water heater's life (4.7 to 27.7 years) | $25,819 | $29,593 |
-  | hot water a person a day (FSEC) | $30,756 | $27,665 |
-  | people a flat | $30,322 | $27,590 |
-  | an electric water heater's upkeep | $29,387 | $27,046 |
-  | the discount rate (4% to 10%) | $27,946 | $30,146 |
+  | what a contractor pays below list (55% to par) | $26,289 | $33,334 |
+  | the gypsum topping over the radiant tubing, a ft2 | $27,809 | $33,524 |
+  | how much of the MEP fee the design adds (none to all) | $27,187 | $31,654 |
+  | the trades' overhead and profit | $27,350 | $31,154 |
+  | an electric water heater's life (4.7 to 27.7 years) | $25,994 | $29,768 |
+  | hot water a person a day (FSEC) | $30,930 | $27,840 |
+  | people a flat | $30,496 | $27,765 |
+  | an electric water heater's upkeep | $29,561 | $27,221 |
+  | the discount rate (4% to 10%) | $28,121 | $30,321 |
 
   Against gas, the gas water heater's life and the mini-split's come next after the list
   discount. The energy model's own inputs (the flats' mass, the set points, the heat pump's
   seasonal efficiency) move it by less than $1,000 each.
 - **10e under the draw,** with the owner's upkeep and replacements counted:
-  - pass 4's gap per flat, by an energy model, is $22,567 at 4% ($19,430-25,660) and $7,932 at 9%
-    ($5,262-10,485);
-  - the tie prices for the heat: electric $137/MWh ($121-153), gas $79 ($69-92), central hot water
+  - pass 4's gap per flat, by an energy model, is $22,629 at 4% ($19,501-25,766) and $7,892 at 9%
+    ($5,325-10,591);
+  - the tie prices for the heat: electric $137/MWh ($120-153), gas $79 ($69-91), central hot water
     $25 ($14-38).
 
 ## What the engineering found before bidding
@@ -319,8 +321,10 @@ found, each before a trade saw the drawings (PLAN.md D28 has each one's step):
   - the heating loop needed a riser pair a column;
   - the floors below the top needed a vent stack;
   - the fire service's backflow assembly needed listed shutoff valves of its own.
-- **Not yet chosen:** eight of the plant's sixteen control points, and the supply pipes' sleeves
-  the quiet depends on (Addendum 9's, priced here).
+- **The supply pipes' sleeves** the quiet depends on were in no document (step 10d). Addendum 9
+  adds them, and found on the way that a sleeve won't pass 56 of the hot pipe's holes within what
+  their joists allow. The hot pipe takes the maker's through-stud isolators instead.
+- **Not yet chosen:** eight of the plant's sixteen control points.
 
 Whether a design-build trade, the plan reviewer or the inspector would have caught each of these,
 and at what cost, can't be known from here. Fewer change orders isn't modelled: no free source
@@ -382,7 +386,8 @@ the sources.
   - at every input's central value, with no upkeep and nothing replaced, its run gives 10b's, 10c's
     and 10e's figures exactly;
   - the draws reproduce, evaluated alone or by the workers;
-  - each half of the draws gives the percentiles within 5% of their spread (4.1% at worst);
+  - each difference's P10, P50 and P90 is known to within 2.5% of its spread (the bootstrap's
+    standard error; 1.7% at worst);
   - the tornado's centre is the central run.
 
 The tests are `tests/test_walkup_baseline.py`, `test_walkup_pricing.py`, `test_walkup_energy.py`,

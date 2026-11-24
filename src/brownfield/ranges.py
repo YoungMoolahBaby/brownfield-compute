@@ -306,18 +306,36 @@ def parity(fx: dict, p: dict, pr: dict, en: dict, sv: dict) -> dict:
 
 
 def checks(r: dict) -> list[tuple[str, bool, str]]:
-    pa, rp, hv = r["parity"], r["repro"], r["halves"]
+    pa, rp, pc = r["parity"], r["repro"], r["precision"]
     return [
         ("at every input's central value, with no upkeep and nothing replaced, 10f's run gives 10b's systems, 10c's running costs and 10e's gaps",
          max(pa.values()) < 1e-6, "; ".join(f"{k} worst ${v:.2e} a flat" for k, v in pa.items())),
         ("the draws reproduce: the first ones evaluated here, alone, give what the workers gave", rp < 1e-9, f"worst ${rp:.2e} a flat"),
-        ("enough draws: each half of them gives the 20-year differences' P10, P50 and P90 within 5% of their P10-P90 spread",
-         hv["worst"] <= 0.05, f"worst {hv['worst']:.1%} ({hv['which']})"),
+        (f"enough draws: each 20-year difference's P10, P50 and P90 known to within {PRECISION:.1%} of its P10-P90 spread "
+         f"(the bootstrap's standard error, {BOOT} resamples)", pc["worst"] <= PRECISION, f"worst {pc['worst']:.1%} ({pc['which']})"),
         ("the tornado's centre is the central run", r["tornado_centre"] < 1e-9, f"worst ${r['tornado_centre']:.2e} a flat"),
     ]
 
 
 TORNADO_KEYS = tuple(f"d life {w}" for w in USUAL)
+PRECISION, BOOT = 0.025, 300  # a percentile's standard error, as a share of its P10-P90 spread; the bootstrap's resamples
+
+
+def precision(mc: dict[str, np.ndarray], boot: int = BOOT, seed: int = SEED) -> dict:
+    """How well the draws pin each 20-year difference's P10, P50 and P90: the bootstrap's standard
+    error (the draws resampled with replacement), as a share of the difference's P10-P90 spread; the
+    worst of them."""
+    rng = np.random.default_rng(seed)
+    worst, which = 0.0, ""
+    for k in sorted(k for k in mc if k.startswith("d life")):
+        x = mc[k]
+        lo, hi = np.percentile(x, [10, 90])
+        spread = max(hi - lo, 1.0)
+        reps = np.array([np.percentile(x[rng.integers(0, len(x), len(x))], [10, 50, 90]) for _ in range(boot)])
+        for q, se in zip((10, 50, 90), reps.std(0) / spread):
+            if se > worst:
+                worst, which = float(se), f"{k}, P{q}"
+    return {"worst": worst, "which": which}
 
 
 def run(r10: dict, pr: dict, en: dict, sv: dict, apt: dict, params: dict, n: int = DRAWS, seed: int = SEED,
@@ -338,19 +356,13 @@ def run(r10: dict, pr: dict, en: dict, sv: dict, apt: dict, params: dict, n: int
         alone.append(evaluate(fx, q)[0])
     repro = max(abs(alone[i][k] - mc[k][i]) for i in range(len(alone)) for k in mc)
     s = summary(mc)
-    half = n // 2
-    worst, which = 0.0, ""
-    for k in [k for k in mc if k.startswith("d life")]:
-        spread = max(s[k]["p90"] - s[k]["p10"], 1.0)
-        for q in (10, 50, 90):
-            d = abs(np.percentile(mc[k][:half], q) - np.percentile(mc[k][half:], q)) / spread
-            if d > worst:
-                worst, which = d, f"{k}, P{q}"
+    prec = precision(mc)
     reads = energy_reads(fx, p)
     tor = tornado(fx, params, p, TORNADO_KEYS, sp0, hw0, reads)
     again, _, _ = evaluate(fx, p, sp0, hw0)
     out = {"central": central, "summary": s, "shares": shares(mc), "sign": sign_test(s), "tornado": tor, "draws": n, "seed": seed,
-           "parity": parity(fx, p, pr, en, sv), "repro": repro, "halves": {"worst": worst, "which": which},
+           "parity": parity(fx, p, pr, en, sv), "repro": repro, "precision": prec,
+           "lowest": {k: float(v.min()) for k, v in mc.items() if k.startswith("d life")},
            "tornado_centre": max(abs(again[k] - central[k]) for k in central), "varied": len(vary), "flats": fx["n"],
            "wear": wear(price(fx["items"], p), p, fx["n"])}
     out["checks"] = checks(out)
@@ -392,7 +404,8 @@ def report(r: dict, p: dict) -> str:
         keys = [key.format(w) if "{}" in key else f"{key} {w}" for w in USUAL]
         lines.append(f"{label:44s} " + " ".join(f"{_band(s[k]):>24s}" for k in keys))
     lines += ["", "The sign test (the difference over the years counted, P10 and P90):"]
-    lines += [f"  against {k}: {_usd(v['p10'])} to {_usd(v['p90'])}: {'holds' if v['holds'] else 'DOES NOT HOLD'}" for k, v in sg.items()]
+    lines += [f"  against {k}: {_usd(v['p10'])} to {_usd(v['p90'])}: {'holds' if v['holds'] else 'DOES NOT HOLD'}; "
+              f"the lowest draw {_usd(r['lowest'][f'd life {k}'])}" for k, v in sg.items()]
     lines += ["", "Share of draws in which the engineered design costs less over the years counted:"]
     lines += [f"  than {w}: " + ", ".join(f"{k} {v:.1%}" for k, v in x.items()) for w, x in sh["engineered cheaper"].items()]
     lines += ["", "Share of draws in which each walk-up costs least:"]

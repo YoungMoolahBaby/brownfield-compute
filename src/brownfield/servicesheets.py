@@ -44,7 +44,7 @@ SHEETS_REV = "Addendum 7"  # the addendum that issues the sheets (Addendum 6 iss
 PDF_NAME = "services-sheets-addendum-7.pdf"
 # Sheets a later addendum reissued alone, as an addendum reissues only the sheets it changes: the
 # revision each carries, and the file it was published in (Addendum 7's set stays as issued).
-REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf")}
+REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf"), "G-001": ("Addendum 9", "services-sheet-g-001-addendum-9.pdf")}
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -1455,20 +1455,32 @@ def sheet_list() -> list[tuple[str, str]]:
     return sorted(out, key=lambda s: (order[s[0].split("-")[0]], s[0]))
 
 
-def cover(ax, sheets: list[tuple[str, str]]) -> None:
-    title_block(ax, "G-001", "COVER, SHEET INDEX, NOTES AND LEGEND")
+def inches(x: float) -> str:
+    """A size in inches as the trade writes it, to a sixteenth: 1.375 -> '1-3/8'."""
+    from fractions import Fraction
+
+    q = Fraction(x).limit_denominator(16)
+    whole, rest = int(q), q - int(q)
+    return f"{whole}-{rest.numerator}/{rest.denominator}" if whole and rest else (f"{rest.numerator}/{rest.denominator}" if rest else f"{whole}")
+
+
+def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None) -> None:
+    """G-001 (Addendum 7; reissued by Addendum 9 with its two general notes, the sheet index marking the
+    sheets reissued since)."""
+    rev = REVISED.get("G-001", (SHEETS_REV,))[0]
+    title_block(ax, "G-001", "COVER, SHEET INDEX, NOTES AND LEGEND", revision=rev)
     ax.text(1.4, SH - 1.2, "12-FLAT WALK-UP: THE SERVICES", fontsize=22, weight="bold", va="top")
     ax.text(1.4, SH - 2.0, f"Plumbing, heating, cooling and air, power and sprinklers, drawn from {SHEETS_REV}'s services model for review by the "
             "trades: the installers' round.", fontsize=10, va="top")
     ax.text(1.4, SH - 2.4, "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Not for construction.",
             fontsize=10, va="top", color="#c00000")
-    rows = [[n, t] for n, t in sheets]
+    rows = [[n, t + (f" ({REVISED[n][0]})" if n in REVISED and n != "G-001" else "")] for n, t in sheets]
     _table(ax, 1.4, SH - 3.3, [("SHEET", 0.9), ("TITLE", 7.2)], rows, title="SHEET INDEX", fs=7, row_h=0.26)
     general = [
         "Codes as Pennsylvania enforces them (34 Pa. Code 403.21, from 2026-01-01): the 2021 IBC, IPC, IMC and IECC; NFPA 70 (2020), "
         "13R (2019) and 72 (2019).",
         f"The bid set's documents govern: the services model (services-{SERVICES_REV}.ifc), its schedules (lengths, fittings, equipment, "
-        f"fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-{SHEETS_REV.split()[-1]}. These sheets "
+        f"fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-{rev.split()[-1]}. These sheets "
         "are drawn from the model and add nothing to it.",
         "Each run is tagged with its system and nominal size in inches; a circuit with its name and wire.",
         "Each storey's plan shows its flats' own runs wherever they go in the floor and ceiling spaces (a floor's drains serve the "
@@ -1486,6 +1498,18 @@ def cover(ax, sheets: list[tuple[str, str]]) -> None:
         "P-601). The control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002).",
         "Basis of design: every make and model named is a basis of design, not a choice; equals by the bidder, with their data.",
     ]
+    if rev == "Addendum 9" and p is not None:
+        sl = "baseline.sleeves."
+        general += [
+            "The water pipes are held off the frame (Addendum 9, item 1; specification section 22 05 29). Above the slab, every hanger "
+            f"and strap on the PEX water pipe clamps over a closed-cell elastomeric sleeve, {inches(p[sl + 'sleeve_wall_in'])} in. wall, "
+            "and the cold pipe passes each "
+            "hole in the same sleeve (its holes are bored for it). The hot pipe and its return pass each hole in an acoustic "
+            f"through-stud isolator, the hole bored to it: {inches(p[sl + 'isolator_hole_small_in'])} in. for 1/2 and 3/4 in. pipe, "
+            f"{inches(p[sl + 'isolator_hole_large_in'])} in. for 1 in., each within the size the holes schedule allows its member.",
+            "The ERV's submittal gives the maker's sound rating at each flat's continuous airflow (M-601), with the test it comes from. "
+            "None is published for the basis of design; an equal without one is not accepted (Addendum 9, item 2).",
+        ]
     missing = [
         "the mechanical and electrical rooms' wall-hung equipment: the exchangers, the pumps, the mixing valve, the backflow assemblies "
         "and the riser assembly, the pressure-reducing valve, the meter stack, the house panel (the diagrams P-601, M-601, E-601 and "
@@ -1522,7 +1546,7 @@ def draw_sheet(ax, number: str, ctx: dict, drawn: set) -> Labels | None:
     bld, rb, s7, p = ctx["bld"], ctx["rb"], ctx["s7"], ctx["p"]
     pre, num = number.split("-")
     if number == "G-001":
-        cover(ax, sheet_list())
+        cover(ax, sheet_list(), p)
     elif number == "G-002":
         tests_sheet(ax, s7, p)
     elif number == "M-602":

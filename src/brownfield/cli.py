@@ -692,6 +692,12 @@ def cmd_systems(args) -> int:
     print(NL + systems.addendum_8_report(r8))
     print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r8["written"]))
     ok &= all(good for _, good, _ in r8["checks"])
+    # Addendum 9 (found in step 10d) changes no element either: the water pipes held off the frame
+    # (a new section, 22 05 29) and the ERV's sound, as general notes on G-001, reissued alone.
+    r9 = runs["addendum-9"] = systems.addendum_9_run(load_params())
+    print(NL + systems.addendum_9_report(r9))
+    print(NL + "wrote " + ", ".join(str(q.relative_to(OUT_DIR.parent)) for q in r9["written"]))
+    ok &= all(good for _, good, _ in r9["checks"])
     if args.publish:
         if not ok:
             print(NL + "a check fails: nothing published")

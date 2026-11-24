@@ -26,7 +26,7 @@ The same walk-up issued as a bid set, an open model (IFC) with its drawings and 
 what a quote needs, against the same set as PDFs only: [pass 3f, the bid set as data](bidset.md).
 
 Its plumbing, heating, cooling, ventilation, electrical work and sprinklers designed in full before
-bidding (Addenda 2-8), and set against the usual US walk-up priced from free sources: [pass 3g,
+bidding (Addenda 2-9), and set against the usual US walk-up priced from free sources: [pass 3g,
 the walk-up's systems](systems.md). The engineering adds about $2,200 a flat. The systems this
 design chose cost $20,000-32,000 a flat more over 20 years than each usual walk-up, and more in
 every one of 4,000 draws. They buy quiet, fresh air and warm floors, not savings.

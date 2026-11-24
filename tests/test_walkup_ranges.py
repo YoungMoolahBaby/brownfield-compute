@@ -70,6 +70,13 @@ def test_the_sign_test_and_the_shares():
     assert sh["cheapest"]["alone"]["engineered"] == 0.25 and sh["cheapest"]["alone"]["electric"] == 0.75  # ties go to the first
 
 
+def test_enough_draws_pin_the_percentiles_and_too_few_dont():
+    rng = np.random.default_rng(3)
+    many = {"d life x": rng.normal(30000.0, 3000.0, 4000)}
+    few = {"d life x": rng.normal(30000.0, 3000.0, 40)}
+    assert rg.precision(many, boot=200)["worst"] <= rg.PRECISION < rg.precision(few, boot=200)["worst"]
+
+
 def test_the_draws_are_the_seeds():
     ps = {"a": Param("a", 1.0, 0.0, 2.0, "u", "low", "s"), "b": Param("b", 5.0, 5.0, 5.0, "u", "high", "s")}
     d1, d2 = draw(ps, 50, 7), draw(ps, 50, 7)

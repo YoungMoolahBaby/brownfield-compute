@@ -530,24 +530,90 @@ def insulation_items(model: dict, p: dict) -> dict:
     return items
 
 
-def sleeve_items(model: dict, p: dict) -> dict:
-    """The supply pipes' closed-cell sleeves at their supports, which step 4d's quiet takes (Warnock
-    and Morin's plastic pipe in Armaflex) and 10d found in no drawing or section: for Addendum 9. One
-    at each support of the engineered design's PEX water pipe above the slab, cold and hot, at IPC
-    Table 308.5's spacing for its size (`baseline.sleeves`)."""
-    sl = "baseline.sleeves."
-    count, ft = 0.0, 0.0
-    for it in model.values():
-        if not it.get("run") or it["system"] not in ("cold", "hot") or "under the slab" in it["role"] or not it["what"].startswith("PEX-a"):
+WATER_RUNS = ("cold", "hot", "hot-return")  # the flats' PEX water runs (routes' ids plumbing/<kind>/<flat>)
+BELOW = ("stem walls", "footings", "slab")  # bores at or under the slab: the mains', sleeved in the foundation
+
+
+def _rid(props: dict) -> str:
+    """A segment's route id, from its key (run/<route id>/<piece>)."""
+    return props["Key"].removeprefix("run/").rsplit("/", 1)[0]
+
+
+def pipe_isolation(rb: list[dict], routes, p: dict) -> dict:
+    """The water pipes held off the frame above the slab (Addendum 9; step 4d's quiet takes it, after
+    Warnock and Morin's plastic pipe in closed-cell sleeves), from the services model's segments and
+    the routes' bores:
+    - **every hanger and strap** between the holes, at IPC Table 308.5's spacing for the pipe's size,
+      clamps over a closed-cell elastomeric sleeve (`baseline.sleeves.sleeve_wall_in`), risers
+      included: each segment takes a support a spacing of its length, its holes counting as supports;
+    - **every hole of the cold pipe** takes the same sleeve: the routes bored it for the pipe in 1/2
+      in. of insulation (`systems.routing.cold_insulation_in`);
+    - **every hole of the hot pipe and its return** takes an acoustic through-stud isolator, the hole
+      bored to the isolator's size for the pipe: the routes bored those holes for the bare pipe
+      (the insulation stops at the member, IECC C404.4), and a sleeve would overfill some.
+    Returns the counts (the sleeves; the isolators by pipe size) and each hole's fit against what its
+    member allows. A run's largest pipe is taken at each of its holes."""
+    import math
+
+    from .routing import pex_od_in
+    from .servicesifc import size_in
+
+    sl, IN = "baseline.sleeves.", 0.0254
+    wall = p[sl + "sleeve_wall_in"]
+    spacing = lambda size: p[sl + ("support_ft_small" if size in ("1/2", "3/4", "1") else "support_ft_large")]  # noqa: E731
+    hangers, cold_holes, ft = 0, 0, 0.0
+    iso: dict[str, int] = {}
+    od: dict[str, float] = {}  # each run's largest pipe, its own outside diameter (in.; the model's takes in its insulation)
+    for r in rb:
+        pr = r["props"]
+        water = pr.get("System") in ("cold", "hot") and pr.get("Material", "").startswith("PEX-a") and "pre-insulated" not in pr["Material"]
+        if not r["cls"].endswith("Segment") or not water:
             continue
-        size = it["size"]
-        small = size in ("1/2", "3/4", "1")
-        count += it["qty"]["engineered"] / p[sl + ("support_ft_small" if small else "support_ft_large")]
-        ft += it["qty"]["engineered"]
+        rid, size, h = _rid(pr), str(pr["Size"]), int(pr.get("Holes", 0))
+        L = pr["Length"] / FT
+        ft += L
+        hangers += max(0, math.ceil(L / spacing(size)) - h)
+        od[rid] = max(od.get(rid, 0.0), pex_od_in(size_in(size)))
+        if pr["System"] == "cold":
+            cold_holes += h
+        elif h:
+            iso[size] = iso.get(size, 0) + h
+    fit = []
+    for rid, rec in sorted(routes.recs.items()):
+        kind = rid.split("/")[1] if rid.startswith("plumbing/") else None
+        if kind not in WATER_RUNS:
+            continue
+        for b in rec["branches"]:
+            for bo in b.get("bores", []):
+                if bo["kind"] in BELOW:
+                    continue
+                hole, allowed = bo["hole_m"] / IN, (math.inf if bo["allowed_m"] is None else bo["allowed_m"] / IN)
+                sleeve = od[rid] + 2 * wall
+                if kind == "cold":
+                    need, what = sleeve, "sleeve"  # through the hole as bored
+                    ok = need <= hole + 1e-9
+                else:
+                    need = p[sl + ("isolator_hole_small_in" if od[rid] <= 0.875 + 1e-6 else "isolator_hole_large_in")]
+                    what = "isolator"
+                    ok = need <= allowed + 1e-9
+                fit.append({"run": rid, "kind": bo["kind"], "member": bo["member"], "hole_in": hole, "allowed_in": allowed, "what": what,
+                            "need_in": need, "ok": ok,
+                            "sleeve_over": kind != "cold" and sleeve + p["systems.routing.hole_clear_in"] > allowed + 1e-9})
+    return {"sleeves": cold_holes + hangers, "hangers": hangers, "cold_holes": cold_holes, "isolators": iso, "ft": ft, "fit": fit,
+            "holes": {"cold": sum(1 for x in fit if x["what"] == "sleeve"), "hot": sum(1 for x in fit if x["what"] == "isolator")},
+            "bad": [x for x in fit if not x["ok"]], "sleeve_over": sum(x["sleeve_over"] for x in fit)}
+
+
+def sleeve_items(rb: list[dict], routes, p: dict) -> dict:
+    """`pipe_isolation`'s sleeves and isolators in the engineered design's list (Addendum 9's)."""
+    iso = pipe_isolation(rb, routes, p)
     items: dict = {}
-    _add(items, ("water", "sleeves"), f"closed-cell elastomeric sleeve at each support of the PEX water pipe ({ft:,.0f} ft above the slab; "
-         "Addendum 9's)", "each", _q(ENG, float(math.ceil(count))), "IPC Table 308.5's spacing on the model's PEX runs (baseline.sleeves)",
-         "rule", "cold")
+    _add(items, ("water", "sleeves"), f"closed-cell elastomeric sleeve at each hanger and strap of the PEX water pipe above the slab "
+         f"({iso['hangers']:,}) and in each cold-water hole ({iso['cold_holes']:,}): Addendum 9", "each", _q(ENG, float(iso["sleeves"])),
+         "baseline.pipe_isolation: IPC Table 308.5's spacing on the model's segments, the routes' bores (baseline.sleeves)", "rule", "cold")
+    for size, n in sorted(iso["isolators"].items()):
+        _add(items, ("water", "isolators", size), f"acoustic through-stud isolator, {_size(size)} pipe, in each hole of the hot water and its "
+             "return: Addendum 9", "each", _q(ENG, float(n)), "baseline.pipe_isolation: the model's segments' holes", "rule", "hot")
     return items
 
 
@@ -751,7 +817,7 @@ def items(apt: dict, p: dict, s7: dict, routes, its: list[dict]) -> dict:
     model, seen = model_items(rb)
     rule = flat_hot_rule(apt, p, routes)
     fixtures = seen["fixtures"] + sum(1 for r in rb if r["props"].get("Kind", "").startswith("washer"))
-    out = {**model, **insulation_items(model, p), **sleeve_items(model, p), **design_items(apt, p, s7, its, fixtures),
+    out = {**model, **insulation_items(model, p), **sleeve_items(rb, routes, p), **design_items(apt, p, s7, its, fixtures),
            **usual_items(apt, p, routes, rule)}
     return {"items": list(out.values()), "seen": seen, "rule": rule}
 

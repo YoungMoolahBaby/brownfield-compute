@@ -532,10 +532,11 @@ RFI_002_ANSWER_AFTER_MIN = 30
 # ENERGY STAR's glass, before it went out; 5 with the services and the frame, D28 step 7e; 6 with
 # the services' sheets, before the installers' round, step 8; 7 with each flat's hot-water loop,
 # the plant, the sequence and the tests, step 9d; 8 with the air-leakage tests, found scoping step 10,
-# before the round's packets went out).
+# before the round's packets went out; 9 with the water pipes held off the frame and the ERV's sound,
+# found in step 10d, before the round's packets went out).
 ISSUED = {1: "2026-11-19T23:29:07-08:00", 2: "2026-11-21T08:43:25-08:00", 3: "2026-11-21T09:15:00-08:00",
           4: "2026-11-21T11:41:33-08:00", 5: "2026-11-22T13:24:46-08:00", 6: "2026-11-22T16:06:49-08:00",
-          7: "2026-11-23T08:35:59-08:00", 8: "2026-11-23T10:28:20-08:00"}
+          7: "2026-11-23T08:35:59-08:00", 8: "2026-11-23T10:28:20-08:00", 9: "2026-11-23T18:54:36-08:00"}
 # When the services model (pass 3g step 7d) was first published to the plan room, preliminary, for
 # Addendum 5 to issue.
 SERVICES_ISSUED = "2026-11-22T11:48:56-08:00"
@@ -546,7 +547,8 @@ TITLES = {1: "The patio doors: their glass and their width",
           5: "The services, the frame, the stair's enclosure and the roof hatch",
           6: "The fire service's control valves, the house panel and the services drawn",
           7: "Each flat's hot-water loop, the plant's storage and backup heater, the control sequence and the tests",
-          8: "The air-leakage tests to Phius's limits, which the heat loads assume"}
+          8: "The air-leakage tests to Phius's limits, which the heat loads assume",
+          9: "The water pipes held off the frame, and the ERV's sound"}
 PUBLISHED = OUT_DIR.parent / "docs" / "pass3" / "bidset"
 
 
@@ -937,6 +939,169 @@ def addendum_8_report(r: dict) -> str:
     ])
 
 
+# Addendum 9 (found in pass 3g step 10d): the quiet supply pipes step 4d counted on take closed-cell
+# sleeves at their supports, which no drawing or section asked for; and the ERV's sound, which no one
+# publishes. It changes no element of the building, the frame or the services: a new section, 22 05
+# 29, and G-001 reissued alone with two general notes.
+
+SPEC_9 = "spec-22-05-29-supports-addendum-9.md"
+
+
+def section_22_05_29(P: dict, iso: dict) -> str:
+    """Specification section 22 05 29 (Addendum 9): the water pipes' supports and how they are held
+    off the frame, every figure from the design's params and `baseline.pipe_isolation`."""
+    from .servicesheets import inches
+
+    sl = "baseline.sleeves."
+    small, large = inches(P[sl + "isolator_hole_small_in"]), inches(P[sl + "isolator_hole_large_in"])
+    n_iso = sum(iso["isolators"].values())
+    by_size = ", ".join(f"{n:,} for {z} in. pipe" for z, n in sorted(iso["isolators"].items(), key=lambda kv: _nominal(kv[0])))
+    return "\n".join([
+        "# 22 05 29: Hangers and supports for the water pipes, held off the frame", "",
+        "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Issued by Addendum 9.", "",
+        "## 1. What it covers", "",
+        f"The PEX water pipe above the slab, cold and hot and the hot water's return, risers included: {iso['ft']:,.0f} ft in the "
+        "services model. The mains under the slab come pre-insulated (P-601).", "",
+        "## 2. Supports", "",
+        f"- Support the pipe as IPC 2021 Table 308.5 asks: PEX 1 in. and smaller every {P[sl + 'support_ft_small']:g} ft (32 in.) "
+        f"horizontally, 1-1/4 in. and larger every {P[sl + 'support_ft_large']:g} ft; vertically at each floor, with a guide midway "
+        "between (its note b).",
+        "- Where the pipe passes through studs, plates or joists, the hole is a support; between holes farther apart than the "
+        "table's spacing, hang or strap it.", "",
+        "## 3. Held off the frame", "",
+        "No water pipe bears on wood or metal above the slab. The design's quiet supply pipes depend on it: Warnock and Morin (NRC, "
+        "1990) measured plastic pipe in closed-cell elastomeric sleeves 13 dB below the same pipe clamped rigidly.", "",
+        f"- **At every hanger and strap:** the clamp goes over a closed-cell elastomeric sleeve, {inches(P[sl + 'sleeve_wall_in'])} in. "
+        f"wall, the pipe's size, at least {inches(P[sl + 'sleeve_ft'] * 12)} in. long. The clamp holds the sleeve, not the pipe. About "
+        f"{iso['hangers']:,} in the model's runs.",
+        "- **At every hole of the cold pipe:** the pipe passes in the same sleeve, slid along to the member. The routes bored these "
+        f"holes for the pipe in 1/2 in. of insulation, so they take it as bored: {iso['holes']['cold']:,} holes.",
+        "- **At every hole of the hot pipe and its return:** an acoustic through-stud isolator, snapped into the hole (basis of "
+        f"design Holdrite SILENCER 261, 262 and 263). Bore the hole to the isolator: {small} in. for 1/2 and 3/4 in. pipe, {large} "
+        f"in. for 1 in. pipe. These holes were bored for the bare pipe, and a sleeve would overfill {iso['sleeve_over']} of them "
+        f"beyond what their joists allow. The isolator fits all {iso['holes']['hot']:,}: the holes schedule's sizes for these "
+        "runs are superseded, each new size within what the schedule allows the member.",
+        "- **The hot pipe's insulation** (IECC C404.4, 1 in.) runs to each side of the isolator, as it stops at each member now.",
+        f"- **The count,** from the model: {iso['sleeves']:,} sleeves and {n_iso:,} isolators ({by_size}).", "",
+        "## 4. Submittals", "",
+        "- The sleeve's material and wall, and the isolator's data sheet, each before it's bought.", "",
+        "## 5. Inspection", "",
+        "- Before the walls are closed, the plumber shows each flat's water pipes, and the inspector or the owner's representative "
+        "looks for any pipe bearing on the frame: at the holes, the hangers and the straps.", "",
+    ])
+
+
+def _nominal(size: str) -> float:
+    from .servicesifc import size_in
+
+    return size_in(size) or 0.0
+
+
+def addendum_9_words(params: dict, iso: dict) -> dict:
+    """Addendum 9's items (found in step 10d). Every figure from the run."""
+    from .params import values
+    from .servicesheets import REVISED, inches
+
+    P = values(params)
+    n_iso = sum(iso["isolators"].values())
+    items = [
+        "Item 1 (the water pipes held off the frame, a new specification section 22 05 29): the design's quiet supply pipes (step "
+        "4d) rest on Warnock and Morin's measurement (NRC, 1990): plastic pipe in closed-cell elastomeric sleeves at its supports, "
+        "13 dB below the same pipe clamped rigidly. No drawing or section asked for the sleeves (found in step 10d). Above the "
+        f"slab, every hanger and strap now clamps over a {inches(P['baseline.sleeves.sleeve_wall_in'])} in.-wall sleeve, and the "
+        "cold pipe passes each of its "
+        f"{iso['holes']['cold']:,} holes in the same sleeve: they were bored for it. The hot pipe and its return pass each of their "
+        f"{iso['holes']['hot']:,} holes in an acoustic through-stud isolator instead: their holes were bored for the bare pipe, and "
+        f"a sleeve would overfill {iso['sleeve_over']} of them past what their joists allow. Each such hole is bored to its "
+        f"isolator, within its member's allowance. The count: {iso['sleeves']:,} sleeves and {n_iso:,} isolators.",
+        "Item 2 (the ERV's sound, a general note on G-001): no sound rating is published for the basis of design, Broan's EDGE "
+        "ERV (step 10d). Its submittal now gives the maker's rating at each flat's continuous airflow, with the test it comes "
+        "from; an equal without one is not accepted.",
+        f"Item 3 (the documents): section 22 05 29, new ({SPEC_9}), and sheet G-001, reissued alone ({REVISED['G-001'][1]}), with "
+        "the two items as general notes and the sheet index marking the sheets reissued since Addendum 7. No element of the "
+        "building, the frame or the services changes.",
+    ]
+    return {"items": items}
+
+
+def addendum_9_run(params: dict) -> dict:
+    """Addendum 9 (found in pass 3g step 10d): no element changes; section 22 05 29 is new and G-001 is
+    reissued alone. Checked: the designs on the routes and the services model in effect (as Addendum
+    8's run), every hole of the water pipe against its sleeve or isolator and its member's allowance,
+    the holes counted two ways, and the reissued sheet. Its text, the section and the sheet go to
+    `ifc_out("addendum-9")`."""
+    from . import baseline, routed, servicesheets, servicesifc
+    from .params import values
+
+    P = values(params)
+    if latest_model().name != "apartment-addendum-5.json":
+        raise SystemExit(f"Addendum 9 is drawn on Addendum 5's building and frame, and the latest is {latest_model().name}")
+    apt = load(latest_model())
+    routes = routed.load(apt, P)
+    if routes is None or not routes.fresh:
+        raise SystemExit("no fresh routes for Addendum 5's model: `brownfield routes` first")
+    s7 = routed.summary(apt, P, routes)
+    if "incomplete" in s7:
+        raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
+    rec = json.loads((OUT_DIR / "pass3" / "routes-7d.json").read_text(encoding="utf-8"))
+    model = servicesifc.OUT / f"services-{servicesifc.ISSUE}.ifc"
+    iso = baseline.pipe_isolation(servicesifc.read_back(baseline.SERVICES), routes, P)
+    out = ifc_out("addendum-9")
+    out.mkdir(parents=True, exist_ok=True)
+    spec = out / SPEC_9
+    spec.write_text(section_22_05_29(P, iso), encoding="utf-8")
+    rev, name = servicesheets.REVISED["G-001"]
+    ctx = servicesheets.context(apt, P, routes=routes, s7=s7)
+    sheet = out / name
+    servicesheets.write(ctx, sheet, numbers=["G-001"], title=f"walk-up services sheet G-001 ({rev})")
+    import pypdf
+
+    pages = pypdf.PdfReader(str(sheet)).pages
+    text = " ".join((pg.extract_text() or "") for pg in pages)
+    words = addendum_9_words(params, iso)
+    s7_bad = [c for c in s7["checks"] if not c[1]]
+    model_bad = [c[0] for c in rec["checks"] if not c[1]]
+    fit = iso["fit"]
+    tight = min((x for x in fit if x["what"] == "isolator"), key=lambda x: x["allowed_in"] - x["need_in"])
+    checks = [
+        ("every check of 7c's designs on the routes passes", not s7_bad, f"{len(s7['checks'])} checks"),
+        ("the services model in effect (Addendum 7's) was built from these routes, and its own checks pass (7d)",
+         rec.get("model") == model.name and model.exists() and not model_bad,
+         f"{rec.get('model')}, {rec['elements']:,} elements" + (f"; failing: {model_bad}" if model_bad else "")),
+        ("every hole the PEX water pipe passes above the slab takes its sleeve as bored (cold) or its isolator within its member's "
+         "allowance (hot and return)", not iso["bad"] and len(fit) > 0,
+         f"{len(fit)} holes; the tightest, {tight['member']}, an isolator's {tight['need_in']:.3f} in. against {tight['allowed_in']:.3f}"
+         + (f"; failing: {[x['member'] for x in iso['bad']][:5]}" if iso["bad"] else "")),
+        ("the holes counted from the model's segments are the routes' bores",
+         iso["cold_holes"] == iso["holes"]["cold"] and sum(iso["isolators"].values()) == iso["holes"]["hot"],
+         f"cold {iso['cold_holes']} against {iso['holes']['cold']}; hot and return {sum(iso['isolators'].values())} against "
+         f"{iso['holes']['hot']}"),
+        ("a sleeve would overfill some of the hot pipe's holes (why they take isolators)", iso["sleeve_over"] > 0,
+         f"{iso['sleeve_over']} of {iso['holes']['hot']}"),
+        ("G-001 is reissued alone, as Addendum 9, with section 22 05 29 and the ERV's rating in its notes as text",
+         len(pages) == 1 and "G-001" in text and rev in text and "22 05 29" in text and "sound rating" in text, f"{name}: {len(pages)} page"),
+    ]
+    r = {"revision": "addendum-9", "words": words, "checks": checks, "second": [], "second_status": None, "sheet": sheet,
+         "spec": spec, "s7_checks": s7_bad, "isolation": {k: v for k, v in iso.items() if k not in ("fit", "bad")}}
+    path = out / "addendum-9.md"
+    path.write_text(addendum_9_report(r) + "\n", encoding="utf-8")
+    r["written"] = [path, sheet, spec]
+    return r
+
+
+def addendum_9_report(r: dict) -> str:
+    from . import bidset
+
+    return "\n".join([
+        f"Addendum 9 (made up, found in pass 3g step 10d, D28): {TITLES[9][0].lower() + TITLES[9][1:]}", "",
+        *(f"  {x}" for x in r["words"]["items"]), "",
+        "What changed: no element of the building, the frame or the services. Section 22 05 29 is new and sheet G-001 reissued; "
+        "the earlier addenda's documents stand.", "",
+        "Checks:", *(f"  {x}" for x in bidset.report(r["checks"]).splitlines()),
+        *(["", "The designs on the routes: failing checks", *(f"  {label}: {dd}" for label, _, dd in r["s7_checks"])] if r["s7_checks"] else []),
+    ])
+
+
 def addendum_2_items(r: dict) -> list[str]:
     """Addendum 2's items, from its run (`ifc_run`)."""
     (h1, h2) = r["hazards"]
@@ -985,12 +1150,13 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     manifest as issued. Addendum 5 issued the frame and the services as bid documents (pass 3g step
     7e); Addendum 6, which changes no model, its text and the services' sheets (step 8); Addendum 7
     the revised services model, its sheets and two specification sections (step 9d); Addendum 8 the
-    revised section 01 45 00 and sheet G-002 (step 10's scoping)."""
+    revised section 01 45 00 and sheet G-002 (step 10's scoping); Addendum 9 section 22 05 29 and sheet
+    G-001 (step 10d's finding)."""
     import shutil
 
     from . import addendum, bidset
 
-    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-8"):
+    for rev in ("addendum-2", "addendum-3", "addendum-4", "addendum-5", "addendum-8", "addendum-9"):
         r = runs.get(rev)
         if r is None or r["second_status"] or not all(ok for _, ok, _ in r["checks"] + r["second"]):
             raise SystemExit(f"won't publish: {rev} didn't run, or a check failed")
@@ -1015,8 +1181,9 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     gone += [f for f in (services["model"], services["changes"], *(x["path"] for x in services["files"])) if not (to / f).exists()]
     if gone:
         raise SystemExit(f"Addendum 6's or 7's published files are missing: {gone}")
-    r8 = runs["addendum-8"]
-    for src in (ifc_out("addendum-8") / "addendum-8.md", r8["spec"], r8["sheet"]):
+    r8, r9 = runs["addendum-8"], runs["addendum-9"]
+    for src in (ifc_out("addendum-8") / "addendum-8.md", r8["spec"], r8["sheet"], ifc_out("addendum-9") / "addendum-9.md", r9["spec"],
+                r9["sheet"]):
         shutil.copyfile(src, to / src.name)
         written.append(to / src.name)
     models = {0: "apartment.ifc", **{n: f"apartment-addendum-{n}.ifc" for n in (1, 2, 3, 4, 5)}}
@@ -1040,7 +1207,8 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
     apt1, _ = bidset.load("apartment-addendum-1.json")
     items = {1: addendum.words(apt0, apt1, params)["items"], 2: addendum_2_items(runs["addendum-2"]),
              3: runs["addendum-3"]["words"]["items"], 4: runs["addendum-4"]["words"]["items"],
-             5: runs["addendum-5"]["words"]["items"], 6: kept[6]["items"], 7: kept[7]["items"], 8: r8["words"]["items"]}
+             5: runs["addendum-5"]["words"]["items"], 6: kept[6]["items"], 7: kept[7]["items"], 8: r8["words"]["items"],
+             9: r9["words"]["items"]}
     files = {
         1: [("addendum-1.pdf", "The addendum: its narrative and the revised sheets, changes clouded"),
             ("addendum-1-diff.md", "What changed, element by element"),
@@ -1072,13 +1240,16 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
         8: [("addendum-8.md", "The addendum: its items, what it changes and the checks"),
             (r8["spec"].name, "Specification section 01 45 00: the tests and inspections, revised (E-1, the air-leakage tests)"),
             (r8["sheet"].name, "Sheet G-002, the tests and inspections, reissued with E-1 revised")],
+        9: [("addendum-9.md", "The addendum: its items, what it changes and the checks"),
+            (r9["spec"].name, "Specification section 22 05 29: the water pipes' supports, held off the frame (new)"),
+            (r9["sheet"].name, "Sheet G-001, the cover and general notes, reissued with Addendum 9's two items")],
     }
     manifest = {"note": "Made up, from the brownfield-compute study: not a real project, nothing is out to bid.",
                 "framing": {"model": "framing-addendum-5.ifc", "revision": "addendum-5", "status": "Addendum 5",
                             "members": len(frame["members"]),
                             "note": "the completed wood frame: the shell, the flats' partitions and plumbing walls, the "
                                     "service annex, the stair halls' floors and the roof hatch's opening (D28 step 7)"},
-                # Addenda 6 to 8 change no element of the building: no model of their own. Addendum 7's
+                # Addenda 6 to 9 change no element of the building: no model of their own. Addendum 7's
                 # changes to the services are marked in the services' layers (`services.changes`).
                 "addenda": [{"number": n, "title": TITLES[n], "issued": ISSUED[n], "items": items[n],
                              "model": models.get(n), "changes": f"changes-addendum-{n}.json" if n in models else None,
@@ -1086,7 +1257,7 @@ def publish(params: dict, runs: dict[str, dict], to: Path = PUBLISHED) -> list[P
                              # The services model this addendum issued, if any (the viewer shows each addendum's).
                              "services_model": next((f for f, _ in files[n] if f.startswith("services-addendum-") and f.endswith(".ifc")), None),
                              "rfi": {1: "rfi-001.bcf", 3: "rfi-002.bcf"}.get(n),
-                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 9)],
+                             "files": [{"path": f, "label": label} for f, label in files[n]]} for n in range(1, 10)],
                 "services": services}
     # The installers' round (step 8c), as `brownfield round --publish` last left it.
     from . import installers

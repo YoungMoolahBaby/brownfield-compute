@@ -70,6 +70,7 @@ CLASSES = {
     "kamstrup_403": ("plumber", "each", "heat meter (Kamstrup MULTICAL 403)", "trade"),
     "badger_eseries_34": ("plumber", "each", "water submeter 3/4 in. (Badger E-Series)", "trade"),
     "sleeve_support": ("plumber", "each", "a closed-cell elastomeric sleeve at a water pipe's support (Armaflex, cut to length)", "trade"),
+    **{f"isolator_{s}": ("plumber", "each", f"an acoustic through-stud isolator, {s} in. pipe (Holdrite SILENCER)", "trade") for s in ("0.5", "0.75", "1")},
     # Each flat's own water heater (its installed cost checked against REMDB's, `known_cases`).
     "aosmith_ent50": ("plumber", "each", "electric water heater 50 gal (A. O. Smith ENT-50)", "trade"),
     "rheem_prog40_pdv": ("plumber", "each", "gas water heater 40 gal, power direct vent (Rheem PROG40)", "trade"),
@@ -253,6 +254,8 @@ def classes_of(it: dict) -> list[tuple[str, float]]:
     }
     if k in design:
         return design[k]
+    if k.startswith("water | isolators |"):
+        return [(f"isolator_{SIZE[k.split(' | ')[2]]}", 1.0)]
     if k.startswith("insulation |"):
         if it["system"] == "ventilation":
             return [("duct_insul_15", 1.0)]
@@ -574,8 +577,8 @@ def purpose(line: dict) -> str:
         return "drains and vents: cast iron, or PVC"
     if k == "water | prv":
         return "the pressure-reducing valve, for quiet"
-    if k == "water | sleeves":
-        return "the supply pipes' sleeves, for quiet"
+    if k == "water | sleeves" or k.startswith("water | isolators"):
+        return "the water pipes held off the frame, for quiet"
     if k == "water | submeters":
         return "the flats' water submeters"
     if k.startswith(("fire | service", "fire | supervision", "fire | combined", "water | domestic")):

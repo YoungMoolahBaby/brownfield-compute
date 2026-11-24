@@ -304,6 +304,35 @@
      "label": "Sheet G-002, the tests and inspections, reissued with E-1 revised"
     }
    ]
+  },
+  {
+   "number": 9,
+   "title": "The water pipes held off the frame, and the ERV's sound",
+   "issued": "2026-11-23T18:54:36-08:00",
+   "items": [
+    "Item 1 (the water pipes held off the frame, a new specification section 22 05 29): the design's quiet supply pipes (step 4d) rest on Warnock and Morin's measurement (NRC, 1990): plastic pipe in closed-cell elastomeric sleeves at its supports, 13 dB below the same pipe clamped rigidly. No drawing or section asked for the sleeves (found in step 10d). Above the slab, every hanger and strap now clamps over a 1/2 in.-wall sleeve, and the cold pipe passes each of its 308 holes in the same sleeve: they were bored for it. The hot pipe and its return pass each of their 452 holes in an acoustic through-stud isolator instead: their holes were bored for the bare pipe, and a sleeve would overfill 56 of them past what their joists allow. Each such hole is bored to its isolator, within its member's allowance. The count: 656 sleeves and 452 isolators.",
+    "Item 2 (the ERV's sound, a general note on G-001): no sound rating is published for the basis of design, Broan's EDGE ERV (step 10d). Its submittal now gives the maker's rating at each flat's continuous airflow, with the test it comes from; an equal without one is not accepted.",
+    "Item 3 (the documents): section 22 05 29, new (spec-22-05-29-supports-addendum-9.md), and sheet G-001, reissued alone (services-sheet-g-001-addendum-9.pdf), with the two items as general notes and the sheet index marking the sheets reissued since Addendum 7. No element of the building, the frame or the services changes."
+   ],
+   "model": null,
+   "changes": null,
+   "services_changes": null,
+   "services_model": null,
+   "rfi": null,
+   "files": [
+    {
+     "path": "addendum-9.md",
+     "label": "The addendum: its items, what it changes and the checks"
+    },
+    {
+     "path": "spec-22-05-29-supports-addendum-9.md",
+     "label": "Specification section 22 05 29: the water pipes' supports, held off the frame (new)"
+    },
+    {
+     "path": "services-sheet-g-001-addendum-9.pdf",
+     "label": "Sheet G-001, the cover and general notes, reissued with Addendum 9's two items"
+    }
+   ]
   }
  ],
  "services": {

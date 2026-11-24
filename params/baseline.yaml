@@ -510,6 +510,27 @@ hours:
     unit: "hours a unit (each)"
     conf: placeholder
     source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid): a sleeve slit and slipped on at a support, about 3 minutes; half to twice"
+  isolator_0.5:
+    value: 0.03
+    low: 0.015
+    high: 0.06
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid): an isolator snapped into a hole bored a size up, about 2 minutes; half to twice"
+  isolator_0.75:
+    value: 0.03
+    low: 0.015
+    high: 0.06
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid): an isolator snapped into a hole bored a size up, about 2 minutes; half to twice"
+  isolator_1:
+    value: 0.03
+    low: 0.015
+    high: 0.06
+    unit: "hours a unit (each)"
+    conf: placeholder
+    source: "judgement (no free source of labour units: RSMeans and the trades' manuals are paid): an isolator snapped into a hole bored a size up, about 2 minutes; half to twice"
   radiant_pex_0.5:
     value: 0.012
     low: 0.006
@@ -1382,6 +1403,27 @@ price:
     unit: USD a 6 ft length of closed-cell elastomeric pipe insulation, 1/2 in. wall, material only
     conf: medium
     source: "US Supply (ussupply.com, read 2026-11-23; 14_ussupply_kflex_*.html in data/raw/pass3g/step10/life/): K-Flex Insul-Tube 1/2 in. wall, 6 ft: 6RX048118 (1-1/8 in. ID, the 1 in. PEX's, most of the pipe) $10.53; 6RX048078 (7/8 in. ID, 3/4 in. PEX) $9.00; 6RX048058 (5/8 in. ID, 1/2 in. PEX) $8.43, the low. No AP Armaflex price could be read (SupplyHouse, Zoro, Ferguson and Global Industrial refused automated reads); K-Flex is the same class of product (closed-cell elastomeric)"
+  isolator_0.5:
+    value: 2.4
+    low: 2.4
+    high: 2.41
+    unit: USD a unit (each), material only
+    conf: medium
+    source: "FaucetDepot (faucetdepot.com, read 2026-11-23; 15_faucetdepot_holdrite_261_silencer_half-inch.html in data/raw/pass3g/step10/life/): Holdrite SILENCER 261, '1/2 in CTS', price $2.40, list price $2.41 (the high). RWC: 'can be used as a suspension hanger ... or as a through-hole isolator'"
+  isolator_0.75:
+    value: 3.26
+    low: 3.26
+    high: 3.43
+    unit: USD a unit (each), material only
+    conf: medium
+    source: "FaucetDepot (faucetdepot.com, read 2026-11-23; 15_faucetdepot_holdrite_262_silencer_3-4inch.html in data/raw/pass3g/step10/life/): Holdrite SILENCER 262, '3/4 in CTS', price $3.26, list price $3.43 (the high). RWC: 'can be used as a suspension hanger ... or as a through-hole isolator'"
+  isolator_1:
+    value: 4.87
+    low: 4.87
+    high: 5.13
+    unit: USD a unit (each), material only
+    conf: medium
+    source: "FaucetDepot (faucetdepot.com, read 2026-11-23; 15_faucetdepot_holdrite_263_silencer_1inch.html in data/raw/pass3g/step10/life/): Holdrite SILENCER 263, '1 in CTS Pipe/Tube', price $4.87, list price $5.13 (the high). RWC: 'can be used as a suspension hanger ... or as a through-hole isolator'"
   bath_fan_panasonic:
     value: 172.15
     low: 153.2
@@ -2935,12 +2977,27 @@ sleeves:
     value: 2.67
     unit: ft between supports, PEX water pipe 1 in. and smaller, horizontal
     conf: high
-    source: "IPC 2021 Table 308.5 (UpCodes, Pennsylvania Plumbing Code 2021, saved 13_upcodes_pennsylvania_ipc2021_ch3.html): 'Cross-linked polyethylene (PEX) pipe, 1 inch and smaller | 2.67 (32 inches) | 10 (b)'; note b, 'For sizes 2 inches and smaller, a guide shall be installed midway between required vertical supports'. Taken along the whole run: an upper count on the risers, which take a support every 10 ft and a guide between"
+    source: "IPC 2021 Table 308.5 (UpCodes, Pennsylvania Plumbing Code 2021, saved 13_upcodes_pennsylvania_ipc2021_ch3.html): 'Cross-linked polyethylene (PEX) pipe, 1 inch and smaller | 2.67 (32 inches) | 10 (b)'; note b, 'For sizes 2 inches and smaller, a guide shall be installed midway between required vertical supports'. Taken on every segment, its holes through the frame counting as supports: an upper count on the risers, which take a support every 10 ft and a guide between"
   support_ft_large:
     value: 4.0
     unit: ft between supports, PEX water pipe 1-1/4 in. and larger, horizontal
     conf: high
     source: "IPC 2021 Table 308.5 (as support_ft_small): 'Cross-linked polyethylene (PEX) pipe, 1-1/4 inches and larger | 4 | 10 (b)'"
+  sleeve_wall_in:
+    value: 0.5
+    unit: in., the closed-cell elastomeric sleeve's wall
+    conf: high
+    source: "the product priced (price.armaflex_6ft): K-Flex Insul-Tube, '1/2 in. wall'; Warnock and Morin (NRCC-35548, 1990) tested a 13 mm closed-cell elastomeric sleeve (systems.noise.supply_plastic_sleeved_db)"
+  isolator_hole_small_in:
+    value: 1.375
+    unit: in., the hole an acoustic through-stud isolator for 1/2 or 3/4 in. pipe snaps into (Holdrite SILENCER 261, 262)
+    conf: medium
+    source: "RWC, Holdrite item 262 (15_rwc_bim_holdrite_262.html, read 2026-11-23): 'as a through-hole isolator in wood or up to 14 gage metal framing into a 1-11/32\" - 1-3/8\" hole'; FaucetDepot: '261 Acoustic Isolator, 1/2 in CTS, 1-3/8 in Dia', '262 ... 3/4 in CTS, 1-3/8 in Dia'"
+  isolator_hole_large_in:
+    value: 2.0
+    unit: in., the hole an acoustic through-stud isolator for 1 in. pipe takes (Holdrite SILENCER 263)
+    conf: medium
+    source: "FaucetDepot (15_faucetdepot_holdrite_263_silencer_1inch.html, read 2026-11-23): '263 Acoustic Thru-Stud Isolator/Suspension Clamp, 1 in CTS Pipe/Tube ... 2 in Dia'"
   sleeve_ft:
     value: 0.5
     low: 0.33
