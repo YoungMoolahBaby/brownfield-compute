@@ -338,9 +338,10 @@ def requests(apt: dict, p: dict) -> dict:
     from .hvac import pipe_for_flow, substation
     from .plumbing import design as pdesign
     from .routing import pex_od_in
+    from .designs import floors
     vent = ventilation_ducts(apt, p)
     cool = cooling_ducts(apt, p)
-    sub = substation(apt, p)
+    sub = substation(apt, p) if floors(p) else None  # the edge design has no building loop
     pd = pdesign(apt, p)
     for name in by_flat(apt):
         rooms = {r["id"].split("/")[1]: r for r in by_flat(apt)[name]}
@@ -455,9 +456,12 @@ def requests(apt: dict, p: dict) -> dict:
             attach=[f"{name}/minisplit", f"hvac/line-set/{name}", f"{name}/standpipe"], flat=name, role="condensate", gap=wall_clear,
             goals=[_box([px - 0.03, wy - 0.03, box_z - 0.02], [px + 0.03, wy + 0.03, box_z + 0.15])],
             grade=-1, slope=p[R + "condensate_slope_in_ft"] / 12)
-        # The radiant manifold's tails: up from the loop's risers into the ceiling (the risers stand
-        # side by side, so nothing passes along the wall beside them), over to the closet, down the
-        # plumbing wall there, out of it beside the washer and along the closet's floor to the cabinet.
+        # The radiant manifold's tails (the network design's): up from the loop's risers into the
+        # ceiling (the risers stand side by side, so nothing passes along the wall beside them), over
+        # to the closet, down the plumbing wall there, out of it beside the washer and along the
+        # closet's floor to the cabinet.
+        if sub is None:
+            continue
         man = eqb[f"{name}/manifold"]
         wd = eqb[f"{name}/washer-dryer"]
         util = rooms["utility"]
@@ -636,7 +640,7 @@ def requests(apt: dict, p: dict) -> dict:
     root_plant = [*annex_drops(apt, p)["plant"], z_mains]
     main_in = {"cold": next(s_["in"] for s_ in pd["paths"]["cold"]["segments"] if "main" in s_["segment"]),
                "hot": next(s_["in"] for s_ in pd["paths"]["hot"]["segments"] if "main" in s_["segment"]),
-               "hot-return": pd["loop"]["return_main_in"], "loop-supply": sub["header_in"], "loop-return": sub["header_in"]}
+               "hot-return": pd["loop"]["return_main_in"], **({"loop-supply": sub["header_in"], "loop-return": sub["header_in"]} if sub else {})}
     main_in = {k: max(v, gs.get("main_in", {}).get(k, 0.0)) for k, v in main_in.items()}
     # Each main at its own depth, so they cross under one another; each joins its risers' feet from
     # below (the risers stand 3-4 in. apart in the wall, too close for mains side by side).

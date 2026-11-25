@@ -258,9 +258,10 @@ def vertical_services(apt: dict, p: dict, frame: dict, fx: dict, sizes: dict | N
              ("vent-stack", "vent", p[R + "vent_stack_od_in"]),
              ("hot", "hot", pex_od_in(sizes["hot"], ins(sizes["hot"]))),
              ("hot-return", "hot-return", pex_od_in(sizes["return"], ins(sizes["return"]))),
-             ("cold", "cold", pex_od_in(sizes["cold"], p[R + "cold_insulation_in"])),
-             ("loop-supply", "loop-supply", pex_od_in(sizes["loop"], p[R + "loop_insulation_in"])),
-             ("loop-return", "loop-return", pex_od_in(sizes["loop"], p[R + "loop_insulation_in"]))]
+             ("cold", "cold", pex_od_in(sizes["cold"], p[R + "cold_insulation_in"]))]
+    if sizes.get("loop") is not None:  # the network design's building loop, its pair a column
+        order += [("loop-supply", "loop-supply", pex_od_in(sizes["loop"], p[R + "loop_insulation_in"])),
+                  ("loop-return", "loop-return", pex_od_in(sizes["loop"], p[R + "loop_insulation_in"]))]
     out = {}
     for col in sorted({column(n) for n in fx}):
         names = sorted(n for n in fx if column(n) == col)
@@ -319,9 +320,12 @@ def default_sizes(apt: dict, p: dict) -> dict:
 
     d = design(apt, p)
     seg = {k: next(s["in"] for s in d["paths"][k]["segments"] if "riser" in s["segment"]) for k in ("cold", "hot")}
+    from .designs import floors
     from .routed import grown
 
-    loop = max(max(r["pipe_in"] for r in substation(apt, p)["risers"].values()), grown(p).get("loop_riser_in", {}).get("loop", 0.0))
+    # The edge design has no building loop (`designs.floors`): no riser pair.
+    loop = (max(max(r["pipe_in"] for r in substation(apt, p)["risers"].values()), grown(p).get("loop_riser_in", {}).get("loop", 0.0))
+            if floors(p) else None)
     return {"cold": seg["cold"], "hot": seg["hot"], "return": d["loop"]["return_riser_in"], "loop": loop}
 
 
@@ -757,11 +761,14 @@ def flat_equipment(apt: dict, p: dict, frame: dict, fx: dict, ch: dict, sf: list
     - **the washer and dryer** stacked against the plumbing wall in the utility closet, on its box;
     - **the ERV** in the closet's soffit over its free floor (between the door's wall and the
       stack, so its access door opens over floor), its length along the closet;
-    - **the radiant manifold's cabinet** on the closet's wall to the bath, by the door, 16 in. up;
+    - **the radiant manifold's cabinet** on the closet's wall to the bath, by the door, 16 in. up
+      (the network design's floors only);
     - **the mini-split's indoor unit** in the hall's soffit, its airflow along the hall, its
       non-piping side 6 in. off the hall's far wall; the 12 in. it wants on its piping side reaches
       past the hall over the partition (step 7b frames that partition to the soffit there);
     - **the load centre** flush in the hall's partition at the panel's bay (`feeder_chase`)."""
+    from .designs import floors
+
     sp = {s["id"]: s for s in sf}
     hang = p[R + "unit_hanger_in"] * IN
     out = []
@@ -783,14 +790,16 @@ def flat_equipment(apt: dict, p: dict, frame: dict, fx: dict, ch: dict, sf: list
         yc = (util["lo_m"][1] + util["hi_m"][1]) / 2
         s = sp[f"{name}/soffit-utility"]
         out.append(_box(f"{name}/erv", "erv", [xc - L / 2, yc - W / 2, s["hi"][2] - H], [xc + L / 2, yc + W / 2, s["hi"][2]], flat=name))
-        # The manifold cabinet: on the closet's wall to the bath, by the door's wall.
-        bath = by["bath"]
-        wall_y = util["lo_m"][1] if bath["hi_m"][1] <= util["lo_m"][1] + 1e-6 else util["hi_m"][1]
-        toward = 1.0 if wall_y == util["lo_m"][1] else -1.0
-        cw, chh, cd = (p[R + k] * IN for k in ("manifold_cab_w_in", "manifold_cab_h_in", "manifold_cab_d_in"))
-        x0 = far - into * p[R + "wall_gap_in"] * IN
-        zc0 = z0 + p[R + "manifold_floor_in"] * IN
-        out.append(_box(f"{name}/manifold", "manifold", [x0, wall_y, zc0], [x0 - into * cw, wall_y + toward * cd, zc0 + chh], flat=name))
+        # The manifold cabinet (the network design's floors): on the closet's wall to the bath, by
+        # the door's wall.
+        if floors(p):
+            bath = by["bath"]
+            wall_y = util["lo_m"][1] if bath["hi_m"][1] <= util["lo_m"][1] + 1e-6 else util["hi_m"][1]
+            toward = 1.0 if wall_y == util["lo_m"][1] else -1.0
+            cw, chh, cd = (p[R + k] * IN for k in ("manifold_cab_w_in", "manifold_cab_h_in", "manifold_cab_d_in"))
+            x0 = far - into * p[R + "wall_gap_in"] * IN
+            zc0 = z0 + p[R + "manifold_floor_in"] * IN
+            out.append(_box(f"{name}/manifold", "manifold", [x0, wall_y, zc0], [x0 - into * cw, wall_y + toward * cd, zc0 + chh], flat=name))
         # The mini-split's indoor unit, hung in the hall's soffit.
         hs = sp[f"{name}/soffit-hall"]
         mw, md, mh = (p[R + k] * IN for k in ("ms_w_in", "ms_d_in", "minisplit_h_in"))
@@ -823,19 +832,32 @@ def annex_equipment(apt: dict, p: dict) -> list[dict]:
     - **the backup heater** beside it, its control compartment's 36 in. of working space in front
       (NEC 110.26(A)), the plant's drop through the slab kept clear of it.
     The fire and domestic services' assemblies, the plate exchangers, pumps and mixing valve hang
-    on the walls above the floor (7b routes to them)."""
+    on the walls above the floor (7b routes to them).
+    In the edge design (`designs.plant_heat` "air"), the storage is ECO2's two tanks (the only ones it
+    warrants its CO2 units on), their front's `tank_front_in` toward the room for their side
+    connections and anodes; there is no heat pump in the room: the units stand outside
+    (`pad_units`)."""
+    from .designs import plant_heat
+
+    air = plant_heat(p) == "air"
     mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
     (_, y0, z0), (x1, y1, _) = mech["lo_m"], mech["hi_m"]
     g = p[R + "wall_gap_in"] * IN
-    D, Ht, anode = p[R + "tank_dia_in"] * IN, p[R + "tank_h_in"] * IN, p[R + "tank_anode_in"] * IN
+    if air:
+        c = "systems.co2_plant."
+        D, Ht, anode, count = p[c + "tank_dia_in"] * IN, p[c + "tank_h_in"] * IN, p[c + "tank_front_in"] * IN, p[c + "tank_count"]
+    else:
+        D, Ht, anode, count = p[R + "tank_dia_in"] * IN, p[R + "tank_h_in"] * IN, p[R + "tank_anode_in"] * IN, p[R + "tank_count"]
     tanks, top = [], y1 - g
-    for k in range(int(p[R + "tank_count"])):
+    for k in range(int(count)):
         tanks.append(_box(f"annex/storage-tank-{'ab'[k]}", "tank", [x1 - g - D, top - D, z0], [x1 - g, top, z0 + Ht],
                           service=[[x1 - g - D - anode, top - D, z0], [x1 - g - D, top, z0 + Ht]]))
         top -= D + g
-    hw, hd, hh = (p[R + k] * IN for k in ("hp_w_in", "hp_d_in", "hp_h_in"))
-    hp = _box("annex/heat-pump", "heat_pump", [x1 - g - hd, y0 + g, z0], [x1 - g, y0 + g + hw, z0 + hh],
-              service=[[x1 - g - hd - p[R + "hp_service_in"] * IN, y0 + g, z0], [x1 - g - hd, y0 + g + hw, z0 + hh]])
+    hp = []
+    if not air:
+        hw, hd, hh = (p[R + k] * IN for k in ("hp_w_in", "hp_d_in", "hp_h_in"))
+        hp = [_box("annex/heat-pump", "heat_pump", [x1 - g - hd, y0 + g, z0], [x1 - g, y0 + g + hw, z0 + hh],
+                   service=[[x1 - g - hd - p[R + "hp_service_in"] * IN, y0 + g, z0], [x1 - g - hd, y0 + g + hw, z0 + hh]])]
     sd, sh = p[R + "swing_dia_in"] * IN, p[R + "swing_h_in"] * IN
     xs = x1 - g - D - anode - g  # the swing tank's right side, past the storage's anode space
     swing = _box("annex/swing-tank", "tank", [xs - sd, y1 - g - sd, z0], [xs, y1 - g, z0 + sh],
@@ -844,7 +866,81 @@ def annex_equipment(apt: dict, p: dict) -> list[dict]:
     xb = xs - sd - g
     backup = _box("annex/backup-heater", "heater", [xb - bd, y1 - g - bd, z0], [xb, y1 - g, z0 + bh],
                   service=[[xb - bd, y1 - g - bd - p["systems.wiring.working_depth_in"] * IN, z0], [xb, y1 - g - bd, z0 + bh]])
-    return [*tanks, hp, swing, backup]
+    return [*tanks, *hp, swing, backup]
+
+
+def pad_units(apt: dict, p: dict) -> list[dict]:
+    """The edge design's CO2 units (`systems.co2_plant`; none in the network design) on a pad outside
+    the mechanical room, against annex-right's outside face over the room (its stretch without the
+    meter stack, which is centred on the electrical room), from the partition's end, as far from the
+    building's back wall and its flats' windows as the stretch lets: stacks of two, each unit on its stand, its
+    fan away from the wall and its back `back_in` off it, the upper `stack_in` over the lower. Each
+    unit's valves and wiring are on its right-hand side looking at its fan (here toward the
+    building's back wall), `side_in` kept clear there; `front_in` of air in front. The pad's top
+    taken at the annex's floor (no site plan yet sets the grade)."""
+    from .designs import plant_heat
+
+    if plant_heat(p) != "air":
+        return []
+    c = "systems.co2_plant."
+    annex = {x["id"]: x for x in apt["rooms"]["annex"]["parts"]}
+    face = annex["annex-right"]["hi_m"][1]
+    mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
+    w, h, d = (p[c + k] * IN for k in ("w_in", "h_in", "d_in"))
+    back, front, side, stack, stand = (p[c + k] * IN for k in ("back_in", "front_in", "side_in", "stack_in", "stand_in"))
+    n = int(p[c + "units"])
+    z0, x0 = mech["lo_m"][2], mech["hi_m"][0] - ((n + 1) // 2) * (w + side)
+    out = []
+    for k in range(n):
+        s_, up = divmod(k, 2)
+        xs = x0 + side + s_ * (w + side)
+        zb = z0 + stand + up * (h + stack)
+        y_b = face + back
+        out.append(_box(f"pad/co2-{k + 1}", "co2_unit", [xs, y_b, zb], [xs + w, y_b + d, zb + h],
+                        service=[[xs, y_b + d, zb], [xs + w, y_b + d + front, zb + h]],
+                        side=[[xs - side, y_b, zb], [xs, y_b + d + front, zb + h]], back=[[xs, face, zb], [xs + w, y_b, zb + h]]))
+    return out
+
+
+def pad_checks(apt: dict, p: dict, pad: list[dict], plant: list[dict]) -> list[tuple[str, bool, str]]:
+    """The edge design's units where ECO2 asks: each with its air in front and behind and its service
+    side clear of every other unit; all outside the annex against the mechanical room's stretch of
+    annex-right; each one's water lines to the storage within ECO2's length and rise. And the
+    nearest flat's window from them, reported (ECO2 states 37 dBA, at no stated distance)."""
+    if not pad:
+        return []
+    c = "systems.co2_plant."
+    mech = next(r for r in apt["rooms"]["rooms"] if r["id"] == "annex/mechanical")
+    face = {x["id"]: x for x in apt["rooms"]["annex"]["parts"]}["annex-right"]["hi_m"][1]
+    spaces = [(u["id"], k, {"lo": u[k][0], "hi": u[k][1]}) for u in pad for k in ("service", "side", "back")]
+    hit = [f"{i} {k} / {u['id']}" for i, k, sp in spaces for u in pad if u["id"] != i and _overlap(sp, u)]
+    stretch = all(mech["lo_m"][0] - 1e-6 <= min(u["lo"][0], u["side"][0][0]) and u["hi"][0] <= mech["hi_m"][0] + 1e-6
+                  and u["back"][0][1] >= face - 1e-6 for u in pad)
+    # Each unit's lines: out of its right-hand side, along the wall to over the nearer tank, through
+    # the wall and on to the tank's side, there and back (ECO2's length is the pair's).
+    tanks = [e for e in plant if e["id"].startswith("annex/storage-tank")]
+    lines = {}
+    for u in pad:
+        ux, uz = u["lo"][0], (u["lo"][2] + u["hi"][2]) / 2
+        t = min(tanks, key=lambda e: abs((e["lo"][0] + e["hi"][0]) / 2 - ux))
+        tx, ty = (t["lo"][0] + t["hi"][0]) / 2, (t["lo"][1] + t["hi"][1]) / 2
+        one = abs(tx - ux) + abs(u["lo"][1] - ty) + abs(uz - (t["lo"][2] + t["hi"][2]) / 2)
+        lines[u["id"]] = {"ft": 2 * one / FT, "rise_ft": max(0.0, (t["hi"][2] - u["lo"][2])) / FT}
+    worst = max(lines.values(), key=lambda x: x["ft"])
+    wins = [o for o in apt["openings"] if o.get("flat") and o.get("kind") == "window"]
+    near = min((math.dist([(a + b) / 2 for a, b in zip(u["lo"], u["hi"])], [(a + b) / 2 for a, b in zip(o["lo_m"], o["hi_m"])]), o["id"])
+               for u in pad for o in wins)
+    return [
+        ("the CO2 units' air in front and behind and their service sides clear of each other (ECO2: 6 in. behind, "
+         f"{p[c + 'front_in']:g} in front, {p[c + 'side_in']:g} on the right-hand side, {p[c + 'stack_in']:g} between stacked units)",
+         not hit, "; ".join(hit) or f"{len(pad)} units, in {(len(pad) + 1) // 2} stacks"),
+        ("the CO2 units outside the annex, against the mechanical room's stretch of annex-right (clear of the meter stack)", stretch,
+         f"{(max(u['hi'][0] for u in pad) - min(u['side'][0][0] for u in pad)) / IN:.0f} in. of the room's "
+         f"{(mech['hi_m'][0] - mech['lo_m'][0]) / IN:.0f}"),
+        (f"each unit's water lines to the storage within ECO2's {p[c + 'line_max_ft']:g} ft and {p[c + 'rise_max_ft']:g} ft of rise",
+         all(x["ft"] <= p[c + "line_max_ft"] and x["rise_ft"] <= p[c + "rise_max_ft"] for x in lines.values()),
+         f"longest {worst['ft']:.0f} ft there and back; the nearest flat window {near[0]:.1f} m from a unit ({near[1]})"),
+    ]
 
 
 def annex_drops(apt: dict, p: dict) -> dict[str, list[float]]:
@@ -937,7 +1033,7 @@ def placements(apt: dict, p: dict) -> dict:
     eq = flat_equipment(apt, p, frame, fx, ch, sf)
     plant = annex_equipment(apt, p)
     return {"frame": frame, "fixtures": fx, "verticals": vs, "chase": ch, "terminations": terms, "soffits": sf, "units": units,
-            "equipment": eq, "plant": plant}
+            "equipment": eq, "plant": plant, **({"pad": pad} if (pad := pad_units(apt, p)) else {})}
 
 
 def summary(apt: dict, p: dict) -> dict:
@@ -946,7 +1042,8 @@ def summary(apt: dict, p: dict) -> dict:
     fr = d.pop("frame")
     checks = (frame_checks(apt, p, fr) + fixture_checks(apt, p, fr, d["fixtures"]) + vertical_checks(apt, p, fr, d["fixtures"], d["verticals"])
               + chase_checks(apt, p, d["chase"]) + soffit_checks(apt, p, fr, d["soffits"]) + termination_checks(apt, p, d["terminations"])
-              + roof_checks(apt, p, d["units"]) + equipment_checks(apt, p, d["equipment"], d["plant"], d["soffits"]))
+              + roof_checks(apt, p, d["units"]) + equipment_checks(apt, p, d["equipment"], d["plant"], d["soffits"])
+              + pad_checks(apt, p, d.get("pad", []), d["plant"]))
     return {"revision": apt["revision"], "frame_members": len(fr["members"]), "checks": checks, "design": d,
             "hatch_command": hatch_command(apt, p), "tub_half_in": p["systems.design.tub_width_in"] / 2}
 

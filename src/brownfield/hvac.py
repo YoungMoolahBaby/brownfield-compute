@@ -738,6 +738,18 @@ def routed_cooling(apt: dict, p: dict, routes) -> dict:
     return out
 
 
+# The edge design's mini-splits are the flats' heat (`designs.floors`). The kitchen and the entry, open
+# to the living room, and the hall and the passage (use "hall"), on the unit's return path, are heated
+# with the living room, their heat in its share (the ERV's kitchen exhaust draws the living room's air
+# through the kitchen). The bath, a closed room the floors heated, has a small electric wall heater on
+# its own circuit (`systems.electrical.bath_heater_va`; `HEAT_HEATER`): 7b found no path for a supply
+# duct to it in the back flats, and in the front flats it crowded out the ERV's supply (11c). The
+# utility closet is no space for occupancy (IBC 1204.1 asks heat of those).
+HEAT_OWN: tuple = ()
+HEAT_HEATER = ("bath",)
+HEAT_WITH_LIVING = ("kitchen", "entry", "hall")
+
+
 def cooling_ducts(apt: dict, p: dict, cool: dict | None = None) -> dict:
     """Each flat's ducted mini-split: the smallest candidate (`systems.minisplit_12`, then
     `_18`, basis of design) whose sensible and total capacity at the design dry bulb, derated for
@@ -745,11 +757,22 @@ def cooling_ducts(apt: dict, p: dict, cool: dict | None = None) -> dict:
     (`loads.cooling_design`). Its indoor unit in a dropped ceiling over the flat's hall, a return
     grille beside it, a supply to every room whose design sensible load is at least
     `systems.minisplit.room_min_w`, its airflow the room's share of those rooms' loads at the
-    unit's High fan; the ducts sized by `size_paths` to the unit's set external static pressure."""
+    unit's High fan; the ducts sized by `size_paths` to the unit's set external static pressure.
+    In the edge design, where it heats (the bath by its own heater, `HEAT_HEATER`),
+    each supply carries the larger of its room's share of the cooling and of the flat's heat (the
+    open rooms' with the living room's, `HEAT_WITH_LIVING`): the larger of its share of the served
+    rooms' cooling (the network design's split), of the unit's heating capacity at the design dry
+    bulb its heat takes (Fujitsu's table, derated for the line set), and `room_least_cfm`, the
+    shares then scaled to the unit's air. Heat is checked room by room (`fallback.space_heat`; IBC
+    1204.1), cooling for the flat as the network design does; `heat` gives each room's heat,
+    cooling and air."""
+    from .designs import floors
     from .loads import cooling_design
     m = "systems.minisplit."
     cool = cool or cooling_design(apt, p)
     rooms_by = {r["id"]: r for r in apt["rooms"]["rooms"]}
+    heats = not floors(p)
+    rh = room_heat(apt, p, design_case(apt, p, preheat=True)) if heats else None
     out = {}
     for name, rooms in by_flat(apt).items():
         hall = next(r for r in rooms if r["use"] == "hall")
@@ -764,21 +787,56 @@ def cooling_ducts(apt: dict, p: dict, cool: dict | None = None) -> dict:
         key = chosen or "minisplit_18"
         tot, sen = unit_capacity(p, key, line)
         loads_w = {r["id"]: cool["rooms"][r["id"]][0] for r in rooms if r["id"] in cool["rooms"]}
-        served = {rid: w for rid, w in loads_w.items() if w >= p[m + "room_min_w"]}
-        total = sum(served.values())
         cfm = p[f"systems.{key}.cfm"]
-        branches = {rid: (cfm * w / total, _xy(rooms_by[rid])) for rid, w in served.items()}
+        heat = None
+        if not heats:
+            served = {rid: w for rid, w in loads_w.items() if w >= p[m + "room_min_w"]}
+            total = sum(served.values())
+            branches = {rid: (cfm * w / total, _xy(rooms_by[rid])) for rid, w in served.items()}
+        else:
+            use = {r["id"]: r["use"] for r in rooms}
+            living = next(r["id"] for r in rooms if r["use"] == "living")
+            design = {x["room"]["id"]: x["design_w"] for x in rh[name]["rooms"]}
+            need = {rid: w for rid, w in design.items() if use[rid] not in HEAT_WITH_LIVING + HEAT_HEATER + ("utility",)}
+            need[living] += sum(w for rid, w in design.items() if use[rid] in HEAT_WITH_LIVING)
+            served = {rid: w for rid, w in loads_w.items() if w >= p[m + "room_min_w"] or use[rid] in HEAT_OWN}
+            from .fallback import capacity_at, pipe_factor
+
+            # Fujitsu's correction starts at 5 m of line: a shorter one (the top floor's, square) takes
+            # its 5 m figure, a little low, so the split errs toward the heat.
+            roof_m = apt["storey_m"] * max(f["floor"] for f in apt["flats"])
+            hcap = capacity_at(p["systems.design.heating_c"])[0] * 1000 * pipe_factor(max(line * FT, 5.0), hall["hi_m"][2] - roof_m)
+            cooled = {rid: w for rid, w in served.items() if w >= p[m + "room_min_w"]}
+            c_tot = sum(cooled.values())
+            f = {rid: max(cooled.get(rid, 0.0) / c_tot, need.get(rid, 0.0) / hcap, p[m + "room_least_cfm"] / cfm) for rid in served}
+            s = sum(f.values())
+            branches = {rid: (cfm * f[rid] / s, _xy(rooms_by[rid])) for rid in served}
+            heat = {"rooms": {rid: {"need_w": need.get(rid, 0.0), "cool_w": served[rid], "cfm": branches[rid][0]} for rid in served},
+                    "with_living": [rid for rid in design if use[rid] in HEAT_WITH_LIVING],
+                    "heaters": {rid: {"need_w": design[rid], "heater_w": p["systems.electrical.bath_heater_va"]}
+                                for rid in design if use[rid] in HEAT_HEATER and design[rid] > 0},
+                    "between": [rid for rid in design if use[rid] in HEAT_HEATER and design[rid] <= 0],
+                    "unheated": {rid: w for rid, w in design.items() if use[rid] == "utility"}, "cfm": cfm,
+                    "heat_w": hcap, "sensible_w": sen}
         ducts = size_paths(_xy(hall), branches, p[m + "esp_inwc"], p, common=(cfm, 0.0, p["systems.ducts.fittings_el_ft"]))
         out[name] = {"unit": key, "covered": chosen is not None, "line_ft": line, "ducts": ducts,
                      "sensible_w": sensible, "latent_w": latent, "capacity_w": tot, "sensible_capacity_w": sen,
                      "unserved_w": sum(w for rid, w in loads_w.items() if rid not in served)}
+        if heat is not None:
+            out[name]["heat"] = heat
     return out
 
 
 # ---- The step as data and as text ----
 
 def summary(apt: dict, p: dict) -> dict:
-    """Step 3 for the latest revision (`apt`), with each known case's check, as data."""
+    """Step 3 for the latest revision (`apt`), with each known case's check, as data: the network
+    design's floors, loop and substation, or the edge design's mini-splits heating every room
+    (`summary_edge`)."""
+    from .designs import floors
+
+    if not floors(p):
+        return summary_edge(apt, p)
     sub = substation(apt, p)
     alt = radiant(apt, p, alt_covering=True)
     chart = chart_check(p)
@@ -825,10 +883,58 @@ def summary(apt: dict, p: dict) -> dict:
     }
 
 
+def summary_edge(apt: dict, p: dict) -> dict:
+    """Step 3 for the edge design: no floors, loop or substation; each flat's mini-split its heat,
+    every room the code asks heat of given its share at the design dry bulb (`cooling_ducts`)."""
+    t1a = [(t, g, psi, pex_psi_per_100ft(g, (t - 32) / 1.8, p["systems.radiant.bore_in"]))
+           for t, rows in REHAU_TABLE_1A.items() for g, psi in rows.items() if g >= 0.6]
+    worst_t1a = max(abs(m / psi - 1) for _, _, psi, m in t1a)
+    vent = ventilation_ducts(apt, p)
+    cool = cooling_ducts(apt, p)
+    case = design_case(apt, p, preheat=True)
+    erv_in = min(f["supply_c"] for f in case["flats"].values())
+    pre = preheat_energy(apt, p)
+    rooms = [(n, rid.split("/")[-1], r["cfm"] / c["heat"]["cfm"] * c["heat"]["heat_w"], r["need_w"])
+             for n, c in cool.items() for rid, r in c["heat"]["rooms"].items()]
+    rooms += [(n, rid.split("/")[-1], r["heater_w"], r["need_w"]) for n, c in cool.items() for rid, r in c["heat"]["heaters"].items()]
+    least = min(rooms, key=lambda x: x[2] - x[3])
+    flat_heat = {n: sum(r["need_w"] for r in c["heat"]["rooms"].values()) for n, c in cool.items()}  # the bath's by its heater
+    return {
+        "revision": apt.get("revision"), "design": "edge",
+        "checks": [
+            ("friction in 1/2 in. PEX against REHAU's Table 1A, 0.6-1.0 gpm, 60 and 120 F", worst_t1a <= 0.05, f"worst {worst_t1a:.1%}"),
+            ("every ERV's supply at or over PHI's minimum at the design hour, with no defrost (preheated to at least Broan's 0 C)",
+             erv_in >= p["systems.erv.supply_min_c"] - 1e-9 and pre["setpoint_c"] >= p["systems.erv.preheat_min_c"],
+             f"supply {erv_in:.1f} C; preheated to {pre['setpoint_c']:.1f} C"),
+            ("every ERV path within its fan's pressure, its airflow within its range",
+             all(v[s_]["ok"] and v["in_range"] for v in vent.values() for s_ in ("supply", "exhaust")), ""),
+            ("every mini-split path within the unit's pressure", all(c["ducts"]["ok"] for c in cool.values()), ""),
+            ("every flat's mini-split covers its design sensible and total loads, derated for its line set",
+             all(c["covered"] for c in cool.values()),
+             ", ".join(sorted({c["unit"] for c in cool.values()})) + f"; line sets {min(c['line_ft'] for c in cool.values()):.0f}-"
+             f"{max(c['line_ft'] for c in cool.values()):.0f} ft"),
+            ("every flat's mini-split heats it at the design dry bulb, its line set counted (Fujitsu's tables)",
+             all(c["heat"]["heat_w"] >= flat_heat[n] for n, c in cool.items()),
+             f"least spare {min(c['heat']['heat_w'] - flat_heat[n] for n, c in cool.items()):.0f} W"),
+            ("every room the code asks heat of (IBC 1204.1) gets its heat at the design dry bulb, by its share of the unit's air "
+             "(the kitchen, entry, hall and passage with the living room; the bath by its wall heater; the utility closet no space for "
+             "occupancy)",
+             all(give >= need - 1e-9 for _, _, give, need in rooms), f"least spare {least[0]} {least[1]}: {least[2]:.0f} W against {least[3]:.0f}"),
+            ("the mini-split's set pressure inside its range",
+             all(p[f"systems.{c['unit']}.esp_min_inwc"] <= p["systems.minisplit.esp_inwc"] <= p[f"systems.{c['unit']}.esp_max_inwc"]
+                 for c in cool.values()), f"{p['systems.minisplit.esp_inwc']:g} in. w.c."),
+        ],
+        "preheat": pre, "erv": {n: {"preheat_w": f["preheat_w"], "supply_c": f["supply_c"]} for n, f in case["flats"].items()},
+        "ventilation_ducts": vent, "cooling": cool,
+    }
+
+
 def report(s: dict) -> str:
     """Step 3 in plain text."""
     from .systems import report as checks
 
+    if s.get("design") == "edge":
+        return report_edge(s)
     sub = s["substation"]
     lines = [f"Pass 3g step 3: heating, cooling and ventilation designed ({s['revision']})", "", checks(s["checks"]), "",
              f"The building loop at design: {sub['w'] / 1000:.1f} kW, {sub['supply_c']:.1f} C out and {sub['return_c']:.1f} C back, "
@@ -869,4 +975,24 @@ def report(s: dict) -> str:
               f"{d['friction_rate']:.3f} in./100 ft; " + ", ".join(
                   f"{k.split('/')[1]} {b['cfm']:.0f} cfm {b['in']} in. ({b['fpm']:.0f} fpm)" for k, b in d["branches"].items())
               + f"; return {d['common']['in']} in.; rooms left to the moving air {c['unserved_w']:.0f} W"]
+    return "\n".join(lines)
+
+
+def report_edge(s: dict) -> str:
+    """Step 3 for the edge design in plain text: each flat's mini-split as its heat, room by room."""
+    from .systems import report as checks
+
+    lines = [f"Pass 3g step 3: heating, cooling and ventilation designed, the edge design ({s['revision']})", "", checks(s["checks"]), "",
+             "Each flat's mini-split heats it (no floors, loop or substation); its air to each room by the larger of the room's "
+             "share of the cooling and of its heat, the kitchen, entry, hall and passage with the living room:"]
+    for n in sorted(s["cooling"], key=lambda n: (n[0], n)):
+        c = s["cooling"][n]
+        h = c["heat"]
+        lines.append(f"  {n:14s} {c['unit']}, {h['heat_w']:.0f} W of heat at the design dry bulb; " + ", ".join(
+            f"{rid.split('/')[1]} {r['cfm']:.0f} cfm ({r['cfm'] / h['cfm'] * h['heat_w']:.0f} W for {r['need_w']:.0f})" for rid, r in h["rooms"].items()))
+    v = s["ventilation_ducts"]["2-front-left"]
+    pre, e = s["preheat"], s["erv"]["2-front-left"]
+    lines += ["", f"Ventilation, 2-front-left: {v['cfm']:.0f} cfm. Its preheater: {e['preheat_w']:.0f} W at the design hour, to "
+              f"{pre['setpoint_c']:.1f} C, so the supply leaves at {e['supply_c']:.1f} C; {pre['kwh_year']:.0f} kWh a year over "
+              f"{pre['hours_year']:.0f} hours (ERA5 2005-2023)."]
     return "\n".join(lines)

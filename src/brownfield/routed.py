@@ -519,20 +519,23 @@ def summary(apt: dict, p: dict, routes: Routes) -> dict:
 
 
 def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
+    """Steps 3-6 on the routes and their checks. The building loop and its substation are the
+    network design's only (`designs.floors`): the edge design's s7 has no `loop`."""
     from . import electrical, fire, hvac, plumbing
+    from .designs import floors
     from .routecheck import penetrations
 
     sq_fire = fire.hydraulics(apt, p)
     fh = fire.routed_hydraulics(apt, p, routes)
     ducts = hvac.routed_ducts(apt, p, routes)
     cool = hvac.routed_cooling(apt, p, routes)
-    sq_sub, sub = hvac.substation(apt, p), hvac.substation(apt, p, routes=routes)
+    sq_sub, sub = (hvac.substation(apt, p), hvac.substation(apt, p, routes=routes)) if floors(p) else (None, None)
     sq_water, water = plumbing.design(apt, p), plumbing.design(apt, p, routes)
     sq_el, el = electrical.design(apt, p), electrical.design(apt, p, routes)
     vt = vents(apt, p, routes)
     ob = obstructions(apt, p, routes.body)
     pen = penetrations(apt, p, routes.body, routes.rt)
-    want = asks(apt, p, routes, fh, water, vt, sub["riser_in"])
+    want = asks(apt, p, routes, fh, water, vt, sub["riser_in"] if sub else None)
     pl, w, h = "systems.plumbing.", "systems.wiring.", "systems.hot_water."
     c4, rc = water["c404"], water["recirc"]
     erv_ok = all(d[k]["ok"] for d in ducts.values() for k in ("erv_supply", "erv_exhaust"))
@@ -568,6 +571,7 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
         ("every mini-split covers its flat's design loads on its routed line set (Fujitsu's derating)",
          all(c["covered"] for c in cool.values()),
          f"line sets {min(c['line_ft'] for c in cool.values()):.0f}-{max(c['line_ft'] for c in cool.values()):.0f} ft"),
+    ] + ([
         ("the building loop's risers (a pair a column) and mains within the velocity limit, no main larger than routed",
          all(r["fps"] <= p["systems.substation.max_velocity_fps"] + 1e-9 for r in sub["risers"].values())
          and max(v[k]["largest_main_in"] for v in sub["routed_loop"]["paths"].values() for k in ("supply", "return")) <= sub["header_in"] + 1e-9,
@@ -575,6 +579,7 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
         (f"the building loop's pump covers its worst routed path at its highest fixed speed, {p['systems.substation.pump_margin']:.0%} in hand "
          "(Grundfos's ALPHA2 15-55 curve III, read off its leaflet)", sub["pump_ok"],
          f"{sub['pump_ft']:.1f} ft needed at {sub['gpm']:.2f} gpm against {sub['pump_curve_ft']:.1f}; risers {sub['riser_in']:g} in."),
+    ] if sub else []) + [
         ("pressure to spare at every flat's shower on the routed pipe, cold and hot (Appendix E; PEX sweeps, Uponor's "
          "fittings), within the street's at the peak", all(v >= 0 for k in ("cold", "hot") for v in water["paths"][k]["by_flat"].values())
          and water["street_ok"],
@@ -619,11 +624,24 @@ def _designs(apt: dict, p: dict, routes: Routes, runs: list) -> dict:
     sq_vent = hvac.ventilation_ducts(apt, p)
     sq_cool = hvac.cooling_ducts(apt, p)
     tel = lambda xs: f"{min(xs):.0f}-{max(xs):.0f}"  # noqa: E731
-    return {"checks": checks, "fire": fh, "square_fire": sq_fire, "ducts": ducts, "cooling": cool, "loop": sub, "square_loop": sq_sub,
+    return {"checks": checks, "fire": fh, "square_fire": sq_fire, "ducts": ducts, "cooling": cool,
+            **({"loop": sub, "square_loop": sq_sub} if sub else _edge_heat(apt, p, cool)),
             "square_erv_tel": tel([v[k]["tel_ft"] for v in sq_vent.values() for k in ("supply", "exhaust")]),
             "square_ms_tel": tel([c["ducts"]["tel_ft"] for c in sq_cool.values()]),
             "water": water, "square_water": sq_water, "electrical": el, "square_electrical": sq_el, "vents": vt, "obstructions": ob,
             "penetrations": pen, "asks": want, "circuits": len(circuits), "stale": stale, "limits": lim}
+
+
+def _edge_heat(apt: dict, p: dict, cool: dict) -> dict:
+    """The edge design's heat on the routes, in the loop's place: each flat on its mini-split, room by
+    room (`fallback.space_heat`), and each ERV's preheat at the design hour (`loads.design_case`)."""
+    from .fallback import space_heat
+    from .loads import design_case
+    from .routing import placements
+
+    case = design_case(apt, p, preheat=True)
+    return {"heat": space_heat(apt, p, {"cooling": cool}, placements(apt, p)),
+            "erv": {n: {"preheat_w": f["preheat_w"], "supply_c": f["supply_c"]} for n, f in case["flats"].items()}}
 
 
 def report(s: dict) -> str:
@@ -635,7 +653,7 @@ def report(s: dict) -> str:
     lim = s["limits"]
     fs, fh = s["square_fire"], s["fire"]
     sw, w = s["square_water"], s["water"]
-    sl, lp = s["square_loop"], s["loop"]
+    sl, lp = s.get("square_loop"), s.get("loop")
     se, el = s["square_electrical"], s["electrical"]
     d, cool, vt, ob, pen = s["ducts"], s["cooling"], s["vents"], s["obstructions"], s["penetrations"]
     rng = lambda xs, f="{:.0f}": f"{f.format(min(xs))}-{f.format(max(xs))}"  # noqa: E731
@@ -656,8 +674,9 @@ def report(s: dict) -> str:
                  + "/".join(f"{v:g}" for v in held) + " in.")
     lines.append(f"  Line sets: {rng([c['square_ft'] for c in cool.values()])} ft -> {rng([c['line_ft'] for c in cool.values()])} ft; "
                  f"least capacity left {min(c['sensible_capacity_w'] - c['sensible_w'] for c in cool.values()):.0f} W sensible")
-    lines.append(f"  The building loop: pump {sl['pump_ft']:.1f} -> {lp['pump_ft']:.1f} ft ({lp['pump_path']}); risers "
-                 + ", ".join(f"{k} {r_['pipe_in']:g} in." for k, r_ in lp["risers"].items()))
+    if lp:
+        lines.append(f"  The building loop: pump {sl['pump_ft']:.1f} -> {lp['pump_ft']:.1f} ft ({lp['pump_path']}); risers "
+                     + ", ".join(f"{k} {r_['pipe_in']:g} in." for k, r_ in lp["risers"].items()))
     lines.append(f"  The hot-water loop: {sw['loop']['loss_btuh'] / 3.412142:.0f} -> {w['loop']['loss_btuh'] / 3.412142:.0f} W "
                  f"({w['loop']['w_per_flat']:.0f} a flat, {w['loop']['flats_loss_btuh'] / 3.412142:.0f} W of it in the flats' own loops); "
                  f"returns {w['loop']['return_main_in']:g} in. mains, {w['loop']['return_riser_in']:g} in. risers, "

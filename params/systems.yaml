@@ -644,6 +644,166 @@ hot_water:
     unit: gal, its own tank
     conf: high
     source: "the same sheet, p. 2: 'DRE-52 50' gal"
+co2_plant:
+  # The edge design's hot-water plant (pass 3g step 11b, Addendum 11): the network design's storage,
+  # swing tank, backup heater and loops, its heat from outdoor CO2 heat pump water heaters in place of
+  # HX-1 and HP-1. The basis of design is ECO2 Systems' SANCO2, the reference unit Ecosizer's engine
+  # names; ECO2 warrants it only on its own storage tanks. ECO2's documents are saved in data/raw/pass3g/step11/eco2/.
+  units:
+    value: 4
+    unit: SANCO2 GS5-45HPC-D outdoor units on the one storage
+    conf: decision
+    source: "ECO2 Systems' smallest published multi-unit layout, 4-HPWHs-1-365-Vert-Tnk-Swing-80.pdf (drawn 09/02/25; data/raw/pass3g/step11/eco2/): four units on one storage. Four give 18 kW above 5 F against Ecosizer's primary, one unit spare, and a margin for the reduction below 5 F, which ECO2 doesn't publish (the step 11b design)"
+  unit_kw:
+    value: 4.5
+    unit: kW, a unit's heating capacity at any outdoor temperature above full_above_f
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Nom Heating Capacity (kw) 4.5kw'; SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 10: 'The SANCO2 system capacity is rated at a minimum of 4.5Kw (15,400 Btu/h) at all ambient temperatures above 5°F. Below 5°F, total capacity is reduced, the amount of reduction will depend on the outdoor temperature.'"
+  full_above_f:
+    value: 5
+    unit: F, the outdoor temperature above which a unit gives its full capacity (below it, less, by an amount ECO2 doesn't publish)
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 10 (unit_kw)"
+  min_ambient_f:
+    value: -25
+    unit: F, the coldest outdoor air a unit runs in
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Ambient Operating Range -25 to 114°F'"
+  storage_f:
+    value: 145
+    unit: F, the storage the units heat to in winter (the edge design's Ecosizer storage temperature)
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 10: '150oF hot water down to 65oF ambient temperature and then 145oF down to -25oF outdoor ambient'; ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Hot Water Temperature (°F) 145°F / 150°F'"
+  cop_17f:
+    value: 2.6
+    unit: a unit's heating COP at 17 F outdoors
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Heating COP @ 17°F Ambient 2.6'"
+  cop_43f:
+    value: 4.2
+    unit: a unit's heating COP at 43 F outdoors
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Heating COP @ 43°F Ambient 4.2'"
+  cop_80f:
+    value: 5.5
+    unit: a unit's heating COP at 80 F outdoors
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Heating COP @ 80°F Ambient 5.5'"
+  mca_a:
+    value: 7.2
+    unit: A, a unit's minimum circuit ampacity at 208/230 V single phase
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'MCA (Amps) 7.2A'; 'Power Voltage 208/230v-1Ph-60Hz'"
+  breaker_a:
+    value: 15
+    unit: A, a unit's breaker
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Breaker Size 15A'"
+  drain_pan_w:
+    value: 132
+    unit: W, a unit's drain-pan heater (the cold-climate model's), on in defrost below about 34 F
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Drain Pan Heater MOC/Watts 0.6A / 132W'"
+  heat_trace_w:
+    value: 138
+    unit: W, the heat trace on a unit's water lines at 5 F outdoors (ECO2's FG2-18L kit, 18 ft, one a unit)
+    conf: medium
+    source: "ECO2 Systems submittal FG2-18L Trace Heat Kit (09-2026; data/raw/pass3g/step11/eco2/): 'Min Output on pipe at 5°F (Watts)' read with its 40 F figure, 108 W and 138 W, as the table's text runs; 'Circuit Breaker Size 15A'. The warranty asks heat trace where 'winter ambient temperature will fall below 27°F' (GS5 Installation Manual 20962971 (K), p. 36)"
+  sound_dba:
+    value: 37
+    unit: dBA, a unit's noise level as ECO2 states it (no distance given)
+    conf: low
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Noise Level (DbA) 37'. ECO2 states no distance, sound power or test: compared beside the mini-splits' outdoor units, not against a limit"
+  w_in:
+    value: 35.125
+    unit: in., a unit's width (the larger of its drawing's two face dimensions, 35-1/8 and 32-1/4 in.)
+    conf: medium
+    source: "ECO2 Systems' GS5-45HPC-D cold-climate brochure (REV 02272024; data/raw/pass3g/step11/eco2/), its dimension drawing: '32-1/4\"', '35-1/8\"', '15.0\"' without saying which is which: the larger taken for both width and height"
+  h_in:
+    value: 35.125
+    unit: in., a unit's height (the larger of the drawing's two face dimensions)
+    conf: medium
+    source: "the same drawing (w_in)"
+  d_in:
+    value: 15.0
+    unit: in., a unit's depth
+    conf: medium
+    source: "the same drawing (w_in): '15.0\"'"
+  back_in:
+    value: 6
+    unit: in., kept behind a unit
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 13: 'Ensure that a minimum distance of 6\" behind the unit and 12\" in front of the unit is maintained, otherwise, the condenser airflow could be affected.'"
+  front_in:
+    value: 24
+    unit: in., kept in front of a unit (ECO2's 12 in. least; the 24 in. it calls desirable)
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 13 (back_in): 12 in.; GS5 Installation Manual 20962971 (K) p. 5: '24\" is desirable'"
+  side_in:
+    value: 24
+    unit: in., kept on a unit's right-hand side for service (its valves and wiring)
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 13: 'all valve and electrical connections are on the RHS of the outdoor unit when looking at the condenser fan. ECO2 recommends a minimum of 18\" separation when stacking the units vertically and 24\" for RHS service access.'"
+  stack_in:
+    value: 18
+    unit: in., between two units stacked
+    conf: high
+    source: "SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 13 (side_in)"
+  stand_in:
+    value: 12
+    unit: in., a unit's stand above the pad (above the snow)
+    conf: high
+    source: "ECO2 Systems submittal ECO-HPSTD-12 mounting stand (12-2022; data/raw/pass3g/step11/eco2/): raises the unit '12\" above snow'"
+  line_max_ft:
+    value: 66
+    unit: ft, the most water line between a unit and its tank, there and back as one length
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): the pump's 'maximum lift of 23ft and total piping length of 66ft'"
+  rise_max_ft:
+    value: 23
+    unit: ft, the most a unit's water lines may rise to its tank
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf) (line_max_ft)"
+  tank_gal:
+    value: 200
+    unit: gal, each storage tank (ECO-200GLBK)
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-ECO200-072025, ECO-200GLBK (data/raw/pass3g/step11/eco2/ECO-200GLBK-Tank-Submittal-07-2025.pdf), p. 1: 'Tank Volume Actual/Nominal 200 Gallons'. ECO2's 285 and 360 gal tanks are 40 in. across their sprayed-on foam (SUB-ECO2-ECO285-022024, SUB-ECO2-ECO360-022024: '40\" O.D. INSULATION'): too wide for the mechanical room's 42 in. door"
+  tank_count:
+    value: 2
+    unit: storage tanks, in series (ECO2's 8-unit drawing pipes its two so)
+    conf: decision
+    source: "the step 11b design: two ECO-200GLBK hold 400 gal, over the storage Ecosizer asks at 145 F; ECO2's 8-HPWHs-1-360-Vert-Tnks-1-285-Swing-80.pdf (data/raw/pass3g/step11/eco2/) pipes its two tanks in series, the first's top to the second's bottom"
+  tank_dia_in:
+    value: 34.0
+    unit: in., each tank's diameter over its insulation
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-ECO200-072025, ECO-200GLBK (data/raw/pass3g/step11/eco2/ECO-200GLBK-Tank-Submittal-07-2025.pdf), p. 2, its drawing: 34.00 in. across"
+  tank_h_in:
+    value: 77.2
+    unit: in., each tank's height to its jacket (its hot outlet's nipple above)
+    conf: medium
+    source: "ECO2 Systems submittal SUB-ECO2-ECO200-072025, ECO-200GLBK (data/raw/pass3g/step11/eco2/ECO-200GLBK-Tank-Submittal-07-2025.pdf), p. 2: 77.2 in. to the jacket; the hot outlet's 2 1/2 in. nipple on top not dimensioned"
+  tank_front_in:
+    value: 24
+    unit: in., kept in front of each tank (its connections and its two anodes)
+    conf: placeholder
+    source: "judgement, until ECO2 gives a service clearance: the tank's connections are on its side (SANCO2 GS4 Technical Book (7-29-2021) (data/raw/pass3g/step11/eco2/SANCO2-GS4-Technical-Manual-7-29-2021.pdf) p. 11: 'SANCO2 tanks have all of the connections on the sides of the tank'), and its 'Anodes 2 x Magnesium' (ECO2 Systems submittal SUB-ECO2-ECO200-072025, ECO-200GLBK (data/raw/pass3g/step11/eco2/ECO-200GLBK-Tank-Submittal-07-2025.pdf) p. 1)"
+  start_f:
+    value: 113
+    unit: F, the storage sensor's reading under which the units start
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'Tank Temperature to Start 113°F'"
+  stop_inlet_f:
+    value: 118
+    unit: F, a unit's own inlet water at which it stops
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-GS5D-072024, GS5-45HPC-D, p. 1 (data/raw/pass3g/step11/eco2/GS5-45HPC-D-Submittal-07-2024-1.pdf): 'GS5 Inlet Water Temp to Stop 118°F'"
+  tank_lb:
+    value: 875
+    unit: lb, each tank installed (empty)
+    conf: high
+    source: "ECO2 Systems submittal SUB-ECO2-ECO200-072025, ECO-200GLBK (data/raw/pass3g/step11/eco2/ECO-200GLBK-Tank-Submittal-07-2025.pdf), p. 1: 'Installed Tank Weight (lbs) 875lbs'"
 electrical:
   # NEC 2020 Article 220 as Mike Holt works it (EC&M, 'Multifamily Dwelling Unit Service and Feeder
   # Calculations', 2009-12-01, free): the optional multifamily calculation, 220.84.
@@ -788,6 +948,13 @@ electrical:
     unit: VA, the radiant manifold's zone actuators and their 24 V transformer, on the ERV's circuit
     conf: placeholder
     source: "placeholder until the actuators and controls are chosen (step 3's manifold has up to six loops)"
+  bath_heater_va:
+    # Fixed for now (500-1000 W would be its range): a varied input shifts every later draw of step 10's
+    # Monte Carlo, which prices the network design; 10i draws it when it prices the edge design.
+    value: 500
+    unit: VA, the edge design's bath wall heater, 120 V, fan-forced, with its own thermostat, on the bathroom's 20 A circuit
+    conf: placeholder
+    source: "judgement, until a heater is chosen: the smallest common fan-forced wall heaters are 500 W at 120 V. NEC 2020 210.11(C)(3) Exception lets a 20 A circuit that supplies a single bathroom also supply other equipment within it per 210.23(A)(1) and (A)(2): fastened-in-place equipment up to 50% of the circuit's rating, 1,200 W at 120 V. Its use: pass 3g step 11c, where 7b found no path for a supply duct to the bath"
   preheater_va:
     value: 1000
     unit: VA, the ERV's electric preheater (Ouellet ODHR0501002, 5 in. round, SCR-modulated)
@@ -1292,6 +1459,12 @@ minisplit:
     unit: W, the least design sensible load a room has to get its own supply duct
     conf: low
     source: "judgement: under it (the hall, bath, passage, utility, kitchen and entry, 5-70 W) the moving air from the hall's return does"
+  room_least_cfm:
+    # Fixed (15-30 would be its range), for the same reason as bath_heater_va.
+    value: 20
+    unit: cfm, the least a supply carries in the edge design, where the mini-split heats (a room's share of the unit's air is never under it)
+    conf: placeholder
+    source: "judgement, until a register maker's table is read: a small ceiling register's least listed airflow. Only the edge design's bath and kitchen supplies (pass 3g step 11b) come near it"
   line_set_horizontal_ft:
     value: 15
     unit: ft of line set across the roof from the chase to the outdoor unit

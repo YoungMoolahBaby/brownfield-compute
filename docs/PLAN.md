@@ -352,6 +352,25 @@ fallback.
   - the central run and ten sampled draws of 10f, 10g and 10h equal the saved ones exactly;
   - republishing the addenda leaves the plan room as it is.
 
+11b and 11c in progress (a checkpoint; the switch still names the network design):
+- **The edge design is built in the design code** and passes its own checks (steps 3, 4, 5 and 7a).
+  - **Hot water:** four ECO2 SANCO2 GS5-45HPC-D units on a pad outside the mechanical room, 18 kW
+    above 5 F (13.5 with one out) against Ecosizer's 11.9. Storage is two ECO2 ECO-200GLBK in series,
+    400 gal at 145 F. BK-1 is their backup on P-2's circuit, never with them. No HX-1 or HP-1.
+  - **Heat:** each flat's mini-split, with its air split by the larger of each room's share of the
+    cooling and of the heat. The kitchen, entry, hall and passage are heated through the living room.
+    A 500 W wall heater is in each top-floor bath only (the baths below lose no heat), on the bath's
+    own 20 A circuit (210.11(C)(3) Exception).
+  - **Gone:** no floors, loop, substation, manifolds, solar panels or PRV.
+  - **The house panel** is 125 A (the units, their heat trace, BK-1 interlocked).
+- **11c:** forge routes the edge design clean: 416 routes, no failures, no clashes, on the third pass.
+  - The first pass found no path for a duct into the kitchen's soffit.
+  - The second found none to the back flats' baths, and the bath's duct crowded out the front flats'
+    ERV supplies.
+- **The network design is unchanged:** G1-G4, and the design-side tests.
+- **Next:** 7a-7d on the edge routes, then 11d (Addendum 11's documents) and 11e (the packets).
+  Then the switch is flipped and the tests are moved to `network`/`edge` fixtures.
+
 Then the round: the packets are in `out/pass3/round/packets/`, rebuilt after Addendum 11. Its
 answers go in the addendum after it.
 
@@ -5671,6 +5690,51 @@ test. Then the township brief's ask.
            - Tests: `tests/test_walkup_designs.py`, 4 (the switch named and fixed; what each design
              has; each its own files, the network's where they were; step 10 on the network design
              whatever the params name, the draws' base included).
+         - **11b/11c in progress 2026-11-24 (a checkpoint):**
+           - **The design code** branches on `designs.py`'s readers:
+             - `hvac` (`cooling_ducts`' edge split, `summary_edge`, `report_edge`);
+             - `fallback.space_heat` (rooms from `loads.room_heat`, `by_room`) and its checks;
+             - `routed._designs` (no loop; `heat` and `erv` in its place);
+             - `routing` (no loop risers or manifolds; ECO2's tanks, no HP-1; `pad_units` and `pad_checks`);
+             - `routes.requests` (no loop tails or mains);
+             - `plumbing` (`storage_temp`, `co2_heater`; no PRV, so the pressure starts at the street
+               less the meter, the tap, the backflow assembly and the main's depth);
+             - `electrical` (`HOUSE_LOADS_EDGE`, `bath_heaters`; no PV disconnect or inverter space);
+             - `sequence` (`sequence_edge`, `POINTS_EDGE`, `INTERLOCKS_EDGE`; the backup entered on the
+               units' fault only);
+             - `acceptance` (HW-5 and HW-6 for the units, R-4 the rooms' heat; no H-1 to H-4);
+             - `servicesifc` (the pad's units as IfcUnitaryEquipment; ECO2's tanks);
+             - `questions` (P6, M1, M2 and E7 rewritten; 30 questions);
+             - `servicesheets` (`SETS`, a set per design; P-601's `_plant_edge`, M-601's `hvac_edge`;
+               the edge notes).
+           - **Params:**
+             - `systems.co2_plant.*`, each quoting ECO2's documents, saved in
+               `data/raw/pass3g/step11/eco2/`;
+             - `systems.electrical.bath_heater_va` and `systems.minisplit.room_least_cfm`, both
+               placeholders;
+             - `data/route_sizes-edge.json`, seeded from the network design's grown sizes.
+           - **Choices made on the way** (each in its code and params):
+             - **ECO2's tanks in place of the Lochinvar pair:** ECO2 warrants its units on no other
+               maker's tanks, and its 285 and 360 gal tanks are 40 in. across, too wide for the 42 in.
+               door.
+             - **Four units,** ECO2's smallest published multi-unit layout: ECO2 gives full capacity
+               only above 5 F, and the design dry bulb is 2.7 F.
+             - **The swing tank stays the Bradford White 4.5 kW:** ECO2's swing tanks carry 13.5 kW.
+             - **BK-1 on P-2's circuit, backup only:** ECO2 is to approve its connections to the
+               storage in writing.
+             - **The pad laid out from the partition's end:** the nearest flat window is 1.9 m from a
+               unit. ECO2 states 37 dBA at no distance.
+             - **No unheated slab F-factor:** the heated one is itself a placeholder, set above an
+               unheated slab's, so it errs high.
+           - **Found:** an input only the edge design reads must stay fixed, or it shifts every later
+             draw of step 10's Monte Carlo (G4 caught it: $183 a flat).
+             `test_walkup_designs.py` now holds it.
+           - **Working files** (not in git) are in `out/pass3/a11_work/`:
+             - `before_a11/`, the parity snapshot;
+             - `g123.sh` and `g4.py`, the guards;
+             - `ed.py`;
+             - `a11_notes.md`;
+             - ECO2's texts.
   - **Out of scope:** sealed construction documents (the line D27 drew); DIN standards; changing
     the envelope.
   - **What we expect not to know:** what US engineers charge for this on a 12-flat building

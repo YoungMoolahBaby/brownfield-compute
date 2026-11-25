@@ -49,11 +49,14 @@ def _q(qid: str, ask: str, see: str, why: str) -> dict:
 
 def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
     """Each trade's questions, then the common ones (`common`)."""
-    w, L, el, fh = s7["water"], s7["loop"], s7["electrical"], s7["fire"]
+    from .designs import floors
+
+    w, L, el, fh = s7["water"], s7.get("loop"), s7["electrical"], s7["fire"]
+    edge = not floors(p)  # the edge design (Addendum 11): no floors, loop or substation; the plant on CO2 units
     hot, cold = w["paths"]["hot"], w["paths"]["cold"]
     elbows = hot["all_elbows"]["sizes"]
-    gpm = [r["gpm_per_circuit"] for f in L["flats"].values() for r in f["rooms"]]
-    meters = [m["l_h"] for m in L["meters"].values()]
+    gpm = [r["gpm_per_circuit"] for f in L["flats"].values() for r in f["rooms"]] if L else []
+    meters = [m["l_h"] for m in L["meters"].values()] if L else []
     esp = [d["ms"]["esp"] for d in s7["ducts"].values()]
     ms_hi = s7["limits"]["ms_hi"]
     lines = [c["line_ft"] for c in s7["cooling"].values()]
@@ -102,6 +105,15 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "schedule), the I-joists' within APA's chart. Is that how you'd work, or would you want it otherwise?",
                "Addendum 5, item 4b; the holes schedule; P-201 and P-202",
                "Bored at the centre, every pipe clears IPC 305.6 without a steel plate. Off-centre, plates come back."),
+            _q("P6", "The hot-water plant: four outdoor CO2 heat pump water heaters (ECO2 Systems' SANCO2, basis of design) on stands "
+               "on a pad outside the mechanical room heat two 200 gal ECO2 tanks in series; then a swing tank and a master mixing valve; "
+               "a backup electric heater on its own pump circuit when the units fault. ECO2 warrants its units only on its own tanks, "
+               "and voids pumped loops with secondary tees on their piping: would you pipe the backup's circuit to the storage as "
+               "drawn, and would ECO2 approve it in writing? Is the pad workable (snow, service, the units' sound at the window)?",
+               "Addendum 11; P-601; M-602",
+               f"Four units give {w['heater']['capacity_kw']:g} kW above 5 F against Ecosizer's {w['heater']['need_kw']:.1f}; below 5 F "
+               "they give less, by an amount ECO2 doesn't publish. ECO2 states 37 dBA at no distance; the nearest flat's window is "
+               "under 2 m from the pad (step 11b).") if edge else
             _q("P6", "The hot-water plant takes the data center's warm water: a plate exchanger preheats, a water-to-water heat pump "
                "lifts it into two storage tanks in series, then a swing tank and a master mixing valve; a backup electric heater on "
                "the same circuit takes over when that water stops. Five pieces now stand on the mechanical room's floor. What would "
@@ -129,6 +141,15 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "a manifold in each flat and heat trace instead (step 9c)."),
         ],
         "M": [
+            *([_q("M1", "Each flat's mini-split is its only heat: its supplies reach the bedrooms, the study and the living room, which "
+                  "the kitchen, entry, hall and passage open on; each top-floor bath has a 500 W wall heater on its own circuit (the "
+                  "baths below lose no heat). Would you heat them so?", "Addendum 11; M-101 to M-103; M-601; E-602",
+                  "IBC 1204.1 asks heat in every space for occupancy; the floors heated these rooms before. A duct to the bath found "
+                  "no path in the back flats' soffits (step 11c)."),
+               _q("M2", "On the design day each mini-split heats its flat alone, its line set's derating counted: would you choose another "
+                  "unit for this climate, or add anything for its defrost?", "Addendum 11; M-601; M-602",
+                  "Fujitsu's table gives the unit's capacity at the design dry bulb; the units now heat all winter (step 9a's check, now "
+                  "the design).")] if edge else [
             _q("M1", f"Each room's radiant loops are balanced to {min(gpm):.3f}-{max(gpm):.3f} gpm. Can a manifold's balancing valves "
                "and flow gauges be set that fine, or would you have each room's actuator cycle its loops instead?",
                "M-601 (the flats' loops and flows)", "The low-heat rooms' loops carry very little water at the design hour (step 3)."),
@@ -139,6 +160,7 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
             _q("M3", f"Each ERV has an electric preheater ({p['systems.electrical.preheater_va']:,.0f} W, in its outdoor-air duct). Would you "
                "fit a hot-water coil off the building loop instead, and would Broan's warranty stand with one?",
                "M-101 to M-103; M-601", "Broan's manual names only an electric heater. A coil would use the data center's heat (step 3)."),
+            ]),
             _q("M4", "The flats' ducts run in soffits below the rated ceiling, not in the joists. Buildable as drawn, at these soffits' "
                "depths?", "M-101 to M-103",
                "The joists' hole chart all but bars these ducts, and IBC 717.6.2 would ask a ceiling radiation damper at every "
@@ -155,7 +177,7 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "M-104", "Fujitsu's derating for the line set is in each unit's capacity (step 3)."),
             _q("M8", "The ERV's fresh air goes into the mini-split's return (Broan's kit). Have you installed it that way?",
                "M-101 to M-103", "It saves a separate supply duct to each room (step 7b)."),
-            _q("M9", f"The building loop: a plate exchanger off the data center's return, {L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft of "
+            *([] if edge else [_q("M9", f"The building loop: a plate exchanger off the data center's return, {L['gpm']:.2f} gpm at {L['pump_ft']:.1f} ft of "
                f"head, a {L['header_in']:g} in. header and a riser pair a column. Comments on the loop or its pump?",
                "Addendum 7, item 4; M-601", f"The pump's curve gives {L['pump_curve_ft']:.1f} ft at that flow at its highest speed. The "
                "exchanger and pump are bases of design, not selections (step 3)."),
@@ -164,6 +186,7 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                "season's change. Workable, or would you want a building-wide signal to the units?",
                "Addendum 7, items 3 and 5; M-602",
                "Fujitsu's units take only an operation/stop and a forced-stop input, so the plant can't switch them to heat (step 9b)."),
+            ]),
         ],
         "E": [
             _q("E1", "Each mini-split's outdoor unit is on a GFCI breaker (NEC 210.8(F)). Which breaker have you used on inverter "
@@ -189,6 +212,12 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
                f"({', '.join(upsized)}). Would you wire them so?",
                "E-602", f"Feeder and branch together reach {max(el['total_drop'].values()):.1%} at worst, inside the "
                f"{s7['limits']['vd']['total']:.0%} the NEC's informational notes give."),
+            _q("E7", f"The house panel is {house['breaker_a']:.0f} A: the four CO2 units on their own {p['systems.co2_plant.breaker_a']:g} A "
+               f"breakers, their lines' heat trace, the swing tank's {p['systems.house.swing_element_va'] / 1000:.1f} kW element counted "
+               f"as {element['kind']}, and the backup water heater counted in place of the units, never both (a wired interlock). Agree?",
+               "Addendum 11; E-601; M-602",
+               f"NEC 220.60 counts the larger of two loads that can't run together; the element's design day takes it "
+               f"{house['element_h']:.1f} h.") if edge else
             _q("E7", f"The house panel is {house['breaker_a']:.0f} A: the swing tank's {p['systems.house.swing_element_va'] / 1000:.1f} kW "
                f"element counted as {element['kind']}, and the backup water heater counted in place of the heat pump, never both "
                "(a wired interlock). Agree?",
@@ -228,6 +257,8 @@ def questions(p: dict, s7: dict) -> dict[str, list[dict]]:
            "G-002; Addendum 7, item 6", "Most are the codes' own tests; the rest prove the design's claims at commissioning."),
         _q("C6", "May we publish your comments, by your trade and county only (no name)?", "", ""),
     ]
+    if edge:  # the M list renumbered after the network design's M1-M3 and M9-M10 left out
+        out["M"] = [dict(q, id=f"M{i}") for i, q in enumerate(out["M"], 1)]
     return out
 
 

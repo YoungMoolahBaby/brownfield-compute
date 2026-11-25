@@ -82,8 +82,37 @@ def ecosizer_primary(day_gal: float, shape: np.ndarray, supply_f: float, storage
 
 def storage_held(p: dict) -> float:
     """The storage the plant's tanks hold (gal): the tanks in series as one volume, as Ecosizer sizes
-    it (Addendum 7: two Lochinvar HP150G)."""
-    return p["systems.routing.tank_count"] * p["systems.routing.tank_gal"]
+    it (Addendum 7: two Lochinvar HP150G; the edge design, two ECO2 ECO-200GLBK, the only tanks
+    ECO2 warrants its units on)."""
+    k = "systems.co2_plant." if _air(p) else "systems.routing."
+    return p[k + "tank_count"] * p[k + "tank_gal"]
+
+
+def _air(p: dict) -> bool:
+    from .designs import plant_heat
+
+    return plant_heat(p) == "air"
+
+
+def storage_temp(p: dict) -> float:
+    """The plant's storage temperature (F): 140 F on the data center's heat (`hot_water.storage_f`);
+    the 145 F the CO2 units give in winter in the edge design (`co2_plant.storage_f`)."""
+    return p["systems.co2_plant.storage_f"] if _air(p) else p["systems.hot_water.storage_f"]
+
+
+def co2_heater(p: dict, prim: dict, day_kbtu: float) -> dict:
+    """The edge design's primary heat: outdoor CO2 units (`systems.co2_plant`), their capacity above
+    ECO2's 5 F (less below it, by an amount ECO2 doesn't publish) against Ecosizer's primary, with one
+    out; the site's design dry bulb against their coldest; the design day's electricity on ECO2's
+    coldest published COP (17 F)."""
+    c = "systems.co2_plant."
+    n, unit = int(p[c + "units"]), p[c + "unit_kw"]
+    need = prim["capacity_kbtuh"] / 3.412142
+    design_f = p["systems.design.heating_c"] * 1.8 + 32
+    return {"kind": "air", "units": n, "unit_kw": unit, "capacity_kw": n * unit, "one_out_kw": (n - 1) * unit, "need_kw": need,
+            "spare": n * unit / need - 1, "design_f": design_f, "full_above_f": p[c + "full_above_f"], "min_ambient_f": p[c + "min_ambient_f"],
+            "day_kbtu": day_kbtu, "cop": p[c + "cop_17f"], "kwh_day": day_kbtu / 3.412142 / p[c + "cop_17f"],
+            "ok": (n - 1) * unit >= need and design_f >= p[c + "min_ambient_f"]}
 
 
 # Ecosizer's swing tank (EcosizerEngine SwingSystem.py, commit 7586430): its volume the smallest of
@@ -763,7 +792,7 @@ def design(apt: dict, p: dict, routes=None) -> dict:
     demand = w["demand_gpm"]
 
     # The design day's gallons restated at the distribution temperature.
-    supply, storage, ret_f = p[h + "distribution_f"], p[h + "storage_f"], p[h + "return_min_f"]
+    supply, storage, ret_f = p[h + "distribution_f"], storage_temp(p), p[h + "return_min_f"]
     day_gal = hw["day_gal"] * (p[h + "supply_f"] - t_in) / (supply - t_in)
 
     # -- the loop: supply mains below the slab to each side, risers up each stack, returns alongside
@@ -832,26 +861,51 @@ def design(apt: dict, p: dict, routes=None) -> dict:
     prim = ecosizer_swing(day_gal, load_shape(), supply, storage, t_in, loss, p[h + "run_hr"], p[h + "aquastat_fract"],
                           p[h + "strat_slope_f_pct"], p[h + "tm_safety"])
     sday = swing_day(day_gal, load_shape(), supply, storage, t_in, loss, prim["tm_volume_gal"], prim["tm_capacity_kbtuh"])
-    # A plate exchanger off the data center's return preheats on the heater's own circuit (no
-    # lukewarm water stored); a water-to-water heat pump on the same circuit lifts it to storage.
-    # The heat pump's heat comes from the same data center water after the exchanger, its flow
-    # throttled so it leaves at the heat pump's source temperature (Jon, 2026-11-21): no unit is
-    # rated on 122 F water.
-    loop_c = p[g + "liquid_supply_c"] + p[g + "liquid_rise_k"]
-    pre_f = (loop_c - p["systems.substation.approach_k"]) * 1.8 + 32
-    share_pre = (pre_f - t_in) / (storage - t_in)
-    cop, src_f = p[h + "hp_cop"], p[h + "hp_source_f"]
-    dc_in_f = loop_c * 1.8 + 32
     # The plant's heat on the design day: the draw from the inlet to the supply temperature, and
     # the loop's loss less what the swing tank's element gives.
     day_kbtu = day_gal * RHO_CP * (supply - t_in) / 1000 + sday["loss_kbtu"] - sday["element_kbtu"]
+    if _air(p):  # the edge design: outdoor CO2 units (`co2_heater`)
+        heater = co2_heater(p, prim, day_kbtu)
+    else:
+        # A plate exchanger off the data center's return preheats on the heater's own circuit (no
+        # lukewarm water stored); a water-to-water heat pump on the same circuit lifts it to storage.
+        # The heat pump's heat comes from the same data center water after the exchanger, its flow
+        # throttled so it leaves at the heat pump's source temperature (Jon, 2026-11-21): no unit is
+        # rated on 122 F water.
+        loop_c = p[g + "liquid_supply_c"] + p[g + "liquid_rise_k"]
+        pre_f = (loop_c - p["systems.substation.approach_k"]) * 1.8 + 32
+        share_pre = (pre_f - t_in) / (storage - t_in)
+        cop, src_f = p[h + "hp_cop"], p[h + "hp_source_f"]
+        dc_in_f = loop_c * 1.8 + 32
+        heater = {"preheat_f": pre_f, "preheat_share": share_pre, "hp_cop": cop, "day_kbtu": day_kbtu,
+                  "hp_kwh_day": day_kbtu * (1 - share_pre) / 3.412142 / cop,
+                  "hp_heat_kwh_day": day_kbtu * (1 - share_pre) / 3.412142,
+                  "loop_kwh_day": day_kbtu * share_pre / 3.412142,
+                  "hp_kw": prim["capacity_kbtuh"] * (1 - share_pre) / 3.412142,
+                  "preheat_kw": prim["capacity_kbtuh"] * share_pre / 3.412142,
+                  "source_f": src_f, "dc_in_f": dc_in_f,
+                  # the data center's flow per the heater circuit's, to leave the exchanger at src_f
+                  "dc_per_circuit": (pre_f - t_in) / (dc_in_f - src_f) if dc_in_f > src_f else float("inf"),
+                  "cold_end_k": (src_f - t_in) / 1.8,
+                  "hp_capacity_ok": p[h + "hp_capacity_btuh"] / 1000 >= prim["capacity_kbtuh"] * (1 - share_pre)}
 
     # -- the pressure: Appendix E's lines from the building's reducing valve to the top floor's shower
     top_ft = apt["storey_m"] * (apt["storeys"] - 1) / FT + p[pl + "valve_height_in"] / 12
     q_all = demand["the building"]["wsfu"]
     sub = lambda q: _device_psi(q, [(10, p[pl + "submeter_psi_10"]), (13, p[pl + "submeter_psi_13"])])  # noqa: E731
     tmv = _device_psi(demand["the building"]["hot"], [(26, p[pl + "tmv_psi_26"]), (40, p[pl + "tmv_psi_40"])])
-    falloff = _device_psi(q_all, [(40, p[pl + "prv_falloff_psi_40"])])
+    from .designs import prv
+
+    # The network design's reducing valve, and its falloff at the peak; the edge design has none.
+    falloff = _device_psi(q_all, [(40, p[pl + "prv_falloff_psi_40"])]) if prv(p) else 0.0
+    upstream = {"the main meter": _device_psi(q_all, [(40, p[pl + "meter_psi_40"])]),
+                "the tap in the main (Table E103.3(4))": tap_loss_psi(q_all, p[pl + "tap_in"]),
+                "the double check valve assembly": _device_psi(q_all, [(40, p[pl + "dcva_psi_40"])]),
+                "up from the main": p[pl + "main_depth_ft"] * 0.433}
+    limit = p[pl + "street_psi"] - sum(upstream.values())
+    # Below the valve, its set static less its falloff; without one, what the street gives less the
+    # meter, the tap, the backflow assembly and the main's depth at the peak.
+    start_psi = p[pl + "max_static_psi"] - falloff if prv(p) else limit
     far = max(square_rows, key=lambda r_: r_["main_ft"])
     far_stack = far["stacks"][0]
     top_flat = rs[far_stack]["flats"][-1]
@@ -864,7 +918,7 @@ def design(apt: dict, p: dict, routes=None) -> dict:
                 ("the riser to the top floor", demand["a stack (one flat a storey)"][kind], top_ft),
                 ("the top flat's branch to its shower", demand["a flat"][kind], branch_ft)]
         developed = sum(L for *_, L in segs) * p[pl + "fittings_factor"]
-        budget = pressure_budget(p[pl + "max_static_psi"] - falloff, {
+        budget = pressure_budget(start_psi, {
             "the shower's valve (Table 604.3)": p[pl + "fixture_psi"],
             "up to the top floor's shower": top_ft * 0.433,
             "the flat's meter": sub(demand["a flat"][kind]),
@@ -878,11 +932,6 @@ def design(apt: dict, p: dict, routes=None) -> dict:
             sized.append({"segment": name, "gpm": q, "ft": L, "in": n, "fps": v, "psi_100ft": f})
         paths[kind] = {"budget": budget, "developed_ft": developed, "rate_psi_100ft": rate, "segments": sized,
                        "friction_psi": friction, "spare_psi": budget["friction_psi"] - friction}
-    upstream = {"the main meter": _device_psi(q_all, [(40, p[pl + "meter_psi_40"])]),
-                "the tap in the main (Table E103.3(4))": tap_loss_psi(q_all, p[pl + "tap_in"]),
-                "the double check valve assembly": _device_psi(q_all, [(40, p[pl + "dcva_psi_40"])]),
-                "up from the main": p[pl + "main_depth_ft"] * 0.433}
-    limit = p[pl + "street_psi"] - sum(upstream.values())
     if routes is not None:
         start = {k: {"main": next(s_["in"] for s_ in paths[k]["segments"] if "main" in s_["segment"]),
                      "riser": next(s_["in"] for s_ in paths[k]["segments"] if "riser" in s_["segment"]),
@@ -917,17 +966,7 @@ def design(apt: dict, p: dict, routes=None) -> dict:
         longest = max(routed_hot_lengths(apt, routes).values())
         vols = routed_volumes(apt, p, routes, paths["hot"]["sizes"]["branch"])
     return {"mains": m, "inlet_f": t_in, "day_gal": day_gal, "primary": prim,
-            "heater": {"preheat_f": pre_f, "preheat_share": share_pre, "hp_cop": cop, "day_kbtu": day_kbtu,
-                       "hp_kwh_day": day_kbtu * (1 - share_pre) / 3.412142 / cop,
-                       "hp_heat_kwh_day": day_kbtu * (1 - share_pre) / 3.412142,
-                       "loop_kwh_day": day_kbtu * share_pre / 3.412142,
-                       "hp_kw": prim["capacity_kbtuh"] * (1 - share_pre) / 3.412142,
-                       "preheat_kw": prim["capacity_kbtuh"] * share_pre / 3.412142,
-                       "source_f": src_f, "dc_in_f": dc_in_f,
-                       # the data center's flow per the heater circuit's, to leave the exchanger at src_f
-                       "dc_per_circuit": (pre_f - t_in) / (dc_in_f - src_f) if dc_in_f > src_f else float("inf"),
-                       "cold_end_k": (src_f - t_in) / 1.8,
-                       "hp_capacity_ok": p[h + "hp_capacity_btuh"] / 1000 >= prim["capacity_kbtuh"] * (1 - share_pre)},
+            "heater": heater,
             "loop": {"loss_btuh": loss, "square_loss_btuh": square_loss, "w_per_flat": loss / 3.412142 / len(apt["flats"]), "gpm": loop_gpm,
                      "return_main_in": ret_main, "return_riser_in": ret_rise, "return_fps": ret_fps,
                      "sides": rows, "rise_ft": rise_ft, "flat_return_in": ret_flat, "flat_branch_in": n_branch, "flats": flats,
@@ -988,7 +1027,7 @@ def summary(apt: dict, p: dict) -> dict:
              f"at {d['recirc']['rated'][1]:g} ft", d["recirc"]["ok"] and d["recirc"]["tbv_ok"],
              f"{d['recirc']['gpm']:.2f} gpm at {d['recirc']['ft']:.1f} ft"),
             ("hot water stored at 140 F and the loop back at 122 F or more (WHO, CDC)",
-             p[h + "storage_f"] >= 140 and p[h + "return_min_f"] >= 122, f"{p[h + 'storage_f']:g} / {p[h + 'return_min_f']:g} F"),
+             storage_temp(p) >= 140 and p[h + "return_min_f"] >= 122, f"{storage_temp(p):g} / {p[h + 'return_min_f']:g} F"),
             ("every pipe within its velocity (8 ft/s cold, 5 hot, 2 the return)",
              not over and d["loop"]["return_fps"] <= p[pl + "return_fps"] + 1e-9,
              f"{len(segs)} segments" + (f"; over: {over}" if over else "")),
@@ -1000,12 +1039,18 @@ def summary(apt: dict, p: dict) -> dict:
             ("the primary storage at least Ecosizer's floor (half the peak hour)", d["primary"]["storage_gal"] >= d["primary"]["minimum_gal"],
              f"{d['primary']['storage_gal']:.0f} gal against {d['primary']['minimum_gal']:.0f}"),
             ("the storage tanks hold the storage Ecosizer asks", storage_held(p) >= d["primary"]["storage_gal"],
-             f"{p['systems.routing.tank_count']:g} x {p['systems.routing.tank_gal']:g} gal against {d['primary']['storage_gal']:.0f}"),
-            ("the heat pump inside its maker's table: its source at most 80 F, which the preheat exchanger can cool the data "
-             "center's water to; its rated output over its share of the plant",
-             ht["source_f"] <= p[h + "hp_source_max_f"] and ht["cold_end_k"] >= p["systems.substation.approach_k"] and ht["hp_capacity_ok"],
-             f"source {ht['source_f']:g} F ({ht['cold_end_k']:.1f} K over the inlet); {p[h + 'hp_capacity_btuh'] / 1000:.1f} "
-             f"against {ht['hp_kw'] * 3.412142:.1f} kBtu/h"),
+             f"{storage_held(p):g} gal against {d['primary']['storage_gal']:.0f}"),
+            *([("the CO2 units cover Ecosizer's primary with one of them out, at ECO2's full capacity (above "
+                f"{ht['full_above_f']:g} F); the design dry bulb inside their range",
+                ht["ok"], f"{ht['units']} x {ht['unit_kw']:g} kW, {ht['one_out_kw']:g} with one out, against {ht['need_kw']:.2f}; "
+                f"the design {ht['design_f']:.1f} F against their {ht['min_ambient_f']:g} F. Below {ht['full_above_f']:g} F they give less, "
+                f"by an amount ECO2 doesn't publish: all {ht['units']} are {ht['spare']:.0%} over the primary there")]
+              if ht.get("kind") == "air" else
+              [("the heat pump inside its maker's table: its source at most 80 F, which the preheat exchanger can cool the data "
+                "center's water to; its rated output over its share of the plant",
+                ht["source_f"] <= p[h + "hp_source_max_f"] and ht["cold_end_k"] >= p["systems.substation.approach_k"] and ht["hp_capacity_ok"],
+                f"source {ht['source_f']:g} F ({ht['cold_end_k']:.1f} K over the inlet); {p[h + 'hp_capacity_btuh'] / 1000:.1f} "
+                f"against {ht['hp_kw'] * 3.412142:.1f} kBtu/h")]),
             ("stack vents per Table 906.1; no vent stack (three branch intervals); no frost closure (903.2)",
              dv["stack_vent_min_in"] <= dv["stack_in"] and not dv["vent_stack_required"] and not dv["frost_closure"],
              f"{dv['stack_vent_min_in']:g} in. over {dv['vent_developed_ft']:.0f} ft"),
@@ -1013,6 +1058,7 @@ def summary(apt: dict, p: dict) -> dict:
             ("cast-iron stacks under CMHC's 33 dBA for a neighbour's plumbing", nz["margin_db"]["cast_iron"] > 0,
              f"{nz['drain_dba']['cast_iron']:g} dBA, {nz['margin_db']['cast_iron']:g} dB to spare (PVC {nz['margin_db']['pvc']:g})"),
         ],
+        "storage_f": storage_temp(p), "storage_held": storage_held(p),
         "design": d, "drains": dv, "noise": nz, "element_kw": p["systems.house.swing_element_va"] / 1000,
     }
 
@@ -1027,13 +1073,18 @@ def report(s: dict) -> str:
              f"The cold water: the mains at {m['design_f']:.1f} F on the coldest day, {m['mean_f']:.1f} F on average "
              f"(Burch and Christensen, from the site's air: {m['air_avg_f']:.1f} F a year, its monthly means {m['air_monthly_spread_f']:.1f} F apart).",
              "", f"The hot-water plant (design day {d['day_gal']:.0f} gal at 125 F): {pr['capacity_kbtuh']:.1f} kBtu/h "
-             f"({pr['capacity_kbtuh'] / 3.412142:.1f} kW) and {pr['storage_gal']:.0f} gal stored at 140 F (Ecosizer; running "
+             f"({pr['capacity_kbtuh'] / 3.412142:.1f} kW) and {pr['storage_gal']:.0f} gal stored at {s['storage_f']:g} F (Ecosizer; running "
              f"volume {pr['running_gal']:.0f} gal).",
-             f"  The data center's return preheats to {ht['preheat_f']:.1f} F: {ht['preheat_share']:.0%} of the heat, "
+             *([f"  Its heat: {ht['units']} outdoor CO2 units (ECO2 Systems' SANCO2 GS5-45HPC-D), {ht['unit_kw']:g} kW each above "
+                f"{ht['full_above_f']:g} F, {ht['capacity_kw']:g} kW in all ({ht['one_out_kw']:g} with one out) against Ecosizer's "
+                f"{ht['need_kw']:.2f}; two ECO-200GLBK tanks in series ({s['storage_held']:g} gal); the design day's {ht['day_kbtu'] / 3.412142:.0f} kWh "
+                f"of heat for {ht['kwh_day']:.0f} kWh at ECO2's COP of {ht['cop']:g} at 17 F, its coldest published."]
+               if ht.get("kind") == "air" else []),
+             *([f"  The data center's return preheats to {ht['preheat_f']:.1f} F: {ht['preheat_share']:.0%} of the heat, "
              f"{ht['preheat_kw']:.1f} kW, {ht['loop_kwh_day']:.0f} kWh on the design day. A water-to-water heat pump lifts the "
              f"rest: {ht['hp_kw']:.1f} kW of heat, from the same water leaving the exchanger at {ht['source_f']:g} F "
              f"({ht['dc_per_circuit']:.2f} x the heater circuit's flow); COP {ht['hp_cop']:g} (ClimateMaster SW036's rating), "
-             f"{ht['hp_heat_kwh_day']:.0f} kWh of heat for {ht['hp_kwh_day']:.1f} kWh.",
+             f"{ht['hp_heat_kwh_day']:.0f} kWh of heat for {ht['hp_kwh_day']:.1f} kWh."] if ht.get("kind") != "air" else []),
              f"  The loop: {lp['loss_btuh'] / 3.412142:.0f} W ({lp['w_per_flat']:.0f} a flat), {lp['gpm']:.2f} gpm to hold {lp['supply_f']:g} F "
              f"out and {lp['return_f']:g} F back; returns {lp['return_main_in']:g} in. mains, {lp['return_riser_in']:g} in. risers (at most "
              f"{lp['return_fps']:.2f} ft/s). Each flat's own loop (IECC C404.5, Addendum 7): its hot branch to its lavatory, where a "

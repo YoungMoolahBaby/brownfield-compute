@@ -81,15 +81,19 @@ def items(p: dict, s7: dict) -> list[dict]:
     from .loads import ventilation
     from .systems import latest_model, load
 
+    from .designs import floors, plant_heat
+    from .plumbing import storage_temp
+
     h, c, pl = "systems.hot_water.", "systems.controls.", "systems.plumbing."
-    w, L, fh, ducts = s7["water"], s7["loop"], s7["fire"], s7["ducts"]
+    w, L, fh, ducts = s7["water"], s7.get("loop"), s7["fire"], s7["ducts"]
+    air = plant_heat(p) == "air"  # the edge design (Addendum 11): the CO2 units, no building loop
     apt = load(latest_model())
     lk = leakage(apt, p)
     v = ventilation(apt, p)
     cfm = max(x["design_cfm"] for x in v.values())
     imc = max(x["imc_cfm"] for x in v.values())
     esp = sorted(d["ms"]["esp"] for d in ducts.values())
-    flat_gpm = [f["gpm"] for f in L["flats"].values()]
+    flat_gpm = [f["gpm"] for f in L["flats"].values()] if L else []
     c4 = w["c404"]
     plumber, hvac_, elec, fire_ = "the plumber (the permit holder)", "the HVAC contractor", "the electrician", "the sprinkler contractor"
     cx = "the balancing contractor, witnessed by the engineer"
@@ -136,14 +140,27 @@ def items(p: dict, s7: dict) -> list[dict]:
          "passes": f"P-3 stops when TS-5 reads {p[c + 'recirc_stop_f']:g} F and starts under {p[h + 'return_min_f']:g} F",
          "basis": "IECC C404.6.1; the sequence (23 09 93)",
          "quotes": [("IECC-C", "shall automatically turn off the pump when the water in the circulation loop is at the desired temperature")]},
-        {"id": "HW-5", "area": "Hot water", "what": "the plant: its setpoints, its interlock and its fallback", "who": cx, "when": "at commissioning",
-         "passes": f"ST-1 held at {p[h + 'storage_f']:g} F; MV-1 sends {p[h + 'distribution_f']:g} F; P-2 runs only with the heating cycle; "
-                   "BK-1 can't be energized while HP-1 is enabled (the wired interlock); with the data center's water cut, the plant "
-                   f"goes to its fallback after {p[c + 'fallback_enter_min']:g} min and back {p[c + 'fallback_exit_min']:g} min after it returns",
-         "basis": "the sequence (23 09 93); IECC C404.6.3",
-         "quotes": [("IECC-C", "shall limit operation of the pump from heating cycle startup to not greater than 5 minutes after the end of the cycle")]},
-        # -- The building loop (radiant floors).
-        {"id": "H-1", "area": "Building loop", "what": "each flat's radiant tubing, before its topping", "who": hvac_,
+        *([{"id": "HW-5", "area": "Hot water", "what": "the plant: its setpoints, its interlock and its backup", "who": cx, "when": "at commissioning",
+            "passes": f"the CO2 units start under {p['systems.co2_plant.start_f']:g} F at TS-4 and each stops at {p['systems.co2_plant.stop_inlet_f']:g} F "
+                      f"at its inlet; ST-1 heated to {storage_temp(p):g} F; MV-1 sends {p[h + 'distribution_f']:g} F; BK-1 can't be energized "
+                      "while the units are enabled (the wired interlock); with every unit's breaker opened, the plant goes to its backup after "
+                      f"{p[c + 'fallback_enter_min']:g} min, P-2 through BK-1 holding ST-1, and back to the units {p[c + 'fallback_exit_min']:g} min "
+                      "after they are sound",
+            "basis": "the sequence (23 09 93)", "quotes": []},
+           {"id": "HW-6", "area": "Hot water", "what": "the CO2 units' start-up", "who": plumber + ", with ECO2 Systems' start-up checklist",
+            "when": "at start-up, before occupancy",
+            "passes": "each unit filled and purged of air, its water flow proved and its freeze protection running (its pump below 37 F); "
+                      "each unit's heat trace on and its freeze-protection valves within 6 in. of it; the units staged by CMB on TS-4",
+            "basis": "the design: ECO2 Systems' GS5 installation manual (20962971) and warranty (heat trace below 27 F)", "quotes": []}]
+          if air else
+          [{"id": "HW-5", "area": "Hot water", "what": "the plant: its setpoints, its interlock and its fallback", "who": cx, "when": "at commissioning",
+            "passes": f"ST-1 held at {p[h + 'storage_f']:g} F; MV-1 sends {p[h + 'distribution_f']:g} F; P-2 runs only with the heating cycle; "
+                      "BK-1 can't be energized while HP-1 is enabled (the wired interlock); with the data center's water cut, the plant "
+                      f"goes to its fallback after {p[c + 'fallback_enter_min']:g} min and back {p[c + 'fallback_exit_min']:g} min after it returns",
+            "basis": "the sequence (23 09 93); IECC C404.6.3",
+            "quotes": [("IECC-C", "shall limit operation of the pump from heating cycle startup to not greater than 5 minutes after the end of the cycle")]}]),
+        # -- The building loop (radiant floors): the network design's only.
+        *([] if not floors(p) else [{"id": "H-1", "area": "Building loop", "what": "each flat's radiant tubing, before its topping", "who": hvac_,
          "when": "before the topping is poured, and through the pour",
          "passes": "hydrostatic at 1.5 times the loop's design pressure, not less than 100 psi, for 15 min; held at its operating "
                    "pressure while the topping is poured",
@@ -161,7 +178,7 @@ def items(p: dict, s7: dict) -> list[dict]:
         {"id": "H-4", "area": "Building loop", "what": "the outdoor reset", "who": cx, "when": "at commissioning",
          "passes": f"the supply follows the reset (the design's {L['supply_c']:.1f} C at the heating design temperature, a straight line "
                    f"to the room's) and the loop stops above {p[c + 'wwsd_c']:g} C outdoors",
-         "basis": "the sequence (23 09 93)", "quotes": []},
+         "basis": "the sequence (23 09 93)", "quotes": []}]),
         # -- The mini-splits and their refrigerant.
         {"id": "R-1", "area": "Mini-splits", "what": "each line set", "who": hvac_, "when": cover + ", and before it runs",
          "passes": "pressurized with nitrogen (or helium or argon) for at least 60 min at the outdoor unit's nameplate design pressure "
@@ -177,6 +194,10 @@ def items(p: dict, s7: dict) -> list[dict]:
         {"id": "R-3", "area": "Mini-splits", "what": "each unit's water-level switch", "who": hvac_, "when": "at start-up",
          "passes": "water in the drain pan stops the unit (Fujitsu's forced stop, function 46-02)",
          "basis": "IMC 307.2.3; the sequence", "quotes": [("IMC3", "one of the following auxiliary protection methods shall be provided")]},
+        *([{"id": "R-4", "area": "Mini-splits", "what": "each flat's heat, room by room", "who": cx, "when": "at commissioning, in heating",
+            "passes": "each supply's airflow within 10% of the schedule's (M-601) with the unit heating: every room the code asks heat of "
+                      "gets its share of the unit's heat; each top-floor bath's wall heater runs on its thermostat",
+            "basis": "the design (step 3: the mini-splits the flats' only heat, Addendum 11); IBC 1204.1", "quotes": []}] if not floors(p) else []),
         # -- Ventilation and the envelope: the energy code's own tests.
         {"id": "V-1", "area": "Ventilation", "what": "each ERV's flows", "who": cx + " (an approved third party where the code official asks)",
          "when": "at commissioning, before occupancy",
@@ -243,7 +264,8 @@ def items(p: dict, s7: dict) -> list[dict]:
                    "energy work to the Uniform Construction Code", "basis": "34 Pa. Code 403.45(e)",
          "quotes": [("UCC", "shall conduct a final inspection of the completed construction work")]},
         {"id": "EL-1", "area": "Electrical", "what": "the wiring, rough and final", "who": official + ", with " + elec, "when": rough + "; and final",
-         "passes": "to the code (the house panel's BK-1/HP-1 interlock proved in HW-5)", "basis": "34 Pa. Code 403.45(a), (e)(2)",
+         "passes": "to the code (the house panel's BK-1/" + ("CO2 units'" if air else "HP-1") + " interlock proved in HW-5)",
+         "basis": "34 Pa. Code 403.45(a), (e)(2)",
          "quotes": [("UCC", "shall perform inspections to insure that the construction complies with the approved permit")]},
     ]
     return out

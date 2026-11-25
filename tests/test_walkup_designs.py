@@ -56,3 +56,11 @@ def test_step_10_prices_the_network_design_whatever_the_bid_sets(params, monkeyp
     # there, fixed, and never among the inputs drawn.
     base, vary = ranges.draws(p10, 3, 7)
     assert designs.name(base) == "network" and designs.KEY not in vary
+
+
+def test_the_edge_designs_own_inputs_dont_shift_step_10s_draws(params):
+    """A varied input shifts every later draw of step 10's Monte Carlo (the network design's): the
+    inputs only the edge design reads stay fixed until 10i draws them."""
+    edge_only = [k for k in params if k.startswith("systems.co2_plant.")
+                 or k in ("systems.electrical.bath_heater_va", "systems.minisplit.room_least_cfm", designs.KEY)]
+    assert edge_only and not [k for k in edge_only if params[k].varies]

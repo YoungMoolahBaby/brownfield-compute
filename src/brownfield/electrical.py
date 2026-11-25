@@ -193,6 +193,8 @@ def flat_circuits(apt: dict, p: dict, name: str) -> list[dict]:
     lighting_va = p[fp + "lighting_w_ft2"] * ft2
     xy = panel_place(apt, name)["xy"]
     far = lambda keys: _far_ft(apt, xy, [by[k] for k in keys], p)  # noqa: E731
+    from .designs import floors
+
     ground = flat["floor"] == 1
     sleep = ["bed-1", "bed-2", "hall", "bath"]
     live = ["living", "study", "passage", "entry", "kitchen", "utility"]
@@ -216,8 +218,12 @@ def flat_circuits(apt: dict, p: dict, name: str) -> list[dict]:
     for label, keys in rec_keys.items():
         va = rec_va * sum(by[k]["area_m2"] for k in keys) / rec_ft2
         if label == "bath":  # 210.11(C)(3): 20 A, the bathroom's receptacles only; GFCI, 210.8(A)(1)
-            add("bath", "bathroom receptacles (210.11(C)(3))", 120, 1, va, 20, "GFCI", far(keys), "general", load_va=p[fp + "branch_vd_va"],
-                rooms=keys)
+            if name not in bath_heaters(apt, p):
+                add("bath", "bathroom receptacles (210.11(C)(3))", 120, 1, va, 20, "GFCI", far(keys), "general",
+                    load_va=p[fp + "branch_vd_va"], rooms=keys)
+            else:  # the edge design's bath heater on it too: 210.11(C)(3) Exception, 210.23(A)(2)'s 50%
+                add("bath", "bathroom receptacles and its wall heater (210.11(C)(3) Exception)", 120, 1, va + p[e + "bath_heater_va"], 20,
+                    "GFCI", far(keys), "general", load_va=max(p[fp + "branch_vd_va"], p[e + "bath_heater_va"]), rooms=keys)
             continue
         extra = " and the patio's outdoor receptacle (210.52(E)(2), a GFCI receptacle)" if (label == "living" and ground) else ""
         add(f"rec-{label.split()[0].replace(',', '')}", f"receptacles, {label}{extra}", 120, 1, va, p[fp + "receptacle_a"], "AFCI",
@@ -282,18 +288,31 @@ def legs(circuits: list[dict]) -> dict:
     return {"a_va": a, "b_va": b, "circuits": out}
 
 
-def flat_load(p: dict, ft2: float) -> dict:
+def bath_heaters(apt: dict, p: dict) -> set[str]:
+    """The flats whose bath has its own wall heater: in the edge design, those whose bath loses heat at
+    the design hour (the top floor's, under the roof; below, the bath sits among heated rooms and
+    loses none); none in the network design, whose floors heat it."""
+    from .designs import floors
+    from .loads import design_case, room_heat
+
+    if floors(p):
+        return set()
+    rh = room_heat(apt, p, design_case(apt, p, preheat=True))
+    return {n for n, f in rh.items() if any(x["room"]["use"] == "bath" and x["design_w"] > 0 for x in f["rooms"])}
+
+
+def flat_load(p: dict, ft2: float, heater: bool = False) -> dict:
     """The flat's feeder load by 220.82 with the appliances as chosen: every one fastened in place
     or on its own circuit at its nameplate (220.82(B)(3)); and under 220.82(C) the larger of the
-    cooling and the heating (`hvac_va`)."""
+    cooling and the heating (`hvac_va`; `heater`, the edge design's bath heater)."""
     from .loads import nec_220_82
 
     appl = [appliance_va(p, k) for k in APPLIANCES]
-    hvac = hvac_va(p, p["systems.electrical.heat_demand_220_82"])
+    hvac = hvac_va(p, p["systems.electrical.heat_demand_220_82"], heater)
     return {"appliances_va": dict(zip(APPLIANCES, appl)), "hvac_va": hvac, **nec_220_82(ft2, appl, hvac, p)}
 
 
-def hvac_va(p: dict, heat_factor: float) -> float:
+def hvac_va(p: dict, heat_factor: float, heater: bool = False) -> float:
     """The flat's heating-or-cooling load: the larger of the air conditioning and the heating. The
     mini-split is a heat pump: its tenant can set it to heat, and it carries the flat when the data
     center's heat is gone (pass 3g step 9a), so in winter it runs with the ERV's preheater, fixed
@@ -302,14 +321,17 @@ def hvac_va(p: dict, heat_factor: float) -> float:
     `heat_factor` (220.82(C)'s 65% of electric heat, as Holt's worked case takes it; 220.84(C)(5)
     compares them at 100%). Step 5 had taken the larger of the cooling and the preheater alone."""
     e = "systems.electrical."
-    return max(p[e + "cooling_va"], p[e + "cooling_va"] + heat_factor * appliance_va(p, "preheater"))
+    heat = appliance_va(p, "preheater") + (p[e + "bath_heater_va"] if heater else 0.0)  # the edge design's bath heater, fixed (Article 424)
+    return max(p[e + "cooling_va"], p[e + "cooling_va"] + heat_factor * heat)
 
 
 def appliance_va(p: dict, key: str) -> float:
-    """An appliance circuit's nameplate load (VA); the ERV's circuit also carries the radiant
-    manifold's actuators and their transformer."""
+    """An appliance circuit's nameplate load (VA); in the network design the ERV's circuit also
+    carries the radiant manifold's actuators and their transformer (the edge design has none)."""
+    from .designs import floors
+
     e = "systems.electrical."
-    return p[e + f"{key}_va"] + (p[e + "manifold_controls_va"] if key == "erv" else 0.0)
+    return p[e + f"{key}_va"] + (p[e + "manifold_controls_va"] if key == "erv" and floors(p) else 0.0)
 
 
 APPLIANCE_CIRCUITS = (("range", "the induction range", "kitchen", False),
@@ -459,8 +481,9 @@ def feeders(apt: dict, p: dict, routed=None) -> dict:
     if routed is not None:
         rt = {n: {**v, "square_ft": v["ft"], "ft": routed_feeder_ft(apt, p, routed, n)} for n, v in rt.items()}
     out = {}
+    heated = bath_heaters(apt, p)
     for f in apt["flats"]:
-        ld = flat_load(p, f["floor_m2"] / FT2)
+        ld = flat_load(p, f["floor_m2"] / FT2, f["name"] in heated)
         va_ll, va_ln = split_load(p, ld["calculated_va"], ld["hvac_va"])
         z0 = feeder_drop(complex(0.0, 0.0), 0.0, va_ll, va_ln, va_ln, p[w + "pf"], FLAT_SYSTEM)
         amps = max(z0["ia"], z0["ib"])
@@ -561,29 +584,45 @@ HOUSE_LOADS = (  # key, what, kind (motor / continuous / noncontinuous / by its 
 )
 
 
+# The edge design's (Addendum 11): the CO2 units in HP-1's place, with the heat trace on their water
+# lines; no building loop, so no loop pump, and the controls the plant's alone.
+HOUSE_LOADS_EDGE = tuple(
+    [("co2_units", "the hot-water plant's outdoor CO2 units, each at its minimum circuit ampacity (ECO2 Systems' SANCO2 "
+                   "GS5-45HPC-D; Addendum 11)", "motor", True),
+     ("co2_heat_trace", "the heat trace on the CO2 units' water lines (ECO2's FG2-18L, one a unit, at 5 F)", "continuous", True)]
+    + [(k, what if k != "backup_heater" else "the plant's backup heater, its elements only when the CO2 units fault, never with them "
+        "(A. O. Smith DRE-52-12)", kind, ll) if k != "controls" else (k, "the plant's controls and the meters' reader", kind, ll)
+       for k, what, kind, ll in HOUSE_LOADS if k not in ("dhw_heat_pump", "loop_pump")])
+
+
 def house_loads(apt: dict, p: dict) -> dict:
     """The house panel's loads (VA) and their calculation under Part III: motors at their
     nameplate with a share of the largest added (`largest_motor_extra`), continuous loads at
     `continuous_factor`, the rest at 100%. The stair has a luminaire at each landing: one a floor and one
     between each pair of flights. The house is on one meter position, 120/208 V like a flat."""
+    from .designs import plant_heat
     from .plumbing import design as plant
 
-    h, w = "systems.house.", "systems.wiring."
+    h, w, c = "systems.house.", "systems.wiring.", "systems.co2_plant."
+    air = plant_heat(p) == "air"
     stair_n = len(apt["stair"]["flights"]) + 1
     # The swing tank's element at its nameplate (Addendum 6), continuous if the design day's heat
     # from it (step 4's plant) takes it `continuous_h` or more at that (it runs in the quiet hours).
     element_h = plant(apt, p)["tm"]["element_kbtu"] * 1000.0 / 3.412142 / p[h + "swing_element_va"]
     element_kind = "continuous" if element_h >= p[h + "continuous_h"] else "noncontinuous"
     rows = []
-    for k, what, kind, ll in HOUSE_LOADS:
-        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"], "backup_heater": p["systems.hot_water.backup_w"]}.get(k) or p[h + f"{k}_va"]
+    for k, what, kind, ll in HOUSE_LOADS_EDGE if air else HOUSE_LOADS:
+        va = {"stair_lights": stair_n * p[h + "stair_luminaire_w"], "backup_heater": p["systems.hot_water.backup_w"],
+              **({"co2_units": p[c + "units"] * p[c + "mca_a"] * 208.0, "co2_heat_trace": p[c + "units"] * p[c + "heat_trace_w"]}
+                 if air else {})}.get(k) or p[h + f"{k}_va"]
         kind = element_kind if k == "swing_element" else kind
         factor = p[h + "continuous_factor"] if kind == "continuous" else 1.0
         rows.append({"key": k, "what": what, "kind": kind, "ll": ll, "va": va, "calc_va": va * factor, "counted": True})
     # The heat pump and the backup heater never run together (the plant's sequence interlocks them,
     # step 9b): of noncoincident loads only the larger counts (220.60), the heat pump with its share
-    # of the largest motor.
-    hp, bk = (next(r for r in rows if r["key"] == k) for k in ("dhw_heat_pump", "backup_heater"))
+    # of the largest motor. In the edge design, the CO2 units and the backup heater likewise: it runs
+    # only when they fault (Addendum 11).
+    hp, bk = (next(r for r in rows if r["key"] == k) for k in ("co2_units" if air else "dhw_heat_pump", "backup_heater"))
     hp_calc = hp["calc_va"] + p[h + "largest_motor_extra"] * hp["va"]
     (hp if bk["calc_va"] >= hp_calc else bk)["counted"] = False
     largest = max(r["va"] for r in rows if r["kind"] == "motor" and r["counted"])
@@ -600,7 +639,9 @@ def house_loads(apt: dict, p: dict) -> dict:
     amps = max(z0["ia"], z0["ib"])
     return {"rows": rows, "stair_luminaires": stair_n, "element_h": element_h, "connected_va": sum(r["va"] for r in rows),
             "calculated_va": sum(r["calc_va"] for r in rows), "amps": amps, "breaker_a": next_standard(amps, p),
-            "dhw_breaker_a": next_standard(p[h + "dhw_heat_pump_va"] / 208.0, p), "dhw_mocp_a": p[h + "dhw_heat_pump_mocp_a"]}
+            "dhw_breaker_a": p[c + "breaker_a"] if air else next_standard(p[h + "dhw_heat_pump_va"] / 208.0, p),
+            "dhw_mocp_a": p[c + "breaker_a"] if air else p[h + "dhw_heat_pump_mocp_a"],
+            "dhw_mca_a": p[c + "mca_a"] if air else p[h + "dhw_heat_pump_va"] / 208.0, "plant": "co2" if air else "hp1"}
 
 
 # ---- 5d: the service and its fault current ----
@@ -635,8 +676,10 @@ def service(apt: dict, p: dict) -> dict:
 
     e = "systems.electrical."
     ft2 = apt["flats"][0]["floor_m2"] / FT2
-    # The space heating, the mini-split heating at its nameplate with the preheater (`hvac_va`).
-    flats = nec_220_84(len(apt["flats"]), ft2, [appliance_va(p, k) for k in APPLIANCES], p[e + "cooling_va"] + appliance_va(p, "preheater"),
+    # The space heating, the mini-split heating at its nameplate with the preheater (`hvac_va`), and in
+    # the edge design the top floor's bath heaters shared over the flats.
+    heat_each = p[e + "cooling_va"] + appliance_va(p, "preheater") + p[e + "bath_heater_va"] * len(bath_heaters(apt, p)) / len(apt["flats"])
+    flats = nec_220_84(len(apt["flats"]), ft2, [appliance_va(p, k) for k in APPLIANCES], heat_each,
                        p[e + "cooling_va"], p)
     house = house_loads(apt, p)
     total = flats["calculated_va"] + house["calculated_va"]
@@ -686,17 +729,20 @@ def room_fit(apt: dict, p: dict) -> dict:
     electrical room's equipment along its walls: a row needs the sum of its pieces' widths, and
     at least the 30 in. of working space 110.26(A)(2) asks (neighbours may share it); the room's
     depth, 36 in. of working space and the deepest piece."""
+    from .designs import pv as has_pv
+
     w, r = "systems.wiring.", "systems.electrical_room."
     ms = meter_stack(p, len(apt["flats"]))
     need = lambda row: max(sum(x for _, x in row), p[w + "working_width_in"])  # noqa: E731
+    solar = has_pv(p)  # the edge design has no solar panels (Addendum 11)
     outdoor = [("the meter stack and its main", ms["width_in"]),
-               ("the PV system's lockable disconnect (FirstEnergy: by the meters)", p[r + "pv_disconnect_width_in"]),
+               *([("the PV system's lockable disconnect (FirstEnergy: by the meters)", p[r + "pv_disconnect_width_in"])] if solar else []),
                ("the surge protector at the main (230.67)", p[r + "spd_width_in"])]
     elec = next(x for x in apt["rooms"]["rooms"] if x["id"] == "annex/electrical")
     depth_in = (elec["hi_m"][0] - elec["lo_m"][0]) / IN
     long_in = (elec["hi_m"][1] - elec["lo_m"][1]) / IN
     inside = [("the house panel", p[r + "house_panel_width_in"]), ("space for a later panel", p[r + "spare_panel_width_in"]),
-              ("the PV inverters (reserved)", p[r + "pv_inverter_width_in"])]
+              *([("the PV inverters (reserved)", p[r + "pv_inverter_width_in"])] if solar else [])]
     side = [("the fire alarm control unit (step 6)", p[r + "facu_width_in"]), ("the telecom backboard", p[r + "telecom_width_in"])]
     return {"wall_in": meter_wall(apt)["length_in"], "outdoor": outdoor, "outdoor_need_in": need(outdoor),
             "partition_in": long_in, "inside": inside, "inside_need_in": need(inside),
@@ -755,6 +801,7 @@ def design(apt: dict, p: dict, routes=None) -> dict:
     """Step 5's electrical for the latest revision: every flat's panel and feeder, the house loads,
     the service and its fault current, the meter wall and the electrical room, the roof's PV, the
     chargers' room. With `routes` (7c), the circuits and feeders on their routes."""
+    from .designs import pv as has_pv
     from .loads import design_case
 
     w = "systems.wiring."
@@ -777,7 +824,7 @@ def design(apt: dict, p: dict, routes=None) -> dict:
                              "need_w": case[n]["preheat_w"]}
         totals[n] = worst
     return {"panels": panels, "feeders": fd, "service": svc, "faults": faults(apt, p, fd, svc), "room": room_fit(apt, p),
-            "meter_wall": meter_wall(apt), "pv": pv(apt, p, svc["house"]), "ev": ev(p, svc), "total_drop": totals,
+            "meter_wall": meter_wall(apt), "pv": pv(apt, p, svc["house"]) if has_pv(p) else None, "ev": ev(p, svc), "total_drop": totals,
             "heater": heater, "vd_total_max": p[w + "vd_total_max"]}
 
 
@@ -871,9 +918,10 @@ def summary(apt: dict, p: dict) -> dict:
              rm["outdoor_need_in"] <= rm["wall_in"] and rm["inside_need_in"] <= rm["partition_in"] and rm["side_need_in"] <= rm["side_in"]
              and rm["depth_need_in"] <= rm["room_depth_in"],
              f"wall {rm['outdoor_need_in']:.0f} of {rm['wall_in']:.0f} in.; room {rm['inside_need_in']:.0f} of {rm['partition_in']:.0f} in."),
-            ("the plant's heat pump on the next standard breaker over its minimum circuit ampacity, within the maximum on its nameplate",
-             svc["house"]["dhw_breaker_a"] <= svc["house"]["dhw_mocp_a"],
-             f"MCA {p['systems.house.dhw_heat_pump_va'] / 208:.1f} A: a {svc['house']['dhw_breaker_a']:.0f} A breaker, its maximum "
+            ("the plant's heat pump on the next standard breaker over its minimum circuit ampacity, within the maximum on its nameplate"
+             + (" (each CO2 unit on its own, ECO2's breaker)" if svc["house"]["plant"] == "co2" else ""),
+             svc["house"]["dhw_mca_a"] <= svc["house"]["dhw_breaker_a"] <= svc["house"]["dhw_mocp_a"],
+             f"MCA {svc['house']['dhw_mca_a']:.1f} A: a {svc['house']['dhw_breaker_a']:.0f} A breaker, its maximum "
              f"{svc['house']['dhw_mocp_a']:.0f} A"),
         ],
         "design": d,
@@ -913,10 +961,12 @@ def report(s: dict) -> str:
               f"(placeholders: FirstEnergy gives the real one on request).",
               f"  Meter stack: {ms['positions']} positions in {ms['columns']} columns of {ms['per_column']} and the {svc['main_a']:.0f} A main, "
               f"{ms['width_in']:.0f} in. wide, sockets {ms['bottom_mid_in']:.0f}-{ms['top_mid_in']:.0f} in. up; on the annex's "
-              f"outside wall ({rm['outdoor_need_in']:.0f} of {rm['wall_in']:.0f} in. with the PV disconnect and the surge protector).",
-              "", f"Solar: the roof holds {pvr['modules']} modules, {pvr['kwp']:.1f} kWp ({pvr['usable_ft2']:,.0f} of {pvr['roof_ft2']:,.0f} ft2 "
-              f"usable), {pvr['kwh_year'] / 1000:.1f} MWh a year (PVGIS, {pvr['kwh_per_kwp']:.0f} kWh/kWp). The house panel takes "
-              f"{pvr['house_ac_kw']:.1f} kW AC of it under the 120% rule; the rest needs FirstEnergy's interconnection.",
+              f"outside wall ({rm['outdoor_need_in']:.0f} of {rm['wall_in']:.0f} in. with "
+              + ("the PV disconnect and " if pvr else "") + "the surge protector).",
+              "", (f"Solar: the roof holds {pvr['modules']} modules, {pvr['kwp']:.1f} kWp ({pvr['usable_ft2']:,.0f} of {pvr['roof_ft2']:,.0f} ft2 "
+                   f"usable), {pvr['kwh_year'] / 1000:.1f} MWh a year (PVGIS, {pvr['kwh_per_kwp']:.0f} kWh/kWp). The house panel takes "
+                   f"{pvr['house_ac_kw']:.1f} kW AC of it under the 120% rule; the rest needs FirstEnergy's interconnection."
+                   if pvr else "Solar: none in the edge design (Addendum 11): no quality a tenant feels, and it doesn't pay at 7% (10g)."),
               f"EV: no chargers at the walk-up; D14 puts charging at the site's mobility hub. If that changes, the service leaves "
               f"{evr['spare_va'] / 1000:.1f} kVA: {evr['unmanaged']} chargers at 7.2 kW unmanaged, or {evr['managed_kw_each']:.2f} kW "
               f"each for {evr['chargers']} under load management."]

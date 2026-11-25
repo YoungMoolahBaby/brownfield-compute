@@ -1,0 +1,16 @@
+{
+ "source": "brownfield routes (pass 3g step 7c, src/brownfield/routed.py `grow`): the nominal sizes (in.) steps 3-6's designs asked on forge's routes beyond what they were routed at; `brownfield routes --requests` routes at them. Only for the model and frame whose hashes are `basis`. The edge design (pass 3g step 11c) started from the network design's grown sizes, its loop riser left out: the same building's runs.",
+ "basis": {
+  "geometry_sha": "f485d59a2099f087",
+  "framing_sha": "e10ed4c300d43801"
+ },
+ "fire": {
+  "riser": "2-1/2",
+  "main": "2-1/2"
+ },
+ "vent_in": {},
+ "main_in": {
+  "hot-return": 1.25
+ },
+ "return_in": {}
+}

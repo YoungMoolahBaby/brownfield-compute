@@ -46,6 +46,20 @@ PDF_NAME = "services-sheets-addendum-7.pdf"
 # revision each carries, and the file it was published in (Addendum 7's set stays as issued).
 REVISED = {"G-002": ("Addendum 8", "services-sheet-g-002-addendum-8.pdf"), "G-001": ("Addendum 10", "services-sheet-g-001-addendum-10.pdf"),
            "E-601": ("Addendum 10", "services-sheet-e-601-addendum-10.pdf")}
+# Each design's set (`designs.py`): the constants above are the network design's (Addendum 7's set, its
+# sheets reissued since); Addendum 11 issues the edge design's whole set, none reissued alone yet.
+SETS = {"network": {"services": SERVICES_REV, "sheets": SHEETS_REV, "pdf": PDF_NAME, "revised": REVISED},
+        "edge": {"services": "addendum-11", "sheets": "Addendum 11", "pdf": "services-sheets-addendum-11.pdf", "revised": {}}}
+_DESIGN = ["network"]  # the design being drawn: set by `context` and `draw_sheet`, read through `_set`
+
+
+def _set() -> dict:
+    """The set of the design being drawn (`SETS`)."""
+    return SETS[_DESIGN[0]]
+
+
+def _edge() -> bool:
+    return _DESIGN[0] == "edge"
 
 SW, SH, BORDER, TITLE_W = pdfset.SHEET_W, pdfset.SHEET_H, pdfset.BORDER, pdfset.TITLE_W
 RIGHT = SW - BORDER - TITLE_W  # the title block's left edge, sheet in.
@@ -84,6 +98,7 @@ SHORT = {  # a box's label on a plan, by its key's last part (or kind)
     "wc": "WC", "lav": "LAV", "tub": "TUB", "sink": "SINK", "dishwasher": "DW", "washer": "W", "dryer": "D",
     "erv": "ERV", "minisplit": "MS", "outdoor-unit": "ODU", "manifold": "MF", "panel": "LC", "storage-tank-a": "ST-1A",
     "storage-tank-b": "ST-1B", "swing-tank": "ST-2", "heat-pump": "HP-1", "backup-heater": "BK-1",
+    **{f"co2-{k}": f"CO2-{k}" for k in range(1, 9)},  # the edge design's CO2 units on their pad (Addendum 11)
 }
 HIDDEN = (0, (3, 2))
 
@@ -256,7 +271,8 @@ def _figure():
     return pdfset._figure()
 
 
-def title_block(ax, number: str, title: str, revision: str = SHEETS_REV, status: str = "for review: the installers' round") -> None:
+def title_block(ax, number: str, title: str, revision: str | None = None, status: str = "for review: the installers' round") -> None:
+    revision = revision or _set()["sheets"]
     from matplotlib.patches import Rectangle
 
     ax.add_patch(Rectangle((BORDER, BORDER), SW - 2 * BORDER, SH - 2 * BORDER, fill=False, lw=1.5))
@@ -265,7 +281,7 @@ def title_block(ax, number: str, title: str, revision: str = SHEETS_REV, status:
     lines = [("brownfield-compute, pass 3g", 11), ("12-flat walk-up", 11), ("SERVICES", 14), ("", 8),
              ("NOT FOR CONSTRUCTION", 12), ("a made-up design for a study,", 8), ("not a real project:", 8),
              ("nothing is out to bid", 8), ("", 8), ("drawn from the bid set's models:", 8), (f"the building and frame of {_rev(REV)},", 8),
-             (f"the services of {_rev(SERVICES_REV)}", 8), ("", 8),
+             (f"the services of {_rev(_set()['services'])}", 8), ("", 8),
              (f"revision: {revision}", 9), (status, 9)]
     y = SH - 1.2
     for text, size in lines:
@@ -569,6 +585,7 @@ def _legend(ax, x: float, y: float, used: Counter, trade: str, extra: list[str] 
         "WC": "water closet", "LAV": "lavatory", "TUB": "bathtub", "SINK": "kitchen sink", "DW": "dishwasher", "W": "washer (D over it)",
         "D": "dryer", "ERV": "energy recovery ventilator (M-601)", "MS": "mini-split indoor unit, ducted (M-601)",
         "ODU": "mini-split outdoor unit (M-601)", "MF": "radiant manifold in its cabinet", "LC": "load centre (E-602)",
+        **{f"CO2-{k}": "outdoor CO2 heat pump water heater (P-601)" for k in range(1, 9)},
         "ST-1": "hot-water storage tank (P-601)", "ST-2": "swing tank (P-601)", "HP-1": "water-to-water heat pump (P-601)",
         "LS": "water-level switch (IMC 307.2.3)"}
     shown = [(k, v) for k, v in boxes.items() if used.get(f"box:{k}")]
@@ -625,6 +642,15 @@ NOTES = {
     ],
 }
 
+# The edge design's (Addendum 11): no manifolds, no floors; the mini-splits the flats' heat.
+NOTES_EDGE = {
+    "P": [n.replace(", and at the manifolds (Addendum 5, item 4a)", " (Addendum 5, item 4a)") for n in NOTES["P"]],
+    "M": [n if "radiant loops" not in n else
+          "Each flat's mini-split is its heat (Addendum 11): its supplies reach the bedrooms, the study and the living room; the "
+          "kitchen, entry, hall and passage are heated through the living room; each top-floor bath has a wall heater (M-601)."
+          for n in NOTES["M"]],
+}
+
 
 def plan_sheet(ax, number: str, bld: dict, rb: list[dict], trade: str, level, s7: dict | None, drawn: set) -> Labels:
     title = "ROOF PLAN, ALL TRADES" if level == "roof" else f"LEVEL {level} {TRADES[trade][1]} PLAN"
@@ -649,7 +675,7 @@ def plan_sheet(ax, number: str, bld: dict, rb: list[dict], trade: str, level, s7
                          f"{w['need_psi']:.1f} psi needed at the street, of {s7['fire']['target_psi']:.0f} (FP-601).")
     y = _legend(ax, RIGHT - 4.4, SH - 1.4, used, trade, extra)
     rl = sorted({label_text(r) for r in rb if r["tag"] == "RL" and drawn_as_run(r)})
-    notes = NOTES[trade] if not roof else [
+    notes = (NOTES_EDGE.get(trade, NOTES[trade]) if _edge() else NOTES[trade]) if not roof else [
         "The outdoor units on stands at Fujitsu's clearances, each tagged with its flat; each line set rises in its column's plumbing "
         f"wall and crosses the roof to its unit ({', '.join(rl)}).",
         "Stacks and vent stacks through the roof (VTR) at the height the authority adopts (IPC 903.1.1 leaves it to it; Pennsylvania's "
@@ -918,7 +944,7 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         ("WATER METER", f"the authority's\n{up['the main meter']:.1f} psi at the peak"),
         ("DOUBLE CHECK VALVE\nASSEMBLY, 2 IN.", f"{up['the double check valve assembly']:.1f} psi at the peak\n(the authority may ask an RPZ:\n"
          f"about {up['the double check valve assembly'] * (p[pl + 'rpz_psi_40'] / p[pl + 'dcva_psi_40'] - 1):.1f} psi more)"),
-        ("PRESSURE-REDUCING\nVALVE", f"set {p[pl + 'max_static_psi']:g} psi static,\nfor quiet"),
+        *([] if _edge() else [("PRESSURE-REDUCING\nVALVE", f"set {p[pl + 'max_static_psi']:g} psi static,\nfor quiet")]),
         (f"COLD MAIN {cold['sizes']['main']:g} IN.", f"PEX-a under the slab\nto four {cold['sizes']['riser']:g} in. risers,\n{cold['sizes']['branch']:g} in. to each flat"),
     ]
     x = 1.4
@@ -943,60 +969,63 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     from .sequence import aquastat_at
     spread = load_params()[hw + "recirc_w_per_flat"]
     by = SH - 13.2
-    dc = _box(ax, 1.4, by + 4.2, 3.4, 1.3, f"DATA CENTER'S LIQUID LOOP\nits return, {h['dc_in_f']:.0f} F ({(h['dc_in_f'] - 32) * 5 / 9:.0f} C)\n"
-              f"{h['dc_per_circuit']:.2f} times the heater\ncircuit's flow", fs=6)
-    hx = _box(ax, 6.2, by + 4.2, 3.4, 1.3, f"HX-1 PLATE EXCHANGER\npreheats the heater circuit\nto {h['preheat_f']:.1f} F: {h['preheat_kw']:.1f} kW\n"
-              f"({h['preheat_share']:.0%} of the plant's heat)", fs=6)
-    hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to {t_store:g} F,\n"
-              f"{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
-    bk = _box(ax, 16.0, by + 4.2, 3.8, 1.3, f"BK-1 BACKUP HEATER (ADD. 7)\nA. O. Smith DRE-52-12 (basis of\ndesign): {p[hw + 'backup_w'] / 1000:.1f} kW, "
-              f"its own {p[hw + 'backup_gal']:g} gal;\nlocked out unless the DC's heat is gone", fs=6)
-    st1 = _box(ax, 11.0, by + 1.0, 3.6, 1.8, f"ST-1A + ST-1B STORAGE (ADD. 7)\n{p[rt + 'tank_count']:g} x {p[rt + 'tank_gal']:g} gal in series, "
-               f"{storage_held(p):g} gal\nat {t_store:g} F (Lochinvar HP150G,\nbasis of design); Ecosizer asks {pr['storage_gal']:.0f}\n"
-               f"{pr['capacity_kbtuh']:.1f} kBtu/h over {p[hw + 'run_hr']:g} h", fs=6)
-    st2 = _box(ax, 16.0, by + 1.0, 3.3, 1.8, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
-               f"(Bradford White RE340S6,\nbasis of design; Addendum 7)\non at {t_out:g} F, off at {t_out + SWING_DEADBAND_F:g} F", fs=6)
-    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MV-1 MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
-    hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n"
-              f"{hot['sizes']['branch']:g} in. to each flat's loop", fs=6)
-    rp = _box(ax, 20.7, by - 1.9, 3.8, 1.5, f"P-3 RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft; TS-5 at ST-2:\n"
-              f"on under {t_back:g} F, off at {p[ct + 'recirc_stop_f']:g} F (C404.6.1)", fs=6)
-    # The data center's water: to HX-1, then the heat pump's source, then back.
-    _pipe(ax, [(dc[0] + dc[2], dc[1] + 0.95), (hx[0], hx[1] + 0.95)], colour="#6a1b9a", text="DC water")
-    _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.95), (hp[0], hp[1] + 0.95)], colour="#6a1b9a", text="source, throttled")
-    _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1] + hp[3]), (hp[0] + hp[2] * 0.5, hp[1] + hp[3] + 0.5), (dc[0] + dc[2] * 0.5, hp[1] + hp[3] + 0.5),
-               (dc[0] + dc[2] * 0.5, dc[1] + dc[3])], colour="#6a1b9a", text=f"back to the data center at {h['source_f']:.0f} F", side=1)
-    # The heater circuit (P-2): ST-1B's bottom through HX-1, HP-1 and BK-1 to ST-1A's top.
-    _pipe(ax, [(st1[0], st1[1] + 0.3), (hx[0] + hx[2] * 0.5, st1[1] + 0.3), (hx[0] + hx[2] * 0.5, hx[1])], colour=TAGS["CW"][1],
-          text="heater circuit (P-2), from ST-1B's bottom", side=-1)
-    _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.3), (hp[0], hp[1] + 0.3)], colour="#ef6c00", text=f"{h['preheat_f']:.1f} F", side=-1)
-    _pipe(ax, [(hp[0] + hp[2], hp[1] + 0.3), (bk[0], bk[1] + 0.3)], colour=TAGS["HW"][1], text=f"{t_store:g} F", side=-1)
-    _pipe(ax, [(bk[0] + bk[2] * 0.5, bk[1]), (bk[0] + bk[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, st1[1] + st1[3])],
-          colour=TAGS["HW"][1], text=f"to ST-1A's top, {t_store:g} F", side=1)
-    _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_store:g} F")
-    _pipe(ax, [(st2[0] + st2[2], mv[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
-    _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_out:g} F")
-    _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.75), (rp[0] + rp[2], rp[1] + 0.75)], colour=TAGS["HWR"][1],
-          ls=TAGS["HWR"][2], text=f"return {lp['return_main_in']:g} in. main, {lp['return_riser_in']:g} in. risers", side=1)
-    _pipe(ax, [(rp[0], rp[1] + 0.75), (st2[0] + st2[2] * 0.5, rp[1] + 0.75), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
-    _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, to ST-1B's bottom")
-    _pipe(ax, [(mv[0] + mv[2] * 0.25, by - 0.2), (mv[0] + mv[2] * 0.25, mv[1])], colour=TAGS["CW"][1], text="cold to the mixing valve")
-    notes = [
-        f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at {t_out:g} F, a swing-tank plant "
-        f"({pr['running_gal']:.0f} gal running; {pr['storage_gal']:.0f} gal of storage, against a floor of {pr['minimum_gal']:.0f}).",
-        f"The storage is two tanks in series, for its stratification (Ecotope): cold in at ST-1B's bottom, hot out of ST-1A's top. P-2 runs "
-        f"on TS-4, the aquastat {aquastat_at(p)}.",
-        f"Stored and leaving the heater at {t_store:g} F (WHO: not less than 60 C; CDC: above 140 F); sent out at {t_out:g} F; back at "
-        f"{t_back:g} F or more.",
-        f"The loop loses {lp['w_per_flat']:.0f} W a flat on its routes, {lp['riser_mains_w_per_flat']:.0f} of it in the risers and mains "
-        f"(Ecosizer's spread of measured buildings {spread.low:g}-{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh "
-        f"on the design day; the plant carries {tm['plant_share']:.0%} of the loop's loss.",
-        f"Most of the hot water's heat comes from the data center: the preheat ({h['preheat_share']:.0%} of the plant's), and what the "
-        "heat pump draws from its water. When it's gone, BK-1 heats the storage instead, never with HP-1 (a wired interlock).",
-        "Not in the model: the plant's wall-hung assemblies (the exchanger, the pumps, the mixing valve, the backflow assembly, the "
-        "pressure-reducing valve). Their places in the mechanical room are for the plumber to propose.",
-        "The control sequence: specification section 23 09 93 (M-602). The tests and inspections: 01 45 00 (G-002).",
-    ]
+    if h.get("kind") == "air":  # the edge design (Addendum 11): the plant on its CO2 units
+        notes = _plant_edge(ax, s7, p, by)
+    else:
+        dc = _box(ax, 1.4, by + 4.2, 3.4, 1.3, f"DATA CENTER'S LIQUID LOOP\nits return, {h['dc_in_f']:.0f} F ({(h['dc_in_f'] - 32) * 5 / 9:.0f} C)\n"
+                  f"{h['dc_per_circuit']:.2f} times the heater\ncircuit's flow", fs=6)
+        hx = _box(ax, 6.2, by + 4.2, 3.4, 1.3, f"HX-1 PLATE EXCHANGER\npreheats the heater circuit\nto {h['preheat_f']:.1f} F: {h['preheat_kw']:.1f} kW\n"
+                  f"({h['preheat_share']:.0%} of the plant's heat)", fs=6)
+        hp = _box(ax, 11.0, by + 4.2, 3.6, 1.3, f"HP-1 WATER-TO-WATER HEAT PUMP\nClimateMaster Tranquility SW036\n(basis of design): to {t_store:g} F,\n"
+                  f"{h['hp_kw']:.1f} kW of heat, COP {h['hp_cop']:g}", fs=6)
+        bk = _box(ax, 16.0, by + 4.2, 3.8, 1.3, f"BK-1 BACKUP HEATER (ADD. 7)\nA. O. Smith DRE-52-12 (basis of\ndesign): {p[hw + 'backup_w'] / 1000:.1f} kW, "
+                  f"its own {p[hw + 'backup_gal']:g} gal;\nlocked out unless the DC's heat is gone", fs=6)
+        st1 = _box(ax, 11.0, by + 1.0, 3.6, 1.8, f"ST-1A + ST-1B STORAGE (ADD. 7)\n{p[rt + 'tank_count']:g} x {p[rt + 'tank_gal']:g} gal in series, "
+                   f"{storage_held(p):g} gal\nat {t_store:g} F (Lochinvar HP150G,\nbasis of design); Ecosizer asks {pr['storage_gal']:.0f}\n"
+                   f"{pr['capacity_kbtuh']:.1f} kBtu/h over {p[hw + 'run_hr']:g} h", fs=6)
+        st2 = _box(ax, 16.0, by + 1.0, 3.3, 1.8, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
+                   f"(Bradford White RE340S6,\nbasis of design; Addendum 7)\non at {t_out:g} F, off at {t_out + SWING_DEADBAND_F:g} F", fs=6)
+        mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MV-1 MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
+        hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n"
+                  f"{hot['sizes']['branch']:g} in. to each flat's loop", fs=6)
+        rp = _box(ax, 20.7, by - 1.9, 3.8, 1.5, f"P-3 RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft; TS-5 at ST-2:\n"
+                  f"on under {t_back:g} F, off at {p[ct + 'recirc_stop_f']:g} F (C404.6.1)", fs=6)
+        # The data center's water: to HX-1, then the heat pump's source, then back.
+        _pipe(ax, [(dc[0] + dc[2], dc[1] + 0.95), (hx[0], hx[1] + 0.95)], colour="#6a1b9a", text="DC water")
+        _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.95), (hp[0], hp[1] + 0.95)], colour="#6a1b9a", text="source, throttled")
+        _pipe(ax, [(hp[0] + hp[2] * 0.5, hp[1] + hp[3]), (hp[0] + hp[2] * 0.5, hp[1] + hp[3] + 0.5), (dc[0] + dc[2] * 0.5, hp[1] + hp[3] + 0.5),
+                   (dc[0] + dc[2] * 0.5, dc[1] + dc[3])], colour="#6a1b9a", text=f"back to the data center at {h['source_f']:.0f} F", side=1)
+        # The heater circuit (P-2): ST-1B's bottom through HX-1, HP-1 and BK-1 to ST-1A's top.
+        _pipe(ax, [(st1[0], st1[1] + 0.3), (hx[0] + hx[2] * 0.5, st1[1] + 0.3), (hx[0] + hx[2] * 0.5, hx[1])], colour=TAGS["CW"][1],
+              text="heater circuit (P-2), from ST-1B's bottom", side=-1)
+        _pipe(ax, [(hx[0] + hx[2], hx[1] + 0.3), (hp[0], hp[1] + 0.3)], colour="#ef6c00", text=f"{h['preheat_f']:.1f} F", side=-1)
+        _pipe(ax, [(hp[0] + hp[2], hp[1] + 0.3), (bk[0], bk[1] + 0.3)], colour=TAGS["HW"][1], text=f"{t_store:g} F", side=-1)
+        _pipe(ax, [(bk[0] + bk[2] * 0.5, bk[1]), (bk[0] + bk[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, by + 3.4), (st1[0] + st1[2] * 0.5, st1[1] + st1[3])],
+              colour=TAGS["HW"][1], text=f"to ST-1A's top, {t_store:g} F", side=1)
+        _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_store:g} F")
+        _pipe(ax, [(st2[0] + st2[2], mv[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
+        _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_out:g} F")
+        _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.75), (rp[0] + rp[2], rp[1] + 0.75)], colour=TAGS["HWR"][1],
+              ls=TAGS["HWR"][2], text=f"return {lp['return_main_in']:g} in. main, {lp['return_riser_in']:g} in. risers", side=1)
+        _pipe(ax, [(rp[0], rp[1] + 0.75), (st2[0] + st2[2] * 0.5, rp[1] + 0.75), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
+        _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, to ST-1B's bottom")
+        _pipe(ax, [(mv[0] + mv[2] * 0.25, by - 0.2), (mv[0] + mv[2] * 0.25, mv[1])], colour=TAGS["CW"][1], text="cold to the mixing valve")
+        notes = [
+            f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at {t_out:g} F, a swing-tank plant "
+            f"({pr['running_gal']:.0f} gal running; {pr['storage_gal']:.0f} gal of storage, against a floor of {pr['minimum_gal']:.0f}).",
+            f"The storage is two tanks in series, for its stratification (Ecotope): cold in at ST-1B's bottom, hot out of ST-1A's top. P-2 runs "
+            f"on TS-4, the aquastat {aquastat_at(p)}.",
+            f"Stored and leaving the heater at {t_store:g} F (WHO: not less than 60 C; CDC: above 140 F); sent out at {t_out:g} F; back at "
+            f"{t_back:g} F or more.",
+            f"The loop loses {lp['w_per_flat']:.0f} W a flat on its routes, {lp['riser_mains_w_per_flat']:.0f} of it in the risers and mains "
+            f"(Ecosizer's spread of measured buildings {spread.low:g}-{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh "
+            f"on the design day; the plant carries {tm['plant_share']:.0%} of the loop's loss.",
+            f"Most of the hot water's heat comes from the data center: the preheat ({h['preheat_share']:.0%} of the plant's), and what the "
+            "heat pump draws from its water. When it's gone, BK-1 heats the storage instead, never with HP-1 (a wired interlock).",
+            "Not in the model: the plant's wall-hung assemblies (the exchanger, the pumps, the mixing valve, the backflow assembly, the "
+            "pressure-reducing valve). Their places in the mechanical room are for the plumber to propose.",
+            "The control sequence: specification section 23 09 93 (M-602). The tests and inspections: 01 45 00 (G-002).",
+        ]
     yy = by - 2.6
     ax.text(1.4, yy, "NOTES", fontsize=8, weight="bold", va="top")
     yy -= 0.3
@@ -1011,7 +1040,7 @@ def plumbing_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     fx = Counter(r["props"].get("Kind") for r in rb if r["key"].startswith("fixture/"))
     frow = [[k, str(n)] for k, n in sorted(fx.items())]
     _table(ax, RIGHT - 9.6, 6.4, [("FIXTURE", 2.4), ("COUNT", 0.8)], frow, title="FIXTURES (FROM THE MODEL; NONE CHOSEN)")
-    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the tables from the services model.",
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {_set()['sheets']}'s services model was built from); the tables from the services model.",
             fontsize=6, va="top", color="#616161")
 
 
@@ -1076,8 +1105,76 @@ def flat_loop_inset(ax, x0: float, top: float, s7: dict, p: dict) -> None:
         yy -= len(parts) * 5.9 / PT * 1.45 + 0.06
 
 
+def _plant_edge(ax, s7: dict, p: dict, by: float) -> list[str]:
+    """P-601's plant for the edge design (Addendum 11): the CO2 units on their pad, ECO2's storage, the
+    backup heater on P-2's circuit, the swing tank, the mixing valve and the recirculation. Returns
+    its notes."""
+    from .params import load_params
+    from .plumbing import SWING_DEADBAND_F, storage_held, storage_temp
+    from .sequence import aquastat_at
+
+    w = s7["water"]
+    h, pr, tm, lp, rc, hot = w["heater"], w["primary"], w["tm"], w["loop"], w["recirc"], w["paths"]["hot"]
+    hw, ct, co = "systems.hot_water.", "systems.controls.", "systems.co2_plant."
+    t_store, t_out, t_back = storage_temp(p), p[hw + "distribution_f"], p[hw + "return_min_f"]
+    spread = load_params()[hw + "recirc_w_per_flat"]
+    n = h["units"]
+    units = _box(ax, 1.4, by + 4.2, 4.8, 1.3, f"CO2-1 TO CO2-{n}, ON THE PAD OUTSIDE\nECO2 Systems SANCO2 GS5-45HPC-D (basis\nof design): "
+                 f"{h['unit_kw']:g} kW each above {h['full_above_f']:g} F, {h['capacity_kw']:g} kW\nin all ({h['one_out_kw']:g} with one out); "
+                 f"to {t_store:g} F", fs=6)
+    bk = _box(ax, 16.0, by + 4.2, 3.8, 1.3, f"BK-1 BACKUP HEATER\nA. O. Smith DRE-52-12 (basis of\ndesign): {p[hw + 'backup_w'] / 1000:.1f} kW, "
+              f"its own {p[hw + 'backup_gal']:g} gal;\non P-2's circuit when the units fault", fs=6)
+    st1 = _box(ax, 11.0, by + 1.0, 3.6, 1.8, f"ST-1A + ST-1B STORAGE (ADD. 11)\n{p[co + 'tank_count']:g} x {p[co + 'tank_gal']:g} gal in series, "
+               f"{storage_held(p):g} gal\nat {t_store:g} F (ECO2 ECO-200GLBK,\nbasis of design); Ecosizer asks {pr['storage_gal']:.0f}\n"
+               f"{pr['capacity_kbtuh']:.1f} kBtu/h over {p[hw + 'run_hr']:g} h", fs=6)
+    st2 = _box(ax, 16.0, by + 1.0, 3.3, 1.8, f"ST-2 SWING TANK\n{tm['volume_gal']:.0f} gal, {p['systems.house.swing_element_va'] / 1000:.1f} kW element\n"
+               f"(Bradford White RE340S6,\nbasis of design)\non at {t_out:g} F, off at {t_out + SWING_DEADBAND_F:g} F", fs=6)
+    mv = _box(ax, 20.7, by + 1.2, 3.3, 1.6, f"MV-1 MIXING VALVE\nASSE 1017 master valve\n{t_out:g} F out", fs=6)
+    hm = _box(ax, 25.4, by + 1.2, 3.3, 1.6, f"HOT MAIN {hot['sizes']['main']:g} IN.\nto four {hot['sizes']['riser']:g} in. risers,\n"
+              f"{hot['sizes']['branch']:g} in. to each flat's loop", fs=6)
+    rp = _box(ax, 20.7, by - 1.9, 3.8, 1.5, f"P-3 RECIRCULATION PUMP\nGrundfos ALPHA2 15-55SF\n{lp['gpm']:.2f} gpm at {rc['ft']:.1f} ft; TS-5 at ST-2:\n"
+              f"on under {t_back:g} F, off at {p[ct + 'recirc_stop_f']:g} F (C404.6.1)", fs=6)
+    # The units: from ST-1B's bottom, back to ST-1A's top, on reverse-return manifolds.
+    _pipe(ax, [(st1[0], st1[1] + 0.3), (units[0] + units[2] * 0.3, st1[1] + 0.3), (units[0] + units[2] * 0.3, units[1])], colour=TAGS["CW"][1],
+          text="to the units, from ST-1B's bottom", side=-1)
+    _pipe(ax, [(units[0] + units[2] * 0.7, units[1]), (units[0] + units[2] * 0.7, by + 3.4), (st1[0] + st1[2] * 0.5, by + 3.4),
+               (st1[0] + st1[2] * 0.5, st1[1] + st1[3])], colour=TAGS["HW"][1], text=f"back to ST-1A's top, {t_store:g} F", side=1)
+    # P-2's circuit through BK-1: only when the units fault.
+    _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.5), (bk[0] + bk[2] * 0.3, st1[1] + 1.5), (bk[0] + bk[2] * 0.3, bk[1])], colour=TAGS["CW"][1],
+          ls=(0, (4, 2)), text="P-2, backup only", side=1)
+    _pipe(ax, [(bk[0] + bk[2] * 0.7, bk[1]), (bk[0] + bk[2] * 0.7, by + 3.6), (st1[0] + st1[2] * 0.8, by + 3.6), (st1[0] + st1[2] * 0.8, st1[1] + st1[3])],
+          colour=TAGS["HW"][1], ls=(0, (4, 2)))
+    _pipe(ax, [(st1[0] + st1[2], st1[1] + 1.0), (st2[0], st2[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_store:g} F")
+    _pipe(ax, [(st2[0] + st2[2], mv[1] + 1.0), (mv[0], mv[1] + 1.0)], colour=TAGS["HW"][1])
+    _pipe(ax, [(mv[0] + mv[2], mv[1] + 1.0), (hm[0], hm[1] + 1.0)], colour=TAGS["HW"][1], text=f"{t_out:g} F")
+    _pipe(ax, [(hm[0] + hm[2] * 0.5, hm[1]), (hm[0] + hm[2] * 0.5, rp[1] + 0.75), (rp[0] + rp[2], rp[1] + 0.75)], colour=TAGS["HWR"][1],
+          ls=TAGS["HWR"][2], text=f"return {lp['return_main_in']:g} in. main, {lp['return_riser_in']:g} in. risers", side=1)
+    _pipe(ax, [(rp[0], rp[1] + 0.75), (st2[0] + st2[2] * 0.5, rp[1] + 0.75), (st2[0] + st2[2] * 0.5, st2[1])], colour=TAGS["HWR"][1], ls=TAGS["HWR"][2])
+    _pipe(ax, [(st1[0] + st1[2] * 0.3, by - 1.0), (st1[0] + st1[2] * 0.3, st1[1])], colour=TAGS["CW"][1], text="cold in, to ST-1B's bottom")
+    _pipe(ax, [(mv[0] + mv[2] * 0.25, by - 0.2), (mv[0] + mv[2] * 0.25, mv[1])], colour=TAGS["CW"][1], text="cold to the mixing valve")
+    return [
+        f"Sized by Ecosizer (Ecotope's engine, read, not run): the design day's {w['day_gal']:.0f} gal at {t_out:g} F, a swing-tank plant "
+        f"({pr['running_gal']:.0f} gal running; {pr['storage_gal']:.0f} gal of storage, against a floor of {pr['minimum_gal']:.0f}).",
+        f"The storage is two ECO2 tanks in series (ECO2 warrants its units only on its own tanks): cold in at ST-1B's bottom, hot out of "
+        f"ST-1A's top. CMB starts the units when TS-4, {aquastat_at(p)}, falls under {p[co + 'start_f']:g} F.",
+        f"Stored at {t_store:g} F (the units' winter outlet; WHO: not less than 60 C); sent out at {t_out:g} F; back at {t_back:g} F or more.",
+        f"The loop loses {lp['w_per_flat']:.0f} W a flat on its routes, {lp['riser_mains_w_per_flat']:.0f} of it in the risers and mains "
+        f"(Ecosizer's spread {spread.low:g}-{spread.high:g}). The swing tank's element gives {tm['kwh_day']:.1f} kWh on the design day.",
+        f"The units give {h['unit_kw']:g} kW each above {h['full_above_f']:g} F, against Ecosizer's {h['need_kw']:.1f} kW; below it less, by "
+        f"an amount ECO2 doesn't publish (the design dry bulb {h['design_f']:.1f} F; they run to {h['min_ambient_f']:g} F). Their water "
+        "lines are heat-traced (ECO2: below 27 F), on stands 12 in. above the pad; ECO2 states 37 dBA at no distance.",
+        "BK-1 heats the storage through P-2 only when the units fault, never with them (a wired interlock); ECO2 to approve its "
+        "circuit's connections to the storage in writing.",
+        "Not in the model: the plant's wall-hung assemblies (the pumps, the mixing valve, the backflow assembly) and the units' water "
+        "lines. Their places are for the plumber to propose.",
+        "The control sequence: specification section 23 09 93 (M-602). The tests and inspections: 01 45 00 (G-002).",
+    ]
+
+
 def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
-    """M-601: the building loop, the flats' equipment and their air."""
+    """M-601: the building loop, the flats' equipment and their air (the edge design's: `hvac_edge`)."""
+    if _edge():
+        return hvac_edge(ax, s7, p, rb)
     title_block(ax, "M-601", "HEATING LOOP, EQUIPMENT AND AIR: DIAGRAM AND SCHEDULES")
     L = s7["loop"]
     ax.text(1.4, SH - 1.2, "THE BUILDING LOOP (RADIANT FLOORS)", fontsize=11, weight="bold", va="top")
@@ -1142,14 +1239,66 @@ def hvac_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     rows = lengths_rows(rb, ("hvac",))
     _table(ax, 14.6, SH - 12.4, [("SYSTEM", 2.9), ("MATERIAL", 4.2), ("SIZE IN.", 1.4), ("FT", 0.8), ("PIECES", 0.7)], rows,
            title="HVAC PIPE AND DUCT BY SYSTEM AND SIZE (FROM THE MODEL)", fs=5.4, row_h=0.17)
-    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the equipment and lengths from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {_set()['sheets']}'s services model was built from); the equipment and lengths from the "
             "services model.", fontsize=6, va="top", color="#616161")
+
+
+def hvac_edge(ax, s7: dict, p: dict, rb: list[dict]) -> None:
+    """M-601 for the edge design (Addendum 11): no building loop; each flat's mini-split its heat and
+    cooling, its air to every room the code asks heat of; the ERVs."""
+    title_block(ax, "M-601", "HEATING, COOLING AND AIR: EQUIPMENT AND SCHEDULES")
+    ax.text(1.4, SH - 1.2, "EACH FLAT'S MINI-SPLIT: ITS HEAT AND ITS COOLING (ADDENDUM 11)", fontsize=11, weight="bold", va="top")
+    sh = s7["heat"]
+    ax.text(1.4, SH - 1.7, f"No radiant floors, building loop or substation: each flat's ducted mini-split heats it. Its heating at the design "
+            f"dry bulb ({sh['design_c']:g} C) from Fujitsu's table, derated for its routed line set and the outdoor unit's height; its air "
+            "to the bedrooms, the study and the living room, each by the larger of its share of the cooling and of the unit's heat it "
+            "needs. The kitchen, entry, hall and passage are heated through the living room. Each top-floor bath has a 500 W wall heater "
+            "on its own circuit (E-602); the baths below lose no heat. The utility closet is no space for occupancy (IBC 1204.1).",
+            fontsize=6.5, va="top", wrap=True)
+    rows = []
+    for n in sorted(s7["cooling"]):
+        c, d, x = s7["cooling"][n], s7["ducts"][n], sh["flats"][n]
+        least = min(x["by_room"].items(), key=lambda kv: kv[1]["give_w"] - kv[1]["need_w"])
+        rows.append([n, c["unit"].replace("minisplit_", "") + "k", f"{x['capacity_w']:,.0f} / {x['load_w']:,.0f}",
+                     f"{least[0]} {least[1]['give_w']:.0f} / {least[1]['need_w']:.0f}",
+                     f"{d['ms']['esp']:.2f}", f"{c['line_ft']:.0f}", f"{c['sensible_capacity_w'] / 1000:.2f} / {c['sensible_w'] / 1000:.2f}",
+                     f"{s7['erv'][n]['preheat_w']:.0f}", f"{max(d['erv_supply']['worst_inwc'], d['erv_exhaust']['worst_inwc']):.2f}"])
+    yy = _table(ax, 1.4, SH - 3.0,
+                [("FLAT", 1.4), ("UNIT", 0.6), ("HEAT W\nUNIT / LOAD", 1.2), ("TIGHTEST ROOM\nW GIVEN / ASKED", 1.6),
+                 ("MINI-SPLIT\nSET IN. W.C.", 1.2), ("LINE SET\nFT", 0.8), ("SENSIBLE KW\nUNIT / LOAD", 1.3), ("ERV PRE-\nHEAT W", 0.8),
+                 ("ERV WORST\nIN. W.C.", 0.9)], rows, title="THE FLATS: HEAT, COOLING AND VENTILATION (7c, ON THE ROUTES)")
+    rooms = ["living", "bed-1", "bed-2", "study"]
+    arow = []
+    for n in sorted(s7["ducts"]):
+        d = s7["ducts"][n]
+        cells = [n]
+        for rm in rooms:
+            pth = d["ms"]["paths"].get(f"{n}/{rm}")
+            cells.append(f"{pth['cfm']:.0f} / {pth['in']:g}" if pth else "-")
+        for rm in ("bath", "kitchen"):
+            pth = d["erv_exhaust"]["paths"].get(f"{n}/{rm}")
+            cells.append(f"{pth['cfm']:.0f} / {pth['in']:g}" if pth else "-")
+        arow.append(cells)
+    _table(ax, 1.4, yy - 0.3, [("FLAT", 1.4)] + [(f"SUPPLY {r.upper()}\nCFM / IN.", 1.25) for r in rooms]
+           + [(f"EXHAUST {r.upper()}\nCFM / IN.", 1.35) for r in ("bath", "kitchen")], arow,
+           title="AIR AT EACH TERMINAL (THE MINI-SPLIT'S SUPPLIES; THE ERV'S EXHAUSTS)")
+    eq = Counter((r["cls"], r["props"].get("Kind", "")) for r in rb if r["key"].startswith("eq/") and r["props"].get("Layer") == "hvac")
+    erow = [[k.split(" (")[0], k[k.find("(") + 1:-1] if "(" in k else "", str(n)] for (_, k), n in sorted(eq.items(), key=lambda kv: kv[0][1])]
+    erow.append(["ERV preheater, electric in-line duct heater", f"Ouellet ODHR0501002, {p['systems.electrical.preheater_va']:,.0f} W "
+                 f"{p['systems.electrical.preheater_v']:.0f} V (step 3), in the outdoor-air duct", str(len(s7["ducts"]))])
+    _table(ax, 14.6, SH - 8.6, [("EQUIPMENT", 3.6), ("BASIS OF DESIGN", 6.4), ("COUNT", 0.6)], erow,
+           title="HVAC EQUIPMENT (FROM THE MODEL; BASIS OF DESIGN, NOT CHOSEN)")
+    rows = lengths_rows(rb, ("hvac",))
+    _table(ax, 14.6, SH - 12.4, [("SYSTEM", 2.9), ("MATERIAL", 4.2), ("SIZE IN.", 1.4), ("FT", 0.8), ("PIECES", 0.7)], rows,
+           title="HVAC PIPE AND DUCT BY SYSTEM AND SIZE (FROM THE MODEL)", fs=5.4, row_h=0.17)
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {_set()['sheets']}'s services model was built from); the "
+            "equipment and lengths from the services model.", fontsize=6, va="top", color="#616161")
 
 
 def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     """E-601: the service, the meter stack, the feeders and the house panel (reissued by Addendum 10 with
     the feeders' grounds in proportion, NEC 250.122(B))."""
-    rev = REVISED.get("E-601", (SHEETS_REV,))[0]
+    rev = _set()["revised"].get("E-601", (_set()["sheets"],))[0]
     title_block(ax, "E-601", "ONE-LINE DIAGRAM AND FEEDER SCHEDULE", revision=rev)
     el = s7["electrical"]
     sv, fa = el["service"], el["faults"]
@@ -1185,7 +1334,8 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         _box(ax, fx + 6.9, yy - 0.28, 2.4, 0.56, f"LC {n.upper()}\nQO130L125PG, {el['panels'][n]['spaces']} spaces", fs=5.2)
     hp = el["service"]["house"]
     hb = _box(ax, x, 2.2, 3.2, 1.9, f"HOUSE PANEL\n{hp['breaker_a']:.0f} A from the house meter\n{hp['calculated_va']:,.0f} VA calculated\n"
-              f"{hp['amps']:.1f} A; the heat pump\non {hp['dhw_breaker_a']:.0f} A (MOCP {hp['dhw_mocp_a']:.0f})", fs=6)
+              f"{hp['amps']:.1f} A; " + (f"each CO2 unit\non {hp['dhw_breaker_a']:.0f} A (ECO2's)" if hp.get("plant") == "co2" else
+              f"the heat pump\non {hp['dhw_breaker_a']:.0f} A (MOCP {hp['dhw_mocp_a']:.0f})"), fs=6)
     _pipe(ax, [(x + 1.6, y - 6.0), (x + 1.6, hb[1] + hb[3])], colour="black", lw=1.0)
     rows = [[r["what"][:70], f"{r['va']:,.0f}", f"{r['calc_va']:,.0f}" if "calc_va" in r else "-"] for r in hp["rows"]]
     _table(ax, 17.6, SH - 2.2, [("HOUSE LOAD", 6.6), ("VA", 0.8), ("CALC. VA", 0.9)], rows, title="THE HOUSE PANEL'S LOADS (STEP 5)", fs=5.6)
@@ -1203,7 +1353,8 @@ def one_line(ax, s7: dict, p: dict, rb: list[dict]) -> None:
         f"The flats share the phases in threes: {'; '.join(f'{k} {len(v)} flats' for k, v in sv['pairs'].items())}.",
         "Not in the model: the meter stack, the house panel and the electrical room's equipment. Fault currents from the "
         "transformer's assumed size and impedance until FirstEnergy gives them.",
-        "No chargers at the walk-up: they are at the mobility hub (D14). Room for PV on the roof (step 5), not drawn.",
+        "No chargers at the walk-up: they are at the mobility hub (D14). "
+        + ("No solar panels (Addendum 11)." if _edge() else "Room for PV on the roof (step 5), not drawn."),
     ]
     yy = 9.6
     ax.text(17.6, yy, "NOTES", fontsize=8, weight="bold", va="top")
@@ -1320,7 +1471,7 @@ def fire_diagram(ax, s7: dict, p: dict, rb: list[dict]) -> None:
     rows = lengths_rows(rb, ("sprinklers",))
     _table(ax, 18.6, SH - 9.8, [("SYSTEM", 2.4), ("MATERIAL", 3.6), ("SIZE IN.", 0.8), ("FT", 0.7), ("PIECES", 0.7)], rows,
            title="SPRINKLER PIPE BY SIZE (FROM THE MODEL)", fs=5.8)
-    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {SHEETS_REV}'s services model was built from); the sprinklers and lengths from the "
+    ax.text(1.4, 1.2, f"Figures: 7c's designs on the routes (routed.summary, on the routes {_set()['sheets']}'s services model was built from); the sprinklers and lengths from the "
             "services model.", fontsize=6, va="top", color="#616161")
 
 
@@ -1361,10 +1512,10 @@ def tests_sheet(ax, s7: dict, p: dict) -> None:
     section 01 45 00 as a schedule."""
     from . import acceptance
 
-    rev = REVISED.get("G-002", (SHEETS_REV,))[0]
+    rev = _set()["revised"].get("G-002", (_set()["sheets"],))[0]
     title_block(ax, "G-002", "TESTS AND INSPECTIONS (SPECIFICATION 01 45 00)", revision=rev)
     ax.text(1.4, SH - 1.2, "TESTS AND INSPECTIONS", fontsize=14, weight="bold", va="top")
-    issued = "Addendum 7" if rev == "Addendum 7" else f"Addendum 7, as {rev} revises it"
+    issued = _set()["sheets"] if rev == _set()["sheets"] else f"{_set()['sheets']}, as {rev} revises it"
     ax.text(1.4, SH - 1.65, f"Specification section 01 45 00 ({issued}) governs, with the codes' own words for each test it quotes. Each test is "
             "the code's own or the design's claim to be proved, its figures the design's. Pennsylvania's code official inspects as 34 Pa. Code "
             "403.45 asks.", fontsize=8.5, va="top")
@@ -1385,8 +1536,10 @@ def sequence_sheet(ax, s7: dict, p: dict) -> None:
 
     title_block(ax, "M-602", "CONTROL SEQUENCE AND POINTS (SPECIFICATION 23 09 93)")
     ax.text(1.4, SH - 1.2, "SEQUENCE OF OPERATIONS", fontsize=14, weight="bold", va="top")
-    ax.text(1.4, SH - 1.65, "Specification section 23 09 93 (Addendum 7) governs. Setpoints are the design's; the fallback's timers, the warm-weather "
-            "shutdown, the mini-splits' offset and the loop's alarm are judgements, set at commissioning.", fontsize=8.5, va="top")
+    ax.text(1.4, SH - 1.65, (f"Specification section 23 09 93 ({_set()['sheets']}) governs. Setpoints are the design's and ECO2's; the "
+                             "backup's timers and the return's alarm are judgements, set at commissioning.") if _edge() else
+            ("Specification section 23 09 93 (Addendum 7) governs. Setpoints are the design's; the fallback's timers, the warm-weather "
+             "shutdown, the mini-splits' offset and the loop's alarm are judgements, set at commissioning."), fontsize=8.5, va="top")
     seq = sq.sequence(p, s7)
     width, fs = 9.4, 10.5
     line = fs / PT * 1.3
@@ -1452,7 +1605,8 @@ def sheet_list() -> list[tuple[str, str]]:
                     ("P-202", "PLUMBING WALLS IN ELEVATION, COLUMNS FRONT-RIGHT AND BACK-RIGHT"),
                     ("P-601", "WATER SERVICE AND HOT-WATER PLANT: DIAGRAM AND SCHEDULES")]
         if trade == "M":
-            out += [("M-601", "HEATING LOOP, EQUIPMENT AND AIR: DIAGRAM AND SCHEDULES"),
+            out += [("M-601", "HEATING, COOLING AND AIR: EQUIPMENT AND SCHEDULES" if _edge() else
+                     "HEATING LOOP, EQUIPMENT AND AIR: DIAGRAM AND SCHEDULES"),
                     ("M-602", "CONTROL SEQUENCE AND POINTS (SPECIFICATION 23 09 93)")]
         if trade == "E":
             out += [("E-601", "ONE-LINE DIAGRAM AND FEEDER SCHEDULE"), ("E-602", "PANEL SCHEDULES")]
@@ -1474,20 +1628,21 @@ def inches(x: float) -> str:
 def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None, s7: dict | None = None) -> None:
     """G-001 (Addendum 7; reissued by Addendum 9 with its two general notes, and by Addendum 10 with the
     feeders' grounds, the sheet index marking the sheets reissued since Addendum 7)."""
-    rev = REVISED.get("G-001", (SHEETS_REV,))[0]
+    rev = _set()["revised"].get("G-001", (_set()["sheets"],))[0]
     title_block(ax, "G-001", "COVER, SHEET INDEX, NOTES AND LEGEND", revision=rev)
     ax.text(1.4, SH - 1.2, "12-FLAT WALK-UP: THE SERVICES", fontsize=22, weight="bold", va="top")
-    drawn_from = f"from {SHEETS_REV}'s services model" if rev == SHEETS_REV else "each from the services model of the addendum it carries,"
+    drawn_from = f"from {_set()['sheets']}'s services model" if rev == _set()["sheets"] else "each from the services model of the addendum it carries,"
     ax.text(1.4, SH - 2.0, f"Plumbing, heating, cooling and air, power and sprinklers, drawn {drawn_from} for review by the "
             "trades: the installers' round.", fontsize=10, va="top")
     ax.text(1.4, SH - 2.4, "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Not for construction.",
             fontsize=10, va="top", color="#c00000")
-    rows = [[n, t + (f" ({REVISED[n][0]})" if n in REVISED and n != "G-001" else "")] for n, t in sheets]
+    revised = _set()["revised"]
+    rows = [[n, t + (f" ({revised[n][0]})" if n in revised and n != "G-001" else "")] for n, t in sheets]
     _table(ax, 1.4, SH - 3.3, [("SHEET", 0.9), ("TITLE", 7.2)], rows, title="SHEET INDEX", fs=7, row_h=0.26)
     general = [
         "Codes as Pennsylvania enforces them (34 Pa. Code 403.21, from 2026-01-01): the 2021 IBC, IPC, IMC and IECC; NFPA 70 (2020), "
         "13R (2019) and 72 (2019).",
-        f"The bid set's documents govern: the services model (services-{SERVICES_REV}.ifc), its schedules (lengths, fittings, equipment, "
+        f"The bid set's documents govern: the services model (services-{_set()['services']}.ifc), its schedules (lengths, fittings, equipment, "
         f"fixtures, sprinklers, registers, switches, holes, plates, openings, firestop) and Addenda 1-{rev.split()[-1]}. These sheets "
         "are drawn from the model and add nothing to it.",
         "Each run is tagged with its system and nominal size in inches; a circuit with its name and wire.",
@@ -1502,8 +1657,14 @@ def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None, s7: dict | N
         "Each flat's hot water is a loop of its own (Addendum 7, item 1; IECC C404.5): from its riser along its hot branch past its "
         "fixtures to the lavatory, where a thermostatic balancing valve (TBV) in the vanity starts its return to the return riser. The "
         "flats' hot pipe and returns are insulated 1 in. (C404.4), stopped at each plate and joist (P-601).",
-        "The plant's storage is two tanks in series, and a backup heater (BK-1) is on its heater circuit (Addendum 7, items 2 and 3; "
-        "P-601). The control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002).",
+        ("The plant's heat is four outdoor CO2 heat pump water heaters on a pad outside the mechanical room, its storage two ECO2 "
+         "tanks in series, and a backup heater (BK-1) on its own pump circuit only when the units fault (Addendum 11; P-601). The "
+         "control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002).") if _edge() else
+        ("The plant's storage is two tanks in series, and a backup heater (BK-1) is on its heater circuit (Addendum 7, items 2 and 3; "
+         "P-601). The control sequence is specification section 23 09 93 (M-602); the tests and inspections, 01 45 00 (G-002)."),
+        *(["Each flat's mini-split is its heat (Addendum 11): no radiant floors, no building loop and no substation; every room the "
+           "code asks heat of gets it, each top-floor bath by its own wall heater (M-601). No solar panels, and no pressure-reducing "
+           "valve: the street gives under IPC 604.8's 80 psi."] if _edge() else []),
         "Basis of design: every make and model named is a basis of design, not a choice; equals by the bidder, with their data.",
     ]
     issue = int(rev.split()[-1])
@@ -1528,11 +1689,14 @@ def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None, s7: dict | N
             + "/".join(sorted({s7["electrical"]["feeders"][n]["egc"] for n in grown})) + " AWG ground (Addendum 10, item 1; E-601); "
             "so does any conductor the installer makes larger.")
     missing = [
-        "the mechanical and electrical rooms' wall-hung equipment: the exchangers, the pumps, the mixing valve, the backflow assemblies "
-        "and the riser assembly, the pressure-reducing valve, the meter stack, the house panel (the diagrams P-601, M-601, E-601 and "
-        "FP-601 show them);",
+        ("the mechanical and electrical rooms' wall-hung equipment: the pumps, the mixing valve, the backflow assemblies " if _edge() else
+         "the mechanical and electrical rooms' wall-hung equipment: the exchangers, the pumps, the mixing valve, the backflow assemblies ")
+        + ("and the riser assembly, the meter stack, the house panel (the diagrams P-601, M-601, E-601 and " if _edge() else
+           "and the riser assembly, the pressure-reducing valve, the meter stack, the house panel (the diagrams P-601, M-601, E-601 and ")
+        + "FP-601 show them);",
         "the outlets, switches and luminaires at the branch circuits' ends (each circuit drawn to its farthest outlet);",
         "the smoke alarms (36, three a flat: step 6), the fire alarm's devices and the telecom;",
+        "the ports connecting one element to the next; the CO2 units' water lines from the pad to the storage (P-601)." if _edge() else
         "the PV on the roof, the radiant loops in the floors' topping, and the ports connecting one element to the next.",
     ]
     x = 11.6
@@ -1560,7 +1724,10 @@ def cover(ax, sheets: list[tuple[str, str]], p: dict | None = None, s7: dict | N
 
 def draw_sheet(ax, number: str, ctx: dict, drawn: set) -> Labels | None:
     """One sheet; returns its labels where it places tags (a plan or an elevation)."""
+    from .designs import name
+
     bld, rb, s7, p = ctx["bld"], ctx["rb"], ctx["s7"], ctx["p"]
+    _DESIGN[0] = name(p)
     pre, num = number.split("-")
     if number == "G-001":
         cover(ax, sheet_list(), p, s7)
@@ -1603,11 +1770,10 @@ def context(apt: dict, p: dict, routes=None, s7: dict | None = None, src: Path =
     s7 = s7 or routed.summary(apt, p, routes)
     if "incomplete" in s7:
         raise SystemExit(f"7c's designs didn't run: {s7['incomplete']}")
-    from .designs import issue, paths
+    from .designs import issue, name, paths
 
-    if issue(p) != SERVICES_REV:
-        raise SystemExit(f"the design's services model is {issue(p)}'s; the sheets are drawn from {SERVICES_REV}'s")
-    services_path = services_path or paths(p)["services"] / f"services-{SERVICES_REV}.ifc"
+    _DESIGN[0] = name(p)  # the drawing follows this design (`_set`)
+    services_path = services_path or paths(p)["services"] / f"services-{issue(p)}.ifc"
     return {"bld": building(src / f"apartment-{REV}.ifc"), "rb": services(services_path), "services_path": services_path,
             "members": framing(src / f"framing-{REV}.ifc"), "s7": s7, "p": p, "routes": routes, "src": src}
 
@@ -1627,7 +1793,7 @@ def write(ctx: dict, path: Path, numbers: list[str] | None = None, title: str | 
     tags: dict[str, tuple[int, int]] = {}
     path.parent.mkdir(parents=True, exist_ok=True)
     with matplotlib.rc_context({"pdf.fonttype": 42}), PdfPages(
-            path, metadata={"Title": title or f"walk-up services sheets ({SHEETS_REV})", "Creator": "brownfield-compute pass 3g steps 8a and 9d",
+            path, metadata={"Title": title or f"walk-up services sheets ({_set()['sheets']})", "Creator": "brownfield-compute pass 3g steps 8a and 9d",
                             "CreationDate": None}) as pdf:
         for n in sheets:
             fig, ax = _figure()
@@ -1688,7 +1854,7 @@ def checks(ctx: dict, res: dict, path: Path) -> list[tuple[str, bool, str]]:
 
 def run(apt: dict, p: dict, out: Path = OUT, routes=None, s7: dict | None = None) -> dict:
     ctx = context(apt, p, routes=routes, s7=s7)
-    path = out / PDF_NAME
+    path = out / _set()["pdf"]
     res = write(ctx, path)
     ch = checks(ctx, res, path)
     for n in res["sheets"]:

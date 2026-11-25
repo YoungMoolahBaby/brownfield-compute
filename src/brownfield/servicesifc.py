@@ -160,7 +160,7 @@ class Designs:
         self.apt, self.p, self.routes, self.s7 = apt, p, routes, s7
         self.fire = s7["fire"]["sizes"]
         self.water = s7["water"]
-        self.loop = s7["loop"]
+        self.loop = s7.get("loop")  # the network design's building loop; the edge design has none
         self.ducts = s7["ducts"]
         self.el = s7["electrical"]
         self.vents = s7["vents"]
@@ -519,6 +519,10 @@ def elements(apt: dict, p: dict, routes, s7: dict, placed: dict) -> list[El]:
     # -- Fixtures on the plumbing walls (7a), and each tub's drain down through the floor to where
     #    its routed drain starts in the space under it.
     out += _fixtures(apt, p, placed["fixtures"])
+    # The edge design's CO2 units on their pad outside the mechanical room (7a's `pad_units`): not
+    # forge's obstacles, which are the building's inside.
+    for o in placed.get("pad", []):
+        out += _equipment(o, D, p)
     for rid in sorted(k for k in routes.recs if k.endswith("/tub") and k.startswith("plumbing/drain/")):
         req, t = routes.reqs[rid], routes.tree(rid)
         flat = req["flat"]
@@ -617,7 +621,21 @@ def _equipment(o: dict, D: Designs, p: dict) -> list[El]:
                           "Addendum 7)"),
         "heat-pump": ("IfcUnitaryEquipment", "USERDEFINED", "water-to-water heat pump", "hot",
                       "water-to-water heat pump (step 4's basis of design, ClimateMaster Tranquility SW036)"),
+        "co2": ("IfcUnitaryEquipment", "USERDEFINED", "air-source CO2 heat pump water heater", "hot",
+                "outdoor CO2 heat pump water heater, on its stand on the pad (ECO2 Systems SANCO2 GS5-45HPC-D, basis of design; "
+                "Addendum 11)"),
     }
+    from .designs import plant_heat
+
+    if plant_heat(p) == "air":  # the edge design's storage: ECO2's tanks, the only ones it warrants its units on
+        for k, end in (("storage-tank-a", "ST-1A, the hot end"), ("storage-tank-b", "ST-1B, the cold end")):
+            spec[k] = ("IfcTank", "STORAGE", None, "hot",
+                       f"hot-water storage tank {end} of two in series (ECO2 Systems ECO-200GLBK, basis of design; Addendum 11)")
+        spec["backup-heater"] = ("IfcBoiler", "WATER", None, "hot",
+                                 "backup water heater BK-1, electric, on P-2's circuit when the CO2 units fault (A. O. Smith DRE-52-12, "
+                                 "basis of design; Addendum 11)")
+    if what.startswith("co2-"):
+        what = "co2"
     if what not in spec:
         raise ValueError(f"{oid}: no equipment of that kind")
     cls, pre, obj, system, kind = spec[what]

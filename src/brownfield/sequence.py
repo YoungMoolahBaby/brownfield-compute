@@ -67,10 +67,53 @@ POINTS = [
 ]
 
 
+# The edge design's points (Addendum 11): no data center water, no building loop; the plant on its
+# CO2 units, BK-1 on P-2's circuit only when they fault.
+POINTS_EDGE = [
+    ("PC-1", "the plant controller (programmable, with alarm notification): P-2, BK-1's enable, P-3, the alarms", "to select"),
+    ("CMB", "the CO2 units' controller, staging them on TS-4 (BACnet to PC-1)", "ECO2 Systems ECO-CMB-BAC (basis of design)"),
+    ("CO2-1 to CO2-4", "the outdoor CO2 heat pump water heaters, each with its own pump, on the pad outside the mechanical room",
+     "ECO2 Systems SANCO2 GS5-45HPC-D (basis of design)"),
+    ("HT-1 to HT-4", "the heat trace on each unit's water lines, self-regulating", "ECO2 Systems FG2-18L (basis of design)"),
+    ("TS-4", "the storage's sensor, in its well at Ecosizer's aquastat height", "with ST-1 (ECO2's)"),
+    ("P-2", "the backup circuit's pump: ST-1B's bottom (the storage's cold end) through BK-1 to ST-1A's top, only in the backup mode",
+     "to select"),
+    ("BK-1", "the backup heater's contactor, its own thermostats", "A. O. Smith DRE-52-12 (basis of design)"),
+    ("ST-2", "the swing tank's element thermostat", "Bradford White RE340S6 (basis of design)"),
+    ("MV-1", "the master mixing valve", "ASSE 1017"),
+    ("P-3", "the recirculation pump, switched by PC-1", "Grundfos ALPHA2 15-55SF (basis of design)"),
+    ("TS-5", "the hot-water return's temperature, at ST-2", "to select"),
+    ("TBV", "each flat's thermostatic balancing valve, under its lavatory in the vanity, where its loop's return starts (self-acting; "
+            "IECC C404.6: with access)",
+     "Caleffi ThermoSetter 116 series, 1/2 in. (basis of design; Addendum 7)"),
+]
+
+INTERLOCKS_EDGE = [
+    ("BK-1 never with the CO2 units", "BK-1's contactor coil is wired through a normally closed contact of the units' enable relay: "
+     "BK-1 can't energize while the units are enabled. The house panel's size counts only the larger (220.60) and rests on it."),
+    ("the preheater with its airflow", "the preheater's own airflow sensor and over-temperature cut-out (Ouellet's) in its circuit."),
+    ("each mini-split with its drain", "the water-level switch on Fujitsu's forced-stop input (function 46-02)."),
+]
+
+
+def points(p: dict) -> list:
+    from .designs import plant_heat
+
+    return POINTS_EDGE if plant_heat(p) == "air" else POINTS
+
+
+def interlocks(p: dict) -> list:
+    from .designs import plant_heat
+
+    return INTERLOCKS_EDGE if plant_heat(p) == "air" else INTERLOCKS
+
+
 def aquastat_at(p: dict) -> str:
     """Where TS-4 goes: Ecosizer's aquastat height as a share of the storage's volume from its cold
     end, in the tanks in series (ST-1B the cold end, ST-1A the hot)."""
-    n = int(p["systems.routing.tank_count"])
+    from .designs import plant_heat
+
+    n = int(p["systems.co2_plant.tank_count" if plant_heat(p) == "air" else "systems.routing.tank_count"])
     names = [f"ST-1{c}" for c in "AB"[:n]][::-1]  # from the cold end
     x = p["systems.hot_water.aquastat_fract"] * n
     k = int(x + 1e-9)
@@ -80,7 +123,12 @@ def aquastat_at(p: dict) -> str:
 
 
 def sequence(p: dict, s7: dict) -> list[dict]:
-    """The sequence, system by system and mode by mode, each step with its figures."""
+    """The sequence, system by system and mode by mode, each step with its figures (the edge
+    design's, `sequence_edge`)."""
+    from .designs import plant_heat
+
+    if plant_heat(p) == "air":
+        return sequence_edge(p, s7)
     h, c = "systems.hot_water.", "systems.controls."
     w, L = s7["water"], s7["loop"]
     t_store, t_out, t_back = p[h + "storage_f"], p[h + "distribution_f"], p[h + "return_min_f"]
@@ -177,6 +225,85 @@ def sequence(p: dict, s7: dict) -> list[dict]:
     ]
 
 
+def sequence_edge(p: dict, s7: dict) -> list[dict]:
+    """The edge design's sequence (Addendum 11): the plant on its CO2 units, BK-1 their backup; no
+    building loop; each flat's mini-split its heat."""
+    from .loads import preheat_c
+    from .plumbing import storage_held, storage_temp
+
+    h, c, co = "systems.hot_water.", "systems.controls.", "systems.co2_plant."
+    w = s7["water"]
+    t_store, t_out, t_back = storage_temp(p), p[h + "distribution_f"], p[h + "return_min_f"]
+    t_stop, t_tbv = p[c + "recirc_stop_f"], p[h + "tbv_set_f"]
+    pre, held, n = preheat_c(p), storage_held(p), int(p[co + "units"])
+    return [
+        {"system": "The hot-water plant (P-601)", "modes": [
+            {"mode": "Normal: on the CO2 units", "steps": [
+                f"CMB starts the units when TS-4, at {p[h + 'aquastat_fract']:.0%} of the storage from its cold end ({aquastat_at(p)}), "
+                f"falls below {p[co + 'start_f']:g} F (ECO2's start); each unit stops when its own inlet water reaches "
+                f"{p[co + 'stop_inlet_f']:g} F (ECO2's stop). They run only with the cold end called (IECC C404.6.3).",
+                f"Each unit draws from ST-1B's bottom and heats its pass to {t_store:g} F into ST-1A's top ({p[co + 'storage_f'] + 5:g} F "
+                "above 65 F outdoors), on reverse-return manifolds (ECO2: more than two units on one storage); the storage's water "
+                f"moves from ST-1B to ST-1A as hot water is drawn ({held:g} gal in series; Ecosizer asks {w['primary']['storage_gal']:.0f}).",
+                f"The {n} units run together on the call; one out, the rest carry the plant above {p[co + 'full_above_f']:g} F "
+                f"({(n - 1) * p[co + 'unit_kw']:g} kW against Ecosizer's {w['heater']['need_kw']:.1f}).",
+                "Each unit's heat trace (HT) on its own thermostat; each unit's pump runs its freeze protection (ECO2: below 37 F) "
+                "while the units are enabled.",
+                "BK-1's elements stay locked out and P-2 stays off (the interlock below).",
+                f"ST-2's element switches on at {t_out:g} F and off at {t_out + SWING_DEADBAND_F:g} F (Ecosizer's swing tank).",
+                f"MV-1 sends {t_out:g} F to the flats.",
+                f"P-3 runs while TS-5 reads under {t_back:g} F and stops when it reaches {t_stop:g} F: off when the loop is at "
+                "temperature (IECC C404.6.1).",
+                f"Each flat's TBV, set at {t_tbv:g} F, throttles its flat's return as it nears that, so every flat's loop returns at "
+                f"{t_back:g} F or more ({w['loop']['gpm']:.2f} gpm in all, {w['recirc']['flat_gpm']:.2f} a flat, at the design's loss).",
+            ]},
+            {"mode": "Backup: the CO2 units faulted", "steps": [
+                f"Entered when CMB reports every unit faulted, or their power lost, for {p[c + 'fallback_enter_min']:g} min (not on "
+                "TS-4: it falls below the units' start on every cycle), or by the manager's switch at PC-1.",
+                "The units' enable is dropped (they are locked out); then BK-1's contactor is released.",
+                f"P-2 runs on TS-4 as the units would, through BK-1, whose own thermostats hold {t_store:g} F at its outlet (set within its "
+                f"{p[h + 'backup_thermostat_min_f']:g}-{p[h + 'backup_thermostat_max_f']:g} F range): ST-1's {held:g} gal are heated as in "
+                "normal running.",
+                f"Left by hand after the units' repair, or when CMB reports them sound for {p[c + 'fallback_exit_min']:g} min: BK-1 "
+                "locked out and P-2 stopped first, then the units enabled.",
+            ]},
+            {"mode": "Alarms, from PC-1 to the building's manager", "steps": [
+                "a unit's fault (CMB); the plant in or out of its backup;",
+                f"the storage at TS-4 below {t_out:g} F;",
+                f"the hot-water return at TS-5 below {t_back:g} F (WHO: not less than 50 C) after P-3 has run "
+                f"{p[c + 'loop_alarm_min']:g} min;",
+                "BK-1's fault.",
+            ]},
+        ]},
+        {"system": "Each flat's mini-split: its heat and cooling (M-101 to M-103)", "modes": [
+            {"mode": "Heating season", "steps": [
+                f"The flat's heat, at the tenant's setpoint (the design's {p['pass3.loads.indoor_c']:g} C); its air to the bedrooms, the "
+                "study and the living room, which the kitchen, entry, hall and passage open on (M-601). Defrost as Fujitsu's controls run it.",
+                "The top floor's bath heaters on their own thermostats (the baths below sit among heated rooms and lose no heat).",
+            ]},
+            {"mode": "Cooling season", "steps": [f"Cooling at the tenant's setpoint (the design's {p['systems.design.cooling_indoor_f']:g} F)."]},
+            {"mode": "Always", "steps": [
+                "Its fan runs continuously at low speed while the ERV runs: the ERV's fresh air enters its return.",
+                "Its static pressure is set to its ducts by Fujitsu's function setting (M-601).",
+                "Its water-level switch stops it (Fujitsu function 46-02, forced stop; IMC 307.2.3).",
+            ]},
+        ]},
+        {"system": "The ERV and its preheater (M-101 to M-103)", "modes": [
+            {"mode": "Always", "steps": [
+                "The ERV runs continuously at its design flows, supply and exhaust balanced (step 9c tests them).",
+                f"The preheater holds the outdoor air leaving it at {pre:.1f} C ({f_of(pre):.1f} F), only with its airflow proved by its "
+                "own sensor, and its over-temperature cut-out in the circuit.",
+            ]},
+        ]},
+        {"system": "Fire protection (FP-601)", "modes": [
+            {"mode": "Always", "steps": [
+                "The waterflow switch: an alarm at the monitoring panel, the exterior horn-strobe, the supervising station.",
+                "Each shutoff valve's tamper switch: a supervisory signal.",
+            ]},
+        ]},
+    ]
+
+
 INTERLOCKS = [
     ("BK-1 never with HP-1", "BK-1's contactor coil is wired through a normally closed contact of HP-1's enable relay: BK-1 can't "
      "energize while HP-1 is enabled. The house panel's size counts only the larger of the two (220.60) and rests on it."),
@@ -186,6 +313,10 @@ INTERLOCKS = [
 
 
 def checks(p: dict, s7: dict) -> list[tuple[str, bool, str]]:
+    from .designs import plant_heat
+
+    if plant_heat(p) == "air":
+        return checks_edge(p, s7)
     h, c = "systems.hot_water.", "systems.controls."
     sup, td, t_in = s7["loop"]["supply_c"], p["systems.design.heating_c"], p["pass3.loads.indoor_c"]
     curve = [reset_c(p, t, sup) for t in range(-25, 21)]
@@ -220,8 +351,41 @@ def checks(p: dict, s7: dict) -> list[tuple[str, bool, str]]:
     ]
 
 
-def markdown(seq: list[dict]) -> str:
-    """The sequence as a specification section (for Addendum 7, step 9d)."""
+def checks_edge(p: dict, s7: dict) -> list[tuple[str, bool, str]]:
+    """The edge design's sequence against its own figures."""
+    from .loads import preheat_c
+    from .plumbing import storage_temp
+
+    h, c, co = "systems.hot_water.", "systems.controls.", "systems.co2_plant."
+    t_store = storage_temp(p)
+    house = s7["electrical"]["service"]["house"]
+    units = next(r for r in house["rows"] if r["key"] == "co2_units")
+    bk = next(r for r in house["rows"] if r["key"] == "backup_heater")
+    return [
+        ("the units' start (ECO2's, at TS-4) under their own stop (at their inlet), both under the storage they make",
+         p[co + "start_f"] < p[co + "stop_inlet_f"] < t_store, f"start under {p[co + 'start_f']:g} F, stop at {p[co + 'stop_inlet_f']:g}, storage {t_store:g}"),
+        ("BK-1's setpoint within its thermostats' range", p[h + "backup_thermostat_min_f"] <= t_store <= p[h + "backup_thermostat_max_f"],
+         f"{t_store:g} F in {p[h + 'backup_thermostat_min_f']:g}-{p[h + 'backup_thermostat_max_f']:g}"),
+        ("the swing tank's element switches on at the supply temperature, under the storage's", p[h + "distribution_f"] + SWING_DEADBAND_F < t_store,
+         f"{p[h + 'distribution_f']:g}-{p[h + 'distribution_f'] + SWING_DEADBAND_F:g} F under {t_store:g}"),
+        ("the preheater's setpoint at least Broan's 0 C", preheat_c(p) >= p["systems.erv.preheat_min_c"], f"{preheat_c(p):.1f} C"),
+        ("leaving the backup takes longer than entering it (no cycling between the heaters)", p[c + "fallback_exit_min"] > p[c + "fallback_enter_min"],
+         f"{p[c + 'fallback_enter_min']:g} min in, {p[c + 'fallback_exit_min']:g} out"),
+        ("the house panel counts BK-1 and the CO2 units as the interlock runs them: the larger, once", units["counted"] != bk["counted"],
+         f"{'BK-1' if bk['counted'] else 'the units'} counted"),
+        ("the recirculation pump stops with the loop at temperature (IECC C404.6.1): its stop above the least return, under the supply",
+         p[h + "return_min_f"] < p[c + "recirc_stop_f"] < p[h + "distribution_f"],
+         f"runs under {p[h + 'return_min_f']:g} F, stops at {p[c + 'recirc_stop_f']:g}, the supply {p[h + 'distribution_f']:g}"),
+        ("each flat's balancing valve set within its range, at or over the least return and under the supply",
+         p[h + "tbv_min_f"] <= p[h + "tbv_set_f"] <= p[h + "tbv_max_f"] and p[h + "return_min_f"] <= p[h + "tbv_set_f"] < p[h + "distribution_f"],
+         f"{p[h + 'tbv_set_f']:g} F in {p[h + 'tbv_min_f']:g}-{p[h + 'tbv_max_f']:g}"),
+    ]
+
+
+def markdown(seq: list[dict], p: dict | None = None) -> str:
+    """The sequence as a specification section (for Addendum 7, step 9d; the edge design's, with
+    its points and interlocks, for Addendum 11)."""
+    pts, ils = (points(p), interlocks(p)) if p is not None else (POINTS, INTERLOCKS)
     lines = ["# 23 09 93: Sequence of operations for the walk-up's services", "",
              "Made up, from the brownfield-compute study: not a real project, nothing is out to bid. Setpoints are the design's; "
              "those marked as judgement are set at commissioning.", ""]
@@ -229,9 +393,9 @@ def markdown(seq: list[dict]) -> str:
         lines += [f"## {i}. {s['system']}", ""]
         for m in s["modes"]:
             lines += [f"**{m['mode']}.**", ""] + [f"- {x}" for x in m["steps"]] + [""]
-    lines += [f"## {len(seq) + 1}. Interlocks, wired, not programmed", ""] + [f"- **{a}:** {b}" for a, b in INTERLOCKS] + [""]
+    lines += [f"## {len(seq) + 1}. Interlocks, wired, not programmed", ""] + [f"- **{a}:** {b}" for a, b in ils] + [""]
     lines += [f"## {len(seq) + 2}. Control points", "", "| Tag | What | Chosen |", "|---|---|---|"]
-    lines += [f"| {t} | {w} | {k} |" for t, w, k in POINTS]
+    lines += [f"| {t} | {w} | {k} |" for t, w, k in pts]
     return "\n".join(lines) + "\n"
 
 
@@ -244,7 +408,7 @@ def run(apt: dict, p: dict) -> dict:
     s7 = routed.summary(apt, p, routes)
     seq = sequence(p, s7)
     path = OUT_DIR / "pass3" / "sequence.md"
-    path.write_text(markdown(seq), encoding="utf-8")
+    path.write_text(markdown(seq, p), encoding="utf-8")
     return {"sequence": seq, "checks": checks(p, s7), "path": path}
 
 

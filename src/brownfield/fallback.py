@@ -17,6 +17,11 @@ an outage or for good, the building must still be heated and have hot water. Ste
   and the backup heater on the house panel, interlocked against HP-1 (220.60).
 
 The control sequence that switches into this (9b) and its tests (9c) come next.
+
+**The edge design** (Addendum 11, `designs.py`) has no data center heat to lose: the mini-splits
+are the flats' heat, and every room the code asks heat of gets its share at the design dry bulb
+(`space_heat`'s `by_room`); the backup heater covers the plant when its CO2 units fault, never
+with them (220.60).
 """
 
 from __future__ import annotations
@@ -24,7 +29,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from .plumbing import storage_held
+from .plumbing import storage_held, storage_temp
 
 ROOT = Path(__file__).resolve().parents[2]
 HEATING = ROOT / "data" / "fujitsu_aruh12_heating.csv"
@@ -82,18 +87,43 @@ def recovery_gph(w: float, rise_f: float) -> float:
 
 
 def space_heat(apt: dict, p: dict, s7: dict, placed: dict) -> dict:
-    """Each flat on its mini-split at the heating design dry bulb, against its design heat."""
+    """Each flat on its mini-split at the heating design dry bulb, against its design heat. In the
+    network design its heat is the floors' (the building loop's, `s7["loop"]`); in the edge design,
+    where the mini-split is the heat, the rooms' (`loads.room_heat`, as the floors' zones sum them),
+    and each room it supplies gets its share of the unit's heat by its share of the air
+    (`hvac.cooling_ducts`'s `heat`), against the room's own heat."""
+    from .designs import floors
+
     units = {u["flat"]: u for u in placed["units"]}
     indoor = {e["id"].split("/")[0]: e for e in placed["equipment"] if e["id"].endswith("/minisplit")}
     cap, inp = capacity_at(p["systems.design.heating_c"])
+    if floors(p):
+        flats = {n: (fl["w"], [r["id"] for r in fl["rooms"]]) for n, fl in s7["loop"]["flats"].items()}
+        ducts = {}
+    else:
+        from .hvac import cooling_ducts
+        from .loads import design_case, room_heat
+
+        rh = room_heat(apt, p, design_case(apt, p, preheat=True))
+        flats = {n: (f["design_w"], [x["room"]["id"] for x in f["rooms"] if x["design_w"] > 0]) for n, f in rh.items()}
+        ducts = {n: c["heat"] for n, c in cooling_ducts(apt, p).items()}
     out = {}
-    for n, fl in sorted(s7["loop"]["flats"].items()):
+    for n, (load, rooms) in sorted(flats.items()):
         line_m = s7["cooling"][n]["line_ft"] * FT
         height = indoor[n]["lo"][2] - units[n]["lo"][2]  # the indoor unit below the outdoor (negative)
         f = pipe_factor(line_m, height)
-        out[n] = {"load_w": fl["w"], "capacity_w": cap * f * 1000, "input_w": inp * 1000, "factor": f, "line_m": line_m,
-                  "height_m": height, "rooms": [r["id"].split("/")[-1] for r in fl["rooms"]]}
+        out[n] = {"load_w": load, "capacity_w": cap * f * 1000, "input_w": inp * 1000, "factor": f, "line_m": line_m,
+                  "height_m": height, "rooms": [r.split("/")[-1] for r in rooms]}
         out[n]["ok"] = out[n]["capacity_w"] >= out[n]["load_w"]
+        if n in ducts:
+            h = ducts[n]
+            out[n]["by_room"] = {rid.split("/")[-1]: {"need_w": r["need_w"], "cfm": r["cfm"], "give_w": out[n]["capacity_w"] * r["cfm"] / h["cfm"]}
+                                 for rid, r in h["rooms"].items()}
+            out[n]["by_room"].update({rid.split("/")[-1]: {"need_w": r["need_w"], "cfm": 0.0, "give_w": r["heater_w"], "heater": True}
+                                      for rid, r in h["heaters"].items()})
+            out[n]["rooms_ok"] = all(r["give_w"] >= r["need_w"] - 1e-9 for r in out[n]["by_room"].values())
+            out[n]["with_living"] = [r.split("/")[-1] for r in h["with_living"]]
+            out[n]["unheated"] = {r.split("/")[-1]: w for r, w in h["unheated"].items()}
     return {"design_c": p["systems.design.heating_c"], "capacity_kw": cap, "input_kw": inp, "flats": out}
 
 
@@ -102,7 +132,7 @@ def hot_water(p: dict, s7: dict) -> dict:
     from the coldest inlet to storage."""
     w, h = s7["water"], "systems.hot_water."
     plant_w = w["primary"]["capacity_kbtuh"] * 1000 / BTU_W
-    rise = p[h + "storage_f"] - w["inlet_f"]
+    rise = storage_temp(p) - w["inlet_f"]
     return {"plant_w": plant_w, "backup_w": p[h + "backup_w"], "ok": p[h + "backup_w"] >= plant_w, "rise_f": rise,
             "recovery_gph": recovery_gph(p[h + "backup_w"], rise), "storage_gal": storage_held(p), "storage_need_gal": w["primary"]["storage_gal"],
             "backup_gal": p[h + "backup_gal"], "day_gal": w["day_gal"]}
@@ -110,7 +140,10 @@ def hot_water(p: dict, s7: dict) -> dict:
 
 def checks(sh: dict, hw: dict, el: dict, p: dict) -> list[tuple[str, bool, str]]:
     house = el["service"]["house"]
-    hp = next(r for r in house["rows"] if r["key"] == "dhw_heat_pump")
+    hp = next(r for r in house["rows"] if r["key"] in ("dhw_heat_pump", "co2_units"))
+    edge = hp["key"] == "co2_units"
+    rooms = [(n, k, r) for n, x in sh["flats"].items() for k, r in x.get("by_room", {}).items()]
+    least = min(rooms, key=lambda t: t[2]["give_w"] - t[2]["need_w"]) if rooms else None
     bk = next(r for r in house["rows"] if r["key"] == "backup_heater")
     worst = min(sh["flats"].values(), key=lambda x: x["capacity_w"] - x["load_w"])
     worst_n = next(n for n, x in sh["flats"].items() if x is worst)
@@ -124,9 +157,16 @@ def checks(sh: dict, hw: dict, el: dict, p: dict) -> list[tuple[str, bool, str]]
          f"least spare {worst_n}: {worst['capacity_w']:.0f} W against {worst['load_w']:.0f} (factor {worst['factor']:.3f})"),
         ("the plant's backup heater covers its capacity (Ecosizer's, over its run hours)", hw["ok"],
          f"{hw['backup_w'] / 1000:.1f} kW against {hw['plant_w'] / 1000:.2f}; {hw['recovery_gph']:.0f} gal/h through {hw['rise_f']:.0f} F"),
-        ("the house panel's breaker covers its load, the backup heater and the heat pump interlocked (220.60)",
+        ("the house panel's breaker covers its load, the backup heater and the " + ("CO2 units" if edge else "heat pump")
+         + " interlocked (220.60)",
          house["breaker_a"] >= house["amps"] and not hp["counted"] and bk["counted"],
-         f"{house['amps']:.1f} A on {house['breaker_a']:.0f} A (the backup {bk['calc_va']:,.0f} VA counted, the heat pump not)"),
+         f"{house['amps']:.1f} A on {house['breaker_a']:.0f} A (the backup {bk['calc_va']:,.0f} VA counted, the "
+         + ("units" if edge else "heat pump") + " not)"),
+        *([("every room the code asks heat of (IBC 1204.1) gets its heat from its mini-split at the design dry bulb, by its share "
+            "of the unit's air, on the routed line set (the kitchen, entry, hall and passage with the living room; the bath by its "
+            "wall heater)",
+            all(x.get("rooms_ok", True) for x in sh["flats"].values()),
+            f"least spare {least[0]} {least[1]}: {least[2]['give_w']:.0f} W against {least[2]['need_w']:.0f}")] if rooms else []),
         ("each flat's feeder covers its heat pump and preheater together", all(f["breaker_a"] >= f["amps"] for f in el["feeders"].values()),
          f"{max(f['amps'] for f in el['feeders'].values()):.1f} A at most on {min(f['breaker_a'] for f in el['feeders'].values()):.0f} A"),
         (f"every feeder within {p['systems.wiring.vd_feeder_max']:.0%} drop on its route",
@@ -157,16 +197,19 @@ def report(r: dict) -> str:
 
     sh, hw, el = r["space"], r["water"], r["electrical"]
     house = el["service"]["house"]
-    lines = ["Pass 3g step 9a: when the data center's heat is gone", "", checks_report(r["checks"]), "",
+    edge = "by_room" in next(iter(sh["flats"].values()))
+    lines = ["Pass 3g step 9a: " + ("the edge design's heat and its plant's backup" if edge else "when the data center's heat is gone"), "",
+             checks_report(r["checks"]), "",
              f"The flats on their mini-splits at {sh['design_c']:g} C (Fujitsu: {sh['capacity_kw']:.2f} kW at 70 F indoor, drawing "
              f"{sh['input_kw']:.2f} kW, before the line set's correction):"]
     for n, x in sh["flats"].items():
         lines.append(f"  {n:14s} {x['load_w']:5.0f} W asked, {x['capacity_w']:5.0f} W given ({x['line_m'] / FT:.0f} ft of line, the outdoor "
                      f"unit {-x['height_m']:.1f} m above: x{x['factor']:.3f}); rooms {', '.join(x['rooms'])}")
-    lines += ["", f"The hot water on the backup heater: {hw['backup_w'] / 1000:.1f} kW against the plant's {hw['plant_w'] / 1000:.2f} kW; "
+    lines += ["", ("When the CO2 units fault, the hot water on the backup heater: " if edge else "The hot water on the backup heater: ")
+              + f"{hw['backup_w'] / 1000:.1f} kW against the plant's {hw['plant_w'] / 1000:.2f} kW; "
                   f"{hw['recovery_gph']:.0f} gal/h from the coldest inlet to storage ({hw['rise_f']:.0f} F), into {hw['storage_gal']:.0f} gal "
                   f"of storage (Ecosizer asks {hw['storage_need_gal']:.0f}) and its own {hw['backup_gal']:.0f}; the design day {hw['day_gal']:.0f} gal.",
               "", f"The house panel: {house['calculated_va']:,.0f} VA calculated, {house['amps']:.1f} A: a {house['breaker_a']:.0f} A position. "
                   f"The service: {el['service']['total_va']:,.0f} VA, {el['service']['amps']:.0f} A on its {el['service']['main_a']} A main. "
-                  f"The PV the house panel takes under the 120% rule: {el['pv']['house_ac_kw']:.1f} kW AC."]
+                  + (f"The PV the house panel takes under the 120% rule: {el['pv']['house_ac_kw']:.1f} kW AC." if not edge else "")]
     return "\n".join(lines)
